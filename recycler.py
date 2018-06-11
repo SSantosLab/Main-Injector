@@ -738,7 +738,7 @@ class event:
         if self.config['sendEmailsToEveryone']:
             yous = ['djbrout@gmail.com', 'marcelle@fnal.gov', 'annis@fnal.gov']
         else:
-            yous = ['djbrout@gmail.com','alenon8@gmail.com']
+            yous = ['djbrout@gmail.com']
 
         if sendtexts:
             t = ['7737578495@msg.fi.google.com', '3017883369@mms.att.net', '6173357963@mms.att.net',
@@ -777,7 +777,7 @@ class event:
         if self.config['sendEmailsToEveryone']:
             yous = ['djbrout@gmail.com', 'marcelle@fnal.gov', 'annis@fnal.gov']
         else:
-            yous = ['djbrout@gmail.com','alenon8@gmail.com']
+            yous = ['djbrout@gmail.com']
         msg['Subject'] = 'Trigger ' + self.trigger_id + ' '+self.skymap_newoutfolder+ ' Processing FAILED!'
         msg['From'] = me
         for you in yous:
