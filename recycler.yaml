@@ -1,4 +1,4 @@
-trigger_path  : '/data/des41.a/data/desgw/gw_mi_3devel/real-triggers'
+trigger_path  : './OUTPUT/REAL/'
 real_or_sim: 'real' #must switch between 'sim' and 'real'
 start_of_season : 57444.
 start_of_season_date : '08/14/2016'
@@ -20,8 +20,8 @@ probHasNS: 1.
 
 events_observed : ['GW150914' , 'GW151226']
 
-isCustomDark: False
-customDarkSlots: []
+#isCustomDark: False
+#customDarkSlots: []
 
 # exposure_length : [ 90. , 90. , 90. ] #sec
 # exposure_filter : [ 'i', 'z', 'z' ]
@@ -44,8 +44,9 @@ skipAll : False
 skipPlots: False
 
 default_map_name : bayestar.fits
+
 # economics analysis
-time_budget_for_NS : 30. # hours, assuming 5 nights and 10hrs/night, 3/5 for NS
+time_budget_for_NS : 20. # hours, assuming 5 nights and 10hrs/night, 3/5 for NS
 time_budget_for_BH : 1.5 # hours, assuming 5 nights and 10hrs/night, 2/5 for BH
 hours_lost_to_weather_for_NS : 0
 hours_lost_to_weather_for_BH : 0
@@ -68,10 +69,10 @@ epoch3_BH  : 14 # start of epoch 3 in days since burst
 enddate_BH : 18 # termination time of observations in days since burst
 
 # NS strategy
-exposure_length_NS : [ 90. , 90. , 90. ] #sec
-exposure_filter_NS : [ 'i', 'z', 'z' ]
+exposure_length_NS : [ 60., 90. ] #sec
+exposure_filter_NS : [ 'i', 'z' ]
 maxHexesPerSlot_NS : 6
-exposure_tiling_NS : [ 9, 9, 9]
+exposure_tiling_NS : [ 9, 9 ]
 # BH strategy
 exposure_length_BH : [ 90., ] #sec
 exposure_filter_BH : [ 'i', ]
@@ -80,23 +81,16 @@ maxHexesPerSlot_BH : 18  # related to maxHexesPerSlot_NS by x3 for x3 less image
 
 
 
-
-
-
 ####Only used for running recycler.py standalone!####
 
 trigger_id : "G297595"
 wrap_all_triggers : False
 
-mjd : 57982.5285
+mjd : 57974.3530295
 force_mjd : False
 
-recycler_mjd : 57979.438
+recycler_mjd : 57979.5
 force_recycler_mjd : True
 
-skymap_filename : '/data/des41.a/data/desgw/gw_mi_3devel/real-triggers/G297595_forzoheyr/LALInference_v1.fits' 
-#skymap_filename : '/data/des41.a/data/marcelle/GW170817/maps/bayestar-HLV-face-on.fits.gz' 
-#skymap_filename : '/data/des41.a/data/marcelle/GW170817/maps/real-triggers/G298048/bayestar-HLV.fits.gz' 
-#Set to default if you wish to use the LIGO map from the trigger xml
-
+skymap_filename : './OUTPUT/REAL/G297595/bayestar/bayestar.fits.gz'
 

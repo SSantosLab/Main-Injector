@@ -9,11 +9,11 @@ import datetime
 import yaml
 import obsSlots
 import time
-import jobmanager
+#import jobmanager
 import pytz
 from threading import Thread
 from copy import copy
-sys.path.append("/data/des41.a/data/desgw/")
+#sys.path.append("/data/des41.a/data/desgw/")
 
 
 class event:
@@ -62,7 +62,7 @@ class event:
         else:
             self.recycler_mjd = self.getmjd(now)
             #self.recycler_mjd = 57981.25
-            print 'hereeee'*100
+            #print 'hereeee'*100
             print self.recycler_mjd
             print self.mjd
             print now
@@ -152,10 +152,9 @@ class event:
         #         print 'THERE IS NO PARAMFILE, HARDCODING THE DISTANCE TO THE CONFIG DIST.'
         #         distance = config["distance"]
 
-        try:
-            eventtype = self.event_params['boc']
-        except:
-            eventtype = 'Burst'
+        
+        eventtype = self.event_params['boc']
+
 
         try:
             probhasns = self.event_params['probhasns']
@@ -172,8 +171,8 @@ class event:
             gethexobstype = 'BH'
             self.distance = 1.
         elif eventtype == 'CBC':
-            print 'probhasns'*100
-            print probhasns
+            #print 'probhasns'*100
+            print 'PROB HAS NS',probhasns
             if probhasns > config['probHasNS_threshold']:
                 gethexobstype = 'NS'
                 self.distance = -999
@@ -214,8 +213,8 @@ class event:
 
 
         self.gethexobstype = gethexobstype
-        print 'triggertype'*100
-        print self.gethexobstype
+        #print 'triggertype'*100
+        print 'TRIGGER TYPE:',self.gethexobstype
         # make the maps
         #try:
         #where = 'getHexObservations'
@@ -244,20 +243,13 @@ class event:
         # print 'skipAll',skipAll
 
         #raw_input()
-        print 'startdayssinceburst'*100
-        print self.skymap, trigger_id, outputDir, mapDir, self.distance,\
-                    gethexobstype,start_days_since_burst,\
-                    exposure_length, filter_list,config['resolution'],\
-                    config['ishalfnight'], config['isfirsthalf'],\
-                    config['isCustomDark'],config['customDarkSlots'],\
-                    overhead, maxHexesPerSlot, skipAll
         probs, times, slotDuration, hoursPerNight = getHexObservations.prepare(
                     self.skymap, trigger_id, outputDir, mapDir, distance=self.distance,
                     trigger_type=gethexobstype,start_days_since_burst=start_days_since_burst,
                     exposure_list=exposure_length, filter_list=filter_list,resolution=config['resolution'],
                     halfNight=config['ishalfnight'], firstHalf=config['isfirsthalf'],
-                    isCustomDark=config['isCustomDark'],customDarkIndices=config['customDarkSlots'],
-                    overhead=overhead, maxHexesPerSlot=maxHexesPerSlot, skipAll=skipAll,mjd=self.mjd)
+                    #isCustomDark=config['isCustomDark'],customDarkIndices=config['customDarkSlots'],
+                    overhead=overhead, maxHexesPerSlot=maxHexesPerSlot, skipAll=skipAll)
             # figure out how to divide the night
             # where = 'getHexObservations.contemplateTheDivisionsOfTime()'
             # line = '102'
@@ -281,7 +273,7 @@ class event:
                 n_slots, mapDirectory=mapDir, simNumber=trigger_id,
                 maxHexesPerSlot=maxHexesPerSlot, mapZero=first_slot,
                 exposure_list=exposure_length, filter_list=filter_list,
-                tiling_list = tiling_list,
+                #tiling_list = tiling_list,
                 trigger_type=gethexobstype, skipJson=config['skipjson'])
         # except:
         #     try:
@@ -1010,15 +1002,12 @@ if __name__ == "__main__":
             e.getContours(config)
             jsonfilelist = e.makeJSON(config)
             e.make_cumulative_probs()
-            ##e.updateTriggerIndex(real_or_sim=real_or_sim)
-            #try:
-            #    e.updateWebpage(real_or_sim)
-            #except:
-            #    pass
-            #e.send_nonurgent_Email()
+            e.updateTriggerIndex(real_or_sim=real_or_sim)
+            e.updateWebpage(real_or_sim)
+            e.send_nonurgent_Email()
             e.makeObservingPlots()
             e.getContours(config)
-            #e.updateWebpage(real_or_sim)
+            e.updateWebpage(real_or_sim)
 
             # ISREALTRIGGER = True
             # eventmngr = Thread(target=jobmanager.eventmanager, args=(trigger_id, jsonfilelist,os.path.join(trigger_path,trigger_id),

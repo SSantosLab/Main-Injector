@@ -1,4 +1,3 @@
-NEWSTUFF
 import os
 import urlparse
 import matplotlib.pyplot as plt
@@ -27,12 +26,12 @@ def sendFirstTriggerEmail(trigger_id,far,mapname='NA'):
 
     me = 'automated-desGW@fnal.gov'
     if config.sendEveryoneEmails:
-        you = ['djbrout@gmail.com','marcelle@fnal.gov','annis@fnal.gov']
+        you = config.allemails
     else:
         you = ['djbrout@gmail.com']
 
     if config.sendtexts:
-        t = ['7737578495@msg.fi.google.com','3017883369@mms.att.net','6173357963@mms.att.net','2153008763@mms.att.net','6307654596@tmomail.net']
+        t = config.alltexts
         you.extend(t)
     else:
         you.extend(['2153008763@mms.att.net'])
@@ -62,12 +61,12 @@ def sendFailedEmail(trigger_id,message='FAILED'):
 
     me = 'automated-desGW@fnal.gov'
     if config.sendEveryoneEmails:
-        you = ['djbrout@gmail.com','marcelle@fnal.gov','annis@fnal.gov']
+        you = config.allemails
     else:
         you = ['djbrout@gmail.com']
 
     if config.sendtexts:
-        t = ['7737578495@msg.fi.google.com','3017883369@mms.att.net','6173357963@mms.att.net','2153008763@mms.att.net','6307654596@tmomail.net']
+        t = config.alltexts
         you.extend(t)
 
     for y in you:
@@ -292,7 +291,7 @@ def imAliveEmail():
 
     me = 'imAlive-desGW@fnal.gov'
     if config.sendEveryoneEmails:
-        you = ['djbrout@gmail.com','marcelle@fnal.gov','annis@fnal.gov']
+        you = config.allemails
     else:
         you = ['djbrout@gmail.com']
 

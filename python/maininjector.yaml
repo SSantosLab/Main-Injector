@@ -1,0 +1,46 @@
+trigger_path  : '/data/des41.a/data/desgw/maininjector_devel_annis/test-triggers'
+# not accurate dates
+start_of_season : 57444.
+start_of_season_date : '08/14/2016'
+end_of_season : 57634.
+
+# static observing parameters
+overhead : 30. #sec
+area_per_hex : 3.0 # sq deg
+
+# economics analysis
+time_budget_for_NS : 30. # hours, assuming 5 nights and 10hrs/night, 3/5 for NS
+time_budget_for_BH : 20. # hours, assuming 5 nights and 10hrs/night, 2/5 for BH
+hours_lost_to_weather_for_NS : 0
+hours_lost_to_weather_for_BH : 0
+rate_of_bh_in_O2: 20.0  # n/yr, BH merger triggers per year in observing run 2
+rate_of_ns_in_O2:  2.0  # n/yr, NS merger triggers per year in observing run 2
+
+# epoch structures. For each epoch the begin date must be set
+# NS strategy
+nepochs_NS : 4
+epoch1_NS  : 0 # start of epoch 1 in days since burst
+epoch2_NS  : 2 # start of epoch 2 in days since burst
+epoch3_NS  : 4 # start of epoch 3 in days since burst
+enddate_NS : 10 # termination time of observations in days since burst
+# BH strategy
+nepochs_BH : 3
+epoch1_BH  : 0 # start of epoch 1 in days since burst
+epoch2_BH  : 1 # start of epoch 2 in days since burst
+epoch3_BH  : 14 # start of epoch 3 in days since burst
+enddate_BH : 18 # termination time of observations in days since burst
+
+# NS strategy
+exposure_length_NS : [ 90. , 90. , 90. ] #sec
+exposure_filter_NS : [ 'i', 'z', 'z' ]
+maxHexesPerSlot_NS : 6  
+# BH strategy
+exposure_length_BH : [ 90., ] #sec
+exposure_filter_BH : [ 'i', ]
+maxHexesPerSlot_BH : 18  # related to maxHexesPerSlot_NS by x3 for x3 less images/hex, so same amount of time
+
+####Only used for testing####
+test_mjd : 57347.
+trigger_id : "M189424"
+wrap_all_triggers : False
+force_mjd : True
