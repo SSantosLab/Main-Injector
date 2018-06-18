@@ -1,5 +1,9 @@
 trigger_path  : './OUTPUT/TEST/'
 real_or_sim: 'real' #must switch between 'sim' and 'real'
+
+# camera
+camera : 'decam'
+
 start_of_season : 57444.
 start_of_season_date : '08/14/2016'
 end_of_season : 57996.
