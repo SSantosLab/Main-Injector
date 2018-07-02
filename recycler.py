@@ -272,44 +272,45 @@ class event:
 
                 # do Hsun-yu Chen's
                 try:
-                    where = 'getHexObservations.economics()'
-                    line = '136'
+                    # do Hsun-yu Chen's 
+                    print "======================================>>>>>>>>>>>>>>>>>>"
+                    print " economics "
+                    print "getHexObservations.economics (", trigger_id, ",",\
+                        best_slot, ", mapDirectory= \"",outputDir, "\" ,",\
+                        "area_left=",area_left, ", days_left=",time_left, ",rate=",rate,") "
+                    print "======================================>>>>>>>>>>>>>>>>>>"
                     econ_prob, econ_area, need_area, quality = \
-                        getHexObservations.economics(trigger_id,
-                                                     best_slot, mapDirectory=mapDir,
-                                                     area_left=area_left, days_left=time_left,
-                                                     rate=rate)
-
-                    hoursOnTarget = (econ_area / area_per_hex) * (time_cost_per_hex / 3600.)
-
-                    # figure out how to divide the night,
-                    # given the new advice on how much time to spend
-                    where = 'getHexObservations.contemplateTheDivisionsOfTime()'
-                    line = '148'
-                    n_slots, first_slot = \
-                        getHexObservations.contemplateTheDivisionsOfTime(
+                        getHexObservations.economics (trigger_id,
+                            best_slot, mapDirectory=outputDir,
+                            area_left=area_left, days_left=time_left, rate=rate)
+        
+                    if econ_area > 0.0 :
+                        hoursOnTarget = (econ_area/area_per_hex ) * (time_cost_per_hex/3600.)
+        
+                        # figure out how to divide the night, 
+                        # given the new advice on how much time to spend
+        
+                        n_slots, first_slot = getHexObservations.contemplateTheDivisionsOfTime(
                             probs, times, hoursPerNight=hoursPerNight,
                             hoursAvailable=hoursOnTarget)
-
-                    where = 'getHexObservations.now()'
-                    line = '156'
-                    best_slot = getHexObservations.now(
-                        n_slots, mapDirectory=mapDir, simNumber=trigger_id,
-                        maxHexesPerSlot=maxHexesPerSlot, mapZero=first_slot,
-                        exposure_list=exposure_length, filter_list=filter_list,
-                        skipJson=False)
+        
+                        best_slot = getHexObservations.now(
+                            n_slots, mapDirectory=outputDir, simNumber=trigger_id,
+                            maxHexesPerSlot=maxHexesPerSlot, mapZero=first_slot,
+                            exposure_list=exposure_length, filter_list=filter_list,
+                            trigger_type = trigger_type, skipJson =skipJson)
                 except:
                     e = sys.exc_info()
-                    trace = traceback.format_exc(sys.exc_info())
+                    exc_type, exc_obj, exc_tb = e[0],e[1],e[2]
+                    where = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                    line = exc_tb.tb_lineno
+                    trace = traceback.format_exc(e)
                     print trace
                     self.send_processing_error(e, where, line, trace)
                     sys.exit()
         else:
             econ_prob = 0
             econ_area = 0
-            #best_slot = 0
-            #print 'setting best slot to zero'*10
-            #raw_input()
             need_area = 11734.0
             quality = 1.0
 
