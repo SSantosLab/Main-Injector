@@ -419,8 +419,7 @@ class event:
         except:
             e = sys.exc_info()
             exc_type, exc_obj, exc_tb = e[0],e[1],e[2]
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            where = fname
+            where = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             line = exc_tb.tb_lineno
             trace = traceback.format_exc(e)
             print trace
@@ -762,8 +761,6 @@ class event:
 
     def makeObservingPlots(self):
         try:
-            where = 'getHexObservations.makeObservingPlots()'
-            line = '776'
             if not self.config['skipPlots']:
                 n_plots = getHexObservations.makeObservingPlots(
                     self.n_slots, self.trigger_id, self.best_slot, self.outputDir, self.mapDir, allSky=True )
@@ -792,7 +789,10 @@ class event:
             #string = "$(ls -v {}-observingPlot*)"
         except:
             e = sys.exc_info()
-            trace = traceback.format_exc(sys.exc_info())
+            exc_type, exc_obj, exc_tb = e[0],e[1],e[2]
+            where = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            line = exc_tb.tb_lineno
+            trace = traceback.format_exc(e)
             print trace
             self.send_processing_error(e, where, line, trace)
             sys.exit()
