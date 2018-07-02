@@ -17,36 +17,24 @@ from copy import copy
 
 
 class event:
-    def __init__(self, skymap_filename, outfolder, trigger_id, mjd, config):
+    def __init__(self, skymap_filename, master_dir, trigger_id, mjd, config):
+'''
+    event:
+
+    master_dir:  the directory containing all trigger subdirectories
+    trigger_id: the name of the trigger event that comes from LIGO
+    mjd:        the modified julian date of the event (in FITS header, among other places)
+    config:     the config filename with the parameters that controls the routine
+'''
         
-        #if xml exists then just continue
-        #else read in skymap_url.txt and get xml 
-        #like so wget --auth-no-challenge https://gracedb.ligo.org/apibasic/events/G268556/files/G268556-4-Initial.xml -O G268556-4-Initial.xml 
+    #if xml exists then just continue
+    #else read in skymap_url.txt and get xml 
+    #like so wget --auth-no-challenge https://gracedb.ligo.org/apibasic/events/G268556/files/G268556-4-Initial.xml -O G268556-4-Initial.xml 
 
-        #read in xml and set params
+    # set up the working directories
+        self.modify_filesystem( master_dir) 
 
-        oldoutfolder = copy(outfolder)
-        self.oldoutfolder = oldoutfolder
-        skymap_newoutfolder = skymap_filename.split('/')[-1].split('.')[0]
-        self.skymap_newoutfolder = skymap_newoutfolder
-        #print skymap_filename.strip()+'.processing'
-        #raw_input()
-        os.system('touch '+skymap_filename.strip()+'.processing')
-        os.system('mkdir '+outfolder+'/'+skymap_newoutfolder)
-        outfolder = outfolder+'/'+skymap_newoutfolder+'/'
-        os.system('cp '+skymap_filename.strip()+' '+outfolder)
-        os.system('cp '+oldoutfolder+'/'+trigger_id +'_params.npz '+outfolder)
-        print 'cp '+skymap_filename.strip()+' '+outfolder
-        print outfolder
-        self.skymap = skymap_filename
-        #print 'skymappp'*10
-        print self.skymap
-        #self.skymap = os.path.join(outfolder, config['default_map_name'])
-        self.outfolder = outfolder
-        self.trigger_id = trigger_id
-        self.mjd = mjd
-        self.config = config
-
+    #read in xml and set params
         season_start_date = datetime.datetime.strptime(config["start_of_season_date"], "%m/%d/%Y")
         
         if config["force_recycler_mjd"]:
@@ -56,10 +44,10 @@ class event:
 
 
         # Setup website directories
-        self.mapspath = os.path.join(outfolder, "maps/")
+        self.mapspath = os.path.join(work_area, "maps/")
         if not os.path.exists(self.mapspath):
             os.makedirs(self.mapspath)
-        self.imagespath = "./DES_GW_Website/Triggers/" + trigger_id + "/"+outfolder.split('/')[-1]
+        self.imagespath = "./DES_GW_Website/Triggers/" + trigger_id + "/"+work_area.split('/')[-1]
         if not os.path.exists(self.imagespath):
             os.makedirs(self.imagespath)
         if not os.path.exists(self.imagespath+'/images'):
@@ -67,12 +55,12 @@ class event:
 
         #self.website_jsonpath = "./DES_GW_Website/Triggers/" + trigger_id + "/"
         #self.website_imagespath = "./DES_GW_Website/Triggers/" + trigger_id + "/images/"
-        self.website_imagespath = self.imagespath+'/'+self.skymap_newoutfolder
+        self.website_imagespath = self.imagespath+'/'+self.trigger_dir
         self.website_jsonpath = self.imagespath
         if not os.path.exists(self.website_imagespath):
             os.makedirs(self.website_imagespath)
 
-        self.event_paramfile = os.path.join(outfolder, trigger_id + '_params.npz')
+        self.event_paramfile = os.path.join(work_area, trigger_id + '_params.npz')
         print self.event_paramfile
         #raw_input()
         self.weHaveParamFile = True
@@ -81,10 +69,41 @@ class event:
         except:
             self.event_params = {}
             self.weHaveParamFile = False
-        os.system('cp recycler.yaml ' + os.path.join(outfolder, 'strategy.yaml'))
-        print '***** Copied recycler.yaml to ' + os.path.join(outfolder,
+        os.system('cp recycler.yaml ' + os.path.join(work_area, 'strategy.yaml'))
+        print '***** Copied recycler.yaml to ' + os.path.join(work_area,
                                                               'strategy.yaml') + ' for future reference *****'
         os.system('kinit -k -t /var/keytab/desgw.keytab desgw/des/des41.fnal.gov@FNAL.GOV')
+
+
+
+    def modify_filesystem(self, master_dir) :
+
+        # master_dir is the directory holding all the trigger directories
+        # trigger_dir is the directory holding everything to do with a single trigger
+        # work_are is master_dir + trigger_dir
+
+
+        skymap_filename = skymap_filename.strip()
+        trigger_dir = skymap_filename.split('/')[-1].split('.')[0]
+        self.trigger_dir = trigger_dir
+        os.system('touch '+skymap_filename+'.processing')
+        os.system('mkdir '+master_dir+'/'+ trigger_dir)
+
+        work_area = master_dir+'/'+ trigger_dir +'/'
+
+        os.system('cp '+skymap_filename.strip()+' '+work_area)
+        os.system('cp '+self.master_dir+'/'+trigger_id +'_params.npz '+work_area)
+        print 'cp '+skymap_filename.strip()+' '+work_area
+        print work_area
+        self.skymap = skymap_filename
+        #print 'skymappp'*10
+        print self.skymap
+
+        self.master_dir = master_dir
+        self.work_area = work_area
+        self.trigger_id = trigger_id
+        self.mjd = mjd
+        self.config = config
 
 
 # Let's guess that mapMaker is the counterpart to recyc.mainInjector from
@@ -108,7 +127,7 @@ class event:
         # if self.event_params['MJD'] == 'NAN':
         #     self.event_params['MJD'] = str(mjd)
         #raw_input()
-        outputDir = self.outfolder
+        outputDir = self.work_area
         mapDir = self.mapspath
         recycler_mjd = self.recycler_mjd
 
@@ -311,7 +330,7 @@ class event:
         self.quality = quality
 
 
-        np.savez(os.path.join(self.outfolder, 'mapmaker_results.npz')
+        np.savez(os.path.join(self.work_area, 'mapmaker_results.npz')
                  , best_slot=best_slot
                  , n_slots=n_slots
                  , first_slot=first_slot
@@ -408,49 +427,44 @@ class event:
         exposure_length= self.exposure_length
         image_dir = self.website_imagespath
         map_dir = self.mapspath
+
+        master_iname = os.path.join(self.work_area, iname) 
+        master_oname = os.path.join(image_dir, oname)
+        trigger_id =  self.trigger_id 
+        trigger_best_slot =  trigger_id + "-" + str(self.best_slot) 
         
         if self.n_slots<1:
-            counter = getHexObservations.nothingToObserveShowSomething(self.trigger_id, self.outfolder, self.mapspath)
-            # iname = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
-            # oname = self.trigger_id + "-observingPlot.gif"
-            # os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
-            iname = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
-            oname = self.trigger_id + "-probabilityPlot.png"
-            os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
-        #if self.n_slots > 0:
+            counter = getHexObservations.nothingToObserveShowSomething(trigger_id, self.work_area, self.mapspath)
+            iname = trigger_best_slot + "-ligo-eq.png"
+            oname = trigger_id + "-probabilityPlot.png"
+            os.system('cp ' + master_iname + ' ' + master_oname)
         if True:
-            # print 'Converting Observing Plots to .gif'
-            # os.system('convert $(for ((a=0; a<50; a++)); do printf -- "-delay 50 '+os.path.join(map_dir,self.trigger_id)+'-observingPlot-%s.png " $a; done;) '+os.path.join(map_dir, self.trigger_id) + '-observingPlot.gif')
-            # #os.system('convert -delay 70 -loop 0 '+os.path.join(map_dir,self.trigger_id)+'-observingPlot-*.png '+
-            # #          os.path.join(map_dir, self.trigger_id) + '-observingPlot.gif')
-            # os.system('cp '+os.path.join(map_dir, self.trigger_id) + '-observingPlot.gif '+ image_dir)
-            iname = self.trigger_id + "-" + str(self.best_slot) + "-maglim-eq.png"
-            oname = self.trigger_id + "_limitingMagMap.png"
-            os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
-            iname = self.trigger_id + "-" + str(self.best_slot) + "-prob-eq.png"
-            oname = self.trigger_id + "_sourceProbMap.png"
-            os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
-            iname = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
-            oname = self.trigger_id + "_LIGO.png"
-            os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
-            iname = self.trigger_id + "-" + str(self.best_slot) + "-probXligo-eq.png"
-            oname = self.trigger_id + "_sourceProbxLIGO.png"
-            os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
+            iname = trigger_best_slot + "-maglim-eq.png"
+            oname = trigger_id + "_limitingMagMap.png"
+            os.system('cp ' + master_iname + ' ' + master_oname)
+            iname = trigger_best_slot + "-prob-eq.png"
+            oname = trigger_id + "_sourceProbMap.png"
+            os.system('cp ' + master_iname + ' ' + master_oname)
+            iname = trigger_best_slot + "-ligo-eq.png"
+            oname = trigger_id + "_LIGO.png"
+            os.system('cp ' + master_iname + ' ' + master_oname)
+            iname = trigger_best_slot + "-probXligo-eq.png"
+            oname = trigger_id + "_sourceProbxLIGO.png"
+            os.system('cp ' + master_iname + ' ' + master_oname)
             # DESGW observation map
-            inname = self.trigger_id + "-observingPlot-{}.png".format(
-                self.best_slot)
-            outname = self.trigger_id + "-observingPlot.png"
-            os.system('cp ' + os.path.join(map_dir, inname) + ' ' + os.path.join(image_dir, outname))
+            inname = trigger_id + "-observingPlot-{}.png".format(self.best_slot)
+            outname =trigger_id + "-observingPlot.png"
+            os.system('cp ' + master_iname + ' ' + master_oname)
             # probability plot
-            name = self.trigger_id + "-probabilityPlot.png"
-            os.system('cp ' + os.path.join(self.outfolder, name) + ' ' + image_dir)
+            name = trigger_id + "-probabilityPlot.png"
+            os.system('cp ' + os.path.join(self.work_area, name) + ' ' + image_dir)
             #raw_input('getting contours stopped')
 
         return
 
     def makeJSON(self, config):
 
-        mapmakerresults = np.load(os.path.join(self.outfolder, 'mapmaker_results.npz'))
+        mapmakerresults = np.load(os.path.join(self.work_area, 'mapmaker_results.npz'))
 
         self.best_slot = mapmakerresults['best_slot']
         self.n_slots = mapmakerresults['n_slots']
@@ -463,7 +477,7 @@ class event:
         # DESGW json file (to be files once that is done)
         json_dir = self.website_jsonpath
         map_dir = self.mapspath
-        jsonname = self.trigger_id + "_"+ self.skymap_newoutfolder +"_JSON.zip"
+        jsonname = self.trigger_id + "_"+ self.trigger_dir +"_JSON.zip"
         jsonFile = os.path.join(map_dir, jsonname)
         jsonfilelistld = os.listdir(map_dir)
         jsonfilelist = []
@@ -519,7 +533,7 @@ class event:
         import smtplib
         from email.mime.text import MIMEText
 
-        text = 'DESGW Webpage Created. See \nhttp://des-ops.fnal.gov:8080/desgw/Triggers/' + self.trigger_id + '/' + self.trigger_id + '_' +self.skymap_newoutfolder+ '_trigger.html'
+        text = 'DESGW Webpage Created. See \nhttp://des-ops.fnal.gov:8080/desgw/Triggers/' + self.trigger_id + '/' + self.trigger_id + '_' +self.trigger_dir + '_trigger.html'
 
         # Create a text/plain message
         msg = MIMEText(text)
@@ -538,7 +552,7 @@ class event:
             yous.extend(t)
 
 
-        msg['Subject'] = 'DESGW Webpage Created for ' + self.trigger_id + ' Map: '+self.skymap_newoutfolder
+        msg['Subject'] = 'DESGW Webpage Created for ' + self.trigger_id + ' Map: '+self.trigger_dir
         msg['From'] = me
         for you in yous:
             msg['To'] = you
@@ -570,7 +584,7 @@ class event:
             yous = ['djbrout@gmail.com', 'marcelle@fnal.gov', 'annis@fnal.gov']
         else:
             yous = ['djbrout@gmail.com']
-        msg['Subject'] = 'Trigger ' + self.trigger_id + ' '+self.skymap_newoutfolder+ ' Processing FAILED!'
+        msg['Subject'] = 'Trigger ' + self.trigger_id + ' '+self.trigger_dir+ ' Processing FAILED!'
         msg['From'] = me
         for you in yous:
             msg['To'] = you
@@ -593,34 +607,34 @@ class event:
         for line in lines:
             triggers.append(line.split(' ')[0])
         if not self.trigger_id in np.unique(triggers):
-            a.write(self.trigger_id + ' ' + self.outfolder + '\n')
+            a.write(self.trigger_id + ' ' + self.work_area + '\n')
         a.close()
         tp.make_index_page('./DES_GW_Website', real_or_sim=real_or_sim)
         return
 
     def make_cumulative_probs(self):
         print ['python', './sims_study/cumulative_plots.py', '-d',
-               '/data/des41.a/data/desgw/maininjector/sims_study/data', '-p', self.outfolder, '-e', self.trigger_id,
-               '-f', os.path.join(self.outfolder, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')]
+               '/data/des41.a/data/desgw/maininjector/sims_study/data', '-p', self.work_area, '-e', self.trigger_id,
+               '-f', os.path.join(self.work_area, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')]
         subprocess.call(['python', './sims_study/cumulative_plots.py', '-d',
-                         '/data/des41.a/data/desgw/maininjector/sims_study/data', '-p', self.outfolder, '-e',
+                         '/data/des41.a/data/desgw/maininjector/sims_study/data', '-p', self.work_area, '-e',
                          self.trigger_id, '-f',
-                         os.path.join(self.outfolder, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')])
-        os.system('scp ' + os.path.join(self.outfolder,
+                         os.path.join(self.work_area, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')])
+        os.system('scp ' + os.path.join(self.work_area,
                                         self.trigger_id + '-and-sim-cumprobs.png') + ' ./DES_GW_Website/Triggers/' + self.trigger_id + '/images/')
 
     def updateWebpage(self,real_or_sim):
         os.system('scp -r DES_GW_Website/Triggers/'+self.trigger_id+' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/')
         os.system('scp DES_GW_Website/* codemanager@desweb.fnal.gov:/des_web/www/html/desgw/')
-        tp.makeNewPage(os.path.join(self.oldoutfolder, self.trigger_id +'_'+ self.skymap_newoutfolder+ '_trigger.html'), self.trigger_id,self.event_paramfile,self.skymap_newoutfolder,real_or_sim=real_or_sim)
-        os.system('scp -r ' + os.path.join(self.oldoutfolder,
-                                           self.trigger_id +'_' + self.skymap_newoutfolder + '_trigger.html') + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/')
-        os.system('scp -r ' + os.path.join(self.oldoutfolder,
-                                           self.trigger_id +'_'+ self.skymap_newoutfolder + '_trigger.html') + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/'+self.trigger_id +'_trigger.html')
+        tp.makeNewPage(os.path.join(self.master_dir, self.trigger_id +'_'+ self.trigger_dir+ '_trigger.html'), self.trigger_id,self.event_paramfile,self.trigger_dir,real_or_sim=real_or_sim)
+        os.system('scp -r ' + os.path.join(self.master_dir,
+                                           self.trigger_id +'_' + self.trigger_dir + '_trigger.html') + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/')
+        os.system('scp -r ' + os.path.join(self.master_dir,
+                                           self.trigger_id +'_'+ self.trigger_dir + '_trigger.html') + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/'+self.trigger_id +'_trigger.html')
 
-        os.system('scp -r ' + self.outfolder + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/')
-        os.system('cp ' + self.outfolder+'/'+self.skymap_newoutfolder + 'recycler.log ' + self.website_jsonpath)
-        #os.system('scp ' + self.oldoutfolder + '/*/*.html ' + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/')
+        os.system('scp -r ' + self.work_area + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/')
+        os.system('cp ' + self.work_area+'/'+self.trigger_dir + 'recycler.log ' + self.website_jsonpath)
+        #os.system('scp ' + self.master_dir + '/*/*.html ' + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/')
         return
 
     def getmjd(self,datet):
@@ -645,14 +659,14 @@ class event:
                 map_dir = self.mapspath
 
                 if self.n_slots < 1:
-                    counter = getHexObservations.nothingToObserveShowSomething(self.trigger_id, self.outfolder,
+                    counter = getHexObservations.nothingToObserveShowSomething(self.trigger_id, self.work_area,
                                                                                self.mapspath)
                     iname = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
                     oname = self.trigger_id + "-observingPlot.gif"
-                    os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
+                    os.system('cp ' + os.path.join(self.work_area, iname) + ' ' + os.path.join(image_dir, oname))
                     iname = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
                     oname = self.trigger_id + "-probabilityPlot.png"
-                    os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
+                    os.system('cp ' + os.path.join(self.work_area, iname) + ' ' + os.path.join(image_dir, oname))
                 # if self.n_slots > 0:
                 if True:
                     print 'Converting Observing Plots to .gif'
