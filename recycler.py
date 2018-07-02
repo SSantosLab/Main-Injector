@@ -38,12 +38,6 @@ class event:
         os.system('cp '+oldoutfolder+'/'+trigger_id +'_params.npz '+outfolder)
         print 'cp '+skymap_filename.strip()+' '+outfolder
         print outfolder
-        #print skymap_filename
-        #print trigger_id
-        #raw_input()
-        #self.skymap = os.path.join(outfolder, 'lalinference.fits.gz')
-        #if not os.path.exists(self.skymap):
-        #    self.skymap = os.path.join(outfolder, 'bayestar.fits.gz')
         self.skymap = skymap_filename
         #print 'skymappp'*10
         print self.skymap
