@@ -111,6 +111,10 @@ class event:
         '''
         os.system('kinit -k -t /var/keytab/desgw.keytab desgw/des/des41.fnal.gov@FNAL.GOV')
 
+
+# Let's guess that mapMaker is the counterpart to recyc.mainInjector from
+# desgw-maps. 
+
     def mapMaker(self, trigger_id, skymap, config):
         import os
         import yaml
@@ -410,12 +414,14 @@ class event:
 
 
         try:
-            where = 'getHexObservations.how_well_did_we_do()'
-            line = '306'
             self.sumligoprob = getHexObservations.how_well_did_we_do(
                 self.skymap, trigger_id, mapDir)
         except:
             e = sys.exc_info()
+            exc_type, exc_obj, exc_tb = e[0],e[1],e[2]
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            where = fname
+            line = exc_tb.tb_lineno
             trace = traceback.format_exc(sys.exc_info())
             print trace
             self.send_processing_error(e, where, line, trace)
@@ -993,11 +999,13 @@ if __name__ == "__main__":
                 badtriggers = open('badtriggers.txt', 'a')
                 badtriggers.write(trigger_id + '\n')
                 print 'WARNING: Could not convert mjd to float. Trigger: ' + trigger_id + ' flagged as bad.'
+# here is where the object is made, and parts of it are filed in
             e = event(skymap_filename,
                       os.path.join(trigger_path,
                                    trigger_id),
                       trigger_id, mjd, config)
 
+# e has variables and code assocaiated with it. The mapMaker is called "e" or "self"
             e.mapMaker(trigger_id, skymap_filename, config)
             e.getContours(config)
             jsonfilelist = e.makeJSON(config)
