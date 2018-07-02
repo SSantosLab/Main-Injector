@@ -27,38 +27,15 @@ class event:
     config:     the config filename with the parameters that controls the routine
 '''
         
-    #if xml exists then just continue
-    #else read in skymap_url.txt and get xml 
-    #like so wget --auth-no-challenge https://gracedb.ligo.org/apibasic/events/G268556/files/G268556-4-Initial.xml -O G268556-4-Initial.xml 
+        # set up the working directories
+        self.modify_filesystem(master_dir) 
 
-    # set up the working directories
-        self.modify_filesystem( master_dir) 
-
-    #read in xml and set params
+        # read config file
         season_start_date = datetime.datetime.strptime(config["start_of_season_date"], "%m/%d/%Y")
-        
         if config["force_recycler_mjd"]:
             self.recycler_mjd = config["recycler_mjd"]
         else:
             self.recycler_mjd = self.getmjd(datetime.datetime.now())
-
-
-        # Setup website directories
-        self.mapspath = os.path.join(work_area, "maps/")
-        if not os.path.exists(self.mapspath):
-            os.makedirs(self.mapspath)
-        self.imagespath = "./DES_GW_Website/Triggers/" + trigger_id + "/"+work_area.split('/')[-1]
-        if not os.path.exists(self.imagespath):
-            os.makedirs(self.imagespath)
-        if not os.path.exists(self.imagespath+'/images'):
-            os.makedirs(self.imagespath+'/images')
-
-        #self.website_jsonpath = "./DES_GW_Website/Triggers/" + trigger_id + "/"
-        #self.website_imagespath = "./DES_GW_Website/Triggers/" + trigger_id + "/images/"
-        self.website_imagespath = self.imagespath+'/'+self.trigger_dir
-        self.website_jsonpath = self.imagespath
-        if not os.path.exists(self.website_imagespath):
-            os.makedirs(self.website_imagespath)
 
         self.event_paramfile = os.path.join(work_area, trigger_id + '_params.npz')
         print self.event_paramfile
@@ -69,19 +46,17 @@ class event:
         except:
             self.event_params = {}
             self.weHaveParamFile = False
-        os.system('cp recycler.yaml ' + os.path.join(work_area, 'strategy.yaml'))
-        print '***** Copied recycler.yaml to ' + os.path.join(work_area,
-                                                              'strategy.yaml') + ' for future reference *****'
+        yaml_dir = os.path.join(work_area, 'strategy.yaml')
+        os.system('cp recycler.yaml ' + yaml_dir)
+        print '***** Copied recycler.yaml to ' + yaml_dir + ' for future reference *****'
         os.system('kinit -k -t /var/keytab/desgw.keytab desgw/des/des41.fnal.gov@FNAL.GOV')
-
 
 
     def modify_filesystem(self, master_dir) :
 
         # master_dir is the directory holding all the trigger directories
         # trigger_dir is the directory holding everything to do with a single trigger
-        # work_are is master_dir + trigger_dir
-
+        # work_area is master_dir + trigger_dir
 
         skymap_filename = skymap_filename.strip()
         trigger_dir = skymap_filename.split('/')[-1].split('.')[0]
@@ -98,6 +73,21 @@ class event:
         self.skymap = skymap_filename
         #print 'skymappp'*10
         print self.skymap
+
+        # Setup website directories
+        self.mapspath = os.path.join(work_area, "maps/")
+        if not os.path.exists(self.mapspath):
+            os.makedirs(self.mapspath)
+        self.imagespath = "./DES_GW_Website/Triggers/" + trigger_id + "/"+work_area.split('/')[-1]
+        if not os.path.exists(self.imagespath):
+            os.makedirs(self.imagespath)
+        if not os.path.exists(self.imagespath+'/images'):
+            os.makedirs(self.imagespath+'/images')
+
+        self.website_imagespath = self.imagespath+'/'+self.trigger_dir
+        self.website_jsonpath = self.imagespath
+        if not os.path.exists(self.website_imagespath):
+            os.makedirs(self.website_imagespath)
 
         self.master_dir = master_dir
         self.work_area = work_area
@@ -123,36 +113,16 @@ class event:
         events_observed = config["events_observed"]
         skipAll = config["skipAll"]
         mjd = self.mjd
-        #print mjd, self.event_params['MJD']
-        # if self.event_params['MJD'] == 'NAN':
-        #     self.event_params['MJD'] = str(mjd)
-        #raw_input()
         outputDir = self.work_area
         mapDir = self.mapspath
         recycler_mjd = self.recycler_mjd
 
         start_days_since_burst = self.recycler_mjd - self.mjd
-        #start_days_since_burst = 1.
-
-
-        #recycler_mjd = 57773
 
         if self.skymap is None:
             self.skymap = os.path.join(outputDir,'lalinference.fits.gz')
 
-        # If distance is not set in config use xml distance
-        # if config["force_distance"]:
-        #     distance = config["distance"]
-        # else:
-        #     if self.weHaveParamFile:
-        #         distance = self.event_params["MaxDistance"]
-        #     else:
-        #         print 'THERE IS NO PARAMFILE, HARDCODING THE DISTANCE TO THE CONFIG DIST.'
-        #         distance = config["distance"]
-
-        
         eventtype = self.event_params['boc']
-
 
         try:
             probhasns = self.event_params['probhasns']
@@ -181,8 +151,6 @@ class event:
             print 'WE DONT KNOW WHAT WERE LOOKING AT!'*5
             gethexobstype = 'BH'
             self.distance = 1.
-
-
 
         if gethexobstype == 'BH':
             filter_list = config["exposure_filter_BH"]
@@ -613,28 +581,38 @@ class event:
         return
 
     def make_cumulative_probs(self):
+        GW_website_dir = "./DES_GW_Website/Triggers/"
+        sim_study_dir = '/data/des41.a/data/desgw/maininjector/sims_study/data'
+        radecfile = os.path.join(self.work_area, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')]
+        cumprobs_file = os.path.join(self.work_area, self.trigger_id + '-and-sim-cumprobs.png') 
         print ['python', './sims_study/cumulative_plots.py', '-d',
-               '/data/des41.a/data/desgw/maininjector/sims_study/data', '-p', self.work_area, '-e', self.trigger_id,
-               '-f', os.path.join(self.work_area, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')]
+               sim_study_dir, '-p', self.work_area, '-e', self.trigger_id,
+               '-f', radecfile]
         subprocess.call(['python', './sims_study/cumulative_plots.py', '-d',
-                         '/data/des41.a/data/desgw/maininjector/sims_study/data', '-p', self.work_area, '-e',
-                         self.trigger_id, '-f',
-                         os.path.join(self.work_area, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')])
-        os.system('scp ' + os.path.join(self.work_area,
-                                        self.trigger_id + '-and-sim-cumprobs.png') + ' ./DES_GW_Website/Triggers/' + self.trigger_id + '/images/')
+               sim_study_dir, '-p', self.work_area, '-e', self.trigger_id, 
+                '-f',radecfile]
+        os.system('scp ' +  cumprobs_file + GW_website_dir + self.trigger_id + '/images/')
 
     def updateWebpage(self,real_or_sim):
-        os.system('scp -r DES_GW_Website/Triggers/'+self.trigger_id+' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/')
-        os.system('scp DES_GW_Website/* codemanager@desweb.fnal.gov:/des_web/www/html/desgw/')
-        tp.makeNewPage(os.path.join(self.master_dir, self.trigger_id +'_'+ self.trigger_dir+ '_trigger.html'), self.trigger_id,self.event_paramfile,self.trigger_dir,real_or_sim=real_or_sim)
-        os.system('scp -r ' + os.path.join(self.master_dir,
-                                           self.trigger_id +'_' + self.trigger_dir + '_trigger.html') + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/')
-        os.system('scp -r ' + os.path.join(self.master_dir,
-                                           self.trigger_id +'_'+ self.trigger_dir + '_trigger.html') + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/'+self.trigger_id +'_trigger.html')
+        trigger_id = self.trigger_id
+        trigger_dir = self.trigger_dir
+        GW_website_dir = "./DES_GW_Website/"
+        desweb = "codemanager@desweb.fnal.gov:/des_web/www/html/desgw/"
+        GW_website_dir_t = GW_website_dir + "Triggers/"
+        desweb_t = desweb + "Triggers/"
+        desweb_t2 = desweb + "Triggers/" + trigger_id 
+        trigger_html = os.path.join(self.master_dir, trigger_id +'_' + 
+            trigger_dir + '_trigger.html') 
 
-        os.system('scp -r ' + self.work_area + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/')
-        os.system('cp ' + self.work_area+'/'+self.trigger_dir + 'recycler.log ' + self.website_jsonpath)
-        #os.system('scp ' + self.master_dir + '/*/*.html ' + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/')
+        os.system('scp -r ' + GW_website_dir_t + self.trigger_id+ ' ' + desweb_t)
+        os.system('scp ' + GW_website_dir + '/* ' + desweb)
+        tp.makeNewPage(
+            os.path.join(self.master_dir, trigger_id +'_'+ trigger_dir+ '_trigger.html'), 
+            trigger_id,self.event_paramfile,trigger_dir, real_or_sim=real_or_sim)
+        os.system('scp -r ' + trigger_html + ' ' + desweb_t2 + "/")
+        os.system('scp -r ' + trigger_html + ' ' + desweb_t2 +'_trigger.html')
+
+        os.system('cp ' + self.work_area + '/' + trigger_dir + 'recycler.log ' + self.website_jsonpath)
         return
 
     def getmjd(self,datet):
