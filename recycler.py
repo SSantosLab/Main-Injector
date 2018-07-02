@@ -368,25 +368,6 @@ class event:
             need_area = 11734.0
             quality = 1.0
 
-        # make observation plots
-        # try:
-        #     where = 'getHexObservations.makeObservingPlots()'
-        #     line = '176'
-        #     print '888' * 20
-        #     print n_slots, trigger_id, best_slot, outputDir, mapDir
-        #     print '888' * 20
-        #     if not config['skipPlots']:
-        #         n_plots = getHexObservations.makeObservingPlots(
-        #             n_slots, trigger_id, best_slot, outputDir, mapDir, allSky=True )
-        #     #string = "$(ls -v {}-observingPlot*)"
-        # except:
-        #     e = sys.exc_info()
-        #     trace = traceback.format_exc(sys.exc_info())
-        #     print trace
-        #     self.send_processing_error(e, where, line, trace)
-        #     sys.exit()
-
-
         try:
             self.sumligoprob = getHexObservations.how_well_did_we_do(
                 self.skymap, trigger_id, mapDir)
