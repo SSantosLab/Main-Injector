@@ -422,7 +422,7 @@ class event:
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             where = fname
             line = exc_tb.tb_lineno
-            trace = traceback.format_exc(sys.exc_info())
+            trace = traceback.format_exc(e)
             print trace
             self.send_processing_error(e, where, line, trace)
             sys.exit()
