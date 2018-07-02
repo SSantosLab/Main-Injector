@@ -219,32 +219,6 @@ class event:
         self.gethexobstype = gethexobstype
         #print 'triggertype'*100
         print 'TRIGGER TYPE:',self.gethexobstype
-        # make the maps
-        #try:
-        #where = 'getHexObservations'
-        #line = '103'
-            #try:
-            #    probs, times, slotDuration, hoursPerNight = getHexObservations.prepare(
-            #        skymap, mjd, trigger_id, outputDir, mapDir, distance=distance,
-            #        exposure_list=exposure_length, filter_list=filter_list,
-            #        overhead=overhead, maxHexesPerSlot=maxHexesPerSlot, skipAll=skipAll)
-            #except ValueError:
-
-        # print 'skymap',self.skymap
-        #
-        #
-        # print 'skymap',self.skymap
-        # print 'distance',self.distance
-        # print 'gethexobstype',gethexobstype
-        # print 'start_days_since_burst',start_days_since_burst
-        # print 'exposure_length',exposure_length
-        # print 'filter_list',filter_list
-        # print 'resolution',config['resolution']
-        # print 'halfnight',config['ishalfnight']
-        # print 'firsthalf', config['isfirsthalf']
-        # print 'overhead',overhead
-        # print 'maxHexesPerSlot',maxHexesPerSlot
-        # print 'skipAll',skipAll
 
         #raw_input()
         probs, times, slotDuration, hoursPerNight = getHexObservations.prepare(
