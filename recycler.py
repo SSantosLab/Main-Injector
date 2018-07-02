@@ -48,20 +48,11 @@ class event:
         self.config = config
 
         season_start_date = datetime.datetime.strptime(config["start_of_season_date"], "%m/%d/%Y")
-        now = datetime.datetime.now()
         
-        self.now = now
         if config["force_recycler_mjd"]:
             self.recycler_mjd = config["recycler_mjd"]
         else:
-            self.recycler_mjd = self.getmjd(now)
-            #self.recycler_mjd = 57981.25
-            #print 'hereeee'*100
-            print self.recycler_mjd
-            print self.mjd
-            print now
-#raw_input()
-            #self.recycler_mjd = config["start_of_season"] + (now - season_start_date).days
+            self.recycler_mjd = self.getmjd(datetime.datetime.now())
 
 
         # Setup website directories
@@ -93,16 +84,6 @@ class event:
         os.system('cp recycler.yaml ' + os.path.join(outfolder, 'strategy.yaml'))
         print '***** Copied recycler.yaml to ' + os.path.join(outfolder,
                                                               'strategy.yaml') + ' for future reference *****'
-        '''
-        krbdir = '/usr/krb5/bin'
-        ticket_cache = '/var/keytab/desgw.keytab'
-        pid = os.getpid()
-        krb_cache = '/tmp/krb5cc_desgw_%s' % pid
-        os.environ['KRB5CCNAME']='FILE:%s' % krb_cache
-        principal = 'desgw/des/des41.fnal.gov@FNAL.GOV'
-        kinit_cmd = '%s/kinit -A -c %s -k -t %s %s' % (krbdir,krb_cache,ticket_cache,principal)
-        os.system(kinit_cmd)
-        '''
         os.system('kinit -k -t /var/keytab/desgw.keytab desgw/des/des41.fnal.gov@FNAL.GOV')
 
 
