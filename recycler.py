@@ -17,18 +17,19 @@ from copy import copy
 
 
 class event:
-    def __init__(self, skymap_filename, master_dir, trigger_id, mjd, config):
-'''
-    event:
+    def __init__(self, skymap_filename, master_dir, trigger_id, mjd, work_area, config):
 
-    master_dir:  the directory containing all trigger subdirectories
-    trigger_id: the name of the trigger event that comes from LIGO
-    mjd:        the modified julian date of the event (in FITS header, among other places)
-    config:     the config filename with the parameters that controls the routine
-'''
+        '''
+        event:
+
+        master_dir:  the directory containing all trigger subdirectories
+        trigger_id: the name of the trigger event that comes from LIGO
+        mjd:        the modified julian date of the event (in FITS header, among other places)
+        config:     the config filename with the parameters that controls the routine
+        '''
         
         # set up the working directories
-        self.modify_filesystem(master_dir) 
+        self.modify_filesystem(skymap_filename, master_dir, trigger_id, mjd, work_area) 
 
         # read config file
         season_start_date = datetime.datetime.strptime(config["start_of_season_date"], "%m/%d/%Y")
@@ -52,7 +53,7 @@ class event:
         os.system('kinit -k -t /var/keytab/desgw.keytab desgw/des/des41.fnal.gov@FNAL.GOV')
 
 
-    def modify_filesystem(self, master_dir) :
+    def modify_filesystem(self, skymap_filename, master_dir, trigger_id, mjd, work_area) :
 
         # master_dir is the directory holding all the trigger directories
         # trigger_dir is the directory holding everything to do with a single trigger
@@ -64,6 +65,7 @@ class event:
         os.system('touch '+skymap_filename+'.processing')
         os.system('mkdir '+master_dir+'/'+ trigger_dir)
 
+        self.master_dir = master_dir
         work_area = master_dir+'/'+ trigger_dir +'/'
 
         os.system('cp '+skymap_filename.strip()+' '+work_area)
@@ -95,7 +97,6 @@ class event:
         self.mjd = mjd
         self.config = config
 
-
 # Let's guess that mapMaker is the counterpart to recyc.mainInjector from
 # desgw-maps. 
 
@@ -104,7 +105,15 @@ class event:
         import yaml
         import getHexObservations
 
+        # debug
+        debug = config["debug"]
 
+        # camera
+        camera   = config["camera"]
+
+       #resolution
+        resolution = config["resolution"]
+        
         overhead = config["overhead"]
         #nvisits = config["nvisits"]
         area_per_hex = config["area_per_hex"]
@@ -186,7 +195,7 @@ class event:
         probs, times, slotDuration, hoursPerNight = getHexObservations.prepare(
                     self.skymap, trigger_id, outputDir, mapDir, distance=self.distance,
                     trigger_type=gethexobstype,start_days_since_burst=start_days_since_burst,
-                    exposure_list=exposure_length, filter_list=filter_list,resolution=config['resolution'],
+                    exposure_list=exposure_length, filter_list=filter_list,resolution=resolution, camera=camera,
                     halfNight=config['ishalfnight'], firstHalf=config['isfirsthalf'],
                     #isCustomDark=config['isCustomDark'],customDarkIndices=config['customDarkSlots'],
                     overhead=overhead, maxHexesPerSlot=maxHexesPerSlot, skipAll=skipAll)
@@ -278,7 +287,7 @@ class event:
 
         try:
             self.sumligoprob = getHexObservations.how_well_did_we_do(
-                self.skymap, trigger_id, mapDir)
+                self.skymap, trigger_id, mapDir, camera, resolution)
         except:
             e = sys.exc_info()
             exc_type, exc_obj, exc_tb = e[0],e[1],e[2]
@@ -581,18 +590,19 @@ class event:
         return
 
     def make_cumulative_probs(self):
-        GW_website_dir = "./DES_GW_Website/Triggers/"
+        GW_website_dir = './DES_GW_Website/Triggers/'
         sim_study_dir = '/data/des41.a/data/desgw/maininjector/sims_study/data'
-        radecfile = os.path.join(self.work_area, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')]
+        radecfile = os.path.join(self.work_area, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')
         cumprobs_file = os.path.join(self.work_area, self.trigger_id + '-and-sim-cumprobs.png') 
         print ['python', './sims_study/cumulative_plots.py', '-d',
                sim_study_dir, '-p', self.work_area, '-e', self.trigger_id,
                '-f', radecfile]
         subprocess.call(['python', './sims_study/cumulative_plots.py', '-d',
                sim_study_dir, '-p', self.work_area, '-e', self.trigger_id, 
-                '-f',radecfile]
-        os.system('scp ' +  cumprobs_file + GW_website_dir + self.trigger_id + '/images/')
+                '-f',radecfile])
+        os.system('scp ' + cumprobs_file + GW_website_dir + self.trigger_id + '/images/')
 
+        
     def updateWebpage(self,real_or_sim):
         trigger_id = self.trigger_id
         trigger_dir = self.trigger_dir
@@ -631,7 +641,7 @@ class event:
         try:
             if not self.config['skipPlots']:
                 n_plots = getHexObservations.makeObservingPlots(
-                    self.n_slots, self.trigger_id, self.best_slot, self.outputDir, self.mapDir, allSky=True )
+                    self.n_slots, self.trigger_id, self.best_slot, self.outputDir, self.mapDir, camera, allSky=True )
 
                 image_dir = self.website_imagespath
                 map_dir = self.mapspath
@@ -728,7 +738,6 @@ if __name__ == "__main__":
     badtriggers.close()
 
 
-
     ####### BIG MONEY NO WHAMMIES ###############################################
     if config["wrap_all_triggers"]:
         if not dontwrap:
@@ -782,7 +791,7 @@ if __name__ == "__main__":
             e = event(skymap_filename,
                       os.path.join(trigger_path,
                                    trigger_id),
-                      trigger_id, mjd, config)
+                      trigger_id, work_area, mjd, config)
 
 # e has variables and code assocaiated with it. The mapMaker is called "e" or "self"
             e.mapMaker(trigger_id, skymap_filename, config)
