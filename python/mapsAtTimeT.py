@@ -130,6 +130,7 @@ def manyDaysOfTotalProbability (
     print "total all-sky summed probability of detection (list1) and daysSinceBurst (list2)"
     print totalProbs,"\n",times,"\n",isDark.astype(int)
     print "dark slots=",darkCount.size
+    
 #    print "===== times with total prob > 10**-2"
 #    ix = totalProbs > 10**-2; 
 #    if np.nonzero(ix)[0].size == 0 :
@@ -203,7 +204,7 @@ def probabilityMaps(obs, mjdOfBurst, daysSinceBurst, \
 # all sky hexes
 # 
 def probabilityMapSaver (obs, sim, mjd, ligo, distance, distance_sig,
-        models, times, probabilities, data_dir, 
+        models, times, probabilities, data_dir, debug, camera,
         onlyHexesAlreadyDone="", reject_hexes="",
         performHexalatationCalculation=True, trigger_type="NS") :
     import decam2hp
@@ -211,16 +212,21 @@ def probabilityMapSaver (obs, sim, mjd, ligo, distance, distance_sig,
     import os
     # one reads the tiling 9 hex centers as that is our default position
     gw_data_dir          = os.environ["DESGW_DATA_DIR"]
-    hexFile = gw_data_dir + "all-sky-hexCenters-tiling9.txt"
-
+    hexFile = gw_data_dir + "all-sky-hexCenters-"+camera+".txt"
     keep_flag = performHexalatationCalculation
-
+    
+    prob_slots = np.percentile(probabilities, 95)
+    print("95th percentile",prob_slots)
     counter = -1
     for time,prob  in zip(times, probabilities) :
         counter += 1
         performHexalatationCalculation = keep_flag
         if prob <= 0 : 
             performHexalatationCalculation = False
+# terrible hack
+        if debug:
+            if prob <= prob_slots : 
+                performHexalatationCalculation = False
         #print "probabilityMapSaver: counter, time= ", counter, time
         if time < 0.06: time = 0.06 ;# if less than 1.5 hours, set to 1.5 hours
         print "================== map save =====>>>>>>>>===== ",
@@ -300,7 +306,7 @@ def probabilityMapSaver (obs, sim, mjd, ligo, distance, distance_sig,
                     raHexen[do_these], decHexen[do_these], idHexen[do_these]
 
             raHexen, decHexen, idHexen, hexVals, rank = \
-                hexalate.cutAndHexalateOnRaDec ( obs, sm, raHexen, decHexen, idHexen, tree)
+                hexalate.cutAndHexalateOnRaDec ( obs, sm, raHexen, decHexen, idHexen, tree, camera)
 
             # where rank is to be understood as the indicies of the
             # ranked hexes in order; i.e., they have nothing to do with
@@ -315,7 +321,6 @@ def probabilityMapSaver (obs, sim, mjd, ligo, distance, distance_sig,
                     raHexen[j],decHexen[j],idHexen[j],hexVals[j],rank[j],(np.asfarray(rank*0.)+(mjd+time))[j]))
             f.close()
             #np.savetxt(name,data.T,fmt="%.6f, %.5f, %s, %.4e, %d, %.4f")
-
     
 
 # Get the saved maps for each day and hour.

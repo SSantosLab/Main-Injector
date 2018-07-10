@@ -55,13 +55,14 @@ def hexalateNHexes (obs, sm, nHexes, allskyDesHexes) :
 
 # be aware that while most of my ra,dec are in degrees,
 # those in obs and sm are in radians
-def cutAndHexalate (obs, sm, allskyDesHexes="../data/all-sky-hexCenters.txt") :
-    raHexen, decHexen, idHexen = getHexCenters(allskyDesHexes)
+def cutAndHexalate (obs, sm, camera, hexFile) :
+    #allskyDesHexes="../data/all-sky-hexCenters-"+camera+".txt"
+    raHexen, decHexen, idHexen = getHexCenters(hexFile)
     raHexen, decHexen, idHexen, hexVals, rank = cutAndHexalateOnRaDec(
-        obs, sm, raHexen, decHexen, idHexen)
+        obs, sm, raHexen, decHexen, idHexen, camera)
     return raHexen, decHexen, idHexen, hexVals, rank
 
-def cutAndHexalateOnRaDec (obs, sm, raHexen, decHexen, idHexen, tree) :
+def cutAndHexalateOnRaDec (obs, sm, raHexen, decHexen, idHexen, tree, camera) :
     verbose = False
     obsHourAngle = obs.ha*360./(2*np.pi)
     obsRa        = obs.ra*360./(2*np.pi)
@@ -75,18 +76,18 @@ def cutAndHexalateOnRaDec (obs, sm, raHexen, decHexen, idHexen, tree) :
         print "\t cutAndHexalate probabilities sum",probabilities.sum()
 
     hexVals = np.zeros(raHexen.size)
-    #hexVals[ix2] = decam2hp.hexalateMapTested(obsRa[ix],obsDec[ix], probabilities[ix], 
     #    raHexen[ix2], decHexen[ix2])
     hexVals[ix2] = decam2hp.hexalateMap(obsRa,obsDec, probabilities, tree,
-        raHexen[ix2], decHexen[ix2])
+        raHexen[ix2], decHexen[ix2], camera)
     if verbose  :
         print "hexVals max", hexVals.max()
     rank=np.argsort(hexVals); 
     rank = rank[::-1];# sort from large to small by flipping natural argsort order
     return raHexen, decHexen, idHexen, hexVals, rank
 
-def getHexCenters (allskyDesHexes = "../data/all-sky-hexCenters.txt") :
-    ra,dec = np.genfromtxt(allskyDesHexes, unpack=True, \
+def getHexCenters (hexFile) :
+    #allskyDesHexes="../data/all-sky-hexCenters-"+camera+".txt"
+    ra,dec = np.genfromtxt(hexFile, unpack=True, \
         usecols=(0,1),comments="#")
     hex_id = getHexId(ra,dec)
     return ra,dec,hex_id

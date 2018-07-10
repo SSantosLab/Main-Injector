@@ -57,7 +57,7 @@ import decam2hp
 #
 #   exposure_length is only used in the computation of the limiting mag map
 #
-def prepare(skymap, trigger_id, data_dir, mapDir,
+def prepare(skymap, trigger_id, data_dir, mapDir, camera,
         distance=60., exposure_list = [90,], filter_list=["i",],
         overhead=30., maxHexesPerSlot=6,
         start_days_since_burst = 0, skipHexelate=False, skipAll=False, 
@@ -65,7 +65,7 @@ def prepare(skymap, trigger_id, data_dir, mapDir,
         onlyHexesAlreadyDone="", 
         saveHexalationMap=True, doOnlyMaxProbability=False, 
         resolution=256, trigger_type="NS", 
-        halfNight = False, firstHalf= True, debug=False) :
+        halfNight = False, firstHalf= True, debug= False) :
     import mapsAtTimeT
     import mags
     import modelRead
@@ -82,17 +82,17 @@ def prepare(skymap, trigger_id, data_dir, mapDir,
     print "calculation starting at  {:.1f} days since burst\n".format(
          start_days_since_burst)
     start_mjd = burst_mjd + start_days_since_burst
-
-    if not debug: 
-        print "cleaning up"
-        files = glob.glob(mapDir+"/*png"); 
-        for f in files: os.remove(f)
-        files = glob.glob(mapDir+"/*json"); 
-        for f in files: os.remove(f)
-        files = glob.glob(mapDir+"/*hp"); 
-        for f in files: os.remove(f)
-        files = glob.glob(mapDir+"/*txt"); 
-        for f in files: os.remove(f)
+    #if not debug: 
+    # hack
+    print "cleaning up"
+    files = glob.glob(mapDir+"/*png"); 
+    for f in files: os.remove(f)
+    files = glob.glob(mapDir+"/*json"); 
+    for f in files: os.remove(f)
+    files = glob.glob(mapDir+"/*hp"); 
+    for f in files: os.remove(f)
+    files = glob.glob(mapDir+"/*txt"); 
+    for f in files: os.remove(f)
         
 
     exposure_list = np.array(exposure_list)
@@ -165,9 +165,9 @@ def prepare(skymap, trigger_id, data_dir, mapDir,
     if skipHexelate:
         print "=============>>>> prepare: using cached maps"
         return probs, times, slotDuration
-    if debug :
-        return  obs, trigger_id, burst_mjd, ligo, ligo_dist, ligo_dist_sig, \
-            models, times, probs, mapDir
+    #if debug :
+        #return  obs, trigger_id, burst_mjd, ligo, ligo_dist, ligo_dist_sig, \
+        #    models, times, probs, mapDir
     if doOnlyMaxProbability :
         if len(probs) == 0 : return [0,],[0,],[0,],[0,]
         ix = np.argmax(probs)
@@ -176,12 +176,11 @@ def prepare(skymap, trigger_id, data_dir, mapDir,
     #print "JTA debugging =============== "
     #probs = np.array(probs[1:4])
     #times = np.array(times[1:4])
-
     mapsAtTimeT.probabilityMapSaver (obs, trigger_id, burst_mjd, \
         ligo, ligo_dist, ligo_dist_sig, models, times, probs, mapDir, \
         onlyHexesAlreadyDone = this_tiling, reject_hexes = reject_hexes,
         performHexalatationCalculation=saveHexalationMap,
-        trigger_type=trigger_type)
+        trigger_type=trigger_type, debug = debug, camera = camera)
     return probs, times, slotDuration, hoursPerNight
 
 # ========== do simple calculations on how to divide the night
@@ -271,11 +270,13 @@ def now(n_slots, mapDirectory="jack/", simNumber=13681,
     # shall we measure the total ligo probability covered?
     return maxProb_slot
 
-def how_well_did_we_do(skymap, simNumber, data_dir) :
+def how_well_did_we_do(skymap, simNumber, data_dir, camera, resolution) :
     ra,dec,ligo = hp2np.hp2np(skymap)
     name = os.path.join(data_dir, str(simNumber) + "-ra-dec-id-prob-mjd-slot.txt")
     raH, decH = np.genfromtxt(name, unpack=True, usecols=(0,1))
-    sum = decam2hp.hexalateMapTested(ra,dec,ligo,raH,decH); 
+    treedata = decam2hp.buildtree(ra, dec, resolution) 
+    tree = treedata[2] 
+    sum = decam2hp.hexalateMap(ra,dec,ligo,tree, raH,decH,camera) 
     print "\nTotal Ligo probability covered by hexes observed: :",sum.sum()
     return sum.sum()
 
@@ -338,7 +339,7 @@ def economics (simNumber, best_slot, mapDirectory,
 # ====== there are possibilities. Show them.
 #
 def makeObservingPlots(nslots, simNumber, best_slot, data_dir, 
-        mapDirectory, allSky = False) :
+        mapDirectory, camera, allSky = False) :
     print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
     print "makeObservingPlots(",nslots, simNumber, best_slot,data_dir," )"
     print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
@@ -369,8 +370,7 @@ def makeObservingPlots(nslots, simNumber, best_slot, data_dir,
             else :
                 obsTime = slotMjd
             #print "\t making observingPlot-{}.png".format(i)
-            observingPlot(figure,simNumber,i,mapDirectory, nslots,
-                extraTitle=obsTime, allSky=allSky)
+            observingPlot(figure,simNumber,i,mapDirectory, nslots, camera, extraTitle=obsTime, allSky=allSky)
             name = str(simNumber)+"-observingPlot-{}.png".format(i)
             plt.savefig(os.path.join(mapDirectory,name))
             counter += 1
@@ -597,6 +597,7 @@ def equalAreaPlot(figure,slot,simNumber,data_dir,mapDir, title="") :
     ra, dec = x, y
 
     # des footprint
+    # plots the DES footprint on the maps
     desra, desdec = insideDesFootprint.getFootprintRaDec()
     desx, desy = mcbryde.mcbryde(desra, desdec)
 
@@ -638,8 +639,7 @@ def equalAreaPlot(figure,slot,simNumber,data_dir,mapDir, title="") :
 
 # modify mcbryde to have alpha=center of plot
 #   "slot" is roughly hour during the night at which to make plot
-def observingPlot(figure, simNumber, slot, data_dir, nslots, \
-        extraTitle="", allSky=False) :
+def observingPlot(figure, simNumber, slot, data_dir, nslots, camera, extraTitle="", allSky=False) :
     import plotMapAndHex
 
     # get the planned observations
@@ -658,7 +658,7 @@ def observingPlot(figure, simNumber, slot, data_dir, nslots, \
 
 
     print "making plotMapAndHex.mapAndHex(figure, ", simNumber, ",", slot, ",", data_dir, ",", nslots, ",ra,dec,", title,") "
-    d=plotMapAndHex.mapAndHex(figure, simNumber, slot, data_dir, nslots, ra, dec, title, slots=slotNumbers, allSky=allSky) 
+    d=plotMapAndHex.mapAndHex(figure, simNumber, slot, data_dir, nslots, ra, dec, camera, title, slots=slotNumbers, allSky=allSky) 
     return d
 
 
