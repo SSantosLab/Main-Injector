@@ -17,7 +17,7 @@ from copy import copy
 
 
 class event:
-    def __init__(self, skymap_filename, master_dir, trigger_id, mjd, work_area, config):
+    def __init__(self, skymap_filename, master_dir, trigger_id, mjd, config):
 
         '''
         event:
@@ -29,7 +29,8 @@ class event:
         '''
         
         # set up the working directories
-        self.modify_filesystem(skymap_filename, master_dir, trigger_id, mjd, work_area) 
+        self.modify_filesystem(skymap_filename, master_dir, trigger_id, mjd) 
+        work_area = self.work_area 
 
         # read config file
         season_start_date = datetime.datetime.strptime(config["start_of_season_date"], "%m/%d/%Y")
@@ -53,11 +54,13 @@ class event:
         os.system('kinit -k -t /var/keytab/desgw.keytab desgw/des/des41.fnal.gov@FNAL.GOV')
 
 
-    def modify_filesystem(self, skymap_filename, master_dir, trigger_id, mjd, work_area) :
+    def modify_filesystem(self, skymap_filename, master_dir, trigger_id, mjd) :
 
         # master_dir is the directory holding all the trigger directories
         # trigger_dir is the directory holding everything to do with a single trigger
         # work_area is master_dir + trigger_dir
+            # work_area is derived
+            # trigger_dir is derived from the path of the skymap_file
 
         skymap_filename = skymap_filename.strip()
         trigger_dir = skymap_filename.split('/')[-1].split('.')[0]
@@ -788,10 +791,8 @@ if __name__ == "__main__":
                 badtriggers.write(trigger_id + '\n')
                 print 'WARNING: Could not convert mjd to float. Trigger: ' + trigger_id + ' flagged as bad.'
 # here is where the object is made, and parts of it are filed in
-            e = event(skymap_filename,
-                      os.path.join(trigger_path,
-                                   trigger_id),
-                      trigger_id, work_area, mjd, config)
+            master_dir = os.path.join(trigger_path, trigger_id)
+            e = event(skymap_filename, master_dir, trigger_id, mjd, config)
 
 # e has variables and code assocaiated with it. The mapMaker is called "e" or "self"
             e.mapMaker(trigger_id, skymap_filename, config)
@@ -804,14 +805,6 @@ if __name__ == "__main__":
             e.makeObservingPlots()
             e.getContours(config)
             e.updateWebpage(real_or_sim)
-
-            # ISREALTRIGGER = True
-            # eventmngr = Thread(target=jobmanager.eventmanager, args=(trigger_id, jsonfilelist,os.path.join(trigger_path,trigger_id),
-            #                                                 os.path.join(trigger_path, trigger_id, 'maps'),ISREALTRIGGER,trigger_path))
-            # eventmngr.start()
-
-            #e.send_nonurgent_Email()
-            #eventmngr.join()
 
         except KeyError:
             print "Unexpected error:", sys.exc_info()
