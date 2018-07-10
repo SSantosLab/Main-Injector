@@ -773,15 +773,7 @@ if __name__ == "__main__":
                print 'Could not find skymap url file'
 
         if 'bayestar' in skymap_filename:
-            print 'bayestar' * 500
-            #print 'waiting 20 seconds for lalinference map otherwise compute using bayestar...'
-            #time.sleep(20)
-            #if os.path.exists(os.path.join(trigger_path,trigger_id) + '/wehavelal'):
-            #    print 'bayestar skipped because we have lalinference map'
-            #    sys.exit()
-            #else:
-            #    print 'running bayestar, never recieved lalinference map'
-            #    pass
+            print 'bayestar' * 50
 
         try:
             try:
