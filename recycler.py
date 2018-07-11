@@ -131,6 +131,11 @@ class event:
 
         start_days_since_burst = self.recycler_mjd - self.mjd
 
+        #Set overhead if the camera is HSC
+        if camera == "hsc":
+            overhead = 20.
+            area_per_hex = 1.5
+
         if self.skymap is None:
             self.skymap = os.path.join(outputDir,'lalinference.fits.gz')
 
