@@ -80,10 +80,14 @@ class event:
         print self.skymap
 
         # Setup website directories
+        website = "./DES_GW_Website/"
+        if not os.path.exists(website) :
+            os.mkdir(website)
+
         self.mapspath = os.path.join(work_area, "maps/")
         if not os.path.exists(self.mapspath):
             os.makedirs(self.mapspath)
-        self.imagespath = "./DES_GW_Website/Triggers/" + trigger_id + "/"+work_area.split('/')[-1]
+        self.imagespath = website + "Triggers/" + trigger_id + "/"+work_area.split('/')[-1]
         if not os.path.exists(self.imagespath):
             os.makedirs(self.imagespath)
         if not os.path.exists(self.imagespath+'/images'):
@@ -99,6 +103,7 @@ class event:
         self.trigger_id = trigger_id
         self.mjd = mjd
         self.config = config
+        self.website=website
 
 # Let's guess that mapMaker is the counterpart to recyc.mainInjector from
 # desgw-maps. 
@@ -350,7 +355,7 @@ class event:
                      M1=self.event_params['M1'],
                      M2=self.event_params['M2'],
                      nHexes=self.prob.size,
-                     time_processed=self.now.strftime("%H:%M %B %d, %Y "),
+                     time_processed=self.recycler_mjd,
                      boc=self.event_params['boc'],
                      CentralFreq=self.event_params['CentralFreq'],
                      best_slot=self.best_slot,
@@ -383,7 +388,7 @@ class event:
                      M1='NAN',
                      M2='NAN',
                      nHexes=self.prob.size,
-                     time_processed=self.now.strftime("%H:%M %B %d, %Y "),
+                     time_processed=self.recycler_mjd,
                      boc='NAN',
                      CentralFreq='NAN',
                      best_slot=self.best_slot,
@@ -413,33 +418,31 @@ class event:
         image_dir = self.website_imagespath
         map_dir = self.mapspath
 
-        master_iname = os.path.join(self.work_area, iname) 
-        master_oname = os.path.join(image_dir, oname)
+        bestslot_name = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
+        cp_string = os.path.join(self.work_area, bestslot_name) + ' ' + image_dir +"/"
         trigger_id =  self.trigger_id 
         trigger_best_slot =  trigger_id + "-" + str(self.best_slot) 
         
         if self.n_slots<1:
             counter = getHexObservations.nothingToObserveShowSomething(trigger_id, self.work_area, self.mapspath)
-            iname = trigger_best_slot + "-ligo-eq.png"
+            bestslot_name = trigger_best_slot + "-ligo-eq.png"
             oname = trigger_id + "-probabilityPlot.png"
-            os.system('cp ' + master_iname + ' ' + master_oname)
+            os.system('cp ' + cp_string + oname)
         if True:
-            iname = trigger_best_slot + "-maglim-eq.png"
+            bestslot_name = trigger_best_slot + "-maglim-eq.png"
             oname = trigger_id + "_limitingMagMap.png"
-            os.system('cp ' + master_iname + ' ' + master_oname)
-            iname = trigger_best_slot + "-prob-eq.png"
+            os.system('cp ' + cp_string + oname)
+            bestslot_name = trigger_best_slot + "-prob-eq.png"
             oname = trigger_id + "_sourceProbMap.png"
-            os.system('cp ' + master_iname + ' ' + master_oname)
-            iname = trigger_best_slot + "-ligo-eq.png"
+            os.system('cp ' + cp_string + oname)
+            bestslot_name = trigger_best_slot + "-ligo-eq.png"
             oname = trigger_id + "_LIGO.png"
-            os.system('cp ' + master_iname + ' ' + master_oname)
-            iname = trigger_best_slot + "-probXligo-eq.png"
+            os.system('cp ' + cp_string + oname)
+            bestslot_name = trigger_best_slot + "-probXligo-eq.png"
             oname = trigger_id + "_sourceProbxLIGO.png"
-            os.system('cp ' + master_iname + ' ' + master_oname)
+            os.system('cp ' + cp_string + oname)
             # DESGW observation map
-            inname = trigger_id + "-observingPlot-{}.png".format(self.best_slot)
-            outname =trigger_id + "-observingPlot.png"
-            os.system('cp ' + master_iname + ' ' + master_oname)
+            os.system('cp ' + cp_string + oname)
             # probability plot
             name = trigger_id + "-probabilityPlot.png"
             os.system('cp ' + os.path.join(self.work_area, name) + ' ' + image_dir)
@@ -580,25 +583,34 @@ class event:
         return
 
     def updateTriggerIndex(self, real_or_sim=None):
+        website = self.website
         if real_or_sim == 'real':
-            fff = './DES_GW_Website/real-trigger_list.txt'
+            fff = website + 'real-trigger_list.txt'
         if real_or_sim == 'sim':
-            fff = './DES_GW_Website/test-trigger_list.txt'
-        l = open(fff, 'r')
-        lines = l.readlines()
-        l.close()
+            fff = website + 'test-trigger_list.txt'
+
+        if not os.path.exists(fff) :
+            lines = []
+        else :
+            l = open(fff, 'r')
+            lines = l.readlines()
+            l.close()
+
         a = open(fff, 'a')
-        triggers = []
-        for line in lines:
-            triggers.append(line.split(' ')[0])
-        if not self.trigger_id in np.unique(triggers):
+        if lines == [] :
             a.write(self.trigger_id + ' ' + self.work_area + '\n')
+        else  :
+            triggers = []
+            for line in lines:
+                triggers.append(line.split(' ')[0])
+            if not self.trigger_id in np.unique(triggers):
+                a.write(self.trigger_id + ' ' + self.work_area + '\n')
         a.close()
-        tp.make_index_page('./DES_GW_Website', real_or_sim=real_or_sim)
+        tp.make_index_page(website, real_or_sim=real_or_sim)
         return
 
     def make_cumulative_probs(self):
-        GW_website_dir = './DES_GW_Website/Triggers/'
+        GW_website_dir = os.path.join(self.website, '/Triggers/')
         sim_study_dir = '/data/des41.a/data/desgw/maininjector/sims_study/data'
         radecfile = os.path.join(self.work_area, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')
         cumprobs_file = os.path.join(self.work_area, self.trigger_id + '-and-sim-cumprobs.png') 
@@ -614,7 +626,7 @@ class event:
     def updateWebpage(self,real_or_sim):
         trigger_id = self.trigger_id
         trigger_dir = self.trigger_dir
-        GW_website_dir = "./DES_GW_Website/"
+        GW_website_dir = self.website
         desweb = "codemanager@desweb.fnal.gov:/des_web/www/html/desgw/"
         GW_website_dir_t = GW_website_dir + "Triggers/"
         desweb_t = desweb + "Triggers/"
@@ -649,20 +661,19 @@ class event:
         try:
             if not self.config['skipPlots']:
                 n_plots = getHexObservations.makeObservingPlots(
-                    self.n_slots, self.trigger_id, self.best_slot, self.outputDir, self.mapDir, camera, allSky=True )
+                    self.n_slots, self.trigger_id, self.best_slot, self.outputDir, self.mapDir, self.camera, allSky=True )
 
                 image_dir = self.website_imagespath
                 map_dir = self.mapspath
 
+                bestslot_name = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
                 if self.n_slots < 1:
-                    counter = getHexObservations.nothingToObserveShowSomething(self.trigger_id, self.work_area,
-                                                                               self.mapspath)
-                    iname = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
+                    counter = getHexObservations.nothingToObserveShowSomething(
+                        self.trigger_id, self.work_area, self.mapspath)
                     oname = self.trigger_id + "-observingPlot.gif"
-                    os.system('cp ' + os.path.join(self.work_area, iname) + ' ' + os.path.join(image_dir, oname))
-                    iname = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
+                    os.system('cp ' + os.path.join(self.work_area, bestslot_name) + ' ' + os.path.join(image_dir, oname))
                     oname = self.trigger_id + "-probabilityPlot.png"
-                    os.system('cp ' + os.path.join(self.work_area, iname) + ' ' + os.path.join(image_dir, oname))
+                    os.system('cp ' + os.path.join(self.work_area, bestslot_name) + ' ' + os.path.join(image_dir, oname))
                 # if self.n_slots > 0:
                 if True:
                     print 'Converting Observing Plots to .gif'
@@ -797,11 +808,13 @@ if __name__ == "__main__":
             jsonfilelist = e.makeJSON(config)
             e.make_cumulative_probs()
             e.updateTriggerIndex(real_or_sim=real_or_sim)
-            e.updateWebpage(real_or_sim)
-            e.send_nonurgent_Email()
+            #e.updateWebpage(real_or_sim)   # why twice?
             e.makeObservingPlots()
             e.getContours(config)
-            e.updateWebpage(real_or_sim)
+            personal_test = True
+            if not personal_test :
+                e.send_nonurgent_Email()
+                e.updateWebpage(real_or_sim)
 
         except KeyError:
             print "Unexpected error:", sys.exc_info()

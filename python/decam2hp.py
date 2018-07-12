@@ -106,7 +106,8 @@ def buildtree(ra,dec,nsides=1024,recompute=False, \
         dec = np.append(left_dec, dec)
         dec = np.append(dec,right_dec)
     
-    file = "/data/des30.a/data/annis/test/healpix_{}_ra_dec_tree_wrap_180.pickle".format(nsides)
+    #file = "/data/des30.a/data/annis/test/healpix_{}_ra_dec_tree_wrap_180.pickle".format(nsides)
+    file = "./healpix_{}_ra_dec_tree_wrap_180.pickle".format(nsides)
     if not recompute and os.path.exists(file):
         ra,dec,tree = cPickle.load(open(file,"rb"))
     else :
@@ -124,7 +125,8 @@ def buildtree(ra,dec,nsides=1024,recompute=False, \
         ra0 = np.append(ra0,right_ra)
         dec0 = np.append(left_dec, dec0)
         dec0 = np.append(dec0,right_dec)
-    file = "/data/des30.a/data/annis/test/healpix_{}_ra_dec_tree_wrap_0.pickle".format(nsides)
+    #file = "/data/des30.a/data/annis/test/healpix_{}_ra_dec_tree_wrap_0.pickle".format(nsides)
+    file = "./healpix_{}_ra_dec_tree_wrap_0.pickle".format(nsides)
     if not recompute and os.path.exists(file):
         ra0,dec0,tree0 = cPickle.load(open(file,"rb"))
     else :

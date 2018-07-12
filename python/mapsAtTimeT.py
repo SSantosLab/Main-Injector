@@ -290,7 +290,7 @@ def probabilityMapSaver (obs, sim, mjd, ligo, distance, distance_sig,
         hp.write_map(name, sm.probMap)
 
         treedata = decam2hp.buildtree(obs.ra*360./2/np.pi,obs.dec*360./2/np.pi,\
-            nsides=hp.get_nside(obs.ra),recompute=True) 
+            nsides=hp.get_nside(obs.ra), recompute=True)
         tree = treedata[2]
         if performHexalatationCalculation :
             raHexen, decHexen, idHexen = hexalate.getHexCenters(hexFile)

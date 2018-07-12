@@ -274,7 +274,7 @@ def how_well_did_we_do(skymap, simNumber, data_dir, camera, resolution) :
     ra,dec,ligo = hp2np.hp2np(skymap)
     name = os.path.join(data_dir, str(simNumber) + "-ra-dec-id-prob-mjd-slot.txt")
     raH, decH = np.genfromtxt(name, unpack=True, usecols=(0,1))
-    treedata = decam2hp.buildtree(ra, dec, resolution) 
+    treedata = decam2hp.buildtree(ra, dec, resolution, recompute=True) 
     tree = treedata[2] 
     sum = decam2hp.hexalateMap(ra,dec,ligo,tree, raH,decH,camera) 
     print "\nTotal Ligo probability covered by hexes observed: :",sum.sum()
