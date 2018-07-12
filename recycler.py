@@ -190,6 +190,7 @@ class event:
         exposure_length = np.array(exposure_length)
         self.exposure_length = exposure_length
         self.time_budget = hoursAvailable
+        self.camera = camera
 
         if config["force_distance"]:
             self.distance = config["distance"]
@@ -208,7 +209,7 @@ class event:
         probs, times, slotDuration, hoursPerNight = getHexObservations.prepare(
                     self.skymap, trigger_id, outputDir, mapDir, distance=self.distance,
                     trigger_type=gethexobstype,start_days_since_burst=start_days_since_burst,
-                    exposure_list=exposure_length, filter_list=filter_list,resolution=resolution, camera=camera,
+                    exposure_list=exposure_length, filter_list=filter_list,resolution=resolution, debug=debug, camera=camera,
                     halfNight=config['ishalfnight'], firstHalf=config['isfirsthalf'],
                     #isCustomDark=config['isCustomDark'],customDarkIndices=config['customDarkSlots'],
                     overhead=overhead, maxHexesPerSlot=maxHexesPerSlot, skipAll=skipAll)
