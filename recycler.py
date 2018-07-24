@@ -1,4 +1,5 @@
 import os
+import glob
 import sys, getopt, traceback
 import numpy as np
 #import triggerpages2 as tp
@@ -678,13 +679,21 @@ class event:
                 # if self.n_slots > 0:
                 if True:
                     print 'Converting Observing Plots to .gif'
-                    os.system('convert $(for ((a=0; a<250; a++)); do printf -- "-delay 50 ' + os.path.join(map_dir,
+                    files=np.array(glob.glob(os.path.join(map_dir, self.trigger_id)+'*.png'))
+                    split=[i.split('-', 2)[2] for i in files]
+                    number=[i.split('.', 1)[0] for i in split]
+                    f=np.array(number).astype(np.int)
+                    maximum=str(np.max(f))
+                    minimum=str(np.min(f))
+                    os.system('convert $(for ((a='+minimum+'; a<='+maximum+'; a++)); do printf -- "-delay 50 ' + os.path.join(map_dir,
                                         self.trigger_id) + '-observingPlot-%s.png " $a; done;) ' + os.path.join(
                         map_dir, self.trigger_id) + '-observingPlot.gif')
                     # os.system('convert -delay 70 -loop 0 '+os.path.join(map_dir,self.trigger_id)+'-observingPlot-*.png '+
                     #          os.path.join(map_dir, self.trigger_id) + '-observingPlot.gif')
                     os.system('cp ' + os.path.join(map_dir, self.trigger_id) + '-observingPlot.gif ' + image_dir)
             #string = "$(ls -v {}-observingPlot*)"
+
+
         except:
             e = sys.exc_info()
             exc_type, exc_obj, exc_tb = e[0],e[1],e[2]
