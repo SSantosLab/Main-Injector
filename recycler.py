@@ -616,10 +616,10 @@ class event:
         sim_study_dir = '/data/des41.a/data/desgw/maininjector/sims_study/data'
         radecfile = os.path.join(self.work_area, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')
         cumprobs_file = os.path.join(self.work_area, self.trigger_id + '-and-sim-cumprobs.png') 
-        print ['python', './sims_study/cumulative_plots.py', '-d',
+        print ['python', './python/cumulative_plots.py', '-d',
                sim_study_dir, '-p', self.work_area, '-e', self.trigger_id,
                '-f', radecfile]
-        subprocess.call(['python', './sims_study/cumulative_plots.py', '-d',
+        subprocess.call(['python', './python/cumulative_plots.py', '-d',
                sim_study_dir, '-p', self.work_area, '-e', self.trigger_id, 
                 '-f',radecfile])
         os.system('scp ' + cumprobs_file + GW_website_dir + self.trigger_id + '/images/')
@@ -638,7 +638,7 @@ class event:
 
         os.system('scp -r ' + GW_website_dir_t + self.trigger_id+ ' ' + desweb_t)
         os.system('scp ' + GW_website_dir + '/* ' + desweb)
-        tp.makeNewPage(
+        tp.makeNewPage(self.master_dir,
             os.path.join(self.master_dir, trigger_id +'_'+ trigger_dir+ '_trigger.html'), 
             trigger_id,self.event_paramfile,trigger_dir, real_or_sim=real_or_sim)
         os.system('scp -r ' + trigger_html + ' ' + desweb_t2 + "/")
@@ -679,7 +679,7 @@ class event:
                 # if self.n_slots > 0:
                 if True:
                     print 'Converting Observing Plots to .gif'
-                    files=np.array(glob.glob(os.path.join(map_dir, self.trigger_id)+'*.png'))
+                    files=np.array(glob.glob(os.path.join(map_dir, self.trigger_id)+'-observingPlot-*.png'))
                     split=[i.split('-', 2)[2] for i in files]
                     number=[i.split('.', 1)[0] for i in split]
                     f=np.array(number).astype(np.int)
@@ -821,7 +821,7 @@ if __name__ == "__main__":
             #e.updateWebpage(real_or_sim)   # why twice?
             e.makeObservingPlots()
             e.getContours(config)
-            personal_test = True
+            personal_test = False
             if not personal_test :
                 e.send_nonurgent_Email()
                 e.updateWebpage(real_or_sim)
