@@ -34,7 +34,6 @@ class event:
         work_area = self.work_area 
 
         # read config file
-        season_start_date = datetime.datetime.strptime(config["start_of_season_date"], "%m/%d/%Y")
         if config["force_recycler_mjd"]:
             self.recycler_mjd = config["recycler_mjd"]
         else:
