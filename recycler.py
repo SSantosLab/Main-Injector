@@ -41,7 +41,7 @@ class event:
             self.recycler_mjd = self.getmjd(datetime.datetime.now())
 
         self.event_paramfile = os.path.join(work_area, trigger_id + '_params.npz')
-        print self.event_paramfile
+        print(self.event_paramfile)
         #raw_input()
         self.weHaveParamFile = True
         try:
@@ -51,7 +51,7 @@ class event:
             self.weHaveParamFile = False
         yaml_dir = os.path.join(work_area, 'strategy.yaml')
         os.system('cp recycler.yaml ' + yaml_dir)
-        print '***** Copied recycler.yaml to ' + yaml_dir + ' for future reference *****'
+        print('***** Copied recycler.yaml to ' + yaml_dir + ' for future reference *****')
         os.system('kinit -k -t /var/keytab/desgw.keytab desgw/des/des41.fnal.gov@FNAL.GOV')
 
 
@@ -74,11 +74,10 @@ class event:
 
         os.system('cp '+skymap_filename.strip()+' '+work_area)
         os.system('cp '+self.master_dir+'/'+trigger_id +'_params.npz '+work_area)
-        print 'cp '+skymap_filename.strip()+' '+work_area
-        print work_area
+        print('cp '+skymap_filename.strip()+' '+work_area)
+        print(work_area)
         self.skymap = skymap_filename
-        #print 'skymappp'*10
-        print self.skymap
+        print(self.skymap)
 
         # Setup website directories
         website = "./DES_GW_Website/"
@@ -163,7 +162,7 @@ class event:
             self.distance = 1.
         elif eventtype == 'CBC':
             #print 'probhasns'*100
-            print 'PROB HAS NS',probhasns
+            print('PROB HAS NS',probhasns)
             if probhasns > config['probHasNS_threshold']:
                 gethexobstype = 'NS'
                 self.distance = -999
@@ -171,7 +170,7 @@ class event:
                 gethexobstype = 'BH'
                 self.distance = 1.
         else: #we dont know what we're looking at... do default obs for lightcurve
-            print 'WE DONT KNOW WHAT WERE LOOKING AT!'*5
+            print('WE DONT KNOW WHAT WERE LOOKING AT!'*5)
             gethexobstype = 'BH'
             self.distance = 1.
 
@@ -204,7 +203,7 @@ class event:
 
         self.gethexobstype = gethexobstype
         #print 'triggertype'*100
-        print 'TRIGGER TYPE:',self.gethexobstype
+        print('TRIGGER TYPE:',self.gethexobstype)
 
         #raw_input()
         probs, times, slotDuration, hoursPerNight = getHexObservations.prepare(
@@ -223,12 +222,12 @@ class event:
         # print 'slotDuration', slotDuration
         # print 'hoursPerNight', hoursPerNight
         #raw_input()
-        print probs,times,slotDuration, hoursPerNight
+        print(probs,times,slotDuration, hoursPerNight)
         #raw_input('probs times')
         n_slots, first_slot = getHexObservations.contemplateTheDivisionsOfTime(
                 probs, times, hoursPerNight=hoursPerNight,
                 hoursAvailable=hoursAvailable)
-        print n_slots, first_slot
+        print(n_slots, first_slot)
         #raw_input('contemplate')
             # compute the best observations
             # where = 'getHexObservations.now()'
@@ -244,7 +243,7 @@ class event:
 
         if not skipecon:
             if n_slots > 0:
-                print "================ N_SLOTS > 0 =================== "
+                print("================ N_SLOTS > 0 =================== ")
                 #   area_left is th enumber of hexes we have left to observe this season
                 #   T_left is the number of days left in the season
                 #   rate is the effective rate of triggers
@@ -259,12 +258,12 @@ class event:
                 # do Hsun-yu Chen's
                 try:
                     # do Hsun-yu Chen's 
-                    print "======================================>>>>>>>>>>>>>>>>>>"
-                    print " economics "
-                    print "getHexObservations.economics (", trigger_id, ",",\
+                    print("======================================>>>>>>>>>>>>>>>>>>")
+                    print(" economics ")
+                    print("getHexObservations.economics (", trigger_id, ",",\
                         best_slot, ", mapDirectory= \"",outputDir, "\" ,",\
-                        "area_left=",area_left, ", days_left=",time_left, ",rate=",rate,") "
-                    print "======================================>>>>>>>>>>>>>>>>>>"
+                        "area_left=",area_left, ", days_left=",time_left, ",rate=",rate,") ")
+                    print("======================================>>>>>>>>>>>>>>>>>>")
                     econ_prob, econ_area, need_area, quality = \
                         getHexObservations.economics (trigger_id,
                             best_slot, mapDirectory=outputDir,
@@ -291,7 +290,7 @@ class event:
                     where = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                     line = exc_tb.tb_lineno
                     trace = traceback.format_exc(e)
-                    print trace
+                    print(trace)
                     self.send_processing_error(e, where, line, trace)
                     sys.exit()
         else:
@@ -309,7 +308,7 @@ class event:
             where = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             line = exc_tb.tb_lineno
             trace = traceback.format_exc(e)
-            print trace
+            print(trace)
             self.send_processing_error(e, where, line, trace)
             sys.exit()
 
@@ -336,7 +335,7 @@ class event:
             obsSlots.readObservingRecord(self.trigger_id, mapDir)
 
         integrated_prob = np.sum(self.prob)
-        print '-'*20+'>','LIGO PROB: %.3f \tLIGO X DES PROB: %.3f' % (self.sumligoprob,integrated_prob)
+        print('-'*20+'>','LIGO PROB: %.3f \tLIGO X DES PROB: %.3f' % (self.sumligoprob,integrated_prob))
         #raw_input('checking comparison of probs!!!!'*10)
 
 
@@ -503,7 +502,7 @@ class event:
         # Copy json file to web server for public download
         if not os.path.exists(jsonFile):
             if integrated_prob == 0:
-                print "zero probability, thus no jsonFile at ", jsonFile
+                print("zero probability, thus no jsonFile at ", jsonFile)
             else:
                 # try:
                 os.chmod(self.mapspath, 0o777)
@@ -550,7 +549,7 @@ class event:
             s = smtplib.SMTP('localhost')
             s.sendmail(me, [you], msg.as_string())
             s.quit()
-        print 'Email sent...'
+        print('Email sent...')
         return
 
     def send_processing_error(self, error, where, line, trace):
@@ -581,7 +580,7 @@ class event:
             s = smtplib.SMTP('localhost')
             s.sendmail(me, [you], msg.as_string())
             s.quit()
-        print 'Email sent...'
+        print('Email sent...')
         return
 
     def updateTriggerIndex(self, real_or_sim=None):
@@ -616,9 +615,9 @@ class event:
         sim_study_dir = '/data/des41.a/data/desgw/maininjector/sims_study/data'
         radecfile = os.path.join(self.work_area, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')
         cumprobs_file = os.path.join(self.work_area, self.trigger_id + '-and-sim-cumprobs.png') 
-        print ['python', './python/cumulative_plots.py', '-d',
+        print(['python', './python/cumulative_plots.py', '-d',
                sim_study_dir, '-p', self.work_area, '-e', self.trigger_id,
-               '-f', radecfile]
+               '-f', radecfile])
         subprocess.call(['python', './python/cumulative_plots.py', '-d',
                sim_study_dir, '-p', self.work_area, '-e', self.trigger_id, 
                 '-f',radecfile])
@@ -649,7 +648,7 @@ class event:
 
     def getmjd(self,datet):
         mjd_epoch = datetime.datetime(1858, 11, 17)
-        print 'FIX ME UTC OR NOT?!?'
+        print('FIX ME UTC OR NOT?!?')
         mjdd = datet-mjd_epoch
         mjd = 5./24. + mjdd.total_seconds() / 3600. / 24.
         return mjd
@@ -678,7 +677,7 @@ class event:
                     os.system('cp ' + os.path.join(self.work_area, bestslot_name) + ' ' + os.path.join(image_dir, oname))
                 # if self.n_slots > 0:
                 if True:
-                    print 'Converting Observing Plots to .gif'
+                    print('Converting Observing Plots to .gif')
                     files=np.array(glob.glob(os.path.join(map_dir, self.trigger_id)+'-observingPlot-*.png'))
                     split=[i.split('-', 2)[2] for i in files]
                     number=[i.split('.', 1)[0] for i in split]
@@ -700,7 +699,7 @@ class event:
             where = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             line = exc_tb.tb_lineno
             trace = traceback.format_exc(e)
-            print trace
+            print(trace)
             self.send_processing_error(e, where, line, trace)
             sys.exit()
 
@@ -713,9 +712,9 @@ if __name__ == "__main__":
             longopts=["triggerpath=", "triggerid=", "mjd=", "exposure_length=", "skymapfilename="])
 
     except getopt.GetoptError as err:
-        print str(err)
-        print "Error : incorrect option or missing argument."
-        print __doc__
+        print(str(err))
+        print("Error : incorrect option or missing argument.")
+        print(__doc__)
         sys.exit(1)
 
     # Read in config
@@ -742,10 +741,10 @@ if __name__ == "__main__":
 
     dontwrap = False
     for o,a in opt:
-        print 'Option'
-        print o
-        print a
-        print '-----'
+        print('Option')
+        print(o)
+        print(a)
+        print('-----')
         if o in ["-tp","--triggerpath"]:
             trigger_path = str(a)
         elif o in ["-tid","--triggerid"]:
@@ -760,7 +759,7 @@ if __name__ == "__main__":
         elif o in ["-sky","--skymapfilename"]:
             skymap_filename = str(a)
         else:
-            print "Warning: option", o, "with argument", a, "is not recognized"
+            print("Warning: option", o, "with argument", a, "is not recognized")
 
     # Clear bad triggers, only used for wrapping all triggers...
     badtriggers = open('badtriggers.txt', 'w')
@@ -796,10 +795,10 @@ if __name__ == "__main__":
             except:
                badtriggers = open('badtriggers.txt', 'a')
                badtriggers.write(trigger_id + '\n')
-               print 'Could not find skymap url file'
+               print('Could not find skymap url file')
 
         if 'bayestar' in skymap_filename:
-            print 'bayestar' * 50
+            print('bayestar' * 50)
 
         try:
             try:
@@ -807,29 +806,28 @@ if __name__ == "__main__":
             except:
                 badtriggers = open('badtriggers.txt', 'a')
                 badtriggers.write(trigger_id + '\n')
-                print 'WARNING: Could not convert mjd to float. Trigger: ' + trigger_id + ' flagged as bad.'
+                print('WARNING: Could not convert mjd to float. Trigger: ' + trigger_id + ' flagged as bad.')
 # here is where the object is made, and parts of it are filed in
             master_dir = os.path.join(trigger_path, trigger_id)
             e = event(skymap_filename, master_dir, trigger_id, mjd, config)
 
 # e has variables and code assocaiated with it. The mapMaker is called "e" or "self"
+
             e.mapMaker(trigger_id, skymap_filename, config)
             e.getContours(config)
             jsonfilelist = e.makeJSON(config)
             e.make_cumulative_probs()
-            e.updateTriggerIndex(real_or_sim=real_or_sim)
-            #e.updateWebpage(real_or_sim)   # why twice?
+            e.updateTriggerIndex(real_or_sim=real_or_sim) # generates the homepage 
+            e.updateWebpage(real_or_sim) #make a blank page with the basic info that is available
             e.makeObservingPlots()
             e.getContours(config)
-            personal_test = False
-            if not personal_test :
-                e.send_nonurgent_Email()
-                e.updateWebpage(real_or_sim)
+            e.send_nonurgent_Email()
+            e.updateWebpage(real_or_sim)
 
         except KeyError:
-            print "Unexpected error:", sys.exc_info()
+            print("Unexpected error:", sys.exc_info())
             badtriggers = open('badtriggers.txt', 'a')
             badtriggers.write(trigger_id + '\n')
     #############################################################################
 
-    print 'Done'
+    print('Done')
