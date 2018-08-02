@@ -135,7 +135,7 @@ class event:
 
         start_days_since_burst = self.recycler_mjd - self.mjd
 
-        #Set overhead if the camera is HSC
+        #Set parameters if the camera is HSC
         if camera == "hsc":
             overhead = 20.
             area_per_hex = 1.5
@@ -620,7 +620,8 @@ class event:
         subprocess.call(['python', './python/cumulative_plots.py', '-d',
                sim_study_dir, '-p', self.work_area, '-e', self.trigger_id, 
                 '-f',radecfile])
-        os.system('scp ' + cumprobs_file + GW_website_dir + self.trigger_id + '/images/')
+        print("SCP HELP!!!!!", 'scp '+ cumprobs_file + ' ' + GW_website_dir + self.trigger_id + '/images/')
+        os.system('scp '+ cumprobs_file + ' ' + GW_website_dir + self.trigger_id + '/images/')
 
         
     def updateWebpage(self,real_or_sim):
@@ -642,7 +643,7 @@ class event:
         os.system('scp -r ' + trigger_html + ' ' + desweb_t2 + "/")
         os.system('scp -r ' + trigger_html + ' ' + desweb_t2 +'_trigger.html')
 
-        os.system('cp ' + self.work_area + '/' + trigger_dir + 'recycler.log ' + self.website_jsonpath)
+        #os.system('cp ' + self.work_area +  trigger_dir + '/'+ 'recycler.log ' + self.website_jsonpath)
         return
 
     def getmjd(self,datet):
