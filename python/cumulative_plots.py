@@ -17,7 +17,7 @@ if len(args) > 0:
     usage()
     sys.exit(2)
 
-path = './'
+path = '.'
 ppath = '.'
 this_event = None
 this_file = None
