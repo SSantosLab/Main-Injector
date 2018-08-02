@@ -620,7 +620,6 @@ class event:
         subprocess.call(['python', './python/cumulative_plots.py', '-d',
                sim_study_dir, '-p', self.work_area, '-e', self.trigger_id, 
                 '-f',radecfile])
-        print("SCP HELP!!!!!", 'scp '+ cumprobs_file + ' ' + GW_website_dir + self.trigger_id + '/images/')
         os.system('scp '+ cumprobs_file + ' ' + GW_website_dir + self.trigger_id + '/images/')
 
         
