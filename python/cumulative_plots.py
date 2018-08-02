@@ -32,7 +32,7 @@ for opt, arg in opts:
         path = arg
         for filename in os.listdir(path):
             events.append(filename.split("-")[0])
-            probs.append( np.genfromtxt(filename, usecols=2) )
+            probs.append( np.genfromtxt(path + filename, usecols=2) )
     elif opt == '-p':
         ppath = arg
     elif opt in ("-e","--event"):
@@ -45,10 +45,8 @@ for opt, arg in opts:
 
 events.append(this_file.split("/")[-1].split("-")[0])
 
-
-
 try:
-    probs.append( np.genfromtxt(filename, usecols=3) )
+    probs.append( np.genfromtxt(path + filename, usecols=3) )
 except IOError:
     print "warning: file for this event not found."
 
