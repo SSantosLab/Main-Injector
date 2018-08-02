@@ -22,8 +22,7 @@ ppath = '.'
 this_event = None
 this_file = None
 events = [ ]
-rows = [ ]
-cols = [ ]
+probs = []
 
 for opt, arg in opts:
     if opt == '-h':
@@ -33,8 +32,7 @@ for opt, arg in opts:
         path = arg
         for filename in os.listdir(path):
             events.append(filename.split("-")[0])
-            rows.append(np.loadtxt(path+'/'+filename))
-            cols.append(np.array(zip(*rows[-1])))            
+            probs.append( np.genfromtxt(filename, usecols=2) )
     elif opt == '-p':
         ppath = arg
     elif opt in ("-e","--event"):
@@ -47,26 +45,20 @@ for opt, arg in opts:
 
 events.append(this_file.split("/")[-1].split("-")[0])
 
+
+
 try:
-    rows.append(np.loadtxt(this_file))
+    probs.append( np.genfromtxt(filename, usecols=3) )
 except IOError:
     print "warning: file for this event not found."
-    rows.append(np.zeros((1,5)))
-
-cols.append(np.array(zip(*rows[-1])))            
-
-
-
 
 i = dict(zip(events,range(len(events))))
-j = {'ra':0,'dec':1,'prob':2,'mjd':3,'slot':4}
-
 
 plt.figure(figsize=(8.5*1.618,8.5))
 sims_labeled = False
 
 for event in events:
-    cumprobs = np.sort(100*cols[i[event]][j['prob']])
+    cumprobs = np.sort(100*prob[i[event]])
     cumprobs = np.cumsum(cumprobs[::-1])
     if i[event] == i[this_event]:
         plt.plot(cumprobs,color='blue',label='Event #: '+event,linewidth=3.0)
