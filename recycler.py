@@ -1,4 +1,5 @@
 import os
+import glob
 import sys, getopt, traceback
 import numpy as np
 #import triggerpages2 as tp
@@ -17,78 +18,29 @@ from copy import copy
 
 
 class event:
-    def __init__(self, skymap_filename, outfolder, trigger_id, mjd, config):
+    def __init__(self, skymap_filename, master_dir, trigger_id, mjd, config):
+
+        '''
+        event:
+
+        master_dir:  the directory containing all trigger subdirectories
+        trigger_id: the name of the trigger event that comes from LIGO
+        mjd:        the modified julian date of the event (in FITS header, among other places)
+        config:     the config filename with the parameters that controls the routine
+        '''
         
-        #if xml exists then just continue
-        #else read in skymap_url.txt and get xml 
-        #like so wget --auth-no-challenge https://gracedb.ligo.org/apibasic/events/G268556/files/G268556-4-Initial.xml -O G268556-4-Initial.xml 
+        # set up the working directories
+        self.modify_filesystem(skymap_filename, master_dir, trigger_id, mjd) 
+        work_area = self.work_area 
 
-        #read in xml and set params
-
-        oldoutfolder = copy(outfolder)
-        self.oldoutfolder = oldoutfolder
-        skymap_newoutfolder = skymap_filename.split('/')[-1].split('.')[0]
-        self.skymap_newoutfolder = skymap_newoutfolder
-        #print skymap_filename.strip()+'.processing'
-        #raw_input()
-        os.system('touch '+skymap_filename.strip()+'.processing')
-        os.system('mkdir '+outfolder+'/'+skymap_newoutfolder)
-        outfolder = outfolder+'/'+skymap_newoutfolder+'/'
-        os.system('cp '+skymap_filename.strip()+' '+outfolder)
-        os.system('cp '+oldoutfolder+'/'+trigger_id +'_params.npz '+outfolder)
-        print 'cp '+skymap_filename.strip()+' '+outfolder
-        print outfolder
-        #print skymap_filename
-        #print trigger_id
-        #raw_input()
-        #self.skymap = os.path.join(outfolder, 'lalinference.fits.gz')
-        #if not os.path.exists(self.skymap):
-        #    self.skymap = os.path.join(outfolder, 'bayestar.fits.gz')
-        self.skymap = skymap_filename
-        #print 'skymappp'*10
-        print self.skymap
-        #self.skymap = os.path.join(outfolder, config['default_map_name'])
-        self.outfolder = outfolder
-        self.trigger_id = trigger_id
-        self.mjd = mjd
-        self.config = config
-
-        season_start_date = datetime.datetime.strptime(config["start_of_season_date"], "%m/%d/%Y")
-        now = datetime.datetime.now()
-        
-        self.now = now
+        # read config file
         if config["force_recycler_mjd"]:
             self.recycler_mjd = config["recycler_mjd"]
         else:
-            self.recycler_mjd = self.getmjd(now)
-            #self.recycler_mjd = 57981.25
-            #print 'hereeee'*100
-            print self.recycler_mjd
-            print self.mjd
-            print now
-#raw_input()
-            #self.recycler_mjd = config["start_of_season"] + (now - season_start_date).days
+            self.recycler_mjd = self.getmjd(datetime.datetime.now())
 
-
-        # Setup website directories
-        self.mapspath = os.path.join(outfolder, "maps/")
-        if not os.path.exists(self.mapspath):
-            os.makedirs(self.mapspath)
-        self.imagespath = "./DES_GW_Website/Triggers/" + trigger_id + "/"+outfolder.split('/')[-1]
-        if not os.path.exists(self.imagespath):
-            os.makedirs(self.imagespath)
-        if not os.path.exists(self.imagespath+'/images'):
-            os.makedirs(self.imagespath+'/images')
-
-        #self.website_jsonpath = "./DES_GW_Website/Triggers/" + trigger_id + "/"
-        #self.website_imagespath = "./DES_GW_Website/Triggers/" + trigger_id + "/images/"
-        self.website_imagespath = self.imagespath+'/'+self.skymap_newoutfolder
-        self.website_jsonpath = self.imagespath
-        if not os.path.exists(self.website_imagespath):
-            os.makedirs(self.website_imagespath)
-
-        self.event_paramfile = os.path.join(outfolder, trigger_id + '_params.npz')
-        print self.event_paramfile
+        self.event_paramfile = os.path.join(work_area, trigger_id + '_params.npz')
+        print(self.event_paramfile)
         #raw_input()
         self.weHaveParamFile = True
         try:
@@ -96,27 +48,79 @@ class event:
         except:
             self.event_params = {}
             self.weHaveParamFile = False
-        os.system('cp recycler.yaml ' + os.path.join(outfolder, 'strategy.yaml'))
-        print '***** Copied recycler.yaml to ' + os.path.join(outfolder,
-                                                              'strategy.yaml') + ' for future reference *****'
-        '''
-        krbdir = '/usr/krb5/bin'
-        ticket_cache = '/var/keytab/desgw.keytab'
-        pid = os.getpid()
-        krb_cache = '/tmp/krb5cc_desgw_%s' % pid
-        os.environ['KRB5CCNAME']='FILE:%s' % krb_cache
-        principal = 'desgw/des/des41.fnal.gov@FNAL.GOV'
-        kinit_cmd = '%s/kinit -A -c %s -k -t %s %s' % (krbdir,krb_cache,ticket_cache,principal)
-        os.system(kinit_cmd)
-        '''
+        yaml_dir = os.path.join(work_area, 'strategy.yaml')
+        os.system('cp recycler.yaml ' + yaml_dir)
+        print('***** Copied recycler.yaml to ' + yaml_dir + ' for future reference *****')
         os.system('kinit -k -t /var/keytab/desgw.keytab desgw/des/des41.fnal.gov@FNAL.GOV')
+
+
+    def modify_filesystem(self, skymap_filename, master_dir, trigger_id, mjd) :
+
+        # master_dir is the directory holding all the trigger directories
+        # trigger_dir is the directory holding everything to do with a single trigger
+        # work_area is master_dir + trigger_dir
+            # work_area is derived
+            # trigger_dir is derived from the path of the skymap_file
+
+        skymap_filename = skymap_filename.strip()
+        trigger_dir = skymap_filename.split('/')[-1].split('.')[0]
+        self.trigger_dir = trigger_dir
+        os.system('touch '+skymap_filename+'.processing')
+        os.system('mkdir '+master_dir+'/'+ trigger_dir)
+
+        self.master_dir = master_dir
+        work_area = master_dir+'/'+ trigger_dir +'/'
+
+        os.system('cp '+skymap_filename.strip()+' '+work_area)
+        os.system('cp '+self.master_dir+'/'+trigger_id +'_params.npz '+work_area)
+        print('cp '+skymap_filename.strip()+' '+work_area)
+        print(work_area)
+        self.skymap = skymap_filename
+        print(self.skymap)
+
+        # Setup website directories
+        website = "./DES_GW_Website/"
+        if not os.path.exists(website) :
+            os.mkdir(website)
+
+        self.mapspath = os.path.join(work_area, "maps/")
+        if not os.path.exists(self.mapspath):
+            os.makedirs(self.mapspath)
+        self.imagespath = website + "Triggers/" + trigger_id + "/"+work_area.split('/')[-1]
+        if not os.path.exists(self.imagespath):
+            os.makedirs(self.imagespath)
+        if not os.path.exists(self.imagespath+'/images'):
+            os.makedirs(self.imagespath+'/images')
+
+        self.website_imagespath = self.imagespath+'/'+self.trigger_dir
+        self.website_jsonpath = self.imagespath
+        if not os.path.exists(self.website_imagespath):
+            os.makedirs(self.website_imagespath)
+
+        self.master_dir = master_dir
+        self.work_area = work_area
+        self.trigger_id = trigger_id
+        self.mjd = mjd
+        self.config = config
+        self.website=website
+
+# Let's guess that mapMaker is the counterpart to recyc.mainInjector from
+# desgw-maps. 
 
     def mapMaker(self, trigger_id, skymap, config):
         import os
         import yaml
         import getHexObservations
 
+        # debug
+        debug = config["debug"]
 
+        # camera
+        camera   = config["camera"]
+
+       #resolution
+        resolution = config["resolution"]
+        
         overhead = config["overhead"]
         #nvisits = config["nvisits"]
         area_per_hex = config["area_per_hex"]
@@ -125,36 +129,21 @@ class event:
         events_observed = config["events_observed"]
         skipAll = config["skipAll"]
         mjd = self.mjd
-        #print mjd, self.event_params['MJD']
-        # if self.event_params['MJD'] == 'NAN':
-        #     self.event_params['MJD'] = str(mjd)
-        #raw_input()
-        outputDir = self.outfolder
+        outputDir = self.work_area
         mapDir = self.mapspath
         recycler_mjd = self.recycler_mjd
 
         start_days_since_burst = self.recycler_mjd - self.mjd
-        #start_days_since_burst = 1.
 
-
-        #recycler_mjd = 57773
+        #Set overhead if the camera is HSC
+        if camera == "hsc":
+            overhead = 20.
+            area_per_hex = 1.5
 
         if self.skymap is None:
             self.skymap = os.path.join(outputDir,'lalinference.fits.gz')
 
-        # If distance is not set in config use xml distance
-        # if config["force_distance"]:
-        #     distance = config["distance"]
-        # else:
-        #     if self.weHaveParamFile:
-        #         distance = self.event_params["MaxDistance"]
-        #     else:
-        #         print 'THERE IS NO PARAMFILE, HARDCODING THE DISTANCE TO THE CONFIG DIST.'
-        #         distance = config["distance"]
-
-        
         eventtype = self.event_params['boc']
-
 
         try:
             probhasns = self.event_params['probhasns']
@@ -172,7 +161,7 @@ class event:
             self.distance = 1.
         elif eventtype == 'CBC':
             #print 'probhasns'*100
-            print 'PROB HAS NS',probhasns
+            print('PROB HAS NS',probhasns)
             if probhasns > config['probHasNS_threshold']:
                 gethexobstype = 'NS'
                 self.distance = -999
@@ -180,11 +169,9 @@ class event:
                 gethexobstype = 'BH'
                 self.distance = 1.
         else: #we dont know what we're looking at... do default obs for lightcurve
-            print 'WE DONT KNOW WHAT WERE LOOKING AT!'*5
+            print('WE DONT KNOW WHAT WERE LOOKING AT!'*5)
             gethexobstype = 'BH'
             self.distance = 1.
-
-
 
         if gethexobstype == 'BH':
             filter_list = config["exposure_filter_BH"]
@@ -202,6 +189,7 @@ class event:
         exposure_length = np.array(exposure_length)
         self.exposure_length = exposure_length
         self.time_budget = hoursAvailable
+        self.camera = camera
 
         if config["force_distance"]:
             self.distance = config["distance"]
@@ -214,39 +202,13 @@ class event:
 
         self.gethexobstype = gethexobstype
         #print 'triggertype'*100
-        print 'TRIGGER TYPE:',self.gethexobstype
-        # make the maps
-        #try:
-        #where = 'getHexObservations'
-        #line = '103'
-            #try:
-            #    probs, times, slotDuration, hoursPerNight = getHexObservations.prepare(
-            #        skymap, mjd, trigger_id, outputDir, mapDir, distance=distance,
-            #        exposure_list=exposure_length, filter_list=filter_list,
-            #        overhead=overhead, maxHexesPerSlot=maxHexesPerSlot, skipAll=skipAll)
-            #except ValueError:
-
-        # print 'skymap',self.skymap
-        #
-        #
-        # print 'skymap',self.skymap
-        # print 'distance',self.distance
-        # print 'gethexobstype',gethexobstype
-        # print 'start_days_since_burst',start_days_since_burst
-        # print 'exposure_length',exposure_length
-        # print 'filter_list',filter_list
-        # print 'resolution',config['resolution']
-        # print 'halfnight',config['ishalfnight']
-        # print 'firsthalf', config['isfirsthalf']
-        # print 'overhead',overhead
-        # print 'maxHexesPerSlot',maxHexesPerSlot
-        # print 'skipAll',skipAll
+        print('TRIGGER TYPE:',self.gethexobstype)
 
         #raw_input()
         probs, times, slotDuration, hoursPerNight = getHexObservations.prepare(
                     self.skymap, trigger_id, outputDir, mapDir, distance=self.distance,
                     trigger_type=gethexobstype,start_days_since_burst=start_days_since_burst,
-                    exposure_list=exposure_length, filter_list=filter_list,resolution=config['resolution'],
+                    exposure_list=exposure_length, filter_list=filter_list,resolution=resolution, debug=debug, camera=camera,
                     halfNight=config['ishalfnight'], firstHalf=config['isfirsthalf'],
                     #isCustomDark=config['isCustomDark'],customDarkIndices=config['customDarkSlots'],
                     overhead=overhead, maxHexesPerSlot=maxHexesPerSlot, skipAll=skipAll)
@@ -259,12 +221,12 @@ class event:
         # print 'slotDuration', slotDuration
         # print 'hoursPerNight', hoursPerNight
         #raw_input()
-        print probs,times,slotDuration, hoursPerNight
+        print(probs,times,slotDuration, hoursPerNight)
         #raw_input('probs times')
         n_slots, first_slot = getHexObservations.contemplateTheDivisionsOfTime(
                 probs, times, hoursPerNight=hoursPerNight,
                 hoursAvailable=hoursAvailable)
-        print n_slots, first_slot
+        print(n_slots, first_slot)
         #raw_input('contemplate')
             # compute the best observations
             # where = 'getHexObservations.now()'
@@ -275,67 +237,12 @@ class event:
                 exposure_list=exposure_length, filter_list=filter_list,
                 #tiling_list = tiling_list,
                 trigger_type=gethexobstype, skipJson=config['skipjson'])
-        # except:
-        #     try:
-        #         print 'skymap', self.skymap
-        #         self.skymap = os.path.join(outputDir,'bayestar.fits.gz')
-        #
-        #         probs, times, slotDuration, hoursPerNight = getHexObservations.prepare(
-        #             self.skymap, mjd, trigger_id, outputDir, mapDir, distance=distance,
-        #             exposure_list=exposure_length, filter_list=filter_list,
-        #             overhead=overhead, maxHexesPerSlot=maxHexesPerSlot, skipAll=skipAll)
-        #         # figure out how to divide the night
-        #         # where = 'getHexObservations.contemplateTheDivisionsOfTime()'
-        #         # line = '102'
-        #         n_slots, first_slot = getHexObservations.contemplateTheDivisionsOfTime(
-        #             probs, times, hoursPerNight=hoursPerNight,
-        #             hoursAvailable=hoursAvailable)
-        #
-        #         # compute the best observations
-        #         # where = 'getHexObservations.now()'
-        #         # line = '109'
-        #         best_slot = getHexObservations.now(
-        #             n_slots, mapDirectory=mapDir, simNumber=trigger_id,
-        #             maxHexesPerSlot=maxHexesPerSlot, mapZero=first_slot,
-        #             exposure_list=exposure_length, filter_list=filter_list,
-        #             skipJson=True)
-        #     except:
-        #         try:
-        #             print 'skymap', self.skymap
-        #             self.skymap = os.path.join(outputDir, 'lalinference.fits.gz')
-        #
-        #             probs, times, slotDuration, hoursPerNight = getHexObservations.prepare(
-        #                 self.skymap, mjd, trigger_id, outputDir, mapDir, distance=distance,
-        #                 exposure_list=exposure_length, filter_list=filter_list,
-        #                 overhead=overhead, maxHexesPerSlot=maxHexesPerSlot, skipAll=skipAll)
-        #             # figure out how to divide the night
-        #             # where = 'getHexObservations.contemplateTheDivisionsOfTime()'
-        #             # line = '102'
-        #             n_slots, first_slot = getHexObservations.contemplateTheDivisionsOfTime(
-        #                 probs, times, hoursPerNight=hoursPerNight,
-        #                 hoursAvailable=hoursAvailable)
-        #
-        #             # compute the best observations
-        #             # where = 'getHexObservations.now()'
-        #             # line = '109'
-        #             best_slot = getHexObservations.now(
-        #                 n_slots, mapDirectory=mapDir, simNumber=trigger_id,
-        #                 maxHexesPerSlot=maxHexesPerSlot, mapZero=first_slot,
-        #                 exposure_list=exposure_length, filter_list=filter_list,
-        #                 skipJson=True)
-        #         except:
-        #             e = sys.exc_info()
-        #             trace = traceback.format_exc(sys.exc_info())
-        #             print trace
-        #             self.send_processing_error(e, where, line, trace)
-        #             sys.exit()
-
         skipecon = True
 
 
         if not skipecon:
             if n_slots > 0:
-                print "================ N_SLOTS > 0 =================== "
+                print("================ N_SLOTS > 0 =================== ")
                 #   area_left is th enumber of hexes we have left to observe this season
                 #   T_left is the number of days left in the season
                 #   rate is the effective rate of triggers
@@ -349,75 +256,58 @@ class event:
 
                 # do Hsun-yu Chen's
                 try:
-                    where = 'getHexObservations.economics()'
-                    line = '136'
+                    # do Hsun-yu Chen's 
+                    print("======================================>>>>>>>>>>>>>>>>>>")
+                    print(" economics ")
+                    print("getHexObservations.economics (", trigger_id, ",",\
+                        best_slot, ", mapDirectory= \"",outputDir, "\" ,",\
+                        "area_left=",area_left, ", days_left=",time_left, ",rate=",rate,") ")
+                    print("======================================>>>>>>>>>>>>>>>>>>")
                     econ_prob, econ_area, need_area, quality = \
-                        getHexObservations.economics(trigger_id,
-                                                     best_slot, mapDirectory=mapDir,
-                                                     area_left=area_left, days_left=time_left,
-                                                     rate=rate)
-
-                    hoursOnTarget = (econ_area / area_per_hex) * (time_cost_per_hex / 3600.)
-
-                    # figure out how to divide the night,
-                    # given the new advice on how much time to spend
-                    where = 'getHexObservations.contemplateTheDivisionsOfTime()'
-                    line = '148'
-                    n_slots, first_slot = \
-                        getHexObservations.contemplateTheDivisionsOfTime(
+                        getHexObservations.economics (trigger_id,
+                            best_slot, mapDirectory=outputDir,
+                            area_left=area_left, days_left=time_left, rate=rate)
+        
+                    if econ_area > 0.0 :
+                        hoursOnTarget = (econ_area/area_per_hex ) * (time_cost_per_hex/3600.)
+        
+                        # figure out how to divide the night, 
+                        # given the new advice on how much time to spend
+        
+                        n_slots, first_slot = getHexObservations.contemplateTheDivisionsOfTime(
                             probs, times, hoursPerNight=hoursPerNight,
                             hoursAvailable=hoursOnTarget)
-
-                    where = 'getHexObservations.now()'
-                    line = '156'
-                    best_slot = getHexObservations.now(
-                        n_slots, mapDirectory=mapDir, simNumber=trigger_id,
-                        maxHexesPerSlot=maxHexesPerSlot, mapZero=first_slot,
-                        exposure_list=exposure_length, filter_list=filter_list,
-                        skipJson=False)
+        
+                        best_slot = getHexObservations.now(
+                            n_slots, mapDirectory=outputDir, simNumber=trigger_id,
+                            maxHexesPerSlot=maxHexesPerSlot, mapZero=first_slot,
+                            exposure_list=exposure_length, filter_list=filter_list,
+                            trigger_type = trigger_type, skipJson =skipJson)
                 except:
                     e = sys.exc_info()
-                    trace = traceback.format_exc(sys.exc_info())
-                    print trace
+                    exc_type, exc_obj, exc_tb = e[0],e[1],e[2]
+                    where = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                    line = exc_tb.tb_lineno
+                    trace = traceback.format_exc(e)
+                    print(trace)
                     self.send_processing_error(e, where, line, trace)
                     sys.exit()
         else:
             econ_prob = 0
             econ_area = 0
-            #best_slot = 0
-            #print 'setting best slot to zero'*10
-            #raw_input()
             need_area = 11734.0
             quality = 1.0
 
-        # make observation plots
-        # try:
-        #     where = 'getHexObservations.makeObservingPlots()'
-        #     line = '176'
-        #     print '888' * 20
-        #     print n_slots, trigger_id, best_slot, outputDir, mapDir
-        #     print '888' * 20
-        #     if not config['skipPlots']:
-        #         n_plots = getHexObservations.makeObservingPlots(
-        #             n_slots, trigger_id, best_slot, outputDir, mapDir, allSky=True )
-        #     #string = "$(ls -v {}-observingPlot*)"
-        # except:
-        #     e = sys.exc_info()
-        #     trace = traceback.format_exc(sys.exc_info())
-        #     print trace
-        #     self.send_processing_error(e, where, line, trace)
-        #     sys.exit()
-
-
         try:
-            where = 'getHexObservations.how_well_did_we_do()'
-            line = '306'
             self.sumligoprob = getHexObservations.how_well_did_we_do(
-                self.skymap, trigger_id, mapDir)
+                self.skymap, trigger_id, mapDir, camera, resolution)
         except:
             e = sys.exc_info()
-            trace = traceback.format_exc(sys.exc_info())
-            print trace
+            exc_type, exc_obj, exc_tb = e[0],e[1],e[2]
+            where = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            line = exc_tb.tb_lineno
+            trace = traceback.format_exc(e)
+            print(trace)
             self.send_processing_error(e, where, line, trace)
             sys.exit()
 
@@ -430,7 +320,7 @@ class event:
         self.quality = quality
 
 
-        np.savez(os.path.join(self.outfolder, 'mapmaker_results.npz')
+        np.savez(os.path.join(self.work_area, 'mapmaker_results.npz')
                  , best_slot=best_slot
                  , n_slots=n_slots
                  , first_slot=first_slot
@@ -444,7 +334,7 @@ class event:
             obsSlots.readObservingRecord(self.trigger_id, mapDir)
 
         integrated_prob = np.sum(self.prob)
-        print '-'*20+'>','LIGO PROB: %.3f \tLIGO X DES PROB: %.3f' % (self.sumligoprob,integrated_prob)
+        print('-'*20+'>','LIGO PROB: %.3f \tLIGO X DES PROB: %.3f' % (self.sumligoprob,integrated_prob))
         #raw_input('checking comparison of probs!!!!'*10)
 
 
@@ -465,7 +355,7 @@ class event:
                      M1=self.event_params['M1'],
                      M2=self.event_params['M2'],
                      nHexes=self.prob.size,
-                     time_processed=self.now.strftime("%H:%M %B %d, %Y "),
+                     time_processed=self.recycler_mjd,
                      boc=self.event_params['boc'],
                      CentralFreq=self.event_params['CentralFreq'],
                      best_slot=self.best_slot,
@@ -498,7 +388,7 @@ class event:
                      M1='NAN',
                      M2='NAN',
                      nHexes=self.prob.size,
-                     time_processed=self.now.strftime("%H:%M %B %d, %Y "),
+                     time_processed=self.recycler_mjd,
                      boc='NAN',
                      CentralFreq='NAN',
                      best_slot=self.best_slot,
@@ -527,138 +417,42 @@ class event:
         exposure_length= self.exposure_length
         image_dir = self.website_imagespath
         map_dir = self.mapspath
+
+        bestslot_name = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
+        cp_string = os.path.join(self.work_area, bestslot_name) + ' ' + image_dir +"/"
+        trigger_id =  self.trigger_id 
+        trigger_best_slot =  trigger_id + "-" + str(self.best_slot) 
         
         if self.n_slots<1:
-            counter = getHexObservations.nothingToObserveShowSomething(self.trigger_id, self.outfolder, self.mapspath)
-            # iname = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
-            # oname = self.trigger_id + "-observingPlot.gif"
-            # os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
-            iname = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
-            oname = self.trigger_id + "-probabilityPlot.png"
-            os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
-        #if self.n_slots > 0:
+            counter = getHexObservations.nothingToObserveShowSomething(trigger_id, self.work_area, self.mapspath)
+            bestslot_name = trigger_best_slot + "-ligo-eq.png"
+            oname = trigger_id + "-probabilityPlot.png"
+            os.system('cp ' + cp_string + oname)
         if True:
-            # print 'Converting Observing Plots to .gif'
-            # os.system('convert $(for ((a=0; a<50; a++)); do printf -- "-delay 50 '+os.path.join(map_dir,self.trigger_id)+'-observingPlot-%s.png " $a; done;) '+os.path.join(map_dir, self.trigger_id) + '-observingPlot.gif')
-            # #os.system('convert -delay 70 -loop 0 '+os.path.join(map_dir,self.trigger_id)+'-observingPlot-*.png '+
-            # #          os.path.join(map_dir, self.trigger_id) + '-observingPlot.gif')
-            # os.system('cp '+os.path.join(map_dir, self.trigger_id) + '-observingPlot.gif '+ image_dir)
-            iname = self.trigger_id + "-" + str(self.best_slot) + "-maglim-eq.png"
-            oname = self.trigger_id + "_limitingMagMap.png"
-            os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
-            iname = self.trigger_id + "-" + str(self.best_slot) + "-prob-eq.png"
-            oname = self.trigger_id + "_sourceProbMap.png"
-            os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
-            iname = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
-            oname = self.trigger_id + "_LIGO.png"
-            os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
-            iname = self.trigger_id + "-" + str(self.best_slot) + "-probXligo-eq.png"
-            oname = self.trigger_id + "_sourceProbxLIGO.png"
-            os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
+            bestslot_name = trigger_best_slot + "-maglim-eq.png"
+            oname = trigger_id + "_limitingMagMap.png"
+            os.system('cp ' + cp_string + oname)
+            bestslot_name = trigger_best_slot + "-prob-eq.png"
+            oname = trigger_id + "_sourceProbMap.png"
+            os.system('cp ' + cp_string + oname)
+            bestslot_name = trigger_best_slot + "-ligo-eq.png"
+            oname = trigger_id + "_LIGO.png"
+            os.system('cp ' + cp_string + oname)
+            bestslot_name = trigger_best_slot + "-probXligo-eq.png"
+            oname = trigger_id + "_sourceProbxLIGO.png"
+            os.system('cp ' + cp_string + oname)
             # DESGW observation map
-            inname = self.trigger_id + "-observingPlot-{}.png".format(
-                self.best_slot)
-            outname = self.trigger_id + "-observingPlot.png"
-            os.system('cp ' + os.path.join(map_dir, inname) + ' ' + os.path.join(image_dir, outname))
+            os.system('cp ' + cp_string + oname)
             # probability plot
-            name = self.trigger_id + "-probabilityPlot.png"
-            os.system('cp ' + os.path.join(self.outfolder, name) + ' ' + image_dir)
+            name = trigger_id + "-probabilityPlot.png"
+            os.system('cp ' + os.path.join(self.work_area, name) + ' ' + image_dir)
             #raw_input('getting contours stopped')
-        # oname = 'observingPlots.gif'
-        # giffile = os.path.join(self.outfolder,iname)+' '+ os.path.join(image_dir,oname)
-        # oname = self.trigger_id+'-observingPlot-*.png'
-        # pngs = os.path.join(self.outfolder,iname)+' '+ os.path.join(image_dir,oname)
-        # os.system('convert -delay 10 -loop 0 '+pngs+' '+giffile)
-
-        # else:
-        #     # there is nothing to observe, make default plots
-        #     try:
-        #         where = 'getHexObservations.nothingToObserveShowSomething()'
-        #         line = '240'
-        #
-        #         ra = [-999]
-        #         dec = [-999]
-        #         ligo = -999
-        #         maglim = [-999]
-        #         probMap = [-999]
-        #     except:
-        #         e = sys.exc_info()
-        #         trace = traceback.format_exc(sys.exc_info())
-        #         print trace
-        #         self.send_processing_error(e, where, line, trace)
-        #         #sys.exit()
-        #         ra = [-999]
-        #         dec = [-999]
-        #         ligo = -999
-        #         maglim = [-999]
-        #         probMap = [-999]
-        #
-        #
-        #     print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
-        #     print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
-        #     print "faking it with getHexObservations.nothingToObserveShowSomething("
-        #     print self.skymap, self.mjd, exposure_length
-        #     print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
-        #     print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
-        #
-        #     figure = plt.figure(1,figsize=(8.5*1.618,8.5))
-        #     plt.figure(figsize=(8.5*1.618,8.5))
-        #     # computing limiting mag
-        #     # plot as ra,dec map
-        #     plt.clf()
-        #     print 'ra', ra
-        #     print 'dec', dec
-        #     print 'maglim', maglim
-        #
-        #     plt.hist(maglim, bins=np.arange(-11, -7, .2))
-        #     plt.xlabel('maglim')
-        #     plt.ylabel('counts')
-        #     name = self.trigger_id + "_limitingMagHist.png"
-        #     plt.savefig(os.path.join(self.outfolder, name))
-        #
-        #     # plt.hexbin( ra, dec, maglim, vmin=15)
-        #     plt.hexbin(ra, dec, maglim)
-        #     plt.colorbar()
-        #     plt.xlabel('RA')
-        #     plt.ylabel('DEC')
-        #     name = self.trigger_id + "_limitingMagMap.png"
-        #     plt.savefig(os.path.join(self.outfolder, name))
-        #     os.system('cp ' + os.path.join(self.outfolder, name) + ' ' + image_dir)
-        #
-        #     # Calculate source probability map
-        #     plt.clf()
-        #     plt.hexbin(ra, dec, probMap, )
-        #     plt.colorbar()
-        #     plt.xlabel('RA')
-        #     plt.ylabel('DEC')
-        #     name = self.trigger_id + "_sourceProbMap.png"
-        #     plt.savefig(os.path.join(self.outfolder, name))
-        #     os.system('cp ' + os.path.join(self.outfolder, name) + ' ' + image_dir)
-        #
-        #     # DES Source Prob Map x Ligo Sky Map
-        #     plt.clf()
-        #     plt.hexbin(ra, dec, probMap * ligo)
-        #     plt.colorbar()
-        #     plt.xlabel('RA')
-        #     plt.ylabel('DEC')
-        #     name = self.trigger_id + "_sourceProbxLIGO.png"
-        #     plt.savefig(os.path.join(self.outfolder, name))
-        #     os.system('cp ' + os.path.join(self.outfolder, name) + ' ' + image_dir)
-        #
-        #     plt.clf()
-        #     plt.hexbin(ra, dec, ligo)
-        #     plt.colorbar()
-        #     plt.xlabel('RA')
-        #     plt.ylabel('DEC')
-        #     name = self.trigger_id + "_LIGO.png"
-        #     plt.savefig(os.path.join(self.outfolder, name))
-        #     os.system('cp ' + os.path.join(self.outfolder, name) + ' ' + image_dir)
 
         return
 
     def makeJSON(self, config):
 
-        mapmakerresults = np.load(os.path.join(self.outfolder, 'mapmaker_results.npz'))
+        mapmakerresults = np.load(os.path.join(self.work_area, 'mapmaker_results.npz'))
 
         self.best_slot = mapmakerresults['best_slot']
         self.n_slots = mapmakerresults['n_slots']
@@ -671,7 +465,7 @@ class event:
         # DESGW json file (to be files once that is done)
         json_dir = self.website_jsonpath
         map_dir = self.mapspath
-        jsonname = self.trigger_id + "_"+ self.skymap_newoutfolder +"_JSON.zip"
+        jsonname = self.trigger_id + "_"+ self.trigger_dir +"_JSON.zip"
         jsonFile = os.path.join(map_dir, jsonname)
         jsonfilelistld = os.listdir(map_dir)
         jsonfilelist = []
@@ -707,7 +501,7 @@ class event:
         # Copy json file to web server for public download
         if not os.path.exists(jsonFile):
             if integrated_prob == 0:
-                print "zero probability, thus no jsonFile at ", jsonFile
+                print("zero probability, thus no jsonFile at ", jsonFile)
             else:
                 # try:
                 os.chmod(self.mapspath, 0o777)
@@ -727,7 +521,7 @@ class event:
         import smtplib
         from email.mime.text import MIMEText
 
-        text = 'DESGW Webpage Created. See \nhttp://des-ops.fnal.gov:8080/desgw/Triggers/' + self.trigger_id + '/' + self.trigger_id + '_' +self.skymap_newoutfolder+ '_trigger.html'
+        text = 'DESGW Webpage Created. See \nhttp://des-ops.fnal.gov:8080/desgw/Triggers/' + self.trigger_id + '/' + self.trigger_id + '_' +self.trigger_dir + '_trigger.html'
 
         # Create a text/plain message
         msg = MIMEText(text)
@@ -746,7 +540,7 @@ class event:
             yous.extend(t)
 
 
-        msg['Subject'] = 'DESGW Webpage Created for ' + self.trigger_id + ' Map: '+self.skymap_newoutfolder
+        msg['Subject'] = 'DESGW Webpage Created for ' + self.trigger_id + ' Map: '+self.trigger_dir
         msg['From'] = me
         for you in yous:
             msg['To'] = you
@@ -754,7 +548,7 @@ class event:
             s = smtplib.SMTP('localhost')
             s.sendmail(me, [you], msg.as_string())
             s.quit()
-        print 'Email sent...'
+        print('Email sent...')
         return
 
     def send_processing_error(self, error, where, line, trace):
@@ -778,62 +572,82 @@ class event:
             yous = ['djbrout@gmail.com', 'marcelle@fnal.gov', 'annis@fnal.gov']
         else:
             yous = ['djbrout@gmail.com']
-        msg['Subject'] = 'Trigger ' + self.trigger_id + ' '+self.skymap_newoutfolder+ ' Processing FAILED!'
+        msg['Subject'] = 'Trigger ' + self.trigger_id + ' '+self.trigger_dir+ ' Processing FAILED!'
         msg['From'] = me
         for you in yous:
             msg['To'] = you
             s = smtplib.SMTP('localhost')
             s.sendmail(me, [you], msg.as_string())
             s.quit()
-        print 'Email sent...'
+        print('Email sent...')
         return
 
     def updateTriggerIndex(self, real_or_sim=None):
+        website = self.website
         if real_or_sim == 'real':
-            fff = './DES_GW_Website/real-trigger_list.txt'
+            fff = website + 'real-trigger_list.txt'
         if real_or_sim == 'sim':
-            fff = './DES_GW_Website/test-trigger_list.txt'
-        l = open(fff, 'r')
-        lines = l.readlines()
-        l.close()
+            fff = website + 'test-trigger_list.txt'
+
+        if not os.path.exists(fff) :
+            lines = []
+        else :
+            l = open(fff, 'r')
+            lines = l.readlines()
+            l.close()
+
         a = open(fff, 'a')
-        triggers = []
-        for line in lines:
-            triggers.append(line.split(' ')[0])
-        if not self.trigger_id in np.unique(triggers):
-            a.write(self.trigger_id + ' ' + self.outfolder + '\n')
+        if lines == [] :
+            a.write(self.trigger_id + ' ' + self.work_area + '\n')
+        else  :
+            triggers = []
+            for line in lines:
+                triggers.append(line.split(' ')[0])
+            if not self.trigger_id in np.unique(triggers):
+                a.write(self.trigger_id + ' ' + self.work_area + '\n')
         a.close()
-        tp.make_index_page('./DES_GW_Website', real_or_sim=real_or_sim)
+        tp.make_index_page(website, real_or_sim=real_or_sim)
         return
 
     def make_cumulative_probs(self):
-        print ['python', './sims_study/cumulative_plots.py', '-d',
-               '/data/des41.a/data/desgw/maininjector/sims_study/data', '-p', self.outfolder, '-e', self.trigger_id,
-               '-f', os.path.join(self.outfolder, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')]
-        subprocess.call(['python', './sims_study/cumulative_plots.py', '-d',
-                         '/data/des41.a/data/desgw/maininjector/sims_study/data', '-p', self.outfolder, '-e',
-                         self.trigger_id, '-f',
-                         os.path.join(self.outfolder, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')])
-        os.system('scp ' + os.path.join(self.outfolder,
-                                        self.trigger_id + '-and-sim-cumprobs.png') + ' ./DES_GW_Website/Triggers/' + self.trigger_id + '/images/')
+        GW_website_dir = os.path.join(self.website, '/Triggers/')
+        sim_study_dir = '/data/des41.a/data/desgw/maininjector/sims_study/data'
+        radecfile = os.path.join(self.work_area, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')
+        cumprobs_file = os.path.join(self.work_area, self.trigger_id + '-and-sim-cumprobs.png') 
+        print(['python', './python/cumulative_plots.py', '-d',
+               sim_study_dir, '-p', self.work_area, '-e', self.trigger_id,
+               '-f', radecfile])
+        subprocess.call(['python', './python/cumulative_plots.py', '-d',
+               sim_study_dir, '-p', self.work_area, '-e', self.trigger_id, 
+                '-f',radecfile])
+        os.system('scp ' + cumprobs_file + GW_website_dir + self.trigger_id + '/images/')
 
+        
     def updateWebpage(self,real_or_sim):
-        os.system('scp -r DES_GW_Website/Triggers/'+self.trigger_id+' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/')
-        os.system('scp DES_GW_Website/* codemanager@desweb.fnal.gov:/des_web/www/html/desgw/')
-        tp.makeNewPage(os.path.join(self.oldoutfolder, self.trigger_id +'_'+ self.skymap_newoutfolder+ '_trigger.html'), self.trigger_id,self.event_paramfile,self.skymap_newoutfolder,real_or_sim=real_or_sim)
-        os.system('scp -r ' + os.path.join(self.oldoutfolder,
-                                           self.trigger_id +'_' + self.skymap_newoutfolder + '_trigger.html') + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/')
-        os.system('scp -r ' + os.path.join(self.oldoutfolder,
-                                           self.trigger_id +'_'+ self.skymap_newoutfolder + '_trigger.html') + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/'+self.trigger_id +'_trigger.html')
+        trigger_id = self.trigger_id
+        trigger_dir = self.trigger_dir
+        GW_website_dir = self.website
+        desweb = "codemanager@desweb.fnal.gov:/des_web/www/html/desgw/"
+        GW_website_dir_t = GW_website_dir + "Triggers/"
+        desweb_t = desweb + "Triggers/"
+        desweb_t2 = desweb + "Triggers/" + trigger_id 
+        trigger_html = os.path.join(self.master_dir, trigger_id +'_' + 
+            trigger_dir + '_trigger.html') 
 
-        os.system('scp -r ' + self.outfolder + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/')
-        os.system('cp ' + self.outfolder+'/'+self.skymap_newoutfolder + 'recycler.log ' + self.website_jsonpath)
-        #os.system('scp ' + self.oldoutfolder + '/*/*.html ' + ' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + self.trigger_id + '/')
+        os.system('scp -r ' + GW_website_dir_t + self.trigger_id+ ' ' + desweb_t)
+        os.system('scp ' + GW_website_dir + '/* ' + desweb)
+        tp.makeNewPage(self.master_dir,
+            os.path.join(self.master_dir, trigger_id +'_'+ trigger_dir+ '_trigger.html'), 
+            trigger_id,self.event_paramfile,trigger_dir, real_or_sim=real_or_sim)
+        os.system('scp -r ' + trigger_html + ' ' + desweb_t2 + "/")
+        os.system('scp -r ' + trigger_html + ' ' + desweb_t2 +'_trigger.html')
+
+        os.system('cp ' + self.work_area + '/' + trigger_dir + 'recycler.log ' + self.website_jsonpath)
         return
 
     def getmjd(self,datet):
         mjd_epoch = datetime.datetime(1858, 11, 17)
-        print 'FIX ME UTC OR NOT?!?'
+        print('FIX ME UTC OR NOT?!?')
         mjdd = datet-mjd_epoch
         mjd = 5./24. + mjdd.total_seconds() / 3600. / 24.
         return mjd
@@ -845,38 +659,46 @@ class event:
 
     def makeObservingPlots(self):
         try:
-            where = 'getHexObservations.makeObservingPlots()'
-            line = '776'
             if not self.config['skipPlots']:
                 n_plots = getHexObservations.makeObservingPlots(
-                    self.n_slots, self.trigger_id, self.best_slot, self.outputDir, self.mapDir, allSky=True )
+                    self.n_slots, self.trigger_id, self.best_slot, self.outputDir, self.mapDir, self.camera, allSky=True )
 
                 image_dir = self.website_imagespath
                 map_dir = self.mapspath
 
+                bestslot_name = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
                 if self.n_slots < 1:
-                    counter = getHexObservations.nothingToObserveShowSomething(self.trigger_id, self.outfolder,
-                                                                               self.mapspath)
-                    iname = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
+                    counter = getHexObservations.nothingToObserveShowSomething(
+                        self.trigger_id, self.work_area, self.mapspath)
                     oname = self.trigger_id + "-observingPlot.gif"
-                    os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
-                    iname = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
+                    os.system('cp ' + os.path.join(self.work_area, bestslot_name) + ' ' + os.path.join(image_dir, oname))
                     oname = self.trigger_id + "-probabilityPlot.png"
-                    os.system('cp ' + os.path.join(self.outfolder, iname) + ' ' + os.path.join(image_dir, oname))
+                    os.system('cp ' + os.path.join(self.work_area, bestslot_name) + ' ' + os.path.join(image_dir, oname))
                 # if self.n_slots > 0:
                 if True:
-                    print 'Converting Observing Plots to .gif'
-                    os.system('convert $(for ((a=0; a<250; a++)); do printf -- "-delay 50 ' + os.path.join(map_dir,
+                    print('Converting Observing Plots to .gif')
+                    files=np.array(glob.glob(os.path.join(map_dir, self.trigger_id)+'-observingPlot-*.png'))
+                    split=[i.split('-', 2)[2] for i in files]
+                    number=[i.split('.', 1)[0] for i in split]
+                    f=np.array(number).astype(np.int)
+                    maximum=str(np.max(f))
+                    minimum=str(np.min(f))
+                    os.system('convert $(for ((a='+minimum+'; a<='+maximum+'; a++)); do printf -- "-delay 50 ' + os.path.join(map_dir,
                                         self.trigger_id) + '-observingPlot-%s.png " $a; done;) ' + os.path.join(
                         map_dir, self.trigger_id) + '-observingPlot.gif')
                     # os.system('convert -delay 70 -loop 0 '+os.path.join(map_dir,self.trigger_id)+'-observingPlot-*.png '+
                     #          os.path.join(map_dir, self.trigger_id) + '-observingPlot.gif')
                     os.system('cp ' + os.path.join(map_dir, self.trigger_id) + '-observingPlot.gif ' + image_dir)
             #string = "$(ls -v {}-observingPlot*)"
+
+
         except:
             e = sys.exc_info()
-            trace = traceback.format_exc(sys.exc_info())
-            print trace
+            exc_type, exc_obj, exc_tb = e[0],e[1],e[2]
+            where = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            line = exc_tb.tb_lineno
+            trace = traceback.format_exc(e)
+            print(trace)
             self.send_processing_error(e, where, line, trace)
             sys.exit()
 
@@ -889,9 +711,9 @@ if __name__ == "__main__":
             longopts=["triggerpath=", "triggerid=", "mjd=", "exposure_length=", "skymapfilename="])
 
     except getopt.GetoptError as err:
-        print str(err)
-        print "Error : incorrect option or missing argument."
-        print __doc__
+        print(str(err))
+        print("Error : incorrect option or missing argument.")
+        print(__doc__)
         sys.exit(1)
 
     # Read in config
@@ -918,10 +740,10 @@ if __name__ == "__main__":
 
     dontwrap = False
     for o,a in opt:
-        print 'Option'
-        print o
-        print a
-        print '-----'
+        print('Option')
+        print(o)
+        print(a)
+        print('-----')
         if o in ["-tp","--triggerpath"]:
             trigger_path = str(a)
         elif o in ["-tid","--triggerid"]:
@@ -936,12 +758,11 @@ if __name__ == "__main__":
         elif o in ["-sky","--skymapfilename"]:
             skymap_filename = str(a)
         else:
-            print "Warning: option", o, "with argument", a, "is not recognized"
+            print("Warning: option", o, "with argument", a, "is not recognized")
 
     # Clear bad triggers, only used for wrapping all triggers...
     badtriggers = open('badtriggers.txt', 'w')
     badtriggers.close()
-
 
 
     ####### BIG MONEY NO WHAMMIES ###############################################
@@ -968,23 +789,15 @@ if __name__ == "__main__":
                 #print os.path.join(trigger_path, trigger_id,'default_skymap.txt')
                 #print os.path.join(trigger_path, trigger_id,'default_skymap.txt').read()
                 skymap_filename = os.path.join(trigger_path, trigger_id,
-                                               open(os.path.join(trigger_path, trigger_id,
-                                                                 'default_skymap.txt'),'r').read())
+                    open(os.path.join(trigger_path, trigger_id,
+                   'default_skymap.txt'),'r').read())
             except:
                badtriggers = open('badtriggers.txt', 'a')
                badtriggers.write(trigger_id + '\n')
-               print 'Could not find skymap url file'
+               print('Could not find skymap url file')
 
         if 'bayestar' in skymap_filename:
-            print 'bayestar' * 500
-            #print 'waiting 20 seconds for lalinference map otherwise compute using bayestar...'
-            #time.sleep(20)
-            #if os.path.exists(os.path.join(trigger_path,trigger_id) + '/wehavelal'):
-            #    print 'bayestar skipped because we have lalinference map'
-            #    sys.exit()
-            #else:
-            #    print 'running bayestar, never recieved lalinference map'
-            #    pass
+            print('bayestar' * 50)
 
         try:
             try:
@@ -992,35 +805,28 @@ if __name__ == "__main__":
             except:
                 badtriggers = open('badtriggers.txt', 'a')
                 badtriggers.write(trigger_id + '\n')
-                print 'WARNING: Could not convert mjd to float. Trigger: ' + trigger_id + ' flagged as bad.'
-            e = event(skymap_filename,
-                      os.path.join(trigger_path,
-                                   trigger_id),
-                      trigger_id, mjd, config)
+                print('WARNING: Could not convert mjd to float. Trigger: ' + trigger_id + ' flagged as bad.')
+# here is where the object is made, and parts of it are filed in
+            master_dir = os.path.join(trigger_path, trigger_id)
+            e = event(skymap_filename, master_dir, trigger_id, mjd, config)
+
+# e has variables and code assocaiated with it. The mapMaker is called "e" or "self"
 
             e.mapMaker(trigger_id, skymap_filename, config)
             e.getContours(config)
             jsonfilelist = e.makeJSON(config)
             e.make_cumulative_probs()
-            e.updateTriggerIndex(real_or_sim=real_or_sim)
-            e.updateWebpage(real_or_sim)
-            e.send_nonurgent_Email()
+            e.updateTriggerIndex(real_or_sim=real_or_sim) # generates the homepage 
+            e.updateWebpage(real_or_sim) #make a blank page with the basic info that is available
             e.makeObservingPlots()
             e.getContours(config)
+            e.send_nonurgent_Email()
             e.updateWebpage(real_or_sim)
 
-            # ISREALTRIGGER = True
-            # eventmngr = Thread(target=jobmanager.eventmanager, args=(trigger_id, jsonfilelist,os.path.join(trigger_path,trigger_id),
-            #                                                 os.path.join(trigger_path, trigger_id, 'maps'),ISREALTRIGGER,trigger_path))
-            # eventmngr.start()
-
-            #e.send_nonurgent_Email()
-            #eventmngr.join()
-
         except KeyError:
-            print "Unexpected error:", sys.exc_info()
+            print("Unexpected error:", sys.exc_info())
             badtriggers = open('badtriggers.txt', 'a')
             badtriggers.write(trigger_id + '\n')
     #############################################################################
 
-    print 'Done'
+    print('Done')

@@ -1,11 +1,16 @@
 trigger_path  : './OUTPUT/REAL/'
 real_or_sim: 'real' #must switch between 'sim' and 'real'
+debug : False
 
 # camera
 camera : 'decam'
 
+#resolution
+#resolution : 256 # default, resolution element on order of ccd area size
+#resolution : 128 # roughly 4 ccds
+resolution : 64 # very fast, debuging, roughly 1/4 of the camera size
+
 start_of_season : 57444.
-start_of_season_date : '08/14/2016'
 end_of_season : 57996.
 
 sendEmailsToEveryone : False

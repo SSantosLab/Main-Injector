@@ -14,7 +14,7 @@ def nowUTC():
     now = dt.utcnow()
     return now
 
-def makeNewPage(outfilename,trigger_id,event_paramfile,mapfolder,processing_param_file=None,real_or_sim='real',secondtimearound=False):
+def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,processing_param_file=None,real_or_sim='real',secondtimearound=False):
     #print 'inside triggerpages'
     #print event_paramfile
     #print 'making new page'*100
@@ -168,8 +168,8 @@ def makeNewPage(outfilename,trigger_id,event_paramfile,mapfolder,processing_para
         subdir = 'real-triggers'
     if real_or_sim == 'sim':
         subdir = 'test-triggers'
-
-    for fff in os.listdir('./'+subdir+'/'+trigger_id+'/'):
+    print(master_dir)
+    for fff in os.listdir(master_dir):
         if '.processing' in fff:
             maps.append(fff.split('.')[0])
             
