@@ -6,6 +6,14 @@ import numpy as np
 import smtplib
 from email.mime.text import MIMEText
 
+############# 8/14/18 update #############
+### This scirpt is still a work in    ###
+### progress. To run as is, make sure ###
+### to run in a the directory that    ### 
+### Main-Injector, gw_workflow, ,and  ###
+### Post-Processing live.             ###
+#########################################
+
 ############# Send emails to appropriate people when things fail #############
 
 def send_email(error, where):
