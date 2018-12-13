@@ -1,61 +1,42 @@
-import subprocess ,os
+import subprocess, os
 from threading import Thread
 import make_recycler_config
+import make_postproc_ini
 import argparse
 import numpy as np
 import smtplib
 from email.mime.text import MIMEText
+import datetime
 
-############# 8/14/18 update #############
-### This scirpt is still a work in    ###
-### progress. To run as is, make sure ###
-### to run in a the directory that    ### 
-### Main-Injector, gw_workflow, ,and  ###
-### Post-Processing live.             ###
-#########################################
+cwd = os.getcwd()
+parser = argparse.ArgumentParser()
+parser.add_argument('--rootdir',
+                    default = cwd,
+                    help="Directory where the Main-Injector, gw_workflow, and PostProcessing directories live.")
+args=parser.parse_args()
+
+DIR_SOURCE = args.rootdir
 
 ############# Send emails to appropriate people when things fail #############
 
 def send_email(error, where):
     
-    text = 'There was an error with ATC pipeline during %s, with message % ' % (where, error)
+    text = 'There was an error with the GW pipeline during %s, with message %s ' % (where, error)
     msg = MIMEText(text)
     # me == the sender's email address
     # you == the recipient's email address
     me = 'alyssag94@brandeis.edu'
     you = 'alyssag94@brandeis.edu'
-    msg['Subject'] = 'ATC pipeline error'
+    msg['Subject'] = 'GW pipeline error'
     msg['From'] = me            
     msg['To'] = you
     s = smtplib.SMTP('localhost')
     s.sendmail(me, [you], msg.as_string())
-    print('An email was sent to %s' % you)
+    print('There was an error. An email was sent to %s' % you)
     s.quit()
 
 
-############# Make yaml file for recycler #############
-
-#information needed to make the .yaml config file for recycler 
-parser = argparse.ArgumentParser()
-parser.add_argument('--camera', choices=['decam', 'hsc'], default='decam', help="what camera did we use, default=decam")
-parser.add_argument('--res', type=str, choices=[64, 128, 256], default=128,
-                    help="what resolution do you want the map, default=128") 
-parser.add_argument('--debug', type=str, choices=[True,False], default=False, help="turn debugging on/off")
-parser.add_argument('--propid', default='2017B-0110', help='proposal id for this run')
-args=parser.parse_args()
-
-#makeYaml takes (camera, res, propid, sendEmail=(default False), sendTexts=(default False), debug=(default False))
-yamlName= make_recycler_config.makeYaml(camera=args.camera, res=args.res, propid=args.propid, debug=args.debug)
-
-#this is a hack to make sure the true/false statements are capitalized. 
-os.system("sed -i -e 's/false/False/g' "+yamlName) 
-os.system("sed -i -e 's/true/True/g' "+yamlName)
-
-#need this to live in the production directory 
-os.system(str("mv ")+yamlName+str(" Main-Injector/"))
-
-
-############# Use to update current environment because subprocess is shit #############
+########### Use to update current environment because subprocess is doesn't handle it well #############
 
 def source(script, update=1):
     pipe = subprocess.Popen(". %s > /dev/null; env" % script, stdout=subprocess.PIPE, shell=True)
@@ -84,6 +65,42 @@ def source(script, update=1):
 
     return env
 
+"""
+############# Make yaml file for recycler ############# 
+
+#information needed to make the .yaml config file for recycler
+#A work in progress - 12/12/18
+parser2 = argparse.ArgumentParser()
+parser2.add_argument('--camera', 
+                    choices=['decam', 'hsc'], 
+                    default='decam', 
+                    help="what camera did we use, default=decam")
+parser2.add_argument('--res', 
+                    type=str, 
+                    choices=[64, 128, 256], 
+                    default=128,
+                    help="what resolution do you want the map, default=128")
+parser2.add_argument('--debug', 
+                    type=str, 
+                    choices=[True,False], 
+                    default=False, 
+                    help="turn debugging on/off")
+parser2.add_argument('--propid', 
+                    default='2017B-0110', 
+                    help='proposal id for this run')
+
+args2=parser2.parse_args()
+
+#makeYaml takes (camera, res, propid, sendEmail=(default False), sendTexts=(default False), debug=(default False)) 
+yamlName= make_recycler_config.makeYaml(camera=args2.camera, res=args2.res, propid=args2.propid, debug=args2.debug)
+
+#this is a hack to make sure the true/false statements are capitalized.
+os.system("sed -i -e 's/false/False/g' "+yamlName)
+os.system("sed -i -e 's/true/True/g' "+yamlName)
+
+#need this to live in the production directory
+os.system(str("mv ")+yamlName+str(" "+DIR_SOURCE+"/Main-Injector/"))
+
 
 ############# Main Injector #############
 
@@ -93,12 +110,12 @@ def source(script, update=1):
 mainoutfile= open('test_main.out', 'w')
 mainerrfile = open('test_main.err','w')
 
-source('Main-Injector/SOURCEME')
+source(DIR_SOURCE+'/Main-Injector/SOURCEME')
 print("Environment successfully set up for Main Injector")
 
 
-start_main = subprocess.Popen(['python', '/data/des41.a/data/desgw/alyssa_test/Main-Injector/recycler.py'], 
-                        stderr=subprocess.PIPE, stdout=subprocess.PIPE, cwd='Main-Injector/')
+start_main = subprocess.Popen(['python', DIR_SOURCE+'/Main-Injector/recycler.py'], 
+                        stderr=subprocess.PIPE, stdout=subprocess.PIPE, cwd=DIR_SOURCE+'/Main-Injector/')
 
 main_out, main_err = start_main.communicate()
 
@@ -108,29 +125,26 @@ mainoutfile.close()
 mainerrfile.close()
 
 rc = start_main.returncode
-#if rc != 0:
-    
-#    send_email(error, where)
 
 print('The return code for recycler is '+str(rc))
-print('')
+if rc != 0:
+    error = open(mainoutfile.name, 'r')
+    err_msg = error.readlines()
+    error.close()
+    where = "Main Injector ("+DIR_SOURCE+"/"+mainoutfile.name+")"
+    send_email(err_msg, where)
+
 print('')
 print("Finished recycler for main injector. Visit website for skymaps")
 print('')
-print('')
 print("Moving on to image processing ...")
 print('')
-print('')
 
-
+"""
 ############# Image Processing ################ 
 
-### The bash script setup_img_proc.sh, should have everything needed for img proc
-### need to add the make_dagrc.py to make the dagmaker.rc file
-
-
-################# create new season number #######################
-### Y6 will start with 600 (417 for mock)   ###
+############ create new season number ###########
+### Y6 will start with 600 (use 417 for mock runs) #####
 import easyaccess
 import fitsio
 
@@ -143,95 +157,132 @@ print(data[0][0])
 newseason = (int(data[0][0]/100) + 1)*100
 print("the season number for this event is "+str(newseason))
 print('')
-print('')
-print('')
-############################################################
 
-### make config file for dagmaker ###
-###       THIS NEEDS HELP         ###
+#Update season number in dagmaker.rc
+os.system("sed -i -e '/^SEASON/s/=.*$/="+newseason+"/' "+DIR_SOURCE+"/gw_workflow/dagmaker.rc")
 
-#import make_dagrc
-#make_dagrc.makeDagRC(season=newseason)
-#dagrc_name= make_dagrc.makeDagRC(seasonval=417) #for mock run
-#os.system('mv dagmaker.rc gw_workflow/dagmaker.rc') 
-
-############################################################
-
-source('Post-Processing/diffimg_setup.sh')
-### run DAGMaker for all new exposures, ie the exposures in curatedExposure.list
-os.system('. ./seasonCycler.sh') #find new exposures and create list
+#Make curatedExposure.list
+os.system("bash "+DIR_SOURCE+"/make_curatedlist.sh")
 
 source('gw_workflow/setup_img_proc.sh')
 print("Environment successfully set up for Image processing.")
 print('')
-print('')
 
-explist = np.genfromtxt('new_curated.list', delimiter=' ', usecols=0) #this will just be curatedExposure.list for production
+explist = np.genfromtxt(DIR_SOURCE+'/curatedExposure.list', delimiter=' ', usecols=0) #this will just be curatedExposure.list for production. new_curated.list, bns_nite1_first10exposures.list are test lists
 
-imgprocout = open('test_imgproc.out', 'w')
-imgprocerr = open('test_imgproc.err', 'w')
+dagmakerout = open('test_imgproc_dagmaker.out', 'w')
+dagmakererr = open('test_imgproc_dagmaker.err', 'w')
+jobsubout = open("test_imgproc_jobsub.out", 'w')
+jobsuberr = open('test_imgproc_jobsub.err', 'w')
+
 for i in explist:
     EXPNUM = int(i)
-    check = os.path.isdir('gw_workflow/mytemp_'+str(EXPNUM))
-    print('does '+str(EXPNUM)+' mytemp directory exist? '+str(check))
-    print('')
+    check = os.path.isdir(DIR_SOURCE+'/gw_workflow/mytemp_'+str(EXPNUM))
+
     check = False #only for test runs
-    if check == False:   
-        img1 = subprocess.Popen(['bash','-c', '/data/des41.a/data/desgw/alyssa_test/gw_workflow/DAGMaker.sh '+str(EXPNUM)] ,stdout = subprocess.PIPE, stderr=subprocess.PIPE, cwd='gw_workflow/') 
+    if check == False:
+        print("mytemp_"+str(EXPNUM)+" does not exist, running DAGMaker.sh")
+
+        img1 = subprocess.Popen(['bash','-c', DIR_SOURCE+'/gw_workflow/DAGMaker.sh '+str(EXPNUM)] ,
+                                stdout = subprocess.PIPE, stderr=subprocess.PIPE, cwd='gw_workflow/') 
         
         im1out, im1err = img1.communicate()
-        imgprocout.write(im1out)
-        imgprocerr.write(im1err)
-        
+        dagmakerout.write(im1out)
+        dagmakererr.write(im1err)
+
+
         rc1 = img1.returncode
         print('The return code for DAGMaker is '+str(rc1))
-        print('Finished ./DAGMaker for exposure '+str(EXPNUM))
-        print('')
+        
+        if rc1 != 0:
+            err_msg = "DAGMaker failed."
+            where = "Image Processing ("+DIR_SOURCE+"/"+dagmakererr.name+")"
+            send_email(err_msg, where)
+        else:
+            print('Finished ./DAGMaker for exposure '+str(EXPNUM)+'. Submitting jobs.')
 
-        img2 = subprocess.Popen(['jobsub_submit_dag','--role=DESGW', '-G', 'des', 
-                                 'file://desgw_pipeline_'+str(EXPNUM)+'.dag'], 
-                                stdout = subprocess.PIPE, stderr=subprocess.PIPE, cwd='gw_workflow/')
+        print('')
+        
+
+        img2 = subprocess.Popen(['jobsub_submit_dag','--role=DESGW', '-G', 'des','file://desgw_pipeline_'+str(EXPNUM)+'.dag'], 
+                                stdout = subprocess.PIPE, stderr=subprocess.PIPE, cwd='gw_workflow/')        
 
         im2out, im2err = img2.communicate()
-        imgprocout.write(im2out)
-        imgprocerr.write(im2err)
-        
+        jobsuberr.write("Errors for jobsub_submit_dag:\n")
+        jobsubout.write("Output for jobsub_submit_dag:\n")
+        jobsubout.write(im2out)
+        jobsuberr.write(im2err)
+
         rc2 = img2.returncode
         print('The return code for this jobsub is '+str(rc2))
-        print('Finished jobsub_submit_dag for exposure '+str(EXPNUM))
-        print('')
-        print('Look at test_imgproc.out for the jobid')
+        if rc2 != 0:
+            err_msg = "Image processing job sub failed."
+            where = "Image Processing ("+DIR_SOURCE+"/"+jobsuberr.name+")"
+            send_email(err_msg, where)
+
+        else:
+            print('Finished jobsub_submit_dag for exposure '+str(EXPNUM))
+            print('')
+            print('Look at test_imgproc_jobsub.out for the jobid')
     else:
         print('Already processed exposure number '+str(EXPNUM))
-imgprocout.close()
-imgprocerr.close()
+
+dagmakerout.close()
+dagmakererr.close()
+jobsuberr.close()
+jobsubout.close()
 
 print("Finished image processing! Moving on to post processing...")
 print('')
 print('')
 
+
 ############# Run Post Processing #############
-############# we have a script that will make the postproc_seasonnumber.ini 
-############# just need to know where to look for the ligo id 
 
-postprocout = open('test_postproc.out', 'w')
-postprocerr = open('test_postproc.err', 'w')
-source('Post-Processing/diffimg_setup.sh')
-#print("Environment successfully set up for post processing.")
+postprocout = open(DIR_SOURCE+'/test_postproc.out', 'w')
+postprocerr = open(DIR_SOURCE+'/test_postproc.err', 'w')
 
-start_pp = ['bash','-c', '/data/des41.a/data/desgw/alyssa_test/Post-Processing/seasonCycler.sh']
-#start_pp = ['id','.', '/data/des41.a/data/desgw/alyssa_test/Post-Processing/seasonCycler.sh']
+#load recycler.yaml for some info
+import yaml
+with open('/data/des41.a/data/desgw/alyssa_test/Main-Injector/recycler.yaml') as f:
+    var=yaml.load(f.read())
+f.close()
+
+band_array = var['exposure_filter_NS']
+band_list = (', '.join(band_array))
+
+#Hack - make ligo id
+today = datetime.datetime.today().strftime('%y%m%d') #YYMMDD
+ligo_id = 'GW'+today
+
+make_postproc_ini.makeini(season=newseason, ligoid=ligo_id, triggerid=var['trigger_id'], propid="2018B-0942", recycler_mjd=var['recycler_mjd'], bands=band_list)
+
+os.system("mv postproc.ini "+DIR_SOURCE+"/Post-Processing/postproc_"+str(newseason)+".ini")
+
+start_pp = ['bash','-c', DIR_SOURCE+'/Post-Processing/seasonCycler.sh']
 postproc = subprocess.Popen(start_pp, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd='Post-Processing/')
+
+while postproc.poll() is None:
+    l = postproc.stdout.readline()
+    print l
 
 postproc_out, postproc_err = postproc.communicate()
 rc3 = postproc.returncode
-print('the return code for post processing is '+str(rc3))
-print('')
+
 postprocout.write(postproc_out)
 postprocerr.write(postproc_err)
 
 postprocout.close()
 postprocerr.close()
+
+print('the return code for post processing is '+str(rc3))
+print('')
+
+if rc3 != 0: 
+    error = os.popen('tail -10 '+postprocerr.name).read()
+    where = "Post Processing ("+DIR_SOURCE+"/"+postprocerr.name+")"
+    send_email(error, where)
+    
 print("Finished Post-Processing! Visit website for more information")
 
 
