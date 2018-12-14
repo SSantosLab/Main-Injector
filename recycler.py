@@ -66,7 +66,8 @@ class event:
         trigger_dir = skymap_filename.split('/')[-1].split('.')[0]
         self.trigger_dir = trigger_dir
         os.system('touch '+skymap_filename+'.processing')
-        os.system('mkdir '+master_dir+'/'+ trigger_dir)
+        if not os.path.exists(master_dir+'/'+ trigger_dir):
+            os.system('mkdir '+master_dir+'/'+ trigger_dir)
 
         self.master_dir = master_dir
         work_area = master_dir+'/'+ trigger_dir +'/'
@@ -132,6 +133,9 @@ class event:
         outputDir = self.work_area
         mapDir = self.mapspath
         recycler_mjd = self.recycler_mjd
+        # JTA
+        print ("mainInjector ",trigger_id, skymap, mjd, outputDir)
+        raise Exception("here")
 
         start_days_since_burst = self.recycler_mjd - self.mjd
 

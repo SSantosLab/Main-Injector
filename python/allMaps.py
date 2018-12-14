@@ -186,7 +186,7 @@ def mainInjector (trigger_id, skymap, trigger_type,\
         hexID_to_do=[], hexID_to_reject=[], 
         hours_used_by_NS=0, hours_used_by_BH=0,
         halfNight = False, firstHalf= True,
-        quick=False, debug=True, camera='decam') :
+        quick=False) :
 
     import os
     import yaml
@@ -204,6 +204,9 @@ def mainInjector (trigger_id, skymap, trigger_type,\
     camera   = config["camera"]
 
     #resolution
+    #resolution = 256 ;# default, resolution element on order of ccd area size
+    #resolution = 128 ;# roughly 4 ccds
+    #resolution = 64 ;# very fast, debuging, roughly 1/4 of the camera size
     resolution = config["resolution"]
 
     # season parameters
@@ -273,9 +276,6 @@ def mainInjector (trigger_id, skymap, trigger_type,\
         skipAll = True
     else :
         skipAll = False
-    #resolution = 256 ;# default, resolution element on order of ccd area size
-    #resolution = 128 ;# roughly 4 ccds
-    #resolution = 64 ;# very fast, debuging, roughly 1/4 of the camera size
     #if debug :
        # return getHexObservations.prepare(
        # skymap, trigger_id, outputDir, outputDir, distance=distance,
@@ -462,9 +462,9 @@ def vedi2(sims, mjds, distances, do2015=True, doV=False) :
             if not os.path.exists(simfile) : 
                 totalProb = 0.0
             else :
-                ligo = hp.read_map(simfile)
+                ligo = hp.read_map(simfile,verbose=False)
                 simfile = data_dir+str(sim)+"-"+str(day)+"-probMap.hp"
-                decam = hp.read_map(simfile)
+                decam = hp.read_map(simfile,verbose=False)
                 ligo = ligo/ligo.sum()
                 totalProb = (decam*ligo).sum()
             totalProbs[day].append(totalProb)

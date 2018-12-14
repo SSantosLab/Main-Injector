@@ -84,7 +84,7 @@ def prepare(skymap, trigger_id, data_dir, mapDir, camera,
     start_mjd = burst_mjd + start_days_since_burst
     #if not debug: 
     # hack
-    print "cleaning up"
+    print "\t cleaning up"
     files = glob.glob(mapDir+"/*png"); 
     for f in files: os.remove(f)
     files = glob.glob(mapDir+"/*json"); 
@@ -147,11 +147,11 @@ def prepare(skymap, trigger_id, data_dir, mapDir, camera,
     #ix = (dec >= 2)
     #ligo[ix] = 0.0
     # GW170814 hack JTA
-    ix = (ra > -10) & ( ra < 60) & (dec < -20)
-    ix = np.invert(ix)
-    ligo[ix] = 0.0
+    #ix = (ra > -10) & ( ra < 60) & (dec < -20)
+    #ix = np.invert(ix)
+    #ligo[ix] = 0.0
 
-    obs = mags.observed(ra,dec,ligo, start_mjd, verbose=False)
+    obs = mags.observed(ra,dec,ligo, start_mjd+.3, verbose=False)
     obs.limitMag("i",exposure=exposure_length)
     print "finished setting up exposure calculation"
 
@@ -166,8 +166,7 @@ def prepare(skymap, trigger_id, data_dir, mapDir, camera,
         print "=============>>>> prepare: using cached maps"
         return probs, times, slotDuration
     #if debug :
-        #return  obs, trigger_id, burst_mjd, ligo, ligo_dist, ligo_dist_sig, \
-        #    models, times, probs, mapDir
+        #return  obs, trigger_id, burst_mjd, ligo, ligo_dist, ligo_dist_sig, models, times, probs, mapDir
     if doOnlyMaxProbability :
         if len(probs) == 0 : return [0,],[0,],[0,],[0,]
         ix = np.argmax(probs)
@@ -390,7 +389,9 @@ def nothingToObserveShowSomething(simNumber, data_dir, mapDir) :
     ix = np.argmax(prob)
     try:
         slot = np.int(slotNum[ix])
+        title = "slot {} hex maxProb {:.6f}, nothing to observe".format(slot, prob[ix])
     except:
+        print "nothingToObserveShowSomething: fiasco."
         print "ra",ra
         print "dec",dec
         print "id",id
@@ -399,8 +400,10 @@ def nothingToObserveShowSomething(simNumber, data_dir, mapDir) :
         print "slotNum", slotNum
         print "ix",ix
         print "ix index",np.nonzero(ix)
-        raise Exception("this failed once, but ran fine when I did it in the directory. NSF thing?")
-    title = "slot {} hex maxProb {:.6f}, nothing to observe".format(slot, prob[ix])
+        print "nothingToObserveShowSomething: fiasco. attempting to go on"
+        slot = 0
+        #raise Exception("this failed once, but ran fine when I did it in the directory. NSF thing?")
+        title = "slot {} hex maxProb {:.6f}, nothing to observe".format("nothing", 0.0)
     counter = equalAreaPlot(figure,slot,simNumber,data_dir,mapDir,title) 
     return counter
 #
