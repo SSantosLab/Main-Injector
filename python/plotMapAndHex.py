@@ -447,6 +447,24 @@ def plotLigoContours(x,y, vals, color="w", alpha = 1.0, lw=0.66, ls="solid", lab
     xmin = x.min(); xmax = x.max()
     ymin = y.min(); ymax = y.max()
     
+# read map 
+prob = hp.read_map('LALInference_v1.fits.gz,0')
+
+# get index numbers of the pixels in the array
+idxs = range(len(prob))
+
+# sort the indices and pixel probabilities
+# in order of decreasing probability in each pixel
+sorted_idx = np.array([x for _,x in sorted(zip(prob,idxs))])[::-1]
+sorted_probs = np.array([x for x,_ in sorted(zip(prob,idxs))])[::-1]
+
+# get the list of indices for pixels whose cumulative sum
+# gives 90%.  Note that the cumulation happens in order
+# of highest probability pixel to lowest
+probsel = sorted_idx[np.cumsum(sorted_probs)<0.9]
+
+
+
     coord = np.array(zip(x,y))
     xi=np.linspace(xmin, xmax, 500)
     yi=np.linspace(ymin, ymax, 500)

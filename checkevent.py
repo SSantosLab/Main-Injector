@@ -116,12 +116,12 @@ def process_gcn(payload, root):
     # Print the alert
     #import checkevent_config as config
 
-    # Respond only to 'test' events.
-    # VERY IMPORTANT! Replce with the following line of code
-    # to respond to only real 'observation' events. DO SO IN CONFIG FILE
     print payload
     print 'GOT GCN LIGO EVENT'
 
+    # Respond only to 'test' events.
+    # VERY IMPORTANT! Replce with the following line of code
+    # to respond to only real 'observation' events. DO SO IN CONFIG FILE
     if root.attrib['role'] != config.mode.lower():
         print 'This event was not of type '+str(config.mode.upper())
         return #This can be changed in the config file
@@ -130,6 +130,7 @@ def process_gcn(payload, root):
     trigger_id = str(root.find("./What/Param[@name='GraceID']").attrib['value'])
 
     sendFirstTriggerEmail(trigger_id,'NA')
+    # if debugging, comment the above out
 
 
     # Respond only to 'CBC' events. Change 'CBC' to "Burst' to respond to only
@@ -323,10 +324,13 @@ logging.basicConfig(level=logging.INFO)
 #Start timer - use threading to say I'm Alive
 print 'Started Threading'
 imAliveEmail()
+# if debugging, comment out the above
 
 # Listen for GCNs until the program is interrupted
 # (killed or interrupted with control-C).
+#   https://gcn.gsfc.nasa.gov/voevent.html
 print 'Listening...'
+#gcn.listen(host='209.208.78.170', port=8099, handler=process_gcn)  ;# public. no LVC alerts
 gcn.listen(host='68.169.57.253', port=8096, handler=process_gcn)
 #gcn.listen(host='68.169.57.253', port=8096, handler=process_gcn,im_alive_filename='/data/des41.a/data/desgw/maininjector/imalivetest.txt')
 
