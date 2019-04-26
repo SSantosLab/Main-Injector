@@ -139,11 +139,13 @@ def prepare(skymap, trigger_id, data_dir, mapDir, camera,
         junk,junk,ligo_dist_norm =hp2np.hp2np(skymap, degrade=resolution, field=3)
     except:
         print "\t !!!!!!!! ------- no distance information in skymap ------ !!!!!!!!"
+    # JTA Hack
     # GW190425
     #print "HACK HACK HACK"
-    #ix = ((ra > 150) | (( ra > -180) & (ra < -120)) ) & (dec > -10) & dec < 40))
+    #ix = ((ra > 150) | (( ra > -180) & (ra < -120)) ) & (dec > -10) & (dec < 40)
     #ix = np.invert(ix)
     #ligo[ix] = 0.0
+    #print "HACK HACK HACK"
     
     # GW170217 hack JTA
     #ix = (ra > 0) & ( ra < 180) & (dec >= -30)
@@ -170,7 +172,7 @@ def prepare(skymap, trigger_id, data_dir, mapDir, camera,
         halfNight = halfNight, firstHalf= firstHalf) 
     if skipHexelate:
         print "=============>>>> prepare: using cached maps"
-        return probs, times, slotDuration
+        return probs, times, slotDuration, hoursPerNight
     #if debug :
         #return  obs, trigger_id, burst_mjd, ligo, ligo_dist, ligo_dist_sig, models, times, probs, mapDir
     if doOnlyMaxProbability :
@@ -375,7 +377,8 @@ def makeObservingPlots(nslots, simNumber, best_slot, data_dir,
             else :
                 obsTime = slotMjd
             #print "\t making observingPlot-{}.png".format(i)
-            observingPlot(figure,simNumber,i,mapDirectory, nslots, camera, extraTitle=obsTime, allSky=allSky)
+            observingPlot(figure,simNumber,i,mapDirectory, nslots, 
+                camera, extraTitle=obsTime, allSky=allSky)
             name = str(simNumber)+"-observingPlot-{}.png".format(i)
             plt.savefig(os.path.join(mapDirectory,name))
             counter += 1
@@ -667,7 +670,6 @@ def observingPlot(figure, simNumber, slot, data_dir, nslots, camera, extraTitle=
 
 
     print "making plotMapAndHex.mapAndHex(figure, ", simNumber, ",", slot, ",", data_dir, ",", nslots, ",ra,dec,", title,") "
-    d=plotMapAndHex.mapAndHex(figure, simNumber, slot, data_dir, nslots, ra, dec, camera, title, slots=slotNumbers, allSky=allSky) 
+
+    d=plotMapAndHex.mapAndHex(figure, simNumber, slot, data_dir, nslots, ra, dec, cam
     return d
-
-
