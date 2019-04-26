@@ -1,1 +1,0 @@
-https://gracedb.ligo.org/apibasic/events/G297595/files/LALInference.fits.gz
