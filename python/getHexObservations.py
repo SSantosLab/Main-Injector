@@ -139,6 +139,12 @@ def prepare(skymap, trigger_id, data_dir, mapDir, camera,
         junk,junk,ligo_dist_norm =hp2np.hp2np(skymap, degrade=resolution, field=3)
     except:
         print "\t !!!!!!!! ------- no distance information in skymap ------ !!!!!!!!"
+    # GW190425
+    #print "HACK HACK HACK"
+    #ix = ((ra > 150) | (( ra > -180) & (ra < -120)) ) & (dec > -10) & dec < 40))
+    #ix = np.invert(ix)
+    #ligo[ix] = 0.0
+    
     # GW170217 hack JTA
     #ix = (ra > 0) & ( ra < 180) & (dec >= -30)
     #ix = np.invert(ix)
@@ -338,7 +344,7 @@ def economics (simNumber, best_slot, mapDirectory,
 # ====== there are possibilities. Show them.
 #
 def makeObservingPlots(nslots, simNumber, best_slot, data_dir, 
-        mapDirectory, camera, allSky = False) :
+        mapDirectory, camera, allSky = True) :
     print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
     print "makeObservingPlots(",nslots, simNumber, best_slot,data_dir," )"
     print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
