@@ -49,7 +49,10 @@ class map(object):
             # self.modelAbsoluteMagnitude, self.modelAbsoluteMagnitudeSigma
             # Currently this is done in mapsAtTimeT.probabilityMaps
 
-            self.modelAbsoluteMagnitude = -11.1
+            # LIGO O1 and O2
+            #self.modelAbsoluteMagnitude = -11.1
+            # LIGO O3
+            self.modelAbsoluteMagnitude = -15.5
             self.modelAbsoluteMagnitudeSigma = 1.0
         elif type == "BH" :
             # fixed luminosity
