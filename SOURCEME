@@ -1,30 +1,19 @@
-#!/bin/sh                                                                                                                                                                                                   
-
+#!/bin/sh
 export DESGW_DATA_DIR="data/"
 export PYTHONPATH="./python/:$PYTHONPATH"
 
-
 umask 002
-         
 
 echo ''
 echo ''
 echo "Setting up Python environment..."
 
-
-
 source /cvmfs/des.opensciencegrid.org/eeups/startupcachejob21i.sh
-
 export EUPS_PATH=${EUPS_PATH}:/data/des41.a/data/desgw/osgsetup/eeups/fnaleups
-
 setup --nolocks pyslalib
 
-
-
 export PATH=/cvmfs/des.opensciencegrid.org/fnal/anaconda2/bin:$PATH
-alias alexpy="source activate default"
-alexpy
-
+source activate des18a
 
 setup python
 setup numpy
