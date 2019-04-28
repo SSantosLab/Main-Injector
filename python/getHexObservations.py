@@ -669,7 +669,8 @@ def observingPlot(figure, simNumber, slot, data_dir, nslots, camera, extraTitle=
     title = title + "      {}".format(simNumber)
 
 
-    print "making plotMapAndHex.mapAndHex(figure, ", simNumber, ",", slot, ",", data_dir, ",", nslots, ",ra,dec,", title,") "
+    print "making plotMapAndHex.mapAndHex(figure, ", simNumber, ",", slot, ",", data_dir, ",", nslots, ",ra,dec,", camera, title,"allSky=",allSky,") "
 
-    d=plotMapAndHex.mapAndHex(figure, simNumber, slot, data_dir, nslots, ra, dec, cam
+    d=plotMapAndHex.mapAndHex(figure, simNumber, slot, data_dir, nslots, ra, dec, \
+        camera, title, slots=slotNumbers, allSky=allSky)
     return d
