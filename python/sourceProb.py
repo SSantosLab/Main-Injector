@@ -143,8 +143,8 @@ class map(object):
             # we are in the case where there is no distance field, so no distance info
             ap_mag = 20.0
             ix = (ap_mag < limitingMag)
-            prob_map = np.zeros(ligo_spatial.size)
 
+            prob_map = np.zeros(ligo_spatial.size)
             prob_map = 0.0*prob_map
             prob_map[ix] = 1.0
 
