@@ -171,7 +171,7 @@ def prepare(skymap, trigger_id, data_dir, mapDir, camera,
         halfNight = halfNight, firstHalf= firstHalf) 
     if skipHexelate:
         print "=============>>>> prepare: using cached maps"
-        return probs, times, slotDuration
+        return probs, times, slotDuration, hoursPerNight
     #if debug :
         #return  obs, trigger_id, burst_mjd, ligo, ligo_dist, ligo_dist_sig, models, times, probs, mapDir
     if doOnlyMaxProbability :
@@ -345,7 +345,7 @@ def economics (simNumber, best_slot, mapDirectory,
 # ====== there are possibilities. Show them.
 #
 def makeObservingPlots(nslots, simNumber, best_slot, data_dir, 
-        mapDirectory, camera, allSky = False) :
+        mapDirectory, camera, allSky = True) :
     print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
     print "makeObservingPlots(",nslots, simNumber, best_slot,data_dir," )"
     print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
@@ -376,7 +376,8 @@ def makeObservingPlots(nslots, simNumber, best_slot, data_dir,
             else :
                 obsTime = slotMjd
             #print "\t making observingPlot-{}.png".format(i)
-            observingPlot(figure,simNumber,i,mapDirectory, nslots, camera, extraTitle=obsTime, allSky=allSky)
+            observingPlot(figure,simNumber,i,mapDirectory, nslots, 
+                camera, extraTitle=obsTime, allSky=allSky)
             name = str(simNumber)+"-observingPlot-{}.png".format(i)
             plt.savefig(os.path.join(mapDirectory,name))
             counter += 1
@@ -667,8 +668,8 @@ def observingPlot(figure, simNumber, slot, data_dir, nslots, camera, extraTitle=
     title = title + "      {}".format(simNumber)
 
 
-    print "making plotMapAndHex.mapAndHex(figure, ", simNumber, ",", slot, ",", data_dir, ",", nslots, ",ra,dec,", title,") "
-    d=plotMapAndHex.mapAndHex(figure, simNumber, slot, data_dir, nslots, ra, dec, camera, title, slots=slotNumbers, allSky=allSky) 
+    print "making plotMapAndHex.mapAndHex(figure, ", simNumber, ",", slot, ",", data_dir, ",", nslots, ",ra,dec,", camera, title,"allSky=",allSky,") "
+
+    d=plotMapAndHex.mapAndHex(figure, simNumber, slot, data_dir, nslots, ra, dec, \
+        camera, title, slots=slotNumbers, allSky=allSky)
     return d
-
-

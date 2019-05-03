@@ -32,7 +32,7 @@ def plotDesFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax) :
 # reload(plotMapAndHex);plotMapAndHex.mapAndHex(figure, "G211117",0,"/data/des30.a/data/annis/des-gw/Christmas16-event/maps/", 8, raHex, decHex, "" )
 #
 def mapAndHex(figure, simNumber, slot, data_dir, nslots, hexRa, hexDec, camera,
-        title="", colorbar=True, slots=np.zeros(0), doHexes=True, allSky=False) :
+        title="", slots=np.zeros(0), doHexes=True, allSky=False, colorbar=True) :
     import healpy as hp
     import hp2np
 
@@ -93,9 +93,9 @@ def mapAndHex(figure, simNumber, slot, data_dir, nslots, hexRa, hexDec, camera,
         #raise Exception("why are you doing this?")
         origLigoMap = ligoMap
     alpha, beta = coreMapAndHex(figure, ra, dec, raMap, decMap, camera, map, \
-        low_limit, high_limit, ligoMap, origLigoMap, doLigoMap=True, doOrigLigoMap=doOrigLigoMap, \
-        resolution=resolution, image=image, scale=scale, badData=badData, badDataVal=badDataVal, \
-        redRa = redRa, title=title, raMid=raMid, raBoxSize=raBoxSize, decBoxSize = decBoxSize, \
+        low_limit, high_limit, ligoMap, origLigoMap, doLigoMap=True, doOrigLigoMap=doOrigLigoMap, 
+        resolution=resolution, image=image, scale=scale, badData=badData, badDataVal=badDataVal, 
+        redRa = redRa, title=title, raMid=raMid, raBoxSize=raBoxSize, decBoxSize = decBoxSize, 
         mod_ra=mod_ra, mod_dec= mod_dec , colorbar=colorbar, slots=slots, thisSlot=slot, 
         doHexes=doHexes, allSky = allSky)
 
@@ -383,11 +383,16 @@ def plotDecamHexen(ax, ra,dec,alpha, camera, beta=0, color="r", lw=1, plateCaree
                 # and cause lines from one side of map to another
                 # split them into separate entities
                 # ugly, but it seems to work.
-                ix_pos = np.nonzero(hexRa>180)[0]
-                ix_neg = np.nonzero(hexRa<-180)[0]
-                ix, = np.where(np.nonzero((hexRa>=-180)&(hexRa<=180))[0])
-                if ix.size > 0 :
-                    hex_path = matplotlib.path.Path(zip(hexX[ix],hexY[ix]))
+                ix_pos, = np.where(hexRa>=180)
+                ix_neg, = np.where(hexRa<=-180)
+                ixn, = np.where((hexRa>-180)&(hexRa<0))
+                ixp, = np.where((hexRa>0)&(hexRa<180))
+                if ixp.size > 0 :
+                    hex_path = matplotlib.path.Path(zip(hexX[ixp],hexY[ixp]))
+                    hex_patch = matplotlib.patches.PathPatch(hex_path, edgecolor=color, lw=lw, fill=False)
+                    ax.add_patch(hex_patch)
+                if ixn.size > 0 :
+                    hex_path = matplotlib.path.Path(zip(hexX[ixn],hexY[ixn]))
                     hex_patch = matplotlib.patches.PathPatch(hex_path, edgecolor=color, lw=lw, fill=False)
                     ax.add_patch(hex_patch)
                 if ix_pos.size > 0:
@@ -445,6 +450,24 @@ def plotLigoContours(x,y, vals, color="w", alpha = 1.0, lw=0.66, ls="solid", lab
     xmin = x.min(); xmax = x.max()
     ymin = y.min(); ymax = y.max()
     
+# read map 
+#prob = hp.read_map('LALInference_v1.fits.gz,0')
+#
+## get index numbers of the pixels in the array
+#idxs = range(len(prob))
+#
+## sort the indices and pixel probabilities
+## in order of decreasing probability in each pixel
+#sorted_idx = np.array([x for _,x in sorted(zip(prob,idxs))])[::-1]
+#sorted_probs = np.array([x for x,_ in sorted(zip(prob,idxs))])[::-1]
+##
+## get the list of indices for pixels whose cumulative sum
+## gives 90%.  Note that the cumulation happens in order
+## of highest probability pixel to lowest
+#probsel = sorted_idx[np.cumsum(sorted_probs)<0.9]
+
+
+
     coord = np.array(zip(x,y))
     xi=np.linspace(xmin, xmax, 500)
     yi=np.linspace(ymin, ymax, 500)

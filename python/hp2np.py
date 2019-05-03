@@ -30,7 +30,10 @@ license="""
 #
 def hp2np (hp_map_file, nan=True, degrade=False, fluxConservation=True, field=0, verbose=False) :
     hm = hp.read_map(hp_map_file, field=field, verbose=verbose)
+<<<<<<< HEAD
     #print "read map"
+=======
+>>>>>>> 790bf63a8b2bd39e95bae65ddfb4645e609cbe20
     ra,dec,vals = map2np(hm, resolution=degrade, fluxConservation=fluxConservation, verbose=verbose)
     return ra,dec,vals
 

@@ -182,10 +182,10 @@ def hexID (file = "../Jan4-2017-event/GW170104-ra-dec-id-prob-mjd-slot.txt") :
 # trigger_type = "NS" or "BH"
 #
 def mainInjector (trigger_id, skymap, trigger_type,\
-        outputDir, recycler_days_since_burst=0.3, 
+        outputDir, recycler_days_since_burst=0.0, 
         hexID_to_do=[], hexID_to_reject=[], 
         hours_used_by_NS=0, hours_used_by_BH=0,
-        halfNight = False, firstHalf= True,
+        halfNight = False, firstHalf= False,
         quick=False) :
 
     import os
@@ -193,6 +193,7 @@ def mainInjector (trigger_id, skymap, trigger_type,\
     import getHexObservations
     skipEcon = False
     skipEcon = True
+    allSky = True # do we want the animated gif to be all sky or not?
 
     with open("maininjector.yaml","r") as f:
         config = yaml.safe_load(f); 
@@ -378,7 +379,7 @@ def mainInjector (trigger_id, skymap, trigger_type,\
         if n_slots > 0 :
             # make observation plots
             print "We're going to do {} slots with best slot {}".format(n_slots, best_slot)
-            n_plots = getHexObservations.makeObservingPlots(n_slots, trigger_id, best_slot, outputDir, outputDir, camera, allSky = False)
+            n_plots = getHexObservations.makeObservingPlots(n_slots, trigger_id, best_slot, outputDir, outputDir, camera, allSky = allSky)
             string = "$(ls -v {}-observingPlot*)  {}_animate.gif".format(trigger_id, trigger_id)
             os.system("convert  -delay 40 -loop 0  " + string)
         else :

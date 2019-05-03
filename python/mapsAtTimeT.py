@@ -178,13 +178,19 @@ def probabilityMaps(obs, mjdOfBurst, daysSinceBurst, \
 
     obs.limitMag(filter, exposure=exposure)
     if trigger_type == "NS" :
-        # we may need to rescale the light curve in the models
-        models_at_t = modelRead.modelsAtTimeT (models, daysSinceBurst)
-        model_scale, model_scale_time = models["scale"]
-        AbsMag = sm.modelAbsoluteMagnitude
-        new_scale = AbsMag - model_scale
-        abs_mag = models_at_t[0] + new_scale
-        sm.absMagMean = abs_mag
+        # as of O3, let's not use source probability
+        #   # we may need to rescale the light curve in the models
+        #   models_at_t = modelRead.modelsAtTimeT (models, daysSinceBurst)
+        #   model_scale, model_scale_time = models["scale"]
+        #   AbsMag = sm.modelAbsoluteMagnitude
+        #   new_scale = AbsMag - model_scale
+        #   abs_mag = models_at_t[0] + new_scale
+        #   sm.absMagMean = abs_mag
+        # as of O3, let's not use source probability
+        # turns out that in the case of distance_sig.sum()=0,
+        # then the sm.calculateProb assumes a source ap mag of 20,
+        # and builds a source probality map where 1 if limit_mag > 20.
+        distance_sig = distance_sig*0
     sm.searchDistance = np.array([distance,])
     result = sm.calculateProb(spatial, distance, distance_sig)
     if not result:

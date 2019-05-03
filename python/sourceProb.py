@@ -49,7 +49,10 @@ class map(object):
             # self.modelAbsoluteMagnitude, self.modelAbsoluteMagnitudeSigma
             # Currently this is done in mapsAtTimeT.probabilityMaps
 
-            self.modelAbsoluteMagnitude = -11.1
+            # LIGO O1 and O2
+            #self.modelAbsoluteMagnitude = -11.1
+            # LIGO O3
+            self.modelAbsoluteMagnitude = -15.5
             self.modelAbsoluteMagnitudeSigma = 1.0
         elif type == "BH" :
             # fixed luminosity
@@ -140,8 +143,8 @@ class map(object):
             # we are in the case where there is no distance field, so no distance info
             ap_mag = 20.0
             ix = (ap_mag < limitingMag)
-            prob_map = np.zeros(ligo_spatial.size)
 
+            prob_map = np.zeros(ligo_spatial.size)
             prob_map = 0.0*prob_map
             prob_map[ix] = 1.0
 
