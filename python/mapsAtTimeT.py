@@ -79,7 +79,7 @@ def manyDaysOfTotalProbability (
         models, start_mjd=0,
         startOfDays=0, endOfDays=11, deltaTime=0.0223, 
         probTimeFile="probTime.txt", trigger_type="NS",
-        halfNight = False, firstHalf= True) :
+        halfNight = False, firstHalf= True, verbose=True) :
     times = []
     totalProbs = []
 
@@ -127,9 +127,13 @@ def manyDaysOfTotalProbability (
         totalProbs = totalProbs*0.0
         totalProbs[darkCount] = tp[darkCount]
     # informational
-    print "total all-sky summed probability of detection (list1) and daysSinceBurst (list2)"
-    print totalProbs,"\n",times,"\n",isDark.astype(int)
-    print "dark slots=",darkCount.size
+    if verbose: print "total all-sky summed probability of detection:"
+    if verbose: print totalProbs
+    if verbose: print "daysSinceBurst:"
+    if verbose: print times,"\n"
+    if verbose: print "isDark:"
+    if verbose: print isDark.astype(int)
+    if verbose: print "dark slots count:",darkCount.size
     
 #    print "===== times with total prob > 10**-2"
 #    ix = totalProbs > 10**-2; 

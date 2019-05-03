@@ -28,9 +28,10 @@ license="""
 #   fluxConservation = False => averaging maps when changing resolution
 #   fluxConservation = True => sums maps when changing resolution
 #
-def hp2np (hp_map_file, nan=True, degrade=False, fluxConservation=True, field=0) :
-    hm = hp.read_map(hp_map_file, field=field)
-    ra,dec,vals = map2np(hm, resolution=degrade, fluxConservation=fluxConservation)
+def hp2np (hp_map_file, nan=True, degrade=False, fluxConservation=True, field=0, verbose=False) :
+    hm = hp.read_map(hp_map_file, field=field, verbose=verbose)
+    #print "read map"
+    ra,dec,vals = map2np(hm, resolution=degrade, fluxConservation=fluxConservation, verbose=verbose)
     return ra,dec,vals
 
 #
@@ -40,16 +41,16 @@ def hp2np (hp_map_file, nan=True, degrade=False, fluxConservation=True, field=0)
 # Often this is inconvenient. 
 #
 # Give me, ra, dec, val.
-def map2np (hp_map, resolution=False, fluxConservation=True) :
+def map2np (hp_map, resolution=False, fluxConservation=True, verbose=False) :
     nside = hp.npix2nside(len(hp_map))
-    print "\t map2np: \t res= ", nside
+    if verbose: print "\t map2np: \t res= ", nside
     if resolution :
         if fluxConservation :
             hp_map = hp.ud_grade(hp_map, resolution, power=-2)
         else :
             hp_map = hp.ud_grade(hp_map, resolution)
         nside = hp.npix2nside(len(hp_map))
-        print "map2np \t changed resolution to ", nside
+        if verbose: print "map2np \t changed resolution to ", nside
     ix = range(0,hp_map.size)
     # pix2and wants the indicies numbers of the pixel to get the coord of
     theta,phi = hp.pix2ang(nside,ix)

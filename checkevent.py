@@ -16,67 +16,84 @@ import subprocess
 #from astropy.time import Time
 import time
 import checkevent_config as config
+import send_texts_and_emails
 
-def sendFirstTriggerEmail(trigger_id,far,mapname='NA'):
+def sendFirstTriggerEmail(trigger_id,far,mapname='NA',retraction=0):
     import smtplib
     from email.mime.text import MIMEText
+    plus = ''
+    if config.mode.lower() == 'observation':
+        plus = 'REAL'
+    if config.mode.lower() == 'mdc':
+        plus = 'FAKE'
+    #if retraction == False:
 
-    text = 'Trigger '+trigger_id+'\nFAR: '+str(far)+'\nMap: '+mapname+'\nURL: https://gracedb.ligo.org/events/view/'+trigger_id+' \nAnalysis has begun, please hold tight for a DESGW webpage...'
-    msg = MIMEText(text)
+    text = plus+' Trigger '+trigger_id+'\nAlert Type: '+str(retraction)+'\nFAR: '+str(far)+'\nMap: '+mapname+'\nURL: https://gracedb.ligo.org/superevents/'+trigger_id+'/view \nAnalysis has begun, please hold tight for a DESGW webpage which will be located here shortly: \nhttp://des-ops.fnal.gov:8080/desgw/Triggers/'+trigger_id+'/'+trigger_id+'_trigger.html \n\nDO NOT REPLY TO THIS THREAD, NOT ALL USERS WILL SEE YOUR RESPONSE.'
+    #msg = MIMEText(text)
 
-    me = 'automated-desGW@fnal.gov'
-    if config.sendEveryoneEmails:
-        you = config.allemails
-    else:
-        you = ['djbrout@gmail.com']
+    #me = 'automated-desGW@fnal.gov'
+    #if config.sendEveryoneEmails:
+    #    you = config.allemails
+    #else:
+    #    you = ['djbrout@gmail.com']
 
-    if config.sendtexts:
-        t = config.alltexts
-        you.extend(t)
-    else:
-        you.extend(['2153008763@mms.att.net'])
+    #if config.sendtexts:
+    #    t = config.alltexts
+    #    you.extend(t)
+    #else:
+    #    you.extend(['2153008763@mms.att.net'])
 
-    for y in you:
-        try:
-            msg['Subject'] =  'Trigger '+trigger_id+' FAR: '+str(far)+' Map: '+mapname
-            msg['From'] = me
-            msg['To'] = y
+    #for y in you:
+    #    try:
+    subject =  plus+' Trigger '+trigger_id+' FAR: '+str(far)+' Map: '+mapname+' NOREPLY'
+    send_texts_and_emails.send(subject,text)
+            #msg['From'] = me
+            #msg['To'] = y
             
-            s = smtplib.SMTP('localhost')
-            s.sendmail(me, y, msg.as_string())
-            s.quit()
-        except:
-            print 'could not send alert! '*100
+            #s = smtplib.SMTP('localhost')
+            #s.sendmail(me, y, msg.as_string())
+            #s.quit()
+    #    except:
+    #        print 'could not send alert! '*100
 
     #if config.sendtexts:
     #    os.system('curl http://textbelt.com/text -d number=2153008763 -d "message=New Trigger FAR:'+str(far)+'"')
     print 'Trigger email sent...'
 
 def sendFailedEmail(trigger_id,message='FAILED'):
+    plus = ''
+    if config.mode.lower() == 'observation':
+        plus = 'REAL'
+    if config.mode.lower() == 'MDC':
+        plus = 'FAKE'
+
     import smtplib
     from email.mime.text import MIMEText
 
     text = message
-    msg = MIMEText(text)
+    #msg = MIMEText(text)
 
-    me = 'automated-desGW@fnal.gov'
-    if config.sendEveryoneEmails:
-        you = config.allemails
-    else:
-        you = ['djbrout@gmail.com']
+    #me = 'automated-desGW@fnal.gov'
+    #if config.sendEveryoneEmails:
+    #    you = config.allemails
+    #else:
+    #    you = ['djbrout@gmail.com']
 
-    if config.sendtexts:
-        t = config.alltexts
-        you.extend(t)
+    #if config.sendtexts:
+    #    t = config.alltexts
+    #    you.extend(t)
 
-    for y in you:
-        msg['Subject'] =  'Trigger '+trigger_id+' FAILED!'
-        msg['From'] = me
-        msg['To'] = y
+    #for y in you:
+    subject =  plus+' Trigger '+trigger_id+' FAILED!'
 
-        s = smtplib.SMTP('localhost')
-        s.sendmail(me, y, msg.as_string())
-        s.quit()
+    send_texts_and_emails.send(subject,text)
+
+    #    msg['From'] = me
+    #    msg['To'] = y
+
+    #    s = smtplib.SMTP('localhost')
+    #    s.sendmail(me, y, msg.as_string())
+    #    s.quit()
 
 def get_skymap(skymap_url,skymap_path):
     """
@@ -112,7 +129,7 @@ def get_skymap(skymap_url,skymap_path):
     gcn.notice_types.LVC_PRELIMINARY,
     gcn.notice_types.LVC_INITIAL,
     gcn.notice_types.LVC_UPDATE)
-def process_gcn(payload, root):
+def process_gcn(payload, root, dontwritepayload=False):
     # Print the alert
     #import checkevent_config as config
 
@@ -122,19 +139,38 @@ def process_gcn(payload, root):
     print payload
     print 'GOT GCN LIGO EVENT'
 
-    if root.attrib['role'] != config.mode.lower():
-        print 'This event was not of type '+str(config.mode.upper())
-        return #This can be changed in the config file
+    #if root.attrib['role'] != config.mode.lower():
+    #    print 'This event was not of type '+str(config.mode.upper())
+    #    return #This can be changed in the config file
     
+    params = {}
+    for elem in root.iterfind('.//Param'):
+        params[elem.attrib['name']] = elem.attrib['value']
+#    params = {elem.attrib['name']:
+#                  elem.attrib['value']
+#              for elem in root.iterfind('.//Param')}
 
-    trigger_id = str(root.find("./What/Param[@name='GraceID']").attrib['value'])
 
-    sendFirstTriggerEmail(trigger_id,'NA')
+    trigger_id = str(params['GraceID'])
 
+    if config.mode.lower() == 'observation':
+        if trigger_id[0] == 'M':
+            print 'This event was not of type '+str(config.mode.upper())
+            return #This can be changed in the config file              
+    if config.mode.lower() == 'mdc':
+        if trigger_id[0] == 'S':
+            print 'This event was not of type '+str(config.mode.upper())
+            return #This can be changed in the config file          
+
+    alerttype = params['AlertType']
+    #sendFirstTriggerEmail(trigger_id,'NA',retraction=alerttype)
+    if alerttype.lower() == 'retraction':
+        sendFirstTriggerEmail(trigger_id,'NA',retraction=alerttype)
+        return
 
     # Respond only to 'CBC' events. Change 'CBC' to "Burst' to respond to only
     # unmodeled burst events.
-    event_type = root.find("./What/Param[@name='Group']").attrib['value']
+    
     #print 'event_type'*50
     #print event_type
     #return
@@ -148,15 +184,27 @@ def process_gcn(payload, root):
 
 
     # Read out integer notice type (note: not doing anythin with this right now)
-    try:
-        notice_type = int(root.find("./What/Param[@name='Packet_Type']").attrib['value'])
-    except:
-        notice_type = 'Not Available'
+    #try:
+    #    notice_type = int(params['Packet_Type'])
+    #except:
+    #    notice_type = 'Not Available'
     #Creating unique folder to save trigger data
     #if event_type == 'CBC':
-    skymap_url = root.find(
-        "./What/Param[@name='SKYMAP_URL_FITS_BASIC']").attrib['value']
+        
+    #skymap_url = root.find("./What/Param[@name='skymap_fits']").attrib['value']
+#    params = {elem.attrib['name']:
+#                  elem.attrib['value']
+#              for elem in root.iterfind('.//Param')}
 
+    try:
+        notice_type = int(params['Packet_Type'])
+    except:
+        notice_type = 'Not Available'
+
+    skymap_url = params['skymap_fits'] 
+    print params
+    #skymap, header = hp.read_map(params['skymap_fits'],
+    #                             h=True, verbose=False)
     #    #skymap_name = trigger_id+'_bayestar.fits'
     #if event_type == 'Burst':
     #    skymap_url = 'https://gracedb.ligo.org/events/'+str(trigger_id)+'/files/skyprobcc_cWB_complete.fits'
@@ -182,21 +230,25 @@ def process_gcn(payload, root):
     event_params = {}
 
     try:
-        trigger_mjd_rounded = float(root.find("./What/Param[@name='Trigger_TJD']").attrib['value'])+40000.
-        trigger_sod = float(root.find("./What/Param[@name='Trigger_SOD']").attrib['value'])
+        
+        trigger_mjd_rounded = float(params['Trigger_TJD'])+40000.
+        trigger_sod = float(params['Trigger_SOD'])
         seconds_in_day = 86400.
-        trigger_mjd = round(trigger_mjd_rounded + trigger_sod/seconds_in_day,4)    
+        trigger_mjd = round(trigger_mjd_rounded + trigger_sod/seconds_in_day,4)            
     except:
         #IF NO MJD WE CAN SPECIFY THE MJD OF RECEIVED TRIGGER
         trigger_mjd = 56555.
+        from astropy.time import Time
+        nt = Time.now()
+        trigger_mjd = round(nt.mjd,4)
 
     event_params['MJD'] = str(trigger_mjd)
     try:
-        event_params['ETA'] = str(root.find("./What/Param[@name='Eta']").attrib['value'])
+        event_params['ETA'] = str(params['Eta'])
     except:
         event_params['ETA'] = '-999.'
     try:
-        event_params['FAR'] = str(round(1./float(root.find("./What/Param[@name='FAR']").attrib['value'])/60./60./24.,1))+' Days'
+        event_params['FAR'] = str(round(1./float(params['FAR'])/60./60./24./365.,2))+' Years'
     except:
         event_params['FAR'] = '-999.'
     try:
@@ -204,13 +256,13 @@ def process_gcn(payload, root):
     except:
         event_params['ChirpMass'] = '-999.'
     try:
-        event_params['MaxDistance'] = str(root.find("./What/Param[@name='MaxDistance']").attrib['value'])+' '+str(root.find("./What/Param[@name='MaxDistance']").attrib['unit'])
-        if event_params['MaxDistance'] < 0.:
+        event_params['MaxDistance'] = str(params['Distance'])
+        if float(event_params['MaxDistance'].split()[0]) < 0.:
             event_params['MaxDistance'] = '60.0 Mpc'
     except:
         event_params['MaxDistance'] = '60. Mpc'
     try:
-        event_params['boc'] = str(root.find("./What/Param[@name='Group']").attrib['value'])
+        event_params['boc'] = str(params['Group'])
     except:
         event_params['boc'] = 'Not Available'
     try:
@@ -218,8 +270,7 @@ def process_gcn(payload, root):
     except:
         event_params['CentralFreq'] = '-999.'
     try:
-        event_params['probhasns'] = str(root.find("./What/Param[@name='ProbHasNS']").attrib['value']) + ' ' + str(
-            root.find("./What/Param[@name='ProbHasNS']").attrib['unit'])
+        event_params['probhasns'] = str(params['BNS'])
     except:
         event_params['probhasns'] = '0.'
 
@@ -234,13 +285,15 @@ def process_gcn(payload, root):
 
 
     #if config.mode.lower() == 'observation':
+
     try:
-        sendFirstTriggerEmail(trigger_id,event_params['FAR'],mapname=skymap_url.split('/')[-1].split('.')[0])
+        sendFirstTriggerEmail(trigger_id,event_params['FAR'],mapname=skymap_url.split('/')[-1].split('.')[0],retraction=alerttype)
     except:
-        sendFirstTriggerEmail(trigger_id,event_params['FAR'])
+        sendFirstTriggerEmail(trigger_id,event_params['FAR'],retraction=alerttype)
     print 'Trigger ID HEERERERERE '+trigger_id
     #save payload to file
-    open(os.path.join(outfolder,trigger_id+'_payload.xml'), 'w').write(payload)
+    if not dontwritepayload:
+        open(os.path.join(outfolder,trigger_id+'_payload.xml'), 'w').write(payload)
     #save url to file
     open(os.path.join(outfolder,trigger_id+'_skymapURL.txt'), 'w').write(skymap_url)
     #save mjd to file
@@ -271,18 +324,25 @@ def process_gcn(payload, root):
     #if skymap_url.split('/')[-1] == 'bayestar.fits.gz':
     args = ['python', 'recycler.py','--skymapfilename='+skymap_filename, '--triggerpath='+config.trigger_outpath, '--triggerid='+trigger_id, '--mjd='+str(trigger_mjd)]    
     print 'ARGSSSSSSSSSSSSSSSSSSSSS'
-    print args
+    for arg in args:
+        print arg,
+    print ''
     #os.mkdir(os.path.join(config.trigger_outpath,trigger_id))
-    os.mkdir(os.path.join(config.trigger_outpath,trigger_id,skymap_filename.split('/')[-1].split('.')[0]))
-    f = open(os.path.join(config.trigger_outpath,trigger_id,skymap_filename.split('/')[-1].split('.')[0],skymap_filename.split('/')[-1].split('.')[0]+'recycler.log'), "w")
+    try:
+        os.mkdir(os.path.join(config.trigger_outpath,trigger_id,skymap_filename.split('/')[-1].split('.')[0]))
+    except:
+        print 'path exists'
+    f = open(os.path.join(config.trigger_outpath,trigger_id,skymap_filename.split('/')[-1].split('.')[0],skymap_filename.split('/')[-1].split('.')[0]+'_recycler.log'), "w")
     subprocess.Popen(args,stdout=f,stderr=f)
     f.close()
     #Need to send an email here saying analysis code was fired
     
-    print 'Finished downloading, fired off job, listening again...'
+    print 'Finished downloading, fired off job'
+    print 'See log here: '+ os.path.join(config.trigger_outpath,trigger_id,skymap_filename.split('/')[-1].split('.')[0],skymap_filename.split('/')[-1].split('.')[0]+'_recycler.log')
 
 from threading import Timer
 def imAliveEmail():
+
     import smtplib
     from email.mime.text import MIMEText
     
@@ -306,28 +366,95 @@ def imAliveEmail():
     print 'Im alive email sent...'
     Timer(43200,imAliveEmail).start()
 
+from datetime import datetime
+def imAliveHTML():
+    current_time = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S")
+
+    f = open('imalive.html','w')
+    f.write('<!doctype html><html><head>\
+    <title>Is Main Injector Alive</title></head><body>\
+    <p>Most recent Main Injector timestamp was: </p><p><break><strong>'+current_time+' GMT</strong></p><break>If this is >10 minutes older than now: <strong><p id="datetime"></p></strong><break><p>Then something could be wrong and please notify Dillon Brout: dbrout@physics.upenn.edu and +1 215-300-8763</p>\
+<script>\
+var dt = new Date();\
+document.getElementById("datetime").innerHTML = dt.toUTCString();\
+</script>\
+</body></html>')
+    f.close()
+    Timer(500,imAliveHTML).start()
+    os.system('scp imalive.html codemanager@desweb.fnal.gov:/des_web/www/html/desgw/')
+
     return
 
+def kinit():
+    os.system('kinit -k -t /var/keytab/desgw.keytab desgw/des/des41.fnal.gov@FNAL.GOV')
+    Timer(43000,kinit).start()
 
-if config.mode.lower() == 'test':
-    pass
-elif config.mode.lower() == 'observation':
-    pass
-else:
-    KeyError('checkevent_config.py Mode must be set to either test or observation.\nExiting...')
 
-import logging
+
+
+import getopt
+if __name__ == "__main__":
+
+    try:
+        args = sys.argv[1:]
+        opt, arg = getopt.getopt(
+            args, "pl:lm",
+            longopts=["payload=", "ligomap=", ])
+
+    except getopt.GetoptError as err:
+        print(str(err))
+        print("Error : incorrect option or missing argument.")
+        print(__doc__)
+        sys.exit(1)
+
+
+
+    if config.mode.lower() == 'test':
+        #os.system('curl -O https://emfollow.docs.ligo.org/userguide/_static/MS181101ab-1-Preliminary.xml')
+        #import lxml.etree
+        #from xml import etree
+        import xml.etree.ElementTree as ET
+        tree = ET.parse('MS181101ab-1-Preliminary.xml')
+        root = tree.getroot()
+        payload = open('MS181101ab-1-Preliminary.xml', 'rb').read()
+        #root = lxml.etree.fromstring(payload)
+        process_gcn(payload, root)
+        #KeyError('DONE!')
+        sys.exit()
+    if config.mode.lower() == 'mdc':
+        pass
+    elif config.mode.lower() == 'observation':
+        pass
+    else:
+        KeyError('checkevent_config.py Mode must be set to either test or observation.\nExiting...')
+
+    import logging
 # Set up logger
-logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO)
 
+
+    #try:
+    runnow=False
+    for o,a in opt:
+        if o in ['--payload']:
+            payloadpath=a
+            payload=open(payloadpath).readlines()
+            import xml.etree.ElementTree as ET
+            tree = ET.parse(payloadpath)
+            root = tree.getroot()
+            process_gcn(payload, root,dontwritepayload=True)
+            runnow=True
+    #except:
+    if not runnow:
 #Start timer - use threading to say I'm Alive
-print 'Started Threading'
-imAliveEmail()
-
+        print 'Started Threading'
+        #imAliveEmail()
+        imAliveHTML()
+        kinit()
 # Listen for GCNs until the program is interrupted
 # (killed or interrupted with control-C).
-print 'Listening...'
-gcn.listen(host='68.169.57.253', port=8096, handler=process_gcn)
+        print 'Listening...'
+        gcn.listen(port=8096, handler=process_gcn)
 #gcn.listen(host='68.169.57.253', port=8096, handler=process_gcn,im_alive_filename='/data/des41.a/data/desgw/maininjector/imalivetest.txt')
 
 #IF YOU END UP HERE THEN SEND AN EMAIL AND REBOOT

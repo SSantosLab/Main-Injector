@@ -1,3 +1,7 @@
+debug : False
+camera: decam
+resolution : 64
+
 trigger_path  : '/data/des41.a/data/desgw/maininjector_devel_annis/test-triggers'
 # not accurate dates
 start_of_season : 57444.
@@ -18,7 +22,7 @@ rate_of_ns_in_O2:  2.0  # n/yr, NS merger triggers per year in observing run 2
 
 # epoch structures. For each epoch the begin date must be set
 # NS strategy
-nepochs_NS : 4
+nepochs_NS : 3
 epoch1_NS  : 0 # start of epoch 1 in days since burst
 epoch2_NS  : 2 # start of epoch 2 in days since burst
 epoch3_NS  : 4 # start of epoch 3 in days since burst

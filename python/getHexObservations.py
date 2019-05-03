@@ -62,7 +62,7 @@ def prepare(skymap, trigger_id, data_dir, mapDir, camera,
         overhead=30., maxHexesPerSlot=6,
         start_days_since_burst = 0, skipHexelate=False, skipAll=False, 
         this_tiling = "", reject_hexes = "",
-        onlyHexesAlreadyDone="", 
+        onlyHexesAlreadyDone="",forcedistance=False, 
         saveHexalationMap=True, doOnlyMaxProbability=False, 
         resolution=256, trigger_type="NS", 
         halfNight = False, firstHalf= True, debug= False) :
@@ -84,7 +84,7 @@ def prepare(skymap, trigger_id, data_dir, mapDir, camera,
     start_mjd = burst_mjd + start_days_since_burst
     #if not debug: 
     # hack
-    print "cleaning up"
+    print "\t cleaning up"
     files = glob.glob(mapDir+"/*png"); 
     for f in files: os.remove(f)
     files = glob.glob(mapDir+"/*json"); 
@@ -93,15 +93,17 @@ def prepare(skymap, trigger_id, data_dir, mapDir, camera,
     for f in files: os.remove(f)
     files = glob.glob(mapDir+"/*txt"); 
     for f in files: os.remove(f)
-        
+    print "done cleaning up"
 
     exposure_list = np.array(exposure_list)
     filter_list = np.array(filter_list)
     ix = filter_list == "i"
     exposure_length = exposure_list[ix].sum()
+    print "obs slots starting"
 
     answers = obsSlots.slotCalculations( burst_mjd, exposure_list, overhead, 
         hexesPerSlot=maxHexesPerSlot) 
+    print "obs slots done"
     hoursPerNight = answers["hoursPerNight"] ;# in minutes
     slotDuration = answers["slotDuration"] ;# in minutes
     deltaTime = slotDuration/(60.*24.) ;# in days
@@ -127,18 +129,23 @@ def prepare(skymap, trigger_id, data_dir, mapDir, camera,
         return probs, times, slotDuration, hoursPerNight
         
     # ==== get the neutron star explosion models
-    models = modelRead.getModels()
+    print "getting models"
 
+    models = modelRead.getModels()
+    print "got models"
+    print skymap
     # === prep the maps
     ra,dec,ligo=hp2np.hp2np(skymap, degrade=resolution, field=0)
+    print "got map"
     ligo_dist, ligo_dist_sig, ligo_dist_norm  = \
         distance*np.ones(ra.size), np.zeros(ra.size), np.zeros(ra.size)
-    try :
-        junk,junk,ligo_dist =hp2np.hp2np(skymap, degrade=resolution, field=1)
-        junk,junk,ligo_dist_sig =hp2np.hp2np(skymap, degrade=resolution, field=2)
-        junk,junk,ligo_dist_norm =hp2np.hp2np(skymap, degrade=resolution, field=3)
-    except:
-        print "\t !!!!!!!! ------- no distance information in skymap ------ !!!!!!!!"
+    if not forcedistance:
+        try :
+            junk,junk,ligo_dist =hp2np.hp2np(skymap, degrade=resolution, field=1)
+            junk,junk,ligo_dist_sig =hp2np.hp2np(skymap, degrade=resolution, field=2)
+            junk,junk,ligo_dist_norm =hp2np.hp2np(skymap, degrade=resolution, field=3)
+        except:
+            print "\t !!!!!!!! ------- no distance information in skymap ------ !!!!!!!!"
     # GW170217 hack JTA
     #ix = (ra > 0) & ( ra < 180) & (dec >= -30)
     #ix = np.invert(ix)
@@ -147,11 +154,11 @@ def prepare(skymap, trigger_id, data_dir, mapDir, camera,
     #ix = (dec >= 2)
     #ligo[ix] = 0.0
     # GW170814 hack JTA
-    ix = (ra > -10) & ( ra < 60) & (dec < -20)
-    ix = np.invert(ix)
-    ligo[ix] = 0.0
+    #ix = (ra > -10) & ( ra < 60) & (dec < -20)
+    #ix = np.invert(ix)
+    #ligo[ix] = 0.0
 
-    obs = mags.observed(ra,dec,ligo, start_mjd, verbose=False)
+    obs = mags.observed(ra,dec,ligo, start_mjd+.3, verbose=False)
     obs.limitMag("i",exposure=exposure_length)
     print "finished setting up exposure calculation"
 
@@ -166,8 +173,7 @@ def prepare(skymap, trigger_id, data_dir, mapDir, camera,
         print "=============>>>> prepare: using cached maps"
         return probs, times, slotDuration
     #if debug :
-        #return  obs, trigger_id, burst_mjd, ligo, ligo_dist, ligo_dist_sig, \
-        #    models, times, probs, mapDir
+        #return  obs, trigger_id, burst_mjd, ligo, ligo_dist, ligo_dist_sig, models, times, probs, mapDir
     if doOnlyMaxProbability :
         if len(probs) == 0 : return [0,],[0,],[0,],[0,]
         ix = np.argmax(probs)
@@ -241,7 +247,7 @@ def contemplateTheDivisionsOfTime(
 def now(n_slots, mapDirectory="jack/", simNumber=13681, 
         mapZero=0, maxHexesPerSlot=5, 
         exposure_list = [90,90,90], filter_list=["i","z","z"],
-        trigger_type = "NS", skipJson = False ) :
+        trigger_type = "NS", skipJson = False, propid= None ) :
     # if the number of slots is zero, nothing to observe or plot
     if n_slots == 0: 
         return 0
@@ -265,7 +271,7 @@ def now(n_slots, mapDirectory="jack/", simNumber=13681,
         turnObservingRecordIntoJSONs(
             ra,dec,id,prob,mjd,slotNumbers, simNumber, 
             exposure_list=exposure_list, filter_list=filter_list, 
-            trigger_type=trigger_type, mapDirectory=mapDirectory) 
+            trigger_type=trigger_type, mapDirectory=mapDirectory, propid=propid) 
 
     # shall we measure the total ligo probability covered?
     return maxProb_slot
@@ -390,7 +396,9 @@ def nothingToObserveShowSomething(simNumber, data_dir, mapDir) :
     ix = np.argmax(prob)
     try:
         slot = np.int(slotNum[ix])
+        title = "slot {} hex maxProb {:.6f}, nothing to observe".format(slot, prob[ix])
     except:
+        print "nothingToObserveShowSomething: fiasco."
         print "ra",ra
         print "dec",dec
         print "id",id
@@ -399,8 +407,10 @@ def nothingToObserveShowSomething(simNumber, data_dir, mapDir) :
         print "slotNum", slotNum
         print "ix",ix
         print "ix index",np.nonzero(ix)
-        raise Exception("this failed once, but ran fine when I did it in the directory. NSF thing?")
-    title = "slot {} hex maxProb {:.6f}, nothing to observe".format(slot, prob[ix])
+        print "nothingToObserveShowSomething: fiasco. attempting to go on"
+        slot = 0
+        #raise Exception("this failed once, but ran fine when I did it in the directory. NSF thing?")
+        title = "slot {} hex maxProb {:.6f}, nothing to observe".format("nothing", 0.0)
     counter = equalAreaPlot(figure,slot,simNumber,data_dir,mapDir,title) 
     return counter
 #
@@ -460,7 +470,7 @@ def hoursPerNight (mjd) :
     
 def turnObservingRecordIntoJSONs(
         ra,dec,id,prob,mjd,slotNumbers, simNumber, 
-        exposure_list, filter_list, trigger_type, mapDirectory) :
+        exposure_list, filter_list, trigger_type, mapDirectory, propid) :
     seqtot =  ra.size
     seqzero = 0
 
@@ -470,7 +480,7 @@ def turnObservingRecordIntoJSONs(
         slotMJD = mjd[ix][0]  ;# just get first mjd in this slot
         tmpname, name = jsonUTCName(slot, slotMJD, simNumber, mapDirectory)
         jsonMaker.writeJson(ra[ix],dec[ix],id[ix],
-            simNumber, seqzero, seqtot, exposureList= exposure_list, 
+            simNumber, seqzero, seqtot, exposureList= exposure_list, propid=propid,
             filterList= filter_list, trigger_type=trigger_type, jsonFilename=tmpname)
 
         desJson(tmpname, name, mapDirectory) 
@@ -518,7 +528,7 @@ def jsonName (slot, utcString, simNumber, mapDirectory) :
 
 def jsonFromRaDecFile(radecfile, nslots, slotZero, 
         hexesPerSlot, simNumber, mjdList, trigger_type, data_dir) :
-    ra,dec = np.genfromtxt(radecfile, unpack=True,usecols=(0,1),comments="#")
+    ra,dec = np.genfromtxt(radecfile, unpack=True,usecols=(0,1),comments="#",propid="propid")
 
     seqtot =  ra.size
     seqzero = 0
@@ -539,7 +549,7 @@ def jsonFromRaDecFile(radecfile, nslots, slotZero,
                 simNumber,data_dir)
             jsonMaker.writeJson(slotRa,slotDec, 
                 simNumber, seqzero+(hexesPerSlot*(slot-slotZero)), 
-                seqtot, trigger_type, jsonFilename=tmpname)
+                seqtot, trigger_type, jsonFilename=tmpname, propid=propid)
             desJson(tmpname, name, data_dir) 
             counter = 0
             slot += 1
@@ -550,7 +560,7 @@ def jsonFromRaDecFile(radecfile, nslots, slotZero,
             simNumber,data_dir)
         jsonMaker.writeJson(slotRa,slotDec, 
             simNumber, seqzero+(hexesPerSlot*(slot-slotZero)), 
-            seqtot, trigger_type, jsonFilename=tmpname)
+            seqtot, trigger_type, jsonFilename=tmpname, propid=propid)
         desJson(tmpname, name, data_dir) 
         
 # ==================================
