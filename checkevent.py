@@ -429,14 +429,6 @@ if __name__ == "__main__":
 # Set up logger
     logging.basicConfig(level=logging.INFO)
 
-<<<<<<< HEAD
-=======
-#Start timer - use threading to say I'm Alive
-print 'Started Threading'
-imAliveEmail()
-# if debugging, comment out the above
->>>>>>> 790bf63a8b2bd39e95bae65ddfb4645e609cbe20
-
     #try:
     runnow=False
     for o,a in opt:
@@ -457,15 +449,8 @@ imAliveEmail()
         kinit()
 # Listen for GCNs until the program is interrupted
 # (killed or interrupted with control-C).
-<<<<<<< HEAD
+
         print 'Listening...'
         gcn.listen(port=8096, handler=process_gcn)
-=======
-#   https://gcn.gsfc.nasa.gov/voevent.html
-print 'Listening...'
-#gcn.listen(host='209.208.78.170', port=8099, handler=process_gcn)  ;# public. no LVC alerts
-gcn.listen(host='68.169.57.253', port=8096, handler=process_gcn)
->>>>>>> 790bf63a8b2bd39e95bae65ddfb4645e609cbe20
-#gcn.listen(host='68.169.57.253', port=8096, handler=process_gcn,im_alive_filename='/data/des41.a/data/desgw/maininjector/imalivetest.txt')
 
 #IF YOU END UP HERE THEN SEND AN EMAIL AND REBOOT

@@ -1,4 +1,5 @@
 #!/bin/sh
+
 export DESGW_DATA_DIR="data/"
 export PYTHONPATH="./python/:/data/des41.a/data/desgw/osgsetup/eeups/fnaleups/Linux64/lxml/v3.4.4/lib/python/:$PYTHONPATH"
 
