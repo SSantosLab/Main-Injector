@@ -17,6 +17,7 @@ import subprocess
 import time
 import checkevent_config as config
 import send_texts_and_emails
+official = False
 
 def sendFirstTriggerEmail(trigger_id,far,mapname='NA',retraction=0):
     import smtplib
@@ -46,7 +47,8 @@ def sendFirstTriggerEmail(trigger_id,far,mapname='NA',retraction=0):
     #for y in you:
     #    try:
     subject =  plus+' Trigger '+trigger_id+' FAR: '+str(far)+' Map: '+mapname+' NOREPLY'
-    send_texts_and_emails.send(subject,text)
+    global official
+    send_texts_and_emails.send(subject,text,official)
             #msg['From'] = me
             #msg['To'] = y
             
@@ -396,7 +398,7 @@ if __name__ == "__main__":
         args = sys.argv[1:]
         opt, arg = getopt.getopt(
             args, "pl:lm",
-            longopts=["payload=", "ligomap=", ])
+            longopts=["payload=", "ligomap=", "official",])
 
     except getopt.GetoptError as err:
         print(str(err))
@@ -404,7 +406,7 @@ if __name__ == "__main__":
         print(__doc__)
         sys.exit(1)
 
-
+    global official
 
     if config.mode.lower() == 'test':
         #os.system('curl -O https://emfollow.docs.ligo.org/userguide/_static/MS181101ab-1-Preliminary.xml')
@@ -430,7 +432,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     #try:
-    runnow=False
+    #runnow=False
     for o,a in opt:
         if o in ['--payload']:
             payloadpath=a
@@ -440,17 +442,19 @@ if __name__ == "__main__":
             root = tree.getroot()
             process_gcn(payload, root,dontwritepayload=True)
             runnow=True
+        if o in ['--official']:
+            official = True
     #except:
-    if not runnow:
+    #if not runnow:
 #Start timer - use threading to say I'm Alive
-        print 'Started Threading'
+    print 'Started Threading'
         #imAliveEmail()
-        imAliveHTML()
-        kinit()
+    imAliveHTML()
+    kinit()
 # Listen for GCNs until the program is interrupted
 # (killed or interrupted with control-C).
 
-        print 'Listening...'
-        gcn.listen(port=8096, handler=process_gcn)
+    print 'Listening...'
+    gcn.listen(port=8096, handler=process_gcn)
 
 #IF YOU END UP HERE THEN SEND AN EMAIL AND REBOOT

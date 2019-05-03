@@ -4,10 +4,13 @@ import smtplib
 import requests
 
 
-def send(subject,text):
-    import MIalerts as config
-    del config
-    import MIalerts as config
+def send(subject,text,official=False):
+    #import MIalerts as config
+    #del config
+    #import MIalerts as config
+
+    if not official:
+        return
 
     msg = MIMEText(text)
     
@@ -23,14 +26,14 @@ def send(subject,text):
 
     me = 'automated-desGW@fnal.gov'
     you = []
-    if config.sendEveryoneEmails:
+    if official:
         for email in people['email']:
             #if not p[0] == '#':
             you.append(email.replace('\t','').replace(' ',''))
-    else:
-        you = ['djbrout@gmail.com']
+    #else:
+    #    you = ['djbrout@gmail.com']
 
-    if config.sendEveryoneTexts:
+    if official:
         for phone in people['phone']:
             if not phone == 'none':
                 #if not p[0] == '#':
@@ -41,9 +44,8 @@ def send(subject,text):
         report["value2"] = text
         requests.post("https://maker.ifttt.com/trigger/desgwtrigger/with/key/dmCI74bFTHzz2uCOIevguh", data=report)            
 
-    else:
-        you.append('2153008763@mms.att.net')
-
+    #else:
+    #    you.append('2153008763@mms.att.net')
 
     for y in you:
         try:
@@ -62,4 +64,3 @@ def send(subject,text):
         
 
 #send('This is just a test #6 DO NOT REPLY VIA EMAIL','LOOK AT SLACK PAGE, cross your fingers, should be instant...')
-#
