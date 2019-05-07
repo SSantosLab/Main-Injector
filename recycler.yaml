@@ -87,7 +87,7 @@ maxHexesPerSlot_BH : 18  # related to maxHexesPerSlot_NS by x3 for x3 less image
 
 ####Only used for running recycler.py standalone!####
 
-trigger_id : "S190426c"
+trigger_id : "MS190327o"
 wrap_all_triggers : False
 
 mjd : 57974.3530295
@@ -96,5 +96,5 @@ force_mjd : False
 recycler_mjd : 57979.5
 force_recycler_mjd : False
 
-skymap_filename : './OUTPUT/O3REAL/S190426c/bayestar1/bayestar1.fits.gz'
+skymap_filename : './OUTPUT/TESTING/MS190327o/bayestar.fits.gz'
 
