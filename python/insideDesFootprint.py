@@ -16,7 +16,7 @@ def getFootprint() :
 def getFootprintRaDec() :
     import os
     gw_data_dir          = os.environ["DESGW_DATA_DIR"]
-    footFile = gw_data_dir + "round13-poly.txt"
+    footFile = gw_data_dir + "round19_v0.txt"
     #ra,dec = np.genfromtxt(footFile,unpack=True,skiprows=30)
     ra,dec = np.genfromtxt(footFile,unpack=True,comments="#")
     return ra,dec

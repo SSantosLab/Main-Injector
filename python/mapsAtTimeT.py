@@ -1,6 +1,8 @@
 import numpy as np
 import healpy as hp
 import os
+import decam2hp
+import hexalate
 
 import sourceProb
 import modelRead
@@ -54,10 +56,14 @@ import modelRead
 #   deltaTime = 0.223*2 ;# twice as long slots, (8 hexes/slot)
 
 
-def oneDayOfTotalProbability (obs, mjd, spatial, distance, distance_sig, 
-        models, deltaTime=0.0223, start_mjd = 0, 
-        probTimeFile="probTime.txt", trigger_type="NS",
-        halfNight = False, firstHalf= True) :
+def oneDayOfTotalProbability (obs, models, deltaTime, start_mjd, 
+        probTimeFile, gw_map_trigger, gw_map_control) :
+
+    mjd = gw_map_trigger.burst_mjd
+    trigger_type = gw_map_trigger.trigger_type
+    spatial = gw_map_trigger.ligo
+    distance = gw_map_trigger.ligo_dist
+    distance_sig= gw_map_trigger.ligo_dist_sig
 
     # the work.
     start_of_days=0
@@ -69,8 +75,7 @@ def oneDayOfTotalProbability (obs, mjd, spatial, distance, distance_sig,
         start_mjd = start_mjd, 
         startOfDays=start_of_days, endOfDays=end_of_days,
         deltaTime=deltaTime, probTimeFile=probTimeFile,
-        trigger_type=trigger_type, 
-        halfNight = halfNight, firstHalf= firstHalf) 
+        trigger_type=trigger_type)
 
     return totalProbs,times
 
@@ -79,7 +84,7 @@ def manyDaysOfTotalProbability (
         models, start_mjd=0,
         startOfDays=0, endOfDays=11, deltaTime=0.0223, 
         probTimeFile="probTime.txt", trigger_type="NS",
-        halfNight = False, firstHalf= True, verbose=True) :
+        verbose=True) :
     times = []
     totalProbs = []
 
@@ -115,17 +120,8 @@ def manyDaysOfTotalProbability (
     # an attempt to deal with half nights
     # if successful, these two booleans should go in yaml
     # somehow and be passed down to here
-    #halfNight = True; firstHalf= True
     darkCount = np.nonzero(isDark)[0]
-    if halfNight:
-        darkHalfSize = np.int(np.round(darkCount.size/2.))
-        if firstHalf:
-            darkCount = darkCount[:darkHalfSize]
-        else :
-            darkCount = darkCount[darkHalfSize:]
-        tp = totalProbs
-        totalProbs = totalProbs*0.0
-        totalProbs[darkCount] = tp[darkCount]
+
     # informational
     if verbose: print "total all-sky summed probability of detection:"
     if verbose: print totalProbs
@@ -171,10 +167,9 @@ def probabilityMaps(obs, mjdOfBurst, daysSinceBurst, \
         spatial, distance, distance_sig, models,
         filter="i", exposure=180, trigger_type="NS") :
     obs.resetTime(mjdOfBurst+daysSinceBurst)
-    sm=sourceProb.map(obs, type=trigger_type);  
 
     sunIsUp = obs.sunBrightnessModel(obs.sunZD)
-    if sunIsUp: return obs, sm, sunIsUp
+    if sunIsUp: return obs, "sm", sunIsUp
 
     obs.limitMag(filter, exposure=exposure)
     if trigger_type == "NS" :
@@ -191,7 +186,8 @@ def probabilityMaps(obs, mjdOfBurst, daysSinceBurst, \
         # then the sm.calculateProb assumes a source ap mag of 20,
         # and builds a source probality map where 1 if limit_mag > 20.
         distance_sig = distance_sig*0
-    sm.searchDistance = np.array([distance,])
+    sm=sourceProb.map(obs, type=trigger_type);  
+    #sm.searchDistance = np.array([distance,])   # why did I have this? Really?
     result = sm.calculateProb(spatial, distance, distance_sig)
     if not result:
         sunIsUp = 1
@@ -213,13 +209,22 @@ def probabilityMaps(obs, mjdOfBurst, daysSinceBurst, \
 # ra,decs that are already done, and these will replace the
 # all sky hexes
 # 
-def probabilityMapSaver (obs, sim, mjd, ligo, distance, distance_sig,
-        models, times, probabilities, data_dir, debug, camera,
-        onlyHexesAlreadyDone="", reject_hexes="",
-        performHexalatationCalculation=True, trigger_type="NS") :
-    import decam2hp
-    import hexalate
-    import os
+def probabilityMapSaver (obs, models, times, probabilities,
+        gw_map_trigger, gw_map_strategy, gw_map_control,
+        performHexalatationCalculation=True) :
+    mjd          = gw_map_trigger.burst_mjd
+    trigger_id   = gw_map_trigger.trigger_id
+    trigger_type = gw_map_trigger.trigger_type
+    ligo         = gw_map_trigger.ligo
+    distance     = gw_map_trigger.ligo_dist
+    distance_sig = gw_map_trigger.ligo_dist_sig
+    camera       = gw_map_strategy.camera
+    debug        = gw_map_control.debug
+    reject_hexes = gw_map_control.reject_hexes
+    data_dir     = gw_map_control.datadir
+    #onlyHexesAlreadyDone  = gw_map_control.this_tiling
+    onlyHexesAlreadyDone  = []
+
     # one reads the tiling 9 hex centers as that is our default position
     gw_data_dir          = os.environ["DESGW_DATA_DIR"]
     hexFile = gw_data_dir + "all-sky-hexCenters-"+camera+".txt"
@@ -238,7 +243,7 @@ def probabilityMapSaver (obs, sim, mjd, ligo, distance, distance_sig,
             if prob <= prob_slots : 
                 performHexalatationCalculation = False
         #print "probabilityMapSaver: counter, time= ", counter, time
-        if time < 0.06: time = 0.06 ;# if less than 1.5 hours, set to 1.5 hours
+        #if time < 0.06: time = 0.06 ;# if less than 1.5 hours, set to 1.5 hours
         print "================== map save =====>>>>>>>>===== ",
         print "slot {} | hours since Time Zero: {:.1f}".format(counter, time*24.),
         if prob <= 0 : 
@@ -257,7 +262,7 @@ def probabilityMapSaver (obs, sim, mjd, ligo, distance, distance_sig,
         # sm.prob = limiting mag convolve abmag convolve volume
         # sm.probMap = total prob map
         # hexRa,hexDec,hexVals
-        nameStem = os.path.join(data_dir, str(sim) + "-{}".format(str(counter)))
+        nameStem = os.path.join(data_dir, str(trigger_id) + "-{}".format(str(counter)))
         print "\t Writing files as {}".format(nameStem)
 
         name = nameStem + "-ra.hp"
@@ -327,8 +332,10 @@ def probabilityMapSaver (obs, sim, mjd, ligo, distance, distance_sig,
             
             f = open(name,'w')
             for j in range(0,raHexen.size) :
+                #pix = hp.ang2pix(npix2nside(ligo.size), raHexen[j],decHexen[j], lonlat=True)
                 f.write("{:.6f}, {:.5f}, {:s}, {:.4e}, {:d}, {:.4f}\n".format(
-                    raHexen[j],decHexen[j],idHexen[j],hexVals[j],rank[j],(np.asfarray(rank*0.)+(mjd+time))[j]))
+                    raHexen[j],decHexen[j],idHexen[j],hexVals[j],rank[j],
+                    (np.asfarray(rank*0.)+(mjd+time))[j]))
             f.close()
             #np.savetxt(name,data.T,fmt="%.6f, %.5f, %s, %.4e, %d, %.4f")
     

@@ -139,14 +139,21 @@ class map(object):
         absMag_var = self.absMagSigma**2
 
         test_sum = ligo_d_var.sum()
-        if test_sum == 0 :
-            # we are in the case where there is no distance field, so no distance info
-            ap_mag = 20.0
-            ix = (ap_mag < limitingMag)
+        if 1 == 1 :
+            # we wish to defeat the probabilty calculation for the time being
+            # May 2019
+            prob_map = np.ones(ligo_spatial.size)
+            print "Defeating source probability calculation- probs set to 1."
+            # the telescope limits will put a boundary on this
 
-            prob_map = np.zeros(ligo_spatial.size)
-            prob_map = 0.0*prob_map
-            prob_map[ix] = 1.0
+        #if test_sum == 0 :
+            # we are in the case where there is no distance field, so no distance info
+            #ap_mag = 20.0
+            #ix = (ap_mag < limitingMag)
+
+            #prob_map = np.zeros(ligo_spatial.size)
+            #prob_map = 0.0*prob_map
+            #prob_map[ix] = 1.0
 
         else :
 # we can't afford to do every pixel. 
@@ -182,6 +189,7 @@ class map(object):
                 prob = prob/norm 
                 prob_map[pix] = prob
                 ic += 1
+            print "\t probMap: made for source absMag {:.1f}".format(absMag_mean)
 
 # probability of recognition propto star density
         prob_map = prob_map * self.precog
@@ -189,7 +197,6 @@ class map(object):
         prob_map = prob_map * telescopeLimits
 
         self.probMap = prob_map
-        print "\t probMap: made for source absMag {:.1f}".format(absMag_mean)
         return 1 
 
 #

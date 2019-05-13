@@ -24,25 +24,26 @@ license="""
 
 # tru cmap = gray_r
 def plot(x, y, vals, gridsize=160, save=False, file="", vmin="", vmax="", cmap="jet", sum=False) :
+    ax1 = plt.axes()
     if vmin > vals.max() : vmin = ""
     if vmax < vals.min() : vmax = ""
     if vmin == "" and vmax == "":
-        plt.hexbin(x,y,vals,gridsize=gridsize, cmap=cmap);  
+        polycol = ax1.hexbin(x,y,vals,gridsize=gridsize, cmap=cmap);  
     elif vmax == "" :
-        plt.hexbin(x,y,vals,gridsize=gridsize, vmin=vmin, cmap=cmap);  
+        polycol = ax1.hexbin(x,y,vals,gridsize=gridsize, vmin=vmin, cmap=cmap);  
     elif vmin == "" :
-        plt.hexbin(x,y,vals,gridsize=gridsize, vmax=vmax, cmap=cmap);  
+        polycol = ax1.hexbin(x,y,vals,gridsize=gridsize, vmax=vmax, cmap=cmap);  
     else :
         if sum:
             print "\t sum!"
-            plt.hexbin(x,y,vals,gridsize=gridsize, vmin=vmin, vmax=vmax, cmap=cmap, reduce_C_function=np.sum);  
+            polycol = ax1.hexbin(x,y,vals,gridsize=gridsize, vmin=vmin, vmax=vmax, cmap=cmap, reduce_C_function=np.sum);  
         else :
-            plt.hexbin(x,y,vals,gridsize=gridsize, vmin=vmin, vmax=vmax, cmap=cmap);  
-    plt.axes().set_aspect('equal'); 
-    plt.colorbar(shrink=0.5,pad=0.03); 
-    plt.axes().set_frame_on(False); 
-    plt.axes().set_xticks([]); 
-    plt.axes().set_yticks([])
+            polycol = ax1.hexbin(x,y,vals,gridsize=gridsize, vmin=vmin, vmax=vmax, cmap=cmap);  
+    ax1.set_aspect('equal'); 
+    ax1.set_frame_on(False); 
+    ax1.set_xticks([]); 
+    ax1.set_yticks([])
+    plt.colorbar(polycol, ax=ax1)
     if save :
         plt.savefig(file, bbox_inches='tight')
 
