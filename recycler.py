@@ -134,8 +134,8 @@ class event:
         mapDir = self.mapspath
         recycler_mjd = self.recycler_mjd
         # JTA
-        print ("mainInjector ",trigger_id, skymap, mjd, outputDir)
-        raise Exception("here")
+        #print ("mainInjector ",trigger_id, skymap, mjd, outputDir)
+        #raise Exception("here")
 
         start_days_since_burst = self.recycler_mjd - self.mjd
 
