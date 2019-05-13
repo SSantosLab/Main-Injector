@@ -117,32 +117,54 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     for f in files: os.remove(f)
     files = glob.glob(data_dir+"/*txt"); 
     for f in files: os.remove(f)
-        
+    print "done cleaning up"
 
     exposure_list = np.array(exposure_list)
     filter_list = np.array(filter_list)
     ix = filter_list == "i"
     exposure_length = exposure_list[ix].sum()
+    print "obs slots starting"
 
     answers = obsSlots.slotCalculations( burst_mjd, exposure_list, overhead, 
         hexesPerSlot=maxHexesPerSlot) 
+    print "obs slots done"
     hoursPerNight = answers["hoursPerNight"] ;# in minutes
     slotDuration = answers["slotDuration"] ;# in minutes
     deltaTime = slotDuration/(60.*24.) ;# in days
 
         
     # ==== get the neutron star explosion models
+    print "getting models"
+
     models = modelRead.getModels()
-
+    print "got models"
+    print skymap
     # === prep the maps
-    ra             = gw_map_trigger.ligo_ra
-    dec            = gw_map_trigger.ligo_dec
-    ligo           = gw_map_trigger.ligo
-    ligo_dist      = gw_map_trigger.ligo_dist
-    lig_dist_sig   = gw_map_trigger.ligo_dist_sig
-    ligo_dist_norm = gw_map_trigger.ligo_norm
+    ra,dec,ligo=hp2np.hp2np(skymap, degrade=resolution, field=0)
+    print "got map"
+    ligo_dist, ligo_dist_sig, ligo_dist_norm  = \
+        distance*np.ones(ra.size), np.zeros(ra.size), np.zeros(ra.size)
+    if not forcedistance:
+        try :
+            junk,junk,ligo_dist =hp2np.hp2np(skymap, degrade=resolution, field=1)
+            junk,junk,ligo_dist_sig =hp2np.hp2np(skymap, degrade=resolution, field=2)
+            junk,junk,ligo_dist_norm =hp2np.hp2np(skymap, degrade=resolution, field=3)
+        except:
+            print "\t !!!!!!!! ------- no distance information in skymap ------ !!!!!!!!"
+    # GW170217 hack JTA
+    #ix = (ra > 0) & ( ra < 180) & (dec >= -30)
+    #ix = np.invert(ix)
+    #ligo[ix] = 0.0
+    # GW170225 hack JTA
+    #ix = (dec >= 2)
+    #ligo[ix] = 0.0
+    # GW170814 hack JTA
+    #ix = (ra > -10) & ( ra < 60) & (dec < -20)
+    #ix = np.invert(ix)
+    #ligo[ix] = 0.0
 
-    obs = mags.observed(ra,dec,ligo, start_mjd, verbose=False)
+    obs = mags.observed(ra,dec,ligo, start_mjd+.3, verbose=False)
+>>>>>>> 1ac820e0c58573070de4d3c8a58cb6461edae71d
     obs.limitMag("i",exposure=exposure_length)
     print "finished setting up exposure calculation"
 
@@ -230,7 +252,6 @@ def make_hexes( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
     # if the length of ra is one and value zero, nothing to observe or plot
     if ra.size == 1 and ra[0] == 0: 
         return 0
-
     # shall we measure the total ligo probability covered?
     # Lets find out how well we did in covering Ligo probability
     sum_ligo_prob = how_well_did_we_do( gw_map_trigger, gw_map_strategy, gw_map_control)
@@ -570,7 +591,7 @@ def hoursPerNight (mjd) :
     
 def turnObservingRecordIntoJSONs(
         ra,dec,id,prob,mjd,slotNumbers, simNumber, 
-        exposure_list, filter_list, trigger_type, mapDirectory) :
+        exposure_list, filter_list, trigger_type, mapDirectory, propid) :
     seqtot =  ra.size
     seqzero = 0
 
@@ -580,7 +601,7 @@ def turnObservingRecordIntoJSONs(
         slotMJD = mjd[ix][0]  ;# just get first mjd in this slot
         tmpname, name = jsonUTCName(slot, slotMJD, simNumber, mapDirectory)
         jsonMaker.writeJson(ra[ix],dec[ix],id[ix],
-            simNumber, seqzero, seqtot, exposureList= exposure_list, 
+            simNumber, seqzero, seqtot, exposureList= exposure_list, propid=propid,
             filterList= filter_list, trigger_type=trigger_type, jsonFilename=tmpname)
 
         desJson(tmpname, name, mapDirectory) 
@@ -631,7 +652,7 @@ def jsonName (slot, utcString, simNumber, mapDirectory) :
 
 def jsonFromRaDecFile(radecfile, nslots, slotZero, 
         hexesPerSlot, simNumber, mjdList, trigger_type, data_dir) :
-    ra,dec = np.genfromtxt(radecfile, unpack=True,usecols=(0,1),comments="#")
+    ra,dec = np.genfromtxt(radecfile, unpack=True,usecols=(0,1),comments="#",propid="propid")
 
     seqtot =  ra.size
     seqzero = 0
@@ -652,7 +673,7 @@ def jsonFromRaDecFile(radecfile, nslots, slotZero,
                 simNumber,data_dir)
             jsonMaker.writeJson(slotRa,slotDec, 
                 simNumber, seqzero+(hexesPerSlot*(slot-slotZero)), 
-                seqtot, trigger_type, jsonFilename=tmpname)
+                seqtot, trigger_type, jsonFilename=tmpname, propid=propid)
             desJson(tmpname, name, data_dir) 
             counter = 0
             slot += 1
@@ -663,7 +684,7 @@ def jsonFromRaDecFile(radecfile, nslots, slotZero,
             simNumber,data_dir)
         jsonMaker.writeJson(slotRa,slotDec, 
             simNumber, seqzero+(hexesPerSlot*(slot-slotZero)), 
-            seqtot, trigger_type, jsonFilename=tmpname)
+            seqtot, trigger_type, jsonFilename=tmpname, propid=propid)
         desJson(tmpname, name, data_dir) 
         
 # ==================================

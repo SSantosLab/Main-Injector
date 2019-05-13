@@ -442,13 +442,11 @@ def plotLigoContours(x,y, vals, color="w", alpha = 1.0, lw=0.66, ls="solid", lab
     import matplotlib
     import matplotlib.pyplot as plt
     from scipy.interpolate import griddata
-
     con_levels=5
     levels=[0.50, 0.90]
     #levels1=[0.50,]
     #levels2=[0.90,]
     print "\t\t contours at confidance levels 0.5, 0.9"
-
     xmin = x.min(); xmax = x.max()
     ymin = y.min(); ymax = y.max()
     
@@ -474,13 +472,11 @@ def plotLigoContours(x,y, vals, color="w", alpha = 1.0, lw=0.66, ls="solid", lab
     xi=np.linspace(xmin, xmax, 500)
     yi=np.linspace(ymin, ymax, 500)
     xi,yi=np.meshgrid(xi,yi)
-
     zi = griddata(coord,vals,(xi,yi),method="cubic")
     #zi = griddata(coord,vals,(xi,yi),method="linear")
-
-    #print "linestyle = ",ls
+     #print "linestyle = ",ls
     ct= plt.contour(xi,yi,zi,con_levels,linewidths=lw, linestyles=ls,
-        colors=color, levels=levels, alpha=alpha)
+                    colors=color, levels=levels, alpha=alpha)
     #ct= plt.contour(xi,yi,zi,con_levels,linewidths=lw, linestyles=ls2,
     #    colors=color, levels=levels1, alpha=alpha)
     if labels :
@@ -488,8 +484,7 @@ def plotLigoContours(x,y, vals, color="w", alpha = 1.0, lw=0.66, ls="solid", lab
         inline= False
         fontsize =10
         fontsize =14
-        #plt.clabel(ct, levels, inline=inline, fontsize=fontsize)
-        #Hack
+        plt.clabel(ct, levels, inline=inline, fontsize=fontsize)
 
 def confidenceLevels(map) :
     map = np.array(map, copy=True)

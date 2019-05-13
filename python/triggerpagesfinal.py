@@ -135,10 +135,10 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
                                         <a href="#Plots" class="smoothScroll">Plots</a>\
                                     </li>\
                                     <li class="nav-item">\
-                                        <a href="#Processing" class="smoothScroll">Processing</a>\
+                                        <a href="../../post-processing-all/Master-master.html" class="smoothScroll">Processing</a>\
                                     </li>\
                                     <li class="nav-item">\
-                                        <a href="#Candidates" class="smoothScroll">Candidates</a>\
+                                        <a href="../../imalive.html" class="smoothScroll">Alive?</a>\
                                     </li>\
                                 </ul>\
                             </div>\
@@ -151,11 +151,11 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
                     <div class="container text-center">\
                         <div class="gallery-item" style="width: 50%; left: 50%; margin-right: -50%; transform: translate(50%, 0%)">\
                          <div class="gallery-thumb" >\
-                            <img name="Trigger" src="'+tmapfolder+'/maps/'+str(trigger_id)+'-observingPlot.gif" onerror="this.src=\'/desgw/image_placeholder.jpg\'" \
+                            <img name="Trigger" src="'+tmapfolder+'/'+str(trigger_id)+'-observingPlot.gif" onerror="this.src=\'/desgw/image_placeholder.jpg\'" \
                             class="img-responsive" alt="2nd gallery Thumb" width="50%">\
                             <div class="image-overlay"></div>\
-                            <a href="'+tmapfolder+'/maps/'+str(trigger_id)+'-observingPlot.gif" onerror="this.href=\'/desgw/image_placeholder.jpg\'" class="gallery-zoom"><i class="fa fa-eye"></i></a>\
-                            <a href="'+tmapfolder+'/maps/'+str(trigger_id)+'-observingPlot.gif" onerror="this.href=\'/desgw/image_placeholder.jpg\'" download class="gallery-link"><i class="fa fa-link"></i></a>\
+                            <a href="'+tmapfolder+'/'+str(trigger_id)+'-observingPlot.gif" onerror="this.href=\'/desgw/image_placeholder.jpg\'" class="gallery-zoom"><i class="fa fa-eye"></i></a>\
+                            <a href="'+tmapfolder+'/'+str(trigger_id)+'-observingPlot.gif" onerror="this.href=\'/desgw/image_placeholder.jpg\'" download class="gallery-link"><i class="fa fa-link"></i></a>\
                           </div>\
                         </div>\
                         <h1>Trigger '+str(trigger_id)+'</h1>\
@@ -164,6 +164,7 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
 
     maps = []
     mapsubdirs = []
+    print 'TMAPFOLDER',tmapfolder,'/',trigger_id,'-observingPlot.gif'
     if real_or_sim == 'real':
         subdir = 'real-triggers'
     if real_or_sim == 'sim':
@@ -189,7 +190,7 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
                 epf = './'+subdir+'/'+trigger_id+'/'+map+'/'+trigger_id+'_params.npz'
                 ofn = './'+subdir+'/'+trigger_id+'/'+trigger_id+'_'+map+'_trigger.html'
                 if not secondtimearound:
-                    makeNewPage(ofn,trigger_id,epf,map,real_or_sim=real_or_sim,secondtimearound=True)
+                    makeNewPage(master_dir,ofn,trigger_id,epf,map,real_or_sim=real_or_sim,secondtimearound=True)
         else:
                 html += '<div class="btn-group">\
                     <a href="'+trigger_id+'_'+map+'_trigger.html"><button\
@@ -199,15 +200,15 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
                 if not secondtimearound:
                     epf = './'+subdir+'/'+trigger_id+'/'+map+'/'+trigger_id+'_params.npz'
                     ofn = './'+subdir+'/'+trigger_id+'/'+trigger_id+'_'+map+'_trigger.html'
-                    makeNewPage(ofn,trigger_id,epf,map,real_or_sim=real_or_sim,secondtimearound=True)
+                    makeNewPage(master_dir,ofn,trigger_id,epf,map,real_or_sim=real_or_sim,secondtimearound=True)
 
     html += '</h2>'
     html +='<h2>LIGO Probability of Detection (in our hexes): ' + str(round(float(str(event_params['LIGO_prob'])), 6)) + '</h2>\
          <h2>DES X LIGO Probability of Detection: '+str(round(float(str(event_params['DESXLIGO_prob'])),6))+'</h2>\
                         <h2>Trigger Type: '+str(event_params['boc'])+'</h2>\
                         <h2>Strategy: ' + str(event_params['gethexobstype']) + '</h2>\
-    <a href="'+thismap+'/maps/'+str(trigger_id)+"_"+thismap+'_JSON.zip" download class="btn btn-outline btn-outline-xl outline-light">Download .json <span class="fa fa-download"></span></a>\
-<a href="'+thismap+'recycler.log" download class="btn btn-outline btn-outline-xl outline-light">Download .log <span class="fa fa-download"></span></a>\
+    <a href="'+'./'+str(trigger_id)+"_"+thismap+'_JSON.zip" download class="btn btn-outline btn-outline-xl outline-light">Download .json <span class="fa fa-download"></span></a>\
+<a href="./'+thismap+'_recycler.log" download class="btn btn-outline btn-outline-xl outline-light">Download .log <span class="fa fa-download"></span></a>\
                     </div>\
                     <!-- /.container -->\
                 </section>\
@@ -243,9 +244,9 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
                         </tr>\
                         <tr onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);">\
                             <th></th>\
-                            <td>Max Dist</td>\
-                            <td>Estimated maximum distance for CBC event</td>\
-                            <td>'+str(event_params['MaxDistance'])+'</td>\
+                            <td>Dist</td>\
+                            <td>Estimated distance for CBC event</td>\
+                            <td>'+str(round(event_params['codeDistance']))+' Mpc</td>\
                         </tr>\
                         <tr onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);">\
                             <th></th>\
@@ -288,7 +289,7 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
                             <th></th>\
                             <td>Dist</td>\
                             <td>Model Distance Used</td>\
-                            <td>' + str(event_params['codeDistance']) + 'Mpc</td>\
+                            <td>' + str(round(event_params['codeDistance'])) + ' Mpc</td>\
                         </tr>\
                         <tr onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);">\
                             <th></th>\
@@ -357,20 +358,20 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
                         <!-- /.gallery-filter -->\
                         <div class="row">\
                             <div class="isotope-gallery-container">\
-                                <div class="col-sm-6 col-xs-12 gallery-item-wrapper nature outside">\
-                                    <div class="gallery-item">\
-                                        <div class="gallery-thumb">\
-                                            <img src="'+tmapfolder+'/'+str(trigger_id)+'-and-sim-cumprobs.png">\
-                                            <div class="image-overlay"></div>\
-                                            <a href="'+tmapfolder+'/'+str(trigger_id)+'-and-sim-cumprobs.png" class="gallery-zoom"><i class="fa fa-eye" alt="This is the title"></i></a>\
-                                            <a href="'+tmapfolder+'/'+str(trigger_id)+'-and-sim-cumprobs.png" download class="gallery-link" target="_blank"><i class="fa fa-link"></i></a>\
-                                        </div>\
-                                        <div class="gallery-details">\
-                                            <h5>Cumulative Probability vs Number of Hexes Observed</h5>\
-                                            <p>grey curves from mock data challenge</p>\
-                                        </div>\
-                                    </div>\
-                                </div>\
+                                <!--<div class="col-sm-6 col-xs-12 gallery-item-wrapper nature outside">\
+                                    <!--<div class="gallery-item">\
+                                        <!--<div class="gallery-thumb">\
+                                            <!--<img src="'+tmapfolder+'/'+str(trigger_id)+'-and-sim-cumprobs.png">\
+                                            <!--<div class="image-overlay"></div>\
+                                            <!--<a href="'+tmapfolder+'/'+str(trigger_id)+'-and-sim-cumprobs.png" class="gallery-zoom"><i class="fa fa-eye" alt="This is the title"></i></a>\
+                                            <!--<a href="'+tmapfolder+'/'+str(trigger_id)+'-and-sim-cumprobs.png" download class="gallery-link" target="_blank"><i class="fa fa-link"></i></a>\
+                                        <!--</div>\
+                                        <!--<div class="gallery-details">\
+                                        <!--    <h5>Cumulative Probability vs Number of Hexes Observed</h5>\
+                                        <!--    <p>grey curves from mock data challenge</p>\
+                                        <!--</div>\
+                                    <!--</div>\
+                                <!--</div>-->\
                                 <!-- /.gallery-item-wrapper -->\
                                 <div class="col-sm-6 col-xs-12 gallery-item-wrapper nature outside">\
                                     <div class="gallery-item">\
@@ -396,7 +397,7 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
                                         </div>\
                                         <div class="gallery-details">\
                                             <h5>LIGO Probability Contour</h5>\
-                                            <p>lalinference</p>\
+                                            <p></p>\
                                         </div>\
                                     </div>\
                                 </div>\
@@ -440,7 +441,7 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
                                         </div>\
                                         <div class="gallery-details">\
                                             <h5>DES Limiting Mag Map for Source</h5>\
-                                            <p>Assumed Source '+str(event_params['codeDistance'])+'</p>\
+                                            <p>Assumed Source '+str(event_params['codeDistance'])+' Mpc</p>\
                                         </div>\
                                     </div>\
                                 </div>\
@@ -618,9 +619,9 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
     a.write(html)
     a.close()
     os.system('scp '+outfilename+' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + trigger_id + '/')
+    os.system('scp '+outfilename+' codemanager@desweb.fnal.gov:/des_web/www/html/desgw/Triggers/' + trigger_id + '/'+trigger_id+'_trigger.html')
 
-
-def make_index_page(webpage_dir, real_or_sim=None):
+def make_index_page(webpage_dir, real_or_sim='real'):
     if real_or_sim == 'real':
         fff = 'real-trigger_list.txt'
     if real_or_sim == 'sim':
@@ -663,14 +664,15 @@ def make_index_page(webpage_dir, real_or_sim=None):
     else:
         indextable += '<h1><a name="Triggers" style="padding-top: 105px;">Mock Triggers</a></h1>'
 
+    #indextable += '<span><h1><a name="Triggers" style="padding-top: 105px;">Im Alive?</a></h1></span>'
+
     indextable += '<table class="table" data-pg-collapsed>\
         <thead>\
             <tr >\
                 <th></th>\
-                <th id="trigger" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);">Trigger</th>\
-                <th id="iprob" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >Integrated Prob</th>\
-                <th id="far" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >FAR</th>\
-                <th id="cmass" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >Chirp Mass</th>\
+                <th id="trigger" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);">Trigger</th><th id="type" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >Type</th>\
+                <th id="iprob" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >LIGO Prob</th>\
+                <th id="far" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >FAR</th><th id="dist" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >Dist.</th><th id="cmass" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >Chirp Mass</th>\
                 <th id="mjd" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >MJD</th>\
                 <th id="date" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >Date</th>\
             </tr>\
@@ -687,12 +689,14 @@ def make_index_page(webpage_dir, real_or_sim=None):
 
         d = mjd_to_datetime(float(str(params['MJD'])))
         try:
+            #params = np.load(os.path.join(outfolder, trig + '_params2.npz'))
             indextable += '<tr onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" \
                         onclick="DoNav(\'Triggers/'+trig+'/'+trig+'_trigger.html\');">\
                           <td></td>\
                           <td >'+trig+'</td>\
-                          <td >'+str(round(float(str(params['DESXLIGO_prob'])), 6))+'</td>\
+                          <td >'+str(params['gethexobstype'])+'</td><td >'+str(round(float(str(params['LIGO_prob'])), 6))+'</td>\
                           <td >'+str(params['FAR'])+'</td>\
+                          <td >'+str(params['codeDistance'])+' Mpc</td>\
                           <td >'+str(params['ChirpMass'])+'</td>\
                           <td >'+str(params['MJD'])+'</td>\
                           <td >'+str(d.strftime('%H:%M:%S \t %b %d, %Y UTC'))+'</td>\
@@ -702,8 +706,10 @@ def make_index_page(webpage_dir, real_or_sim=None):
                         onclick="DoNav(\'Triggers/'+trig+'/'+trig+'_trigger.html\');">\
                           <td></td>\
                           <td >'+trig+'</td>\
-                          <td >'+str(round(float(str(params['integrated_prob'])), 6))+'</td>\
+                          <td >NA</td>\
+                          <td >NA</td>\
                           <td >'+str(params['FAR'])+'</td>\
+                          <td >NA</td>\
                           <td >'+str(params['ChirpMass'])+'</td>\
                           <td >'+str(params['MJD'])+'</td>\
                           <td >'+str(d.strftime('%H:%M:%S \t %b %d, %Y UTC'))+'</td>\
@@ -752,6 +758,7 @@ def make_index_page(webpage_dir, real_or_sim=None):
                                 <h2>DESGW EM Followup</h2>\
                                 <a href="real-triggers.html" class="btn btn-outline btn-outline-xl outline-light">REAL Triggers</a>\
                                 <a href="mock-triggers.html" class="btn btn-outline btn-outline-xl outline-light">Mock Triggers</a>\
+<p></p><a href="imalive.html" class="btn btn-outline btn-outline-xl outline-light">Im Alive?</a>\
                             </div>\
                             <!-- /.container -->\
                         </section>'

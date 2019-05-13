@@ -15,7 +15,8 @@ import pytz
 from threading import Thread
 from copy import copy
 #sys.path.append("/data/des41.a/data/desgw/")
-
+import send_texts_and_emails
+import getdistance
 
 class event:
     def __init__(self, skymap_filename, master_dir, trigger_id, mjd, config):
@@ -163,19 +164,30 @@ class event:
         if eventtype == 'Burst':
             gethexobstype = 'BH'
             self.distance = 1.
+            self.propid = config['BBH_propid']
         elif eventtype == 'CBC':
             #print 'probhasns'*100
             print('PROB HAS NS',probhasns)
             if probhasns > config['probHasNS_threshold']:
                 gethexobstype = 'NS'
-                self.distance = -999
+                try:
+                    self.distance = getdistance.dist_from_map(self.skymap)
+                except:
+                    print('failed to get distance from map')
+                    print('using 1mpc')
+                    self.distance = 1.
+                self.propid = config['BNS_propid']
             else:
                 gethexobstype = 'BH'
                 self.distance = 1.
+                self.propid = config['BBH_propid']
         else: #we dont know what we're looking at... do default obs for lightcurve
             print('WE DONT KNOW WHAT WERE LOOKING AT!'*5)
             gethexobstype = 'BH'
             self.distance = 1.
+            self.propid = config['BBH_propid']
+
+
 
         if gethexobstype == 'BH':
             filter_list = config["exposure_filter_BH"]
@@ -183,12 +195,14 @@ class event:
             exposure_length = config["exposure_length_BH"]
             hoursAvailable = config["time_budget_for_BH"]
             tiling_list = config["exposure_tiling_BH"]
+            self.propid = config['BBH_propid']
         else:
             filter_list = config["exposure_filter_NS"]
             maxHexesPerSlot = config["maxHexesPerSlot_NS"]
             exposure_length = config["exposure_length_NS"]
             hoursAvailable = config["time_budget_for_NS"]
             tiling_list = config["exposure_tiling_NS"]
+            self.propid = config['BNS_propid']
 
         exposure_length = np.array(exposure_length)
         self.exposure_length = exposure_length
@@ -197,7 +211,7 @@ class event:
 
         if config["force_distance"]:
             self.distance = config["distance"]
-
+            print '--- FORCING DISTANCE TO ',config["distance"],'---'
         #self.distance = distance
 
         if not os.path.exists(outputDir):
@@ -211,9 +225,9 @@ class event:
         #raw_input()
         probs, times, slotDuration, hoursPerNight = getHexObservations.prepare(
                     self.skymap, trigger_id, outputDir, mapDir, distance=self.distance,
-                    trigger_type=gethexobstype,start_days_since_burst=start_days_since_burst,
-                    exposure_list=exposure_length, filter_list=filter_list,resolution=resolution, debug=debug, camera=camera,
-                    halfNight=config['ishalfnight'], firstHalf=config['isfirsthalf'],
+                    trigger_type=gethexobstype,start_days_since_burst=start_days_since_burst,camera=self.camera,
+                    exposure_list=exposure_length, filter_list=filter_list,resolution=resolution, debug=debug, 
+                    halfNight=config['ishalfnight'], firstHalf=config['isfirsthalf'],forcedistance=config["force_distance"],
                     #isCustomDark=config['isCustomDark'],customDarkIndices=config['customDarkSlots'],
                     overhead=overhead, maxHexesPerSlot=maxHexesPerSlot, skipAll=skipAll)
             # figure out how to divide the night
@@ -240,7 +254,8 @@ class event:
                 maxHexesPerSlot=maxHexesPerSlot, mapZero=first_slot,
                 exposure_list=exposure_length, filter_list=filter_list,
                 #tiling_list = tiling_list,
-                trigger_type=gethexobstype, skipJson=config['skipjson'])
+                trigger_type=gethexobstype, skipJson=config['skipjson'],
+                propid=self.propid)
         skipecon = True
 
 
@@ -286,7 +301,7 @@ class event:
                             n_slots, mapDirectory=outputDir, simNumber=trigger_id,
                             maxHexesPerSlot=maxHexesPerSlot, mapZero=first_slot,
                             exposure_list=exposure_length, filter_list=filter_list,
-                            trigger_type = trigger_type, skipJson =skipJson)
+                            trigger_type = trigger_type, skipJson =skipJson, propid=self.propid)
                 except:
                     e = sys.exc_info()
                     exc_type, exc_obj, exc_tb = e[0],e[1],e[2]
@@ -379,7 +394,7 @@ class event:
                      gethexobstype=self.gethexobstype,
                      probhasns=self.probhasns
                      )
-
+            #os.system('cp '+self.event_paramfile+" "+self.master_dir+"/"+self.trigger_id+"_params2.npz")
         else:
             np.savez(self.event_paramfile,
                      MJD='NAN',
@@ -434,15 +449,19 @@ class event:
             os.system('cp ' + cp_string + oname)
         if True:
             bestslot_name = trigger_best_slot + "-maglim-eq.png"
+            cp_string = os.path.join(self.work_area, bestslot_name) + ' ' + image_dir +"/"
             oname = trigger_id + "_limitingMagMap.png"
             os.system('cp ' + cp_string + oname)
             bestslot_name = trigger_best_slot + "-prob-eq.png"
+            cp_string = os.path.join(self.work_area, bestslot_name) + ' ' + image_dir +"/"
             oname = trigger_id + "_sourceProbMap.png"
             os.system('cp ' + cp_string + oname)
             bestslot_name = trigger_best_slot + "-ligo-eq.png"
+            cp_string = os.path.join(self.work_area, bestslot_name) + ' ' + image_dir +"/"
             oname = trigger_id + "_LIGO.png"
             os.system('cp ' + cp_string + oname)
             bestslot_name = trigger_best_slot + "-probXligo-eq.png"
+            cp_string = os.path.join(self.work_area, bestslot_name) + ' ' + image_dir +"/"
             oname = trigger_id + "_sourceProbxLIGO.png"
             os.system('cp ' + cp_string + oname)
             # DESGW observation map
@@ -522,36 +541,9 @@ class event:
         return jsonfilelist
 
     def send_nonurgent_Email(self,sendtexts=False):
-        import smtplib
-        from email.mime.text import MIMEText
-
-        text = 'DESGW Webpage Created. See \nhttp://des-ops.fnal.gov:8080/desgw/Triggers/' + self.trigger_id + '/' + self.trigger_id + '_' +self.trigger_dir + '_trigger.html'
-
-        # Create a text/plain message
-        msg = MIMEText(text)
-
-        # me == the sender's email address
-        # you == the recipient's email address
-        me = 'automated-desGW@fnal.gov'
-        if self.config['sendEmailsToEveryone']:
-            yous = ['djbrout@gmail.com', 'marcelle@fnal.gov', 'annis@fnal.gov']
-        else:
-            yous = ['djbrout@gmail.com']
-
-        if sendtexts:
-            t = ['7737578495@msg.fi.google.com', '3017883369@mms.att.net', '6173357963@mms.att.net',
-                 '2153008763@mms.att.net', '6307654596@tmomail.net']
-            yous.extend(t)
-
-
-        msg['Subject'] = 'DESGW Webpage Created for ' + self.trigger_id + ' Map: '+self.trigger_dir
-        msg['From'] = me
-        for you in yous:
-            msg['To'] = you
-
-            s = smtplib.SMTP('localhost')
-            s.sendmail(me, [you], msg.as_string())
-            s.quit()
+        text = 'DESGW Webpage Created for REAL event. See \nhttp://des-ops.fnal.gov:8080/desgw/Triggers/' + self.trigger_id + '/' + self.trigger_id + '_' +self.trigger_dir + '_trigger.html\n\nDO NOT REPLY TO THIS THREAD, NOT ALL USERS WILL SEE YOUR RESPONSE.'
+        subject = 'DESGW Webpage Created for REAL event ' + self.trigger_id + ' Map: '+self.trigger_dir+' NOREPLY'
+        send_texts_and_emails.send(subject,text)
         print('Email sent...')
         return
 
@@ -559,7 +551,7 @@ class event:
         import smtplib
         from email.mime.text import MIMEText
 
-        message = 'Processing Failed for Trigger ' + str(self.trigger_id) + '\n\nFunction: ' + str(
+        message = 'Processing Failed for REAL Trigger ' + str(self.trigger_id) + '\n\nFunction: ' + str(
             where) + '\n\nLine ' + str(line) + ' of recycler.py\n\nError: ' + str(error) + '\n\n'
         message += '-' * 60
         message += '\n'
@@ -568,21 +560,8 @@ class event:
         message += '-' * 60
         message += '\n'
 
-        # Create a text/plain message                                                                                                                                                                      
-        msg = MIMEText(message)
-
-        me = 'automated-desGW@fnal.gov'
-        if self.config['sendEmailsToEveryone']:
-            yous = ['djbrout@gmail.com', 'marcelle@fnal.gov', 'annis@fnal.gov']
-        else:
-            yous = ['djbrout@gmail.com']
-        msg['Subject'] = 'Trigger ' + self.trigger_id + ' '+self.trigger_dir+ ' Processing FAILED!'
-        msg['From'] = me
-        for you in yous:
-            msg['To'] = you
-            s = smtplib.SMTP('localhost')
-            s.sendmail(me, [you], msg.as_string())
-            s.quit()
+        subject = 'REAL Trigger ' + self.trigger_id + ' '+self.trigger_dir+ ' Processing FAILED!'
+        send_texts_and_emails.send(subject,message)
         print('Email sent...')
         return
 
@@ -613,7 +592,7 @@ class event:
         tp.make_index_page(website, real_or_sim=real_or_sim)
         return
 
-    def make_cumulative_probs(self):
+    '''def make_cumulative_probs(self):
         GW_website_dir = os.path.join(self.website, '/Triggers/')
         sim_study_dir = '/data/des41.a/data/desgw/maininjector/sims_study/data'
         radecfile = os.path.join(self.work_area, 'maps', self.trigger_id + '-ra-dec-id-prob-mjd-slot.txt')
@@ -625,7 +604,7 @@ class event:
                sim_study_dir, '-p', self.work_area, '-e', self.trigger_id, 
                 '-f',radecfile])
         os.system('scp '+ cumprobs_file + ' ' + GW_website_dir + self.trigger_id + '/images/')
-
+        '''
         
     def updateWebpage(self,real_or_sim):
         trigger_id = self.trigger_id
@@ -640,13 +619,16 @@ class event:
 
         os.system('scp -r ' + GW_website_dir_t + self.trigger_id+ ' ' + desweb_t)
         os.system('scp ' + GW_website_dir + '/* ' + desweb)
-        tp.makeNewPage(self.master_dir,
-            os.path.join(self.master_dir, trigger_id +'_'+ trigger_dir+ '_trigger.html'), 
-            trigger_id,self.event_paramfile,trigger_dir, real_or_sim=real_or_sim)
+        #master_dir,outfilename,trigger_id,event_paramfile,mapfolder,processing_param_file=None,real_or_sim='real',secondtimearound=False
+        print self.master_dir
+        print os.path.join(self.master_dir, trigger_id +'_'+ trigger_dir+ '_trigger.html')
+        print trigger_id,self.event_paramfile,trigger_dir
+
+        tp.makeNewPage(self.master_dir,os.path.join(self.master_dir, trigger_id +'_'+ trigger_dir+ '_trigger.html'),trigger_id,self.event_paramfile,trigger_dir, real_or_sim=real_or_sim)
         os.system('scp -r ' + trigger_html + ' ' + desweb_t2 + "/")
         os.system('scp -r ' + trigger_html + ' ' + desweb_t2 +'_trigger.html')
 
-        #os.system('cp ' + self.work_area +  trigger_dir + '/'+ 'recycler.log ' + self.website_jsonpath)
+        os.system('cp ' + self.master_dir +'/'+  trigger_dir + '/'+trigger_dir+ '_recycler.log ' + self.website_jsonpath)
         return
 
     def getmjd(self,datet):
@@ -819,7 +801,7 @@ if __name__ == "__main__":
             e.mapMaker(trigger_id, skymap_filename, config)
             e.getContours(config)
             jsonfilelist = e.makeJSON(config)
-            e.make_cumulative_probs()
+            #e.make_cumulative_probs()
             e.updateTriggerIndex(real_or_sim=real_or_sim) # generates the homepage 
             e.updateWebpage(real_or_sim) #make a blank page with the basic info that is available
             e.makeObservingPlots()

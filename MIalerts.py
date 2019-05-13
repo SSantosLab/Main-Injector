@@ -1,0 +1,2 @@
+sendEveryoneEmails = False
+sendEveryoneTexts = False
