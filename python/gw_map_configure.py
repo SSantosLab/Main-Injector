@@ -75,7 +75,7 @@ class trigger(object):
 class strategy(object) :
     """
     """
-    def __init__(self, camera, exposure_list, filter_list, maxHexesPerSlot, hoursAvailable):
+    def __init__(self, camera, exposure_list, filter_list, maxHexesPerSlot, hoursAvailable, propid):
         """
         """
         self.camera = camera
@@ -83,6 +83,7 @@ class strategy(object) :
         self.filter_list = filter_list
         self.maxHexesPerSlot = maxHexesPerSlot
         self.hoursAvailable = hoursAvailable
+        self.propid = propid
 
         if camera == "decam" :
             self.overhead =  30. # seconds
@@ -125,6 +126,7 @@ class results(object):
         """
         self.probability_per_slot = False
         self.time_of_slot = False
+        self.isdark = False
         self.slotDuration = False
         self.hoursPerNight = False
         self.n_slots = False
