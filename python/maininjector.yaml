@@ -37,7 +37,7 @@ resolution: 128 #for map making
 
 distance : 60.
 force_distance : False
-days_since_burst : 0.7
+days_since_burst : 0.0
 
 skipAll : False
 skipPlots: False
