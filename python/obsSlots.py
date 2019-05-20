@@ -143,6 +143,7 @@ def observing(sim, nslots, data_dir,
 
         impossible = 1e-5
         impossible = 1e-7
+        impossible = 1e-8
         ix = np.nonzero(hexVal < impossible)
         raHexen, decHexen, idHexen, hexVal, mjd, slotNum, islot  = \
             np.delete(raHexen, ix), \
