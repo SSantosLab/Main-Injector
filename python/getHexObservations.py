@@ -63,6 +63,7 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     import modelRead
     import healpy as hp
     import os
+    forcedistance = False
 
     skymap               = gw_map_trigger.skymap
     trigger_id           = gw_map_trigger.trigger_id
@@ -134,11 +135,8 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
 
         
     # ==== get the neutron star explosion models
-    print "getting models"
-
     models = modelRead.getModels()
-    print "got models"
-    print skymap
+
     # === prep the maps
     ra,dec,ligo=hp2np.hp2np(skymap, degrade=resolution, field=0)
     print "got map"
@@ -151,38 +149,26 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
             junk,junk,ligo_dist_norm =hp2np.hp2np(skymap, degrade=resolution, field=3)
         except:
             print "\t !!!!!!!! ------- no distance information in skymap ------ !!!!!!!!"
-    # GW170217 hack JTA
-    #ix = (ra > 0) & ( ra < 180) & (dec >= -30)
-    #ix = np.invert(ix)
-    #ligo[ix] = 0.0
-    # GW170225 hack JTA
-    #ix = (dec >= 2)
-    #ligo[ix] = 0.0
-    # GW170814 hack JTA
-    #ix = (ra > -10) & ( ra < 60) & (dec < -20)
-    #ix = np.invert(ix)
-    #ligo[ix] = 0.0
 
     obs = mags.observed(ra,dec,ligo, start_mjd+.3, verbose=False)
->>>>>>> 1ac820e0c58573070de4d3c8a58cb6461edae71d
     obs.limitMag("i",exposure=exposure_length)
     print "finished setting up exposure calculation"
 
     # ==== calculate maps during a full night of observing
     probabilityTimesCache = os.path.join(data_dir,\
         "probabilityTimesCache_"+str(trigger_id)+".txt")
-    probs,times = mapsAtTimeT.oneDayOfTotalProbability(
+    probs,times,isdark = mapsAtTimeT.oneDayOfTotalProbability(
         obs, models, deltaTime, start_mjd, probabilityTimesCache,
         gw_map_trigger, gw_map_control)
-
 
     mapsAtTimeT.probabilityMapSaver (obs, models, times, probs, 
         gw_map_trigger, gw_map_strategy, gw_map_control)
 
     gw_map_results.probability_per_slot = probs
-    gw_map_results.time_of_slot = times
-    gw_map_results.slotDuration = slotDuration
+    gw_map_results.time_of_slot  = times
+    gw_map_results.slotDuration  = slotDuration
     gw_map_results.hoursPerNight = hoursPerNight
+    gw_map_results.isdark        = isdark
     return 
 
 # ==== figure out what to observe
@@ -271,13 +257,14 @@ def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control) :
     trigger_type  = gw_map_trigger.trigger_type
     exposure_list = gw_map_strategy.exposure_list
     filter_list   = gw_map_strategy.filter_list
+    propid        = gw_map_strategy.propid
     data_dir      = gw_map_control.datadir
     ra,dec,id,prob,mjd,slotNum,dist = obsSlots.readObservingRecord(trigger_id,data_dir)
     print "\n=============>>>>  JSONs"
     turnObservingRecordIntoJSONs(
         ra,dec,id,prob,mjd,slotNum, trigger_id,
         exposure_list=exposure_list, filter_list=filter_list, 
-            trigger_type=trigger_type, mapDirectory=data_dir) 
+            trigger_type=trigger_type, mapDirectory=data_dir, propid=propid) 
 
 
 #
@@ -301,16 +288,15 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
     start_slot = gw_map_control.start_slot
     do_nslots = gw_map_control.do_nslots
 
-    n_slots = gw_map_results.n_slots
-    first_slot = gw_map_results.first_slot
-    best_slot = gw_map_results.best_slot
-
-
     # we are doing a quick run, avoiding most calculations as they are already done and on disk
     if (gw_map_results.hoursPerNight == False)  :
         reuse_results(data_dir, gw_map_trigger, gw_map_strategy, gw_map_results, get_slots=True)
-        n_slots = gw_map_results.n_slots
-        best_slot = gw_map_results.best_slot
+    n_slots = gw_map_results.n_slots
+    first_slot = gw_map_results.first_slot
+    best_slot = gw_map_results.best_slot
+    probs =   gw_map_results.probability_per_slot 
+    times =    gw_map_results.time_of_slot 
+    isdark =    (gw_map_results.isdark).astype(int)
 
     if n_slots == 0:
         nothingToObserveShowSomething(trigger_id, data_dir)
@@ -319,13 +305,12 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
     print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
     print "makeObservingPlots(",n_slots, trigger_id, best_slot,data_dir," )"
     print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
-    print "We're going to do {} slots with best slot={}".format(n_slots, best_slot)
+    print "We're going to do {} slots with best slot={}".format(np.nonzero(isdark)[0].size, best_slot)
     figure = plt.figure(1,figsize=(8.5*1.618,8.5))
 
     print "\t cleaning up old png files"
     files = glob.glob(data_dir+"/*png"); 
     for f in files: os.remove(f)
-
 
     # first, make the probability versus something plot
     ra,dec,id,prob,slotMjd,slotNumbers,dist = obsSlots.readObservingRecord(
@@ -333,23 +318,15 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
 
     # now make the hex observation plots
     counter = 1   ;# already made one
-    for i in np.unique(slotNumbers) :
-        obsTime = ""
-        i = np.int(i)
-        ix = slotNumbers == i
-        if np.any(ix) : 
-            ix = np.nonzero(ix)
-            if np.nonzero(ix)[0].size > 1 :
-                obsTime = slotMjd[ix[0]].mean()
-            else :
-                obsTime = slotMjd
-            #print "\t making observingPlot-{}.png".format(i)
-            observingPlot(figure,trigger_id,i,data_dir, n_slots, 
-                camera, extraTitle=obsTime, allSky=allSky)
-            name = str(trigger_id)+"-observingPlot-{}.png".format(i)
-            plt.savefig(os.path.join(data_dir,name))
-            counter += 1
-            counter+= equalAreaPlot(figure,i,trigger_id,data_dir)
+    #for i in np.unique(slotNumbers) :
+    for i in range(isdark.size) :
+        if not isdark[i]: continue
+        
+        observingPlot(figure,trigger_id,i,data_dir, n_slots, camera, allSky=allSky)
+        name = str(trigger_id)+"-observingPlot-{}.png".format(i)
+        plt.savefig(os.path.join(data_dir,name))
+        counter += 1
+        counter+= equalAreaPlot(figure,i,trigger_id,data_dir)
 
     label = ""
     if allSky == False: label="centered_"
@@ -457,9 +434,10 @@ def reuse_results(data_dir, gw_map_trigger,gw_map_strategy, gw_map_results, get_
             print "\t got nothing- we're skipping this one"
         else :
             data = np.genfromtxt(probabilityTimesCache, unpack=True)
-            probs, times = data[0],data[1]
+            probs, times,isdark = data[0],data[1],data[2]
         gw_map_results.probability_per_slot = probs
         gw_map_results.time_of_slot = times
+        gw_map_results.isdark = isdark
 
         exposure_list   = gw_map_strategy.exposure_list
         burst_mjd       = gw_map_trigger.burst_mjd 
@@ -871,21 +849,19 @@ def equalAreaPlot(figure,slot,simNumber,data_dir, title="") :
 
 # modify mcbryde to have alpha=center of plot
 #   "slot" is roughly hour during the night at which to make plot
-def observingPlot(figure, simNumber, slot, data_dir, nslots, camera, extraTitle="", allSky=False) :
+def observingPlot(figure, simNumber, slot, data_dir, nslots, camera, allSky=False) :
     import plotMapAndHex
 
     # get the planned observations
     ra,dec,id,prob,mjd,slotNumbers,dist = obsSlots.readObservingRecord(simNumber, data_dir)
     ix = slotNumbers == slot
-    the_mjd = mjd[ix][0]
+    if np.any(ix):
+        the_mjd = mjd[ix][0]
+        time = utcFromMjd(the_mjd)
+    else :
+        time = ""
     
-    #title = "i-band limiting magnitude"
-    title = "" ;# as the color bar is labeled
-    if extraTitle != "" :
-        #extraTitle = " mjd {:.2f}: ".format(extraTitle)
-        extraTitle = " Slot {}    {} ".format(slot, utcFromMjd(the_mjd))
-        title = extraTitle+title
-    #title = title + "      LIGO countours at max/[1.1, 3, 10, 30]"
+    title = " Slot {}    {} ".format(slot, time)
     title = title + "      {}".format(simNumber)
 
 

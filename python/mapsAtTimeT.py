@@ -70,14 +70,14 @@ def oneDayOfTotalProbability (obs, models, deltaTime, start_mjd,
     end_of_days=1
     #print "JTA debugging  ====="
     #end_of_days=0.1
-    totalProbs,times = manyDaysOfTotalProbability(
+    totalProbs,times,isDark = manyDaysOfTotalProbability(
         obs, mjd, spatial, distance, distance_sig, models, 
         start_mjd = start_mjd, 
         startOfDays=start_of_days, endOfDays=end_of_days,
         deltaTime=deltaTime, probTimeFile=probTimeFile,
         trigger_type=trigger_type)
 
-    return totalProbs,times
+    return totalProbs,times, isDark
 
 def manyDaysOfTotalProbability (
         obs, burst_mjd, spatial, distance, distance_sig, 
@@ -144,7 +144,7 @@ def manyDaysOfTotalProbability (
 
     data = np.array([totalProbs, times, isDark.astype(int)]).T
     np.savetxt(probTimeFile, data, "%f %f %d")
-    return totalProbs,times
+    return totalProbs,times, isDark
 
 #==============================================================
 #
