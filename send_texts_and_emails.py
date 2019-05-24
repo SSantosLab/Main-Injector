@@ -15,7 +15,7 @@ def send(subject,text,official=False):
     msg = MIMEText(text)
     
     try:
-        people = np.genfromtxt('PHONE_AND_EMAIL_LIST.TXT', dtype=[('name','S50'),('email','S50'),('phone','S50')], delimiter=",",skip_header=1)
+        people = np.genfromtxt('/home/s1/desgw/PHONE_AND_EMAIL_LIST.TXT', dtype=[('name','S50'),('email','S50'),('phone','S50')], delimiter=",",skip_header=1)
     except:
         report = {}
         report["value1"] = 'WARNING, THE PHONE AND EMAIL LIST CRASHED... probably a formatting issue \n'
