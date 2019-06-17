@@ -10,6 +10,16 @@ import os
 # then one expects circa 40-45 maps as there is about 2/hour
 #   with the 1% cut, then one expects far fewer. Perhaps zero.
 
+# May 2019
+# I added start_slot and do_nslots, in the name of running from a start for a 
+#   number of slots. This brought out the mapping from slotNumber and hexData to 
+#   the actual slot number, done in the code at def observing line : map_i = i + mapZero
+# The issue is that start_slot and do_nslot are in the mapped slot number, so many
+#   of the slots don't exist, and much of the infrastructure loops over all slots
+#   I had to put in 6 places a "if do_nslots > -1; if i+mapZero < start_slot" technology
+#   (marked by JTA)  to deal with this
+#   
+
 #===============================================================================
 # These calculations used to be spread over hither and yon.
 # Bring them together.
@@ -37,15 +47,19 @@ import os
 # Ok, then, code:
 #
 def slotCalculations(mjd, exposure_lengths, overhead, hexesPerSlot = 6) :
-    tot_exptime = (np.array(overhead)+np.array(exposure_lengths)).sum()
-    slot_time = tot_exptime*hexesPerSlot
-    slot_duration = slot_time/60. ;# in minutes
     from getHexObservations import hoursPerNight
+    slot_duration = slotDuration(exposure_lengths, overhead, hexesPerSlot) 
     hoursAvailable = hoursPerNight(mjd)
     answers = dict()
     answers["slotDuration"] = slot_duration
     answers["hoursPerNight"] = hoursAvailable
     return answers
+
+def slotDuration(exposure_lengths, overhead, hexesPerSlot = 6) :
+    tot_exptime = (np.array(overhead)+np.array(exposure_lengths)).sum()
+    slot_time = tot_exptime*hexesPerSlot
+    slot_duration = slot_time/60. ;# in minutes
+    return slot_duration
 
 # find the number of slots per night
 def findNSlots(hoursAvailable, slotDuration=32.) :
@@ -97,11 +111,14 @@ def findStartMap ( probs, times, n_slots ) :
 #   if we do zzi at 2 mins/image then 4 min/hex + 2 min/hex2 = 6 mins
 #   call it 60 minute slots  and 10 hexes/slot
 def observing(sim, nslots, data_dir, 
-        maxHexesPerSlot = 4, mapZero = 0, verbose=0) :
+        maxHexesPerSlot = 4, mapZero = 0, do_nslots = -1, start_slot=-1, verbose=0) :
     # prep the observing lists
     observingSlots = np.arange(0,nslots)
     slotsObserving = dict()
     slotsObserving["nslots"] = nslots
+    slotsObserving["mapZero"] = mapZero
+    slotsObserving["do_nslots"] = do_nslots
+    slotsObserving["start_slot"] = start_slot
     for i in observingSlots :
         slotsObserving[i] = 0
         slotsObserving[i,"ra"]   = np.array([])
@@ -116,6 +133,9 @@ def observing(sim, nslots, data_dir,
     hexData = dict()
     for i in observingSlots :
         map_i = i + mapZero
+# JTA 1
+        if start_slot > -1 and do_nslots > -1 :
+            if map_i < start_slot or map_i >= start_slot+do_nslots : continue
         raHexen, decHexen, idHexen, hexVal, rank, mjd, slotNum = \
            loadHexalatedProbabilities( sim, map_i, data_dir)
         islot = i*np.ones(raHexen.size)
@@ -123,6 +143,7 @@ def observing(sim, nslots, data_dir,
 
         impossible = 1e-5
         impossible = 1e-7
+        impossible = 1e-8
         ix = np.nonzero(hexVal < impossible)
         raHexen, decHexen, idHexen, hexVal, mjd, slotNum, islot  = \
             np.delete(raHexen, ix), \
@@ -132,46 +153,51 @@ def observing(sim, nslots, data_dir,
             np.delete(mjd, ix) , \
             np.delete(slotNum, ix), \
             np.delete(islot, ix)
-        print " n hexes >{} probability=".format(str(impossible)),
+        print " n hexes w/ >{} probability=".format(str(impossible)),
         print "{:4d};".format(raHexen.size),
-        print "  sum prob= {:7.4f} %".format( 100*hexVal.sum())
+        print "  in slot,all_possible_hexes sum prob= {:7.4f} %".format( 100*hexVal.sum())
         hexData[i] = raHexen, decHexen, idHexen, hexVal, mjd, slotNum, islot
-        #print np.sort(hexVal), hexVal.sum(), 100.*hexVal.sum(),"%"
+        #print i, np.sort(hexVal[0:10]), hexVal.sum(), 100.*hexVal.sum(),"%"
 
     # start the search for all max probabilities
     # we'll assume the list is less than 40,000 long, the n-sq-degrees/sky
     for n in range(0,40000) :
         # search for a single max probabilities
         maxRa, maxDec, maxId, maxProb, maxMjd, maxSlotNum, maxIslot  = \
-            findMaxProbOfAllHexes(hexData, observingSlots, n, verbose) 
+            findMaxProbOfAllHexes(hexData, slotsObserving, observingSlots, n, verbose) 
         maxData = maxRa,maxDec,maxId, maxProb,maxMjd,maxSlotNum, maxIslot
 
         # we've found the maximum probability on the lists, 
         # so add it to the obs lists # unless not possible. 
         # If the latter, delete it from that slot
         slot = maxIslot
-        if slotsObserving[slot] < maxHexesPerSlot : 
-            # it is possible to make the observation, 
-            # put it onto the observing lists
-            slotsObserving = addObsToSlot (slotsObserving, maxData, slot)
-            if verbose >= 1: print n, "slot of max:",slot
-        else :
-            # but if this slot of observing is full, it is not possible 
-            # to make the observation,
-            # so move on AFTER deleting it from the list
-            hexData = deleteHexFromSlot (hexData, slot, maxProb) 
+        # if slot is -1, then no max prob found
+        if slot > -1 :  
+            if slotsObserving[slot] < maxHexesPerSlot : 
+                # it is possible to make the observation, 
+                # put it onto the observing lists
+                slotsObserving = addObsToSlot (slotsObserving, maxData, slot)
+                if verbose >= 1: print n, "slot of max:",slot
+            else :
+                # but if this slot of observing is full, it is not possible 
+                # to make the observation,
+                # so move on AFTER deleting it from the list
+                hexData = deleteHexFromSlot (hexData, slot, maxProb) 
         #if verbose >= 2: 
         #   if n > 7: raise Exception("jack")
     
         # perform the necessary bookkeeping, 
         # eliminating this hex from future observing
         hexData = deleteHexFromAllSlots (
-            hexData, observingSlots, maxRa, maxDec, verbose, n) 
+            hexData, slotsObserving, observingSlots, maxRa, maxDec, verbose, n) 
 
         # do some summary statistics
         sumHexes = 0
         sumObs = 0
         for i in range(0,nslots) :
+# JTA 6
+            if start_slot > -1 and do_nslots > -1 :
+                if i+mapZero < start_slot or i+mapZero >= start_slot+do_nslots : continue
             sumHexes += hexData[i][0].size
             sumObs += slotsObserving[i]
 
@@ -211,50 +237,44 @@ def observing(sim, nslots, data_dir,
 #
 # examine the statistics of the observing lists
 #
-def observingStats( slotsObserving ) :
+def observingStats( slotsObserving, mapZero=0, do_nslots=-1, start_slot=-1 ) :
     nslots = slotsObserving["nslots"]
     for i in range(0,nslots) :
-        print "\t",i, 
+# JTA 2
+        if start_slot > -1 and do_nslots > -1 :
+            if i+mapZero < start_slot or i+mapZero >= start_slot+do_nslots : continue
+        print "\t ",i+mapZero, 
         #print "slotnum={} ".format( slotsObserving[i,"slotNum"]),
         print "n obs= {}".format( slotsObserving[i,"ra"].size), 
         print "  sum prob= {:7.4f} %".format( 100*slotsObserving[i,"prob"].sum())
     ra,dec,id,prob,mjd,slotNum,islot = slotsObservingToNpArrays(slotsObserving) 
 
-    print "\tobservingStats:  ",
+    print "\t observingStats:  ",
     print "observable prob_tot = {:.1f}%".format(100.*prob.sum())
+    print "\t   (from the prob in each slot, summed)"
     return ra,dec,id,prob,mjd,slotNum,islot
 
-def observingRecord(slotsObserving, simNumber, data_dir) :
-    name = os.path.join(data_dir, str(simNumber) + "-ra-dec-id-prob-mjd-slot.txt")
-    ra,dec,id,prob,mjd,slotNum,islot = slotsObservingToNpArrays(slotsObserving) 
-    data = np.array([ra, dec, id, prob, mjd, slotNum]).T
-    f = open(name,'w')
-    unique_slots = np.unique(slotNum)
-    for slot in unique_slots:
-        ix = slot==slotNum
-        iy = np.argsort(ra[ix])
-        for r,d,i,p,m,s in zip(
-                ra[ix][iy], dec[ix][iy], id[ix][iy], 
-                prob[ix][iy], mjd[ix][iy], slotNum[ix][iy]):
-            f.write("{:.6f} {:.5f} {:s} {:.7f} {:.4f} {:.1f}\n".format(r,d,i,p,m,s))
-    f.close()
-    #np.savetxt(name, data, "%.6f %.5f %s %.6f %.4f %d")
-    return ra,dec,id,prob,mjd,slotNum
-
-#     ra,dec,id,prob,mjd,slotNum,islot = readObservingRecord(simNumber, data_dir)
-def readObservingRecord(simNumber, data_dir) :
+#  ra,dec,id,prob,mjd,slotNum,dist = obsSlots.readObservingRecord(trigger_id,data_dir)
+def readObservingRecord(trigger_id, data_dir) :
     import os
-    name = os.path.join(data_dir, str(simNumber) + "-ra-dec-id-prob-mjd-slot.txt")
+    name = os.path.join(data_dir, str(trigger_id) + "-ra-dec-id-prob-mjd-slot-dist.txt")
     if not os.path.exists(name) or os.stat(name).st_size == 0 :
-        ra,dec,id,prob,mjd,slotNum = \
+        ra,dec,id,prob,mjd,slotNum,dist = \
             np.array(0),np.array(0),np.array("0"), \
-            np.array(0),np.array(0),np.array(0)
+            np.array(0),np.array(0),np.array(0),np.array(0)
     else :
-        ra,dec,prob,mjd,slotNum = np.genfromtxt(name,unpack=True,comments="#",usecols=(0,1,3,4,5))
+        ra,dec,prob,mjd,slotNum,dist = \
+            np.genfromtxt(name,unpack=True,comments="#",usecols=(0,1,3,4,5,6))
         id = np.genfromtxt(name,unpack=True,comments="#", usecols=(2),dtype="str")
-    return ra,dec,id,prob,mjd,slotNum
+    return ra,dec,id,prob,mjd,slotNum,dist
 
 def slotsObservingToNpArrays(slotsObserving) :
+
+    do_nslots  = slotsObserving["do_nslots"]
+    start_slot = slotsObserving["start_slot"]
+    nslots     = slotsObserving["nslots"]
+    mapZero    = slotsObserving["mapZero"]
+
     nslots = slotsObserving["nslots"]
     ra = np.array([])
     dec = np.array([])
@@ -264,6 +284,9 @@ def slotsObservingToNpArrays(slotsObserving) :
     slotNum = np.array([])
     islot = np.array([])
     for i in range(0,nslots) :
+# JTA 7
+        if start_slot > -1 and do_nslots > -1 :
+            if i+mapZero < start_slot or i+mapZero >= start_slot+do_nslots : continue
         ra = np.append(ra, slotsObserving[i,"ra"])
         dec = np.append(dec, slotsObserving[i,"dec"])
         id = np.append(id, slotsObserving[i,"id"])
@@ -277,10 +300,18 @@ def slotsObservingToNpArrays(slotsObserving) :
 #
 # search for the single highest probability hex over all of the possible hexes
 # in the hexData slots 
-#
-def findMaxProbOfAllHexes(hexData, observingSlots, n="", verbose = 0) :
+#  slotsObserving is a dictionary, observingSlots is a np array of slot numbers#
+def findMaxProbOfAllHexes(hexData, slotsObserving, observingSlots, n="", verbose = 0) :
+    do_nslots  = slotsObserving["do_nslots"]
+    start_slot = slotsObserving["start_slot"]
+    nslots     = slotsObserving["nslots"]
+    mapZero    = slotsObserving["mapZero"]
+
     maxProb = -1
     for i in observingSlots :
+# JTA 3
+        if start_slot > -1 and do_nslots > -1 :
+            if i+mapZero < start_slot or i+mapZero >= start_slot+do_nslots : continue
         data = hexData[i]
         hexRa     = data[0]
         hexDec    = data[1]
@@ -308,7 +339,7 @@ def findMaxProbOfAllHexes(hexData, observingSlots, n="", verbose = 0) :
     #print "observingSlots", observingSlots
     if maxProb == -1 : 
         maxRa, maxDec, maxId, maxVal, maxMjd, maxSlot, islot = \
-            0,0,0,0,0,0,0
+            -1,-1,-1,-1,-1,-1,-1
         #raise Exception("no max probability found")
     return maxRa, maxDec, maxId, maxVal, maxMjd, maxSlot, islot
 
@@ -346,8 +377,17 @@ def deleteHexFromSlot (hexData, slot, maxProb) :
     return hexData
 # the hex,slot has made it onto an observing list, so remove the hex
 # from all hex lists ( rm hex,*)
-def deleteHexFromAllSlots (hexData, observingSlots, maxRa, maxDec, verbose=0, n="") :
+def deleteHexFromAllSlots (hexData, slotsObserving, observingSlots, maxRa, maxDec, verbose=0, n="") :
+    do_nslots  = slotsObserving["do_nslots"]
+    start_slot = slotsObserving["start_slot"]
+    nslots     = slotsObserving["nslots"]
+    mapZero    = slotsObserving["mapZero"]
+
     for i in observingSlots:
+# JTA 4
+        if start_slot > -1 and do_nslots > -1 :
+            if i+mapZero < start_slot or i+mapZero >= start_slot+do_nslots : continue
+        data = hexData[i]
         data = hexData[i]
         hexRa  = data[0]
         hexDec = data[1]
@@ -380,10 +420,18 @@ def deleteHexFromAllSlots (hexData, observingSlots, maxRa, maxDec, verbose=0, n=
 # though they survive to be returned in the final lists
 def eliminateFullObservingSlots(
         hexData, slotsObserving, observingSlots, maxHexesPerSlot, verbose) :
+    do_nslots = slotsObserving["do_nslots"]
+    start_slot = slotsObserving["start_slot"]
+    nslots = slotsObserving["nslots"]
+    mapZero = slotsObserving["mapZero"]
+
     full = []
     for i in range(0,len(observingSlots)):
         # either we've observed as much as we can, or there is nothing to see
         slot = observingSlots[i]
+# JTA 5
+        if start_slot > -1 and do_nslots > -1 :
+            if slot+mapZero < start_slot or slot+mapZero >= start_slot+do_nslots : continue
         if (slotsObserving[slot] >= maxHexesPerSlot) | (hexData[slot][0].size ==0): 
             full.append(i)
     if verbose >= 2: 

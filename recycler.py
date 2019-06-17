@@ -135,9 +135,7 @@ class event:
         mapDir = self.mapspath
         recycler_mjd = self.recycler_mjd
         # JTA
-        #('mainInjector ', 'MS190327o', './OUTPUT/TESTING/MS190327o/bayestar.fits.gz', 99999.0, './OUTPUT/O3REAL/MS190327o/bayestar/')
         print ("mainInjector ",trigger_id, skymap, mjd, outputDir)
-        #raise Exception("here")
 
         start_days_since_burst = self.recycler_mjd - self.mjd
 

@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import rotate
-from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import interp1d
 
 license="""
    Copyright (C) 2014 James Annis
@@ -172,7 +172,7 @@ def readMT() :
     data_dir = os.environ["DESGW_DATA_DIR"]
     file = data_dir + "mcbrydethomas-psi.dat"
     dec,psi = np.genfromtxt(file,unpack=True)
-    psispline = UnivariateSpline(dec,psi,s=0)
+    psispline =interp1d(dec,psi, fill_value="extrapolate",bounds_error=False)
     psi_spline = psispline
     return psispline, dec, psi
 

@@ -129,7 +129,8 @@ class observed(object):
         self.moonSep      = self.getLunarSeparation(self.ra, self.dec, self.moonData)
 
     def limitMag (self, filter, exposure=30, verbose=True) :
-        #print "\t limiting magnitude"
+        #print "\t JTA limiting magnitude", self.mjd, self.mjdToLST(self.mjd, self.lon)
+        #print self.ha[int(self.ha.size/2.)]
         mjd       = self.mjd
         zd        = self.zd
         sun_zd    = self.sunZD

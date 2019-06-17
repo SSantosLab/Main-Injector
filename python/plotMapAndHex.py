@@ -57,8 +57,8 @@ def mapAndHex(figure, simNumber, slot, data_dir, nslots, hexRa, hexDec, camera,
     #decBoxSize = 16.
     #mod_ra = -12
     #mod_dec = 5
-    mod_ra = 0; mod_dec=3; raBoxSize=15; decBoxSize=15
-    raBoxSize=60
+    mod_ra = 0; mod_dec=3; raBoxSize=60; decBoxSize=15
+    mod_ra = 0; mod_dec=0; raBoxSize=25; decBoxSize=25
 
     low_limit = 21.; high_limit=23.8
     if doStars :
@@ -113,6 +113,7 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
     import insideDesFootprint
     import matplotlib
     from scipy.ndimage.filters import gaussian_filter
+    if allSky: contourLabels = False
 
     cmap = "cubehelix_r"
     cmap = "YlGnBu"
@@ -211,7 +212,6 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
         #plotLmcHexes(alpha,beta,ax)
         # and not the fig1 marcelle paper, which is change lmcHexes2 to lmcHexes
 
-
     # deal with titles, axes, etc
     plt.title(title)
     plt.xlim(xmin, xmax)
@@ -251,8 +251,7 @@ def computeLimits (raHex, decHex, raMid = -1000, raBoxSize=5., decBoxSize=5, mod
         raMid = raMin+(raMax-raMin)/2.
     alpha= -1*(raMid+mod_alpha)
 
-    print "\t raMin, raMax, decMin, decMax:", raMin, raMax, decMin, decMax
-    #raise Exception
+    if verbose: print "\t raMin, raMax, decMin, decMax:", raMin, raMax, decMin, decMax
     if allSky :
         #x,y = mcbryde.mcbryde(np.array([-179.999,179.999]), np.array([-60,60]), alpha=alpha, beta=beta)
         #decMin = -60; decMax = 60.0
@@ -264,10 +263,10 @@ def computeLimits (raHex, decHex, raMid = -1000, raBoxSize=5., decBoxSize=5, mod
         ybox = 0.01*(ymax-ymin)
     else :
         # autoscaling
-        #x,y = mcbryde.mcbryde(raHex, decHex, alpha=alpha, beta=beta)
-        x,y = mcbryde.mcbryde(np.array([raMin,raMax]), np.array([1,1]), alpha=alpha, beta=beta)
+        x,y = mcbryde.mcbryde(raHex, decHex, alpha=alpha, beta=beta)
+        #x,y = mcbryde.mcbryde(np.array([raMin,raMax]), np.array([1,1]), alpha=alpha, beta=beta)
         xmin = x.min(); xmax = x.max()
-        x,y = mcbryde.mcbryde(np.array([-1,1]), np.array([decMin,decMax]), alpha=alpha, beta=beta)
+        #x,y = mcbryde.mcbryde(np.array([-1,1]), np.array([decMin,decMax]), alpha=alpha, beta=beta)
         ymin = y.min(); ymax = y.max()
         xbox = 0.1*(xmax-xmin)
         ybox = 0.1*(ymax-ymin)
@@ -278,7 +277,7 @@ def computeLimits (raHex, decHex, raMid = -1000, raBoxSize=5., decBoxSize=5, mod
         print "ra box, dec box",raMin, raMax, decMin, decMax
         print "x box, y box", xmin, xmax, ymin, ymax 
         print "alpha, beta",alpha, beta
-    #raw_input("wait for human to press")
+    #raise Exception("here")
     return raMin, raMax, decMin, decMax, xmin, xmax, ymin, ymax, alpha, beta
 
 # @profile
@@ -369,15 +368,33 @@ def plotDecamHexen(ax, ra,dec,alpha, camera, beta=0, color="r", lw=1, plateCaree
         from equalArea import mcbryde
         import matplotlib.pyplot as plt
         nHex = ra.size
+        # loop over every hex, painting it using a matplotlib technology
         for i in range(0,nHex) :
             hexRa,hexDec = decam2hp.cameraOutline(ra[i], dec[i], camera)
             hexX,hexY = mcbryde.mcbryde(hexRa,hexDec, alpha=alpha, beta=beta, )
             if plateCaree:
                 hexX,hexY = hexRa, hexDec
             if not allSky :
-                hex_path = matplotlib.path.Path(zip(hexX,hexY))
-                hex_patch = matplotlib.patches.PathPatch(hex_path, edgecolor=color, lw=lw, fill=False)
-                ax.add_patch(hex_patch)
+                # long section dealing with hexes that get split across the singularity
+                # and cause lines from one side of map to another
+                # split them into separate entities
+                # ugly, but it seems to work.
+                # not as complete as the one that works in ra,dec space
+                ix_pos, = np.where(hexX>=180)
+                ix_neg, = np.where(hexX<=-180)
+                ix_safe, = np.where((hexX <180) & (hexX>-180))
+                if ix_pos.size > 0:      # >= 180   
+                    hex_path = matplotlib.path.Path(zip(hexX[ix_pos],hexY[ix_pos]))
+                    hex_patch = matplotlib.patches.PathPatch(hex_path, edgecolor=color, lw=lw, fill=False)
+                    ax.add_patch(hex_patch)
+                if ix_neg.size > 0:     # <= -180 
+                    hex_path = matplotlib.path.Path(zip(hexX[ix_neg],hexY[ix_neg]))
+                    hex_patch = matplotlib.patches.PathPatch(hex_path, edgecolor=color, lw=lw, fill=False)
+                    ax.add_patch(hex_patch)
+                if ix_safe.size > 0:     
+                    hex_path = matplotlib.path.Path(zip(hexX[ix_safe],hexY[ix_safe]))
+                    hex_patch = matplotlib.patches.PathPatch(hex_path, edgecolor=color, lw=lw, fill=False)
+                    ax.add_patch(hex_patch)
             else :
                 # long section dealing with hexes that get split across the singularity
                 # and cause lines from one side of map to another
@@ -387,19 +404,20 @@ def plotDecamHexen(ax, ra,dec,alpha, camera, beta=0, color="r", lw=1, plateCaree
                 ix_neg, = np.where(hexRa<=-180)
                 ixn, = np.where((hexRa>-180)&(hexRa<0))
                 ixp, = np.where((hexRa>0)&(hexRa<180))
-                if ixp.size > 0 :
+                #raise Exception("here")
+                if ixp.size > 0 :   # 0 <= x <= 180
                     hex_path = matplotlib.path.Path(zip(hexX[ixp],hexY[ixp]))
                     hex_patch = matplotlib.patches.PathPatch(hex_path, edgecolor=color, lw=lw, fill=False)
                     ax.add_patch(hex_patch)
-                if ixn.size > 0 :
+                if ixn.size > 0 :  # -180 <= x <= 0
                     hex_path = matplotlib.path.Path(zip(hexX[ixn],hexY[ixn]))
                     hex_patch = matplotlib.patches.PathPatch(hex_path, edgecolor=color, lw=lw, fill=False)
                     ax.add_patch(hex_patch)
-                if ix_pos.size > 0:
+                if ix_pos.size > 0:      # >= 180   
                     hex_path = matplotlib.path.Path(zip(hexX[ix_pos],hexY[ix_pos]))
                     hex_patch = matplotlib.patches.PathPatch(hex_path, edgecolor=color, lw=lw, fill=False)
                     ax.add_patch(hex_patch)
-                if ix_neg.size > 0:
+                if ix_neg.size > 0:     # <= -180 
                     hex_path = matplotlib.path.Path(zip(hexX[ix_neg],hexY[ix_neg]))
                     hex_patch = matplotlib.patches.PathPatch(hex_path, edgecolor=color, lw=lw, fill=False)
                     ax.add_patch(hex_patch)
@@ -484,7 +502,10 @@ def plotLigoContours(x,y, vals, color="w", alpha = 1.0, lw=0.66, ls="solid", lab
         inline= False
         fontsize =10
         fontsize =14
-        plt.clabel(ct, levels, inline=inline, fontsize=fontsize)
+        try:
+            plt.clabel(ct, levels, inline=inline, fontsize=fontsize)
+        except:
+            plt.clabel(ct, levels[1:], inline=inline, fontsize=fontsize)
 
 def confidenceLevels(map) :
     map = np.array(map, copy=True)
