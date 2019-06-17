@@ -1,4 +1,4 @@
-trigger_path  : './OUTPUT/TESTING/'
+trigger_path  : './OUTPUT/O3REAL/'
 real_or_sim: 'real' #must switch between 'sim' and 'real'
 debug : False
 

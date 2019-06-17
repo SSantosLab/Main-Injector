@@ -1,2 +1,2 @@
-sendEveryoneEmails = False
-sendEveryoneTexts = False
+sendEveryoneEmails = True
+sendEveryoneTexts = True

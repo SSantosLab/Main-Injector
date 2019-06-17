@@ -325,7 +325,10 @@ def process_gcn(payload, root, dontwritepayload=False):
     
     #Fire off analysis code    
     #if skymap_url.split('/')[-1] == 'bayestar.fits.gz':
-    args = ['python', 'recycler.py','--skymapfilename='+skymap_filename, '--triggerpath='+config.trigger_outpath, '--triggerid='+trigger_id, '--mjd='+str(trigger_mjd),'--official='+official]    
+    if official:
+        args = ['python', 'recycler.py','--skymapfilename='+skymap_filename, '--triggerpath='+config.trigger_outpath, '--triggerid='+trigger_id, '--mjd='+str(trigger_mjd),'--official']
+    else:
+        args = ['python', 'recycler.py','--skymapfilename='+skymap_filename, '--triggerpath='+config.trigger_outpath, '--triggerid='+trigger_id, '--mjd='+str(trigger_mjd)]
     print 'ARGSSSSSSSSSSSSSSSSSSSSS'
     for arg in args:
         print arg,

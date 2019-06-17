@@ -1,5 +1,5 @@
-mode = 'test' # switch to 'observation' for real data!! 'test' will use an offline map and 'mdc' will listen for mock alerts
-trigger_outpath = 'OUTPUT/O3testing/'
+mode = 'observation' # switch to 'observation' for real data!! 'test' will use an offline map and 'mdc' will listen for mock alerts
+trigger_outpath = 'OUTPUT/O3REAL/'
 
 
 #sendEveryoneEmails = True
