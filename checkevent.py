@@ -17,6 +17,7 @@ import subprocess
 import time
 import checkevent_config as config
 import send_texts_and_emails
+global official
 official = False
 
 def sendFirstTriggerEmail(trigger_id,far,mapname='NA',retraction=0):
@@ -47,8 +48,10 @@ def sendFirstTriggerEmail(trigger_id,far,mapname='NA',retraction=0):
     #for y in you:
     #    try:
     subject =  plus+' Trigger '+trigger_id+' FAR: '+str(far)+' Map: '+mapname+' NOREPLY'
-    global official
-    send_texts_and_emails.send(subject,text,official)
+    #global official
+    #print(official)
+    #asdf
+    send_texts_and_emails.send(subject,text,official=official)
             #msg['From'] = me
             #msg['To'] = y
             
@@ -88,7 +91,8 @@ def sendFailedEmail(trigger_id,message='FAILED'):
     #for y in you:
     subject =  plus+' Trigger '+trigger_id+' FAILED!'
 
-    send_texts_and_emails.send(subject,text)
+    #global official
+    send_texts_and_emails.send(subject,text,official=official)
 
     #    msg['From'] = me
     #    msg['To'] = y
@@ -321,7 +325,7 @@ def process_gcn(payload, root, dontwritepayload=False):
     
     #Fire off analysis code    
     #if skymap_url.split('/')[-1] == 'bayestar.fits.gz':
-    args = ['python', 'recycler.py','--skymapfilename='+skymap_filename, '--triggerpath='+config.trigger_outpath, '--triggerid='+trigger_id, '--mjd='+str(trigger_mjd)]    
+    args = ['python', 'recycler.py','--skymapfilename='+skymap_filename, '--triggerpath='+config.trigger_outpath, '--triggerid='+trigger_id, '--mjd='+str(trigger_mjd),'--official='+official]    
     print 'ARGSSSSSSSSSSSSSSSSSSSSS'
     for arg in args:
         print arg,
@@ -406,34 +410,18 @@ if __name__ == "__main__":
         print(__doc__)
         sys.exit(1)
 
-    global official
+    #global official
 
-    if config.mode.lower() == 'test':
-        #os.system('curl -O https://emfollow.docs.ligo.org/userguide/_static/MS181101ab-1-Preliminary.xml')
-        #import lxml.etree
-        #from xml import etree
-        import xml.etree.ElementTree as ET
-        tree = ET.parse('MS181101ab-1-Preliminary.xml')
-        root = tree.getroot()
-        payload = open('MS181101ab-1-Preliminary.xml', 'rb').read()
-        #root = lxml.etree.fromstring(payload)
-        process_gcn(payload, root)
-        #KeyError('DONE!')
-        sys.exit()
-    if config.mode.lower() == 'mdc':
-        pass
-    elif config.mode.lower() == 'observation':
-        pass
-    else:
-        KeyError('checkevent_config.py Mode must be set to either test or observation.\nExiting...')
 
     import logging
 # Set up logger
     logging.basicConfig(level=logging.INFO)
+    official = False
 
     #try:
     #runnow=False
     for o,a in opt:
+        print(o)
         if o in ['--payload']:
             payloadpath=a
             payload=open(payloadpath).readlines()
@@ -444,6 +432,27 @@ if __name__ == "__main__":
             runnow=True
         if o in ['--official']:
             official = True
+            print('Official!!!'*10)
+            if config.mode.lower() != 'observation':
+                print('This is official, but mode is not observation!!!'*5)
+        else:
+            print('Not Official!'*10)
+
+    if config.mode.lower() == 'test':
+        import xml.etree.ElementTree as ET
+        tree = ET.parse('MS181101ab-1-Preliminary.xml')
+        root = tree.getroot()
+        payload = open('MS181101ab-1-Preliminary.xml', 'rb').read()
+        process_gcn(payload, root)
+        sys.exit()
+    if config.mode.lower() == 'mdc':
+        pass
+    elif config.mode.lower() == 'observation':
+        pass
+    else:
+        KeyError('checkevent_config.py Mode must be set to either test or observation.\nExiting...')
+
+
     #except:
     #if not runnow:
 #Start timer - use threading to say I'm Alive

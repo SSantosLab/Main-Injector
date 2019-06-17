@@ -1,4 +1,4 @@
-trigger_path  : './OUTPUT/O3REAL/'
+trigger_path  : './OUTPUT/TESTING/'
 real_or_sim: 'real' #must switch between 'sim' and 'real'
 debug : False
 
@@ -87,7 +87,7 @@ maxHexesPerSlot_BH : 18  # related to maxHexesPerSlot_NS by x3 for x3 less image
 
 ####Only used for running recycler.py standalone!####
 
-trigger_id : "MS190327o"
+trigger_id : "S190426c"
 wrap_all_triggers : False
 
 mjd : 57974.3530295
@@ -96,5 +96,5 @@ force_mjd : False
 recycler_mjd : 57979.5
 force_recycler_mjd : False
 
-skymap_filename : './OUTPUT/TESTING/MS190327o/bayestar.fits.gz'
+skymap_filename : './OUTPUT/TESTING/S190426c/bayestar.fits.gz'
 

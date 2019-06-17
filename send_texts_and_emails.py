@@ -8,7 +8,7 @@ def send(subject,text,official=False):
     #import MIalerts as config
     #del config
     #import MIalerts as config
-
+    #asdf
     if not official:
         return
 

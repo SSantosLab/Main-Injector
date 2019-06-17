@@ -19,7 +19,7 @@ import send_texts_and_emails
 import getdistance
 
 class event:
-    def __init__(self, skymap_filename, master_dir, trigger_id, mjd, config):
+    def __init__(self, skymap_filename, master_dir, trigger_id, mjd, config, official):
 
         '''
         event:
@@ -53,7 +53,7 @@ class event:
         os.system('cp recycler.yaml ' + yaml_dir)
         print('***** Copied recycler.yaml to ' + yaml_dir + ' for future reference *****')
         os.system('kinit -k -t /var/keytab/desgw.keytab desgw/des/des41.fnal.gov@FNAL.GOV')
-
+        self.official = official
 
     def modify_filesystem(self, skymap_filename, master_dir, trigger_id, mjd) :
 
@@ -135,8 +135,9 @@ class event:
         mapDir = self.mapspath
         recycler_mjd = self.recycler_mjd
         # JTA
+        #('mainInjector ', 'MS190327o', './OUTPUT/TESTING/MS190327o/bayestar.fits.gz', 99999.0, './OUTPUT/O3REAL/MS190327o/bayestar/')
         print ("mainInjector ",trigger_id, skymap, mjd, outputDir)
-        raise Exception("here")
+        #raise Exception("here")
 
         start_days_since_burst = self.recycler_mjd - self.mjd
 
@@ -148,6 +149,9 @@ class event:
         if self.skymap is None:
             self.skymap = os.path.join(outputDir,'lalinference.fits.gz')
 
+
+        #print(self.event_params.keys())
+        #asdf
         eventtype = self.event_params['boc']
 
         try:
@@ -543,7 +547,7 @@ class event:
     def send_nonurgent_Email(self,sendtexts=False):
         text = 'DESGW Webpage Created for REAL event. See \nhttp://des-ops.fnal.gov:8080/desgw/Triggers/' + self.trigger_id + '/' + self.trigger_id + '_' +self.trigger_dir + '_trigger.html\n\nDO NOT REPLY TO THIS THREAD, NOT ALL USERS WILL SEE YOUR RESPONSE.'
         subject = 'DESGW Webpage Created for REAL event ' + self.trigger_id + ' Map: '+self.trigger_dir+' NOREPLY'
-        send_texts_and_emails.send(subject,text)
+        send_texts_and_emails.send(subject,text,official=self.official)
         print('Email sent...')
         return
 
@@ -561,7 +565,7 @@ class event:
         message += '\n'
 
         subject = 'REAL Trigger ' + self.trigger_id + ' '+self.trigger_dir+ ' Processing FAILED!'
-        send_texts_and_emails.send(subject,message)
+        send_texts_and_emails.send(subject,message,official=self.official)
         print('Email sent...')
         return
 
@@ -694,7 +698,7 @@ if __name__ == "__main__":
         args = sys.argv[1:]
         opt, arg = getopt.getopt(
             args, "tp:tid:mjd:exp:sky",
-            longopts=["triggerpath=", "triggerid=", "mjd=", "exposure_length=", "skymapfilename="])
+            longopts=["triggerpath=", "triggerid=", "mjd=", "exposure_length=", "official","skymapfilename="])
 
     except getopt.GetoptError as err:
         print(str(err))
@@ -709,6 +713,8 @@ if __name__ == "__main__":
     trigger_path = config["trigger_path"]
 
     real_or_sim = config["real_or_sim"]
+
+    official = False
 
     if config["skymap_filename"] == 'Default':
         skymap_filename = None
@@ -743,6 +749,8 @@ if __name__ == "__main__":
             hours_available = float(a)
         elif o in ["-sky","--skymapfilename"]:
             skymap_filename = str(a)
+        elif o in ['--official']:
+            official = True
         else:
             print("Warning: option", o, "with argument", a, "is not recognized")
 
@@ -794,7 +802,7 @@ if __name__ == "__main__":
                 print('WARNING: Could not convert mjd to float. Trigger: ' + trigger_id + ' flagged as bad.')
 # here is where the object is made, and parts of it are filed in
             master_dir = os.path.join(trigger_path, trigger_id)
-            e = event(skymap_filename, master_dir, trigger_id, mjd, config)
+            e = event(skymap_filename, master_dir, trigger_id, mjd, config, official)
 
 # e has variables and code assocaiated with it. The mapMaker is called "e" or "self"
 
