@@ -17,6 +17,8 @@ from copy import copy
 #sys.path.append("/data/des41.a/data/desgw/")
 import send_texts_and_emails
 import getdistance
+import gw_map_configure
+import matplotlib.pyplot as plt
 
 class event:
     def __init__(self, skymap_filename, master_dir, trigger_id, mjd, config, official):
@@ -34,6 +36,7 @@ class event:
         self.modify_filesystem(skymap_filename, master_dir, trigger_id, mjd) 
         work_area = self.work_area 
 
+        self.trigger_id = trigger_id
         # read config file
         if config["force_recycler_mjd"]:
             self.recycler_mjd = config["recycler_mjd"]
@@ -108,6 +111,250 @@ class event:
 
 # Let's guess that mapMaker is the counterpart to recyc.mainInjector from
 # desgw-maps. 
+
+
+    def mapMaker2(self, trigger_id, skymap, config, snarf_mi_maps=False, start_slot = -1, do_nslots= -1,  mi_map_dir = "./"):
+        import os
+        import yaml
+        import getHexObservations
+
+        # debug                                                                                                                                                                                                                               
+        debug = config["debug"]
+
+        # camera                                                                                                                                                                                                                              
+        camera   = config["camera"]
+
+       #resolution                                                                                                                                                                                                                            
+        resolution = float(config["resolution"])
+
+        overhead = config["overhead"]
+        #nvisits = config["nvisits"]                                                                                                                                                                                                          
+        area_per_hex = config["area_per_hex"]
+        start_of_season = config["start_of_season"]
+        end_of_season = config["end_of_season"]
+        events_observed = config["events_observed"]
+        skipAll = config["skipAll"]
+        mjd = self.mjd
+        outputDir = self.work_area
+        mapDir = self.mapspath
+        recycler_mjd = self.recycler_mjd
+
+            # debug
+        debug = config["debug"]    
+
+    # camera
+        camera   = config["camera"]
+
+    #resolution
+    #resolution = 256 ;# default, resolution element on order of ccd area size
+    #resolution = 128 ;# roughly 4 ccds
+    #resolution = 64 ;# very fast, debuging, roughly 1/4 of the camera size
+        resolution     = config["resolution"]
+    # control the code running
+        #if do_make_maps == -1:
+        do_make_maps   = config["do_make_maps"]
+        #if do_make_hexes == -1:
+        do_make_hexes  = config["do_make_hexes"]
+        #if do_make_jsons == -1:
+        do_make_jsons  = config["do_make_jsons"]
+        #if do_make_gifs == -1:
+        do_make_gifs   = config["do_make_gifs"]
+
+
+    # same day?
+        days_since_burst = 0
+        #days_since_burst = config["days_since_burst"]
+
+    # strategy
+        exposure_length_ns= np.array(config["exposure_length_NS"],dtype='float')
+        filter_list_ns    = config["exposure_filter_NS"]
+        maxHexesPerSlot_ns= np.array(config["maxHexesPerSlot_NS"],dtype='float')
+        exposure_length_bh= np.array(config["exposure_length_BH"],dtype='float')
+        filter_list_bh    = config["exposure_filter_BH"]
+        maxHexesPerSlot_bh= np.array(config["maxHexesPerSlot_BH"],dtype='float')
+
+    # economics analysis for NS and for BH
+        hoursAvailable_ns = config["time_budget_for_NS"]
+        hoursAvailable_bh = config["time_budget_for_BH"]
+        lostToWeather_ns  = config["hours_lost_to_weather_for_NS"]
+        lostToWeather_bh  = config["hours_lost_to_weather_for_BH"]
+        rate_bh           = config["rate_of_bh_in_O2"];# events/year
+        rate_ns           = config["rate_of_ns_in_O2"];# events/year
+        hours_used_by_NS  = 0
+        hours_used_by_BH  = 0
+
+
+
+        eventtype = self.event_params['boc']
+
+        try:
+            probhasns = self.event_params['probhasns']
+        except:
+            probhasns = 0. #for old maps...                                                                                                                                                                                                   
+
+        if config['forceProbHasNS']: probhasns = config['probHasNS']
+
+        self.probhasns = probhasns
+        gethexobstype = None
+
+        #print 'eventtype',eventtype                                                                                                                                                                                                          
+        self.time_budget = hoursAvailable_ns
+        if eventtype == 'Burst':
+            gethexobstype = 'BH'
+            self.distance = 1.
+            self.propid = config['BBH_propid']
+            self.time_budget = hoursAvailable_bh
+        elif eventtype == 'CBC':
+            #print 'probhasns'*100                                                                                                                                                                                                            
+            print('PROB HAS NS',probhasns)
+            if probhasns > config['probHasNS_threshold']:
+                gethexobstype = 'NS'
+                try:
+                    self.distance = getdistance.dist_from_map(self.skymap)
+                except:
+                    print('failed to get distance from map')
+                    print('using 1mpc')
+                    self.distance = 1.
+                self.propid = config['BNS_propid']
+            else:
+                gethexobstype = 'BH'
+                self.distance = 1.
+                self.propid = config['BBH_propid']
+                self.time_budget = hoursAvailable_bh
+
+        else: #we dont know what we're looking at... do default obs for lightcurve                                                                                                                                                            
+            print('WE DONT KNOW WHAT WERE LOOKING AT!'*5)
+            gethexobstype = 'BH'
+            self.distance = 1.
+            self.propid = config['BBH_propid']
+            self.time_budget = hoursAvailable_bh
+
+        
+        trigger_type = gethexobstype 
+
+    # configure strategy for the event type
+        if trigger_type == "NS" :
+            hoursAvailable       = hoursAvailable_ns - lostToWeather_ns - hours_used_by_NS
+            rate                 = rate_ns
+            exposure_length      = exposure_length_ns
+            filter_list          = filter_list_ns
+            maxHexesPerSlot      = maxHexesPerSlot_ns
+        elif trigger_type == "BH" :
+            hoursAvailable       = hoursAvailable_bh - lostToWeather_bh - hours_used_by_BH
+            rate                 = rate_bh
+            exposure_length      = exposure_length_bh
+            filter_list          = filter_list_bh 
+            maxHexesPerSlot      = maxHexesPerSlot_bh
+        else :
+            raise Exception(
+                "trigger_type={}  ! Can only compute BH or NS".format(trigger_type))
+        
+        allSky = config['allSky']
+
+        exposure_length   = np.array(exposure_length)
+
+        gw_map_control  = gw_map_configure.control( resolution, mapDir, debug, 
+                                                    allSky=allSky, snarf_mi_maps=snarf_mi_maps, mi_map_dir = mi_map_dir)
+        gw_map_trigger  = gw_map_configure.trigger( skymap, trigger_id, trigger_type, 
+                                                    resolution, days_since_burst=days_since_burst)
+        gw_map_strategy = gw_map_configure.strategy( camera, exposure_length, 
+                                                     filter_list, maxHexesPerSlot, hoursAvailable, self.propid)
+        gw_map_results = gw_map_configure.results()
+
+        if not os.path.exists(outputDir): os.makedirs(outputDir)
+        if not os.path.exists(mapDir): os.makedirs(mapDir)
+
+    
+        if do_make_maps :
+            # make the computationally expensive maps of everything
+            getHexObservations.make_maps( 
+                gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
+
+        if do_make_hexes :
+            # compute the best observations
+            getHexObservations.make_hexes( 
+                gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
+                start_slot = start_slot, do_nslots= do_nslots)
+            # if start_slot = -1, do_nslots = -1, then do whole night, as if called like:
+            #    getHexObservations.make_hexes( 
+            #        gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
+            # the web page maker version of main injector should default to -1, -1
+
+        if do_make_jsons :
+            # make the jsons 
+            getHexObservations.make_jsons( gw_map_trigger, gw_map_strategy, gw_map_control)
+
+        if do_make_gifs :
+            getHexObservations.makeGifs( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
+
+        ra, dec, id, self.prob, mjd, slotNum, dist = \
+            obsSlots.readObservingRecord(self.trigger_id, mapDir)
+        self.slotNum = slotNum
+
+        integrated_prob = np.sum(self.prob)
+        try:
+            print('-'*20+'>','LIGO PROB: %.3f \tLIGO X DES PROB: %.3f' % (gw_map_results.sum_ligo_prob,integrated_prob))
+        except:
+            pass
+
+        self.best_slot = gw_map_results.best_slot
+        self.n_slots = gw_map_results.n_slots
+        self.first_slot = gw_map_results.first_slot
+        self.exposure_length = exposure_length
+        if do_make_maps:
+            np.savez(self.event_paramfile,
+                     MJD=self.mjd,
+                     ETA=self.event_params['ETA'],
+                     FAR=self.event_params['FAR'],
+                     ChirpMass=self.event_params['ChirpMass'],
+                     MaxDistance=self.event_params['MaxDistance'],
+                     DESXLIGO_prob=integrated_prob,
+                     LIGO_prob=gw_map_results.sum_ligo_prob,
+                     M1=self.event_params['M1'],
+                     M2=self.event_params['M2'],
+                     nHexes=self.prob.size,
+                     time_processed=self.recycler_mjd,
+                     boc=self.event_params['boc'],
+                     CentralFreq=self.event_params['CentralFreq'],
+                     best_slot=gw_map_results.best_slot,
+                     n_slots=gw_map_results.n_slots,
+                     first_slot=gw_map_results.first_slot,
+                     econ_prob=0,#self.econ_prob,
+                     econ_area=0,#self.econ_area,
+                     need_area=0,#self.need_area,
+                     quality=0,#self.quality,
+                     codeDistance=self.distance,
+                     exposure_times=exposure_length,
+                     exposure_filter=filter_list,
+                     hours=self.time_budget,
+                     nvisits=-999,#config['nvisits'],                                                                
+                     mapname='NAN',
+                     filename=self.skymap,
+                     gethexobstype=trigger_type,
+                     probhasns=self.probhasns
+                     )
+
+
+        map_dir = mapDir
+        jsonname = self.trigger_id + "_"+ self.trigger_dir +"_JSON.zip"
+        jsonFile = os.path.join(map_dir, jsonname)
+        jsonfilelistld = os.listdir(map_dir)
+        jsonfilelist = []
+        for f in jsonfilelistld:
+            if '-tmp' in f:
+                os.remove(os.path.join(map_dir, f))
+            elif '.json' in f:
+                jsonfilelist.append(f)
+
+
+        os.system('zip -j ' + jsonFile + ' ' + self.mapspath + '/*0.json')
+        os.system('cp ' + jsonFile + ' ' + self.website_jsonpath)
+
+        os.system('cp ' + os.path.join(map_dir, self.trigger_id) + '_centered_animate.gif ' + self.website_imagespath)
+
+
+
+        return 
 
     def mapMaker(self, trigger_id, skymap, config):
         import os
@@ -207,7 +454,6 @@ class event:
             self.propid = config['BNS_propid']
 
         exposure_length = np.array(exposure_length)
-        self.exposure_length = exposure_length
         self.time_budget = hoursAvailable
         self.camera = camera
 
@@ -225,6 +471,9 @@ class event:
         print('TRIGGER TYPE:',self.gethexobstype)
 
         #raw_input()
+
+        
+
         probs, times, slotDuration, hoursPerNight = getHexObservations.prepare(
                     self.skymap, trigger_id, outputDir, mapDir, distance=self.distance,
                     trigger_type=gethexobstype,start_days_since_burst=start_days_since_burst,camera=self.camera,
@@ -351,8 +600,9 @@ class event:
                  , quality=quality
                  )
 
-        ra, dec, id, self.prob, mjd, slotNum = \
+        ra, dec, id, self.prob, mjd, slotNum, dist = \
             obsSlots.readObservingRecord(self.trigger_id, mapDir)
+        self.slotNum = slotNum
 
         integrated_prob = np.sum(self.prob)
         print('-'*20+'>','LIGO PROB: %.3f \tLIGO X DES PROB: %.3f' % (self.sumligoprob,integrated_prob))
@@ -430,6 +680,18 @@ class event:
                      probhasns = 'NAN'
                      )
 
+    def makeProbabilityPlot(self):
+        plt.clf()
+        plt.plot(self.slotNum,self.prob,label='Total Prob %.3f'%np.sum(self.prob))
+        plt.scatter(self.slotNum,self.prob)
+        plt.xlabel('Slot Number')
+        plt.ylabel('Probability Per Slot')
+        plt.title('decam*ligo')
+        plt.legend()
+        name = self.trigger_id + "-probabilityPlot.png"
+        plt.savefig(os.path.join(self.mapspath, name))
+        plt.clf()
+
     def getContours(self, config):
         import matplotlib.pyplot as plt
 
@@ -451,26 +713,27 @@ class event:
             os.system('cp ' + cp_string + oname)
         if True:
             bestslot_name = trigger_best_slot + "-maglim-eq.png"
-            cp_string = os.path.join(self.work_area, bestslot_name) + ' ' + image_dir +"/"
+            cp_string = os.path.join(map_dir, bestslot_name) + ' ' + image_dir +"/"
             oname = trigger_id + "_limitingMagMap.png"
             os.system('cp ' + cp_string + oname)
             bestslot_name = trigger_best_slot + "-prob-eq.png"
-            cp_string = os.path.join(self.work_area, bestslot_name) + ' ' + image_dir +"/"
+            cp_string = os.path.join(map_dir, bestslot_name) + ' ' + image_dir +"/"
             oname = trigger_id + "_sourceProbMap.png"
             os.system('cp ' + cp_string + oname)
             bestslot_name = trigger_best_slot + "-ligo-eq.png"
-            cp_string = os.path.join(self.work_area, bestslot_name) + ' ' + image_dir +"/"
+            cp_string = os.path.join(map_dir, bestslot_name) + ' ' + image_dir +"/"
             oname = trigger_id + "_LIGO.png"
             os.system('cp ' + cp_string + oname)
             bestslot_name = trigger_best_slot + "-probXligo-eq.png"
-            cp_string = os.path.join(self.work_area, bestslot_name) + ' ' + image_dir +"/"
+            cp_string = os.path.join(map_dir, bestslot_name) + ' ' + image_dir +"/"
             oname = trigger_id + "_sourceProbxLIGO.png"
             os.system('cp ' + cp_string + oname)
             # DESGW observation map
             os.system('cp ' + cp_string + oname)
             # probability plot
+            self.makeProbabilityPlot()
             name = trigger_id + "-probabilityPlot.png"
-            os.system('cp ' + os.path.join(self.work_area, name) + ' ' + image_dir)
+            os.system('cp ' + os.path.join(map_dir, name) + ' ' + image_dir)
             #raw_input('getting contours stopped')
 
         return
@@ -502,9 +765,9 @@ class event:
 
         if self.n_slots > 0:
             # get statistics
-            ra, dec, id, self.prob, mjd, slotNum = \
+            ra, dec, id, self.prob, mjd, slotNum, dist = \
                 obsSlots.readObservingRecord(self.trigger_id, map_dir)
-
+            self.slotNum = slotNum
             # adding integrated probability to paramfile
             integrated_prob = np.sum(self.prob)
             nHexes = str(self.prob.size)
@@ -619,6 +882,9 @@ class event:
         trigger_html = os.path.join(self.master_dir, trigger_id +'_' + 
             trigger_dir + '_trigger.html') 
 
+        print 'scp -r ' + GW_website_dir_t + self.trigger_id+ ' ' + desweb_t
+        print 'scp ' + GW_website_dir + '/* ' + desweb
+        #asdf
         os.system('scp -r ' + GW_website_dir_t + self.trigger_id+ ' ' + desweb_t)
         os.system('scp ' + GW_website_dir + '/* ' + desweb)
         #master_dir,outfilename,trigger_id,event_paramfile,mapfolder,processing_param_file=None,real_or_sim='real',secondtimearound=False
@@ -626,10 +892,13 @@ class event:
         print os.path.join(self.master_dir, trigger_id +'_'+ trigger_dir+ '_trigger.html')
         print trigger_id,self.event_paramfile,trigger_dir
 
-        tp.makeNewPage(self.master_dir,os.path.join(self.master_dir, trigger_id +'_'+ trigger_dir+ '_trigger.html'),trigger_id,self.event_paramfile,trigger_dir, real_or_sim=real_or_sim)
+        #tp.makeNewPage(self.master_dir,os.path.join(self.master_dir, trigger_id +'_'+ trigger_dir+ '_trigger.html'),trigger_id,self.event_paramfile,trigger_dir, real_or_sim=real_or_sim)
+        print 'here1'
+        print 'scp -r ' + trigger_html + ' ' + desweb_t2 + "/"
         os.system('scp -r ' + trigger_html + ' ' + desweb_t2 + "/")
+        print 'here2'
         os.system('scp -r ' + trigger_html + ' ' + desweb_t2 +'_trigger.html')
-
+        print 'here3'
         os.system('cp ' + self.master_dir +'/'+  trigger_dir + '/'+trigger_dir+ '_recycler.log ' + self.website_jsonpath)
         return
 
@@ -648,16 +917,16 @@ class event:
     def makeObservingPlots(self):
         try:
             if not self.config['skipPlots']:
-                n_plots = getHexObservations.makeObservingPlots(
-                    self.n_slots, self.trigger_id, self.best_slot, self.outputDir, self.mapDir, self.camera, allSky=True )
+                #n_plots = getHexObservations.makeObservingPlots(
+                #    self.n_slots, self.trigger_id, self.best_slot, self.outputDir, self.mapDir, self.camera, allSky=True )
 
                 image_dir = self.website_imagespath
                 map_dir = self.mapspath
 
                 bestslot_name = self.trigger_id + "-" + str(self.best_slot) + "-ligo-eq.png"
                 if self.n_slots < 1:
-                    counter = getHexObservations.nothingToObserveShowSomething(
-                        self.trigger_id, self.work_area, self.mapspath)
+                    #counter = getHexObservations.nothingToObserveShowSomething(
+                    #    self.trigger_id, self.work_area, self.mapspath)
                     oname = self.trigger_id + "-observingPlot.gif"
                     os.system('cp ' + os.path.join(self.work_area, bestslot_name) + ' ' + os.path.join(image_dir, oname))
                     oname = self.trigger_id + "-probabilityPlot.png"
@@ -803,17 +1072,17 @@ if __name__ == "__main__":
             e = event(skymap_filename, master_dir, trigger_id, mjd, config, official)
 
 # e has variables and code assocaiated with it. The mapMaker is called "e" or "self"
-
-            e.mapMaker(trigger_id, skymap_filename, config)
+            
+            e.mapMaker2(trigger_id, skymap_filename, config)
             e.getContours(config)
-            jsonfilelist = e.makeJSON(config)
-            #e.make_cumulative_probs()
+            #jsonfilelist = e.makeJSON(config)
+            ##e.make_cumulative_probs()
             e.updateTriggerIndex(real_or_sim=real_or_sim) # generates the homepage 
             e.updateWebpage(real_or_sim) #make a blank page with the basic info that is available
-            e.makeObservingPlots()
-            e.getContours(config)
-            e.send_nonurgent_Email()
-            e.updateWebpage(real_or_sim)
+            #e.makeObservingPlots()
+            #e.getContours(config)
+            #e.send_nonurgent_Email()
+            #e.updateWebpage(real_or_sim)
 
         except KeyError:
             print("Unexpected error:", sys.exc_info())

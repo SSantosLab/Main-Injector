@@ -9,9 +9,17 @@ BNS_propid : 2019A-0205
 camera : 'decam'
 
 #resolution
-resolution : 256 # default, resolution element on order of ccd area size
+#resolution : 256 # default, resolution element on order of ccd area size
 #resolution : 128 # roughly 4 ccds
-#resolution : 64 # very fast, debuging, roughly 1/4 of the camera size
+resolution : 64 # very fast, debuging, roughly 1/4 of the camera size
+
+do_make_maps: True
+do_make_hexes: True
+do_make_jsons: True
+do_make_gifs: True
+
+allSky: False
+
 
 start_of_season : 57444.
 end_of_season : 57996.
@@ -28,8 +36,8 @@ skipjson: False
 
 probHasNS_threshold: .5
 
-forceProbHasNS: True
-probHasNS: 1.
+forceProbHasNS: False
+probHasNS: 0.
 
 events_observed : ['GW150914' , 'GW151226']
 
@@ -87,7 +95,7 @@ maxHexesPerSlot_BH : 18  # related to maxHexesPerSlot_NS by x3 for x3 less image
 
 ####Only used for running recycler.py standalone!####
 
-trigger_id : "S190426c"
+trigger_id : "S190630ag"
 wrap_all_triggers : False
 
 mjd : 57974.3530295
@@ -96,5 +104,5 @@ force_mjd : False
 recycler_mjd : 57979.5
 force_recycler_mjd : False
 
-skymap_filename : './OUTPUT/TESTING/S190426c/bayestar.fits.gz'
+skymap_filename : './OUTPUT/O3REAL/S190630ag/bayestar/bayestar.fits.gz'
 

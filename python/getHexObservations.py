@@ -240,8 +240,12 @@ def make_hexes( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
         return 0
     # shall we measure the total ligo probability covered?
     # Lets find out how well we did in covering Ligo probability
-    sum_ligo_prob = how_well_did_we_do( gw_map_trigger, gw_map_strategy, gw_map_control)
-
+    try:
+        sum_ligo_prob = how_well_did_we_do( gw_map_trigger, gw_map_strategy, gw_map_control)
+    except:
+        print '=============>>>> ZERO PROBABILITY!'
+        sum_ligo_prob = 0.
+        
     if do_nslots == -1 :
         cumulPlot(trigger_id, data_dir) 
         cumulPlot2(trigger_id, data_dir) 
@@ -249,6 +253,8 @@ def make_hexes( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
     gw_map_results.n_slots = n_slots
     gw_map_results.first_slot = mapZero
     gw_map_results.best_slot = maxProb_slot
+    gw_map_results.sum_ligo_prob = sum_ligo_prob
+
     return 
 
 # Make the json files
@@ -331,7 +337,8 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
     label = ""
     if allSky == False: label="centered_"
 
-    string = "$(ls -v {}-observingPlot*)  {}_{}animate.gif".format(trigger_id, trigger_id, label)
+    string = "$(ls -v {}-observingPlot*)  {}_{}animate.gif".format(data_dir+'/'+trigger_id, data_dir+'/'+trigger_id, label)
+    print string
     os.system("convert  -delay 40 -loop 0  " + string)
 
     # return the number of plots made
@@ -886,8 +893,11 @@ def writeObservingRecord(slotsObserving, data_dir, gw_map_trigger, gw_map_contro
 
     map_distance = gw_map_trigger.ligo_dist
     nside = hp.npix2nside(map_distance.size)
+    #ang2pix(nside,theta,phi,nest=False)
     pix_num = hp.ang2pix(nside,ra,dec, lonlat=True)
     dist = map_distance[pix_num]
+    #fixing the distance
+    #dist = 60.
     fd = open(name,'w')
     fd.write("# ra, dec, id, prob, mjd, slotNum, dist\n")
     unique_slots = np.unique(slotNum)

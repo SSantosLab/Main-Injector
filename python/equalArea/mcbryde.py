@@ -48,11 +48,12 @@ def mcbryde (ra,dec, southUp=0, test=0, alpha=0, beta=0, isLine=False) :
         ix = np.argsort(ra)
         ra = ra[ix]; dec=dec[ix]
 
+    #print(dec)
     try :
         psi = psi_spline(dec)
     except :
         readMT()
-        psi = psi_spline(dec)
+        psi = psi_spline(np.array(dec,dtype='float'))
     ra  =  ra*2*pi/360.
     dec = dec*2*pi/360.
     psi = psi*2*np.pi/360.
@@ -172,7 +173,7 @@ def readMT() :
     data_dir = os.environ["DESGW_DATA_DIR"]
     file = data_dir + "mcbrydethomas-psi.dat"
     dec,psi = np.genfromtxt(file,unpack=True)
-    psispline =interp1d(dec,psi, fill_value="extrapolate",bounds_error=False)
+    psispline =interp1d(np.array(dec,dtype='float'),np.array(psi,dtype='float'),bounds_error=False)# fill_value="extrapolate",bounds_error=False)
     psi_spline = psispline
     return psispline, dec, psi
 

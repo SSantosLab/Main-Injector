@@ -151,11 +151,11 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
                     <div class="container text-center">\
                         <div class="gallery-item" style="width: 50%; left: 50%; margin-right: -50%; transform: translate(50%, 0%)">\
                          <div class="gallery-thumb" >\
-                            <img name="Trigger" src="'+tmapfolder+'/'+str(trigger_id)+'-observingPlot.gif" onerror="this.src=\'/desgw/image_placeholder.jpg\'" \
+                            <img name="Trigger" src="'+tmapfolder+'/'+str(trigger_id)+'_centered_animate.gif" onerror="this.src=\'/desgw/image_placeholder.jpg\'" \
                             class="img-responsive" alt="2nd gallery Thumb" width="50%">\
                             <div class="image-overlay"></div>\
-                            <a href="'+tmapfolder+'/'+str(trigger_id)+'-observingPlot.gif" onerror="this.href=\'/desgw/image_placeholder.jpg\'" class="gallery-zoom"><i class="fa fa-eye"></i></a>\
-                            <a href="'+tmapfolder+'/'+str(trigger_id)+'-observingPlot.gif" onerror="this.href=\'/desgw/image_placeholder.jpg\'" download class="gallery-link"><i class="fa fa-link"></i></a>\
+                            <a href="'+tmapfolder+'/'+str(trigger_id)+'_centered_animate.gif" onerror="this.href=\'/desgw/image_placeholder.jpg\'" class="gallery-zoom"><i class="fa fa-eye"></i></a>\
+                            <a href="'+tmapfolder+'/'+str(trigger_id)+'_centered_animate.gif" onerror="this.href=\'/desgw/image_placeholder.jpg\'" download class="gallery-link"><i class="fa fa-link"></i></a>\
                           </div>\
                         </div>\
                         <h1>Trigger '+str(trigger_id)+'</h1>\
@@ -180,6 +180,7 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
     for map in maps:
         print map
         #raw_input()
+        print event_params.keys()
         if map in str(event_params['filename']):
                 html+='<div class="btn-group">\
                              <a ><button\
