@@ -107,18 +107,18 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
         return
 
 
-    print "\t cleaning up"
-    files = glob.glob(data_dir+"/*png"); 
-    for f in files: os.remove(f)
-    files = glob.glob(data_dir+"/*jpg"); 
-    for f in files: os.remove(f)
-    files = glob.glob(data_dir+"/*json"); 
-    for f in files: os.remove(f)
-    files = glob.glob(data_dir+"/*hp"); 
-    for f in files: os.remove(f)
-    files = glob.glob(data_dir+"/*txt"); 
-    for f in files: os.remove(f)
-    print "done cleaning up"
+    #print "\t cleaning up"
+    #files = glob.glob(data_dir+"/*png"); 
+    #for f in files: os.remove(f)
+    #files = glob.glob(data_dir+"/*jpg"); 
+    #for f in files: os.remove(f)
+    #files = glob.glob(data_dir+"/*json"); 
+    #for f in files: os.remove(f)
+    #files = glob.glob(data_dir+"/*hp"); 
+    #for f in files: os.remove(f)
+    #files = glob.glob(data_dir+"/*txt"); 
+    #for f in files: os.remove(f)
+    #print "done cleaning up"
 
     exposure_list = np.array(exposure_list)
     filter_list = np.array(filter_list)
@@ -276,15 +276,15 @@ def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control) :
 #
 # ====== there are possibilities. Show them.
 #
-def makeGifs (gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
+def makeGifs (gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=True) :
     # make gif centered on hexes
     n_plots = makeObservingPlots(
-        gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=False)
+        gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=allSky)
 
-    if  gw_map_control.allSky == True :
-    # make gif centered on ra=0,dec=0, all sky
-        n_plots = makeObservingPlots(
-            gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=True)
+    #if  gw_map_control.allSky == True :
+    ## make gif centered on ra=0,dec=0, all sky
+    #    n_plots = makeObservingPlots(
+    #        gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=True)
 
 def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=True) :
     trigger_id = gw_map_trigger.trigger_id
@@ -305,6 +305,7 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
     isdark =    (gw_map_results.isdark).astype(int)
 
     if n_slots == 0:
+        print '>>>>>>>>>>>>>>>>>>nothingToObserveShowSomething'
         nothingToObserveShowSomething(trigger_id, data_dir)
         return
 
@@ -315,8 +316,8 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
     figure = plt.figure(1,figsize=(8.5*1.618,8.5))
 
     print "\t cleaning up old png files"
-    files = glob.glob(data_dir+"/*png"); 
-    for f in files: os.remove(f)
+    #files = glob.glob(data_dir+"/*png"); 
+    #for f in files: os.remove(f)
 
     # first, make the probability versus something plot
     ra,dec,id,prob,slotMjd,slotNumbers,dist = obsSlots.readObservingRecord(
@@ -325,19 +326,25 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
     # now make the hex observation plots
     counter = 1   ;# already made one
     #for i in np.unique(slotNumbers) :
+
+    label = ""
+    if allSky == False: label="centered-"
+
     for i in range(isdark.size) :
+        print isdark[i]
         if not isdark[i]: continue
         
         observingPlot(figure,trigger_id,i,data_dir, n_slots, camera, allSky=allSky)
-        name = str(trigger_id)+"-observingPlot-{}.png".format(i)
+        name = str(trigger_id)+"-{}observingPlot-{}.png".format(label,i)
+        print('hereeee',name)
         plt.savefig(os.path.join(data_dir,name))
         counter += 1
         counter+= equalAreaPlot(figure,i,trigger_id,data_dir)
 
-    label = ""
-    if allSky == False: label="centered_"
+    #label = ""
+    #if allSky == False: label="centered-"
 
-    string = "$(ls -v {}-observingPlot*)  {}_{}animate.gif".format(data_dir+'/'+trigger_id, data_dir+'/'+trigger_id, label)
+    string = "$(ls -v {}observingPlot*)  {}_{}animate.gif".format(data_dir+'/'+trigger_id+'-'+label, data_dir+'/'+trigger_id, label)
     print string
     os.system("convert  -delay 40 -loop 0  " + string)
 
@@ -533,6 +540,7 @@ def readMaps(mapDir, simNumber, slot) :
     decMap    =hp.read_map(name+"-dec.hp", verbose=False);
     haMap     =hp.read_map(name+"-ha.hp", verbose=False);
     xMap      =hp.read_map(name+"-x.hp", verbose=False);
+    print 'JUST READ IN XMAP',xMap
     yMap      =hp.read_map(name+"-y.hp", verbose=False);
     hxMap     =hp.read_map(name+"-hx.hp", verbose=False);
     hyMap     =hp.read_map(name+"-hy.hp", verbose=False);
@@ -760,8 +768,8 @@ def cumulPlot(trigger_id, data_dir) :
     eyear,emonth,eday,ehour,eminute = utc_time_from_mjd(mjd[ix].max())
     ax3.set_xlabel("UT hour, starting {}/{}/{}, ending {}/{}".format(
         year, month, day, emonth, eday))
-    print "\t writing {}-slot-probabilities.png".format(trigger_id)
-    plt.savefig("{}-slot-probabilities.png".format(trigger_id))
+    print "\t writing {}-slot-probabilities.png".format(data_dir+'/'+trigger_id)
+    plt.savefig("{}-slot-probabilities.png".format(data_dir+'/'+trigger_id))
 
 
 
@@ -799,8 +807,8 @@ def cumulPlot2(trigger_id, data_dir) :
         ax2.plot([interp(q),interp(q)], [0, new_cy.max()],alpha=0.3,c="r", ls="dotted")
         ax2.text(interp(q), new_cy.max()*0.95, "{:2d}%".format(int(q*100)), 
             verticalalignment='bottom', alpha=0.3, color="r")
-    print "\t writing {}-hex-probabilities.png".format(trigger_id)
-    plt.savefig("{}-hex-probabilities.png".format(trigger_id))
+    print "\t writing {}-hex-probabilities.png".format(data_dir+'/'+trigger_id)
+    plt.savefig("{}-hex-probabilities.png".format(data_dir+'/'+trigger_id))
 
 def equalAreaPlot(figure,slot,simNumber,data_dir, title="") :
     import matplotlib.pyplot as plt

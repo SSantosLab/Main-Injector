@@ -272,9 +272,14 @@ class event:
 
         if do_make_hexes :
             # compute the best observations
-            getHexObservations.make_hexes( 
-                gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
-                start_slot = start_slot, do_nslots= do_nslots)
+            #getHexObservations.make_hexes( 
+            #    gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
+            #    start_slot = start_slot, do_nslots= do_nslots)
+
+            getHexObservations.make_hexes(
+                gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
+
+
             # if start_slot = -1, do_nslots = -1, then do whole night, as if called like:
             #    getHexObservations.make_hexes( 
             #        gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
@@ -285,10 +290,11 @@ class event:
             getHexObservations.make_jsons( gw_map_trigger, gw_map_strategy, gw_map_control)
 
         if do_make_gifs :
-            getHexObservations.makeGifs( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
+            getHexObservations.makeGifs( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky = allSky)
 
         ra, dec, id, self.prob, mjd, slotNum, dist = \
             obsSlots.readObservingRecord(self.trigger_id, mapDir)
+
         self.slotNum = slotNum
 
         integrated_prob = np.sum(self.prob)
@@ -885,14 +891,17 @@ class event:
         print 'scp -r ' + GW_website_dir_t + self.trigger_id+ ' ' + desweb_t
         print 'scp ' + GW_website_dir + '/* ' + desweb
         #asdf
+        os.system('cp '+trigger_html+' '+GW_website_dir)
+
         os.system('scp -r ' + GW_website_dir_t + self.trigger_id+ ' ' + desweb_t)
         os.system('scp ' + GW_website_dir + '/* ' + desweb)
         #master_dir,outfilename,trigger_id,event_paramfile,mapfolder,processing_param_file=None,real_or_sim='real',secondtimearound=False
         print self.master_dir
         print os.path.join(self.master_dir, trigger_id +'_'+ trigger_dir+ '_trigger.html')
+        #os.system('cp '+trigger_html+' '+GW_website_dir)
         print trigger_id,self.event_paramfile,trigger_dir
 
-        #tp.makeNewPage(self.master_dir,os.path.join(self.master_dir, trigger_id +'_'+ trigger_dir+ '_trigger.html'),trigger_id,self.event_paramfile,trigger_dir, real_or_sim=real_or_sim)
+        tp.makeNewPage(self.master_dir,os.path.join(self.master_dir, trigger_id +'_'+ trigger_dir+ '_trigger.html'),trigger_id,self.event_paramfile,trigger_dir, real_or_sim=real_or_sim)
         print 'here1'
         print 'scp -r ' + trigger_html + ' ' + desweb_t2 + "/"
         os.system('scp -r ' + trigger_html + ' ' + desweb_t2 + "/")

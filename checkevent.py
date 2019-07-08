@@ -7,6 +7,7 @@ import tempfile
 import shutil
 import sys
 import glob
+sys.path.append('/data/des41.a/data/desgw/osgsetup/eeups/fnaleups/Linux64/pygcn/pygcn-0.1.10/')
 import gcn
 import gcn.handlers
 import gcn.notice_types
