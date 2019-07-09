@@ -122,6 +122,14 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
     else :
         ix=np.nonzero((xMap > xmin) & (xMap  <= xmax) & (yMap > ymin) & (yMap <= ymax) )
 
+    if allSky:
+        ix = np.nonzero((xMap > -999999) & (yMap > -999999))
+        ix = np.ones(xMap.size).astype(bool)
+        xmin=xMap.min(); xmax=xMap.max()
+        ymin=yMap.min(); ymax=yMap.max()
+        #doHexes=False
+
+
     # plot the image, either as an image or as a hexbin
     plt.clf()
     if image :
@@ -287,6 +295,7 @@ def plotDesFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax) :
 def makeImage (xMap, yMap, vals, xmin, xmax, ymin, ymax, scale, 
         badData=False, badDataVal=-11.0, verbose=False, too_far_away_scale=1.5) :
     import scipy.spatial
+    print 'xmap',xMap,'ymap',yMap
     tree = scipy.spatial.KDTree(zip(xMap, yMap))
 
     xsize = int(xmax)+1 - int(xmin)-1 

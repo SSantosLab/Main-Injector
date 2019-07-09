@@ -15,6 +15,7 @@ Matt Wiesner,			none,				none
 Maria Elidaiana,		elidaiana.sp@gmail.com,		3392159170@tmomail.net
 antonella palmese,		palmese@fnal.gov,		3317078212@tmomail.net
 will hartley,			willliam.hartley@gmail.com,	none
+Tristan Bachmann,               tgbachmann@uchicago.edu,                5857708123@vzwpix.com
 francisco forster,		francisco.forster@gmail.com, 	none
 constantina nicolau,		constantina.nicolaou.i@gmail.com,	none
 geraint lewis,			geraint.lewis@sydney.edu.au,			none
@@ -25,3 +26,8 @@ melissa butner,			butnerm@gmail.com,			6307506430@mms.att.net
 mandeep gill,			msgill@slac.stanford.edu,		6509061069@mms.att.net
 paulo barchi,			paulobarchi@gmail.com,			none
 felipe olivares,		f.olivares.e@gmail.com,			none
+Ignacio Sanchez,		nachoandres_sanchezb@hotmail.com, 	none
+Jonathan Garcia, 		japinedag@unal.edu.co, 			none
+Nicolas Retamal, 		nicomezare@gmail.com,			none
+Juanita romero, 		jantilen@das.uchile.cl, 		none
+Osmar Rodriguez,		olrodrig@gmail.com,			none

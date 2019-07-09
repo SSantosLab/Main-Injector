@@ -16,13 +16,15 @@ setup --nolocks pyslalib
 export PATH=/cvmfs/des.opensciencegrid.org/fnal/anaconda2/bin:$PATH
 source activate des18a
 
-setup python
-setup numpy
-setup scipy
-setup matplotlib
-setup astropy
-setup fitsio
-setup yaml
-setup pygcn
-setup easyaccess
-setup healpy #MUST BE LAST
+unsetup numpy
+
+#setup python
+#setup numpy
+#setup scipy
+#setup matplotlib
+#setup astropy
+#setup fitsio
+#setup yaml
+#setup pygcn
+#setup easyaccess
+###s#etup healpy #MUST BE LAST
