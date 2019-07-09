@@ -3,26 +3,6 @@ import os
 from equalArea import mcbryde
 import matplotlib.pyplot as plt
 
-def getDesFootprint () :
-    import insideDesFootprint
-    ra,dec = insideDesFootprint.getFootprintRaDec() 
-    return ra,dec
-def plotDesFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax) :
-    import matplotlib.pyplot as plt
-    import matplotlib.path
-    import matplotlib.patches
-    from equalArea import mcbryde
-    desRa, desDec = getDesFootprint()
-    x,y = mcbryde.mcbryde(desRa, desDec, alpha=alpha, beta=beta)
-    ix = (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
-    #plt.plot(x[ix],y[ix],c="k",alpha=0.5)
-    footprint = matplotlib.path.Path(zip(x,y))
-    patch = matplotlib.patches.PathPatch(footprint, facecolor='gold', lw=1, alpha=0.066, fill=True)
-    ax.add_patch(patch)
-    patch = matplotlib.patches.PathPatch(footprint, edgecolor='gold', lw=1, alpha=1, fill=False)
-    #patch = matplotlib.patches.PathPatch(footprint, edgecolor='gold', lw=1, alpha=0.33, fill=False)
-    ax.add_patch(patch)
-    
 #  raHex, decHex = np.genfromtxt("512/lmc-ra-dec-prob-mjd-slot.txt", unpack=True, usecols=(0,1))
 #  raHex, decHex = plotMapAndHex.getG184098_iband_hexes() 
 #  alpha,beta= plotMapAndHex.mapAndHex(figure,"lmc",10,"512/",10,raHex, decHex); 
@@ -279,6 +259,29 @@ def computeLimits (raHex, decHex, raMid = -1000, raBoxSize=5., decBoxSize=5, mod
         print "alpha, beta",alpha, beta
     #raise Exception("here")
     return raMin, raMax, decMin, decMax, xmin, xmax, ymin, ymax, alpha, beta
+
+
+def getDesFootprint () :
+    import insideDesFootprint
+    ra,dec = insideDesFootprint.getFootprintRaDec() 
+    return ra,dec
+def plotDesFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax) :
+    import matplotlib.pyplot as plt
+    import matplotlib.path
+    import matplotlib.patches
+    from equalArea import mcbryde
+    desRa, desDec = getDesFootprint()
+    x,y = mcbryde.mcbryde(desRa, desDec, alpha=alpha, beta=beta)
+    ix = (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
+    #plt.plot(x[ix],y[ix],c="k",alpha=0.5)
+    footprint = matplotlib.path.Path(zip(x,y))
+    patch = matplotlib.patches.PathPatch(footprint, facecolor='gold', lw=1, alpha=0.066, fill=True)
+    ax.add_patch(patch)
+    patch = matplotlib.patches.PathPatch(footprint, edgecolor='gold', lw=1, alpha=1, fill=False)
+    #patch = matplotlib.patches.PathPatch(footprint, edgecolor='gold', lw=1, alpha=0.33, fill=False)
+    ax.add_patch(patch)
+    
+
 
 # @profile
 def makeImage (xMap, yMap, vals, xmin, xmax, ymin, ymax, scale, 
