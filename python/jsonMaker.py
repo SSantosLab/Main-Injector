@@ -29,7 +29,7 @@ def writeJson(ra,dec,id, seqid="none", seqnum=0, seqtot=0,
         exposureList = [90,90,90], 
         filterList = ["i","z","z"],
         #tilingList = [9,9,9], 
-        tilingList = [10,10,10], 
+        tilingList = [1, 2],
         trigger_type = "NS", propid='propid',
         jsonFilename="des-gw.json") :
     offsets = tileOffsets()
@@ -41,6 +41,7 @@ def writeJson(ra,dec,id, seqid="none", seqnum=0, seqtot=0,
     seqtot= seqtot*nexp
     for i in range(0,size) :
         for j in range(0,nexp) :
+            print i,j,size,nexp, tilingList
             seqnum +=1
             tiling = tilingList[j]
             filter = filterList[j]
@@ -115,16 +116,6 @@ def tileOffsets() :
 # fake offset 19
     offsets[19] =  0.9423775, -0.405792 
 #
-# now, we are going to assume that the hex centers are
-# read from all-sky-hexcenters-tiling9.txt
-# where the hex centers are those for tiling 9
-# i.e., the offset has already been applied.
-# Therefore, all of the offsets in this routine
-# should be made relative to tiling 9's offset
-    for i in [0,1,2,3,4,5,6,7,8,10,11,17,18,19, 9] :
-        ra =offsets[i][0]-offsets[9][0]
-        dec = offsets[i][1]-offsets[9][1]
-        offsets[i] = (ra,dec)
     return offsets
 
 
