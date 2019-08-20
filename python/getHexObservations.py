@@ -150,7 +150,7 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
         except:
             print "\t !!!!!!!! ------- no distance information in skymap ------ !!!!!!!!"
 
-    obs = mags.observed(ra,dec,ligo, start_mjd+.3, verbose=False)
+    obs = mags.observed(ra,dec,ligo, start_mjd, verbose=False)
     obs.limitMag("i",exposure=exposure_length)
     print "finished setting up exposure calculation"
 
