@@ -85,8 +85,8 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
         low_limit, high_limit, ligoMap, origLigoMap, doLigoMap=True, doOrigLigoMap=False, 
         resolution=512, image=False, scale=1., badData=False, badDataVal=-11.0,
         redRa = 90., title="", raMid=-1000, raBoxSize=5., decBoxSize=5., mod_ra = 0, mod_dec=0.,
-        doHexes = True, gradRedHiDec = -80, raGratDelRa=30., decGratDelDec=10. , colorbar=True,
-        contourLabels=True , slots=np.zeros(0), thisSlot=0, allSky = False) :
+        doHexes = False, gradRedHiDec = -80, raGratDelRa=30., decGratDelDec=10. , colorbar=True,
+        contourLabels=True , slots=np.zeros(0), thisSlot=0, allSky = False) : #ag 190816 change doHexes to false
     from equalArea import mcbryde
     import matplotlib.pyplot as plt
     from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -127,7 +127,7 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
         ix = np.ones(xMap.size).astype(bool)
         xmin=xMap.min(); xmax=xMap.max()
         ymin=yMap.min(); ymax=yMap.max()
-        #doHexes=False
+#        doHexes=False #ag 190816 uncommented
 
 
     # plot the image, either as an image or as a hexbin
@@ -184,21 +184,35 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
         linewidth=1.0
         #ax = figure.add_subplot(1,1,1)
         # this is needed for search fig 1
-        ax=plotDecamHexen(ax, hexRa, hexDec, alpha, camera, beta, color="r", lw=linewidth, allSky=allSky) 
+        
+        hexRa1, hexDec1 = np.genfromtxt('/data/des41.a/data/desgw/alyssaO3jimRecycler/7-2-10MainInjector/Main-Injector/190816_plotcands/190816cands.txt', usecols=(0,1), unpack=True)
+
+        ax=plotDecamHexen(ax, hexRa1, hexDec1, alpha, camera, beta, color="r", lw=linewidth, allSky=allSky) 
         #ix =np.invert( insideDesFootprint.insideFootprint(hexRa, hexDec))
         #ax=plotDecamHexen(ax, hexRa[ix],hexDec[ix],alpha, beta, color="orange", lw=linewidth, allSky=allSky) 
-        if slots.size > 0 :
-            # plot the already observed hexes as maroon
-            ix = slots<thisSlot
-            ax=plotDecamHexen(ax, hexRa[ix],hexDec[ix],alpha, camera, beta, color="maroon", lw=linewidth, allSky=allSky) 
+#        if slots.size > 0 :
+#            # plot the already observed hexes as maroon
+#            ix = slots<thisSlot
+#            ax=plotDecamHexen(ax, hexRa[ix],hexDec[ix],alpha, camera, beta, color="maroon", lw=linewidth, allSky=allSky) 
             # plot the current slots hexes as yellow
-            ix = slots==thisSlot
-            ax=plotDecamHexen(ax, hexRa[ix],hexDec[ix],alpha, camera, beta, color="yellow", lw=linewidth, allSky=allSky) 
+#            ix = slots==thisSlot
+#            ax=plotDecamHexen(ax, hexRa[ix],hexDec[ix],alpha, camera, beta, color="yellow", lw=linewidth, allSky=allSky) 
         
 
         # fig1 and fig2, lmc paper, 
         #plotLmcHexes(alpha,beta,ax)
         # and not the fig1 marcelle paper, which is change lmcHexes2 to lmcHexes
+
+    #ag hack to get not hexes                                                                        
+    if doHexes == False:                                                                              
+        hexRa2, hexDec2 = np.genfromtxt('/data/des41.a/data/desgw/alyssaO3jimRecycler/7-2-10MainInjector/Main-Injector/190816_plotcands/190816cands.txt', usecols=(0,1), unpack=True)                                                                 
+        hexX,hexY = mcbryde.mcbryde(hexRa2,hexDec2, alpha=alpha, beta=beta)                            
+        plt.scatter(hexX, hexY, s=90, c="r", marker=".", zorder=2, edgecolors="k")
+          
+        hexRa3, hexDec3 = np.genfromtxt('/data/des41.a/data/desgw/alyssaO3jimRecycler/7-2-10MainInjector/Main-Injector/190816_plotcands/190817_cands.txt', usecols=(0,1), unpack=True)                                                              
+        hexX3,hexY3 = mcbryde.mcbryde(hexRa3,hexDec3, alpha=alpha, beta=beta)
+        plt.scatter(hexX3, hexY3, s=90, c="g", marker=".", zorder=3, edgecolors="k")
+
 
     # deal with titles, axes, etc
     plt.title(title)
@@ -467,12 +481,14 @@ def plotDecamHexen(ax, ra,dec,alpha, camera, beta=0, color="r", lw=1, plateCaree
 
     return ax
 
-def plotLigoContours(x,y, vals, color="w", alpha = 1.0, lw=0.66, ls="solid", labels=False ) :
+def plotLigoContours(x,y, vals, color="w", alpha = 1.0, lw=0.66, ls="solid", labels=True ) : #ag 190816 change labels to true
     import matplotlib
     import matplotlib.pyplot as plt
     from scipy.interpolate import griddata
     con_levels=5
-    levels=[0.50, 0.90]
+    #con_levels=25
+    #levels=[0.50, 0.90]
+    levels=[0.50, 0.9, 0.95, 0.99]
     #levels1=[0.50,]
     #levels2=[0.90,]
     print "\t\t contours at confidance levels 0.5, 0.9"
@@ -504,19 +520,28 @@ def plotLigoContours(x,y, vals, color="w", alpha = 1.0, lw=0.66, ls="solid", lab
     zi = griddata(coord,vals,(xi,yi),method="cubic")
     #zi = griddata(coord,vals,(xi,yi),method="linear")
      #print "linestyle = ",ls
-    ct= plt.contour(xi,yi,zi,con_levels,linewidths=lw, linestyles=ls,
+    #ct= plt.contour(xi,yi,zi,con_levels,linewidths=lw, linestyles=ls,
+    #                colors=color, levels=levels, alpha=alpha)
+    ct= plt.contour(xi,yi,zi,linewidths=lw, linestyles=ls,
                     colors=color, levels=levels, alpha=alpha)
     #ct= plt.contour(xi,yi,zi,con_levels,linewidths=lw, linestyles=ls2,
     #    colors=color, levels=levels1, alpha=alpha)
-    if labels :
-        inline= True
-        inline= False
-        fontsize =10
-        fontsize =14
-        try:
-            plt.clabel(ct, levels, inline=inline, fontsize=fontsize)
-        except:
-            plt.clabel(ct, levels[1:], inline=inline, fontsize=fontsize)
+
+#ag 20190818 get rid of if to try and force labels
+
+#    if labels :
+#        inline= True
+#        inline= False
+#        fontsize =10
+#        fontsize =14
+#        try:
+#            plt.clabel(ct, levels, inline=inline, fontsize=fontsize)
+#        except:
+#            plt.clabel(ct, levels[1:], inline=inline, fontsize=fontsize)
+
+    inline = True
+    fontsize = 14
+    plt.clabel(ct, levels[1:], inline=True, fontsize=fontsize, colors="black")
 
 def confidenceLevels(map) :
     map = np.array(map, copy=True)
