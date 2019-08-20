@@ -107,20 +107,20 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
         return
 
 
-    #print "\t cleaning up"
-    #files = glob.glob(data_dir+"/*png"); 
-    #for f in files: os.remove(f)
-    #files = glob.glob(data_dir+"/*jpg"); 
-    #for f in files: os.remove(f)
-    #files = glob.glob(data_dir+"/*json"); 
-    #for f in files: os.remove(f)
-    #files = glob.glob(data_dir+"/*hp"); 
-    #for f in files: os.remove(f)
-    #files = glob.glob(data_dir+"/*txt"); 
-    #for f in files: os.remove(f)
-    #print "done cleaning up"
+    print "\t cleaning up"
+    files = glob.glob(data_dir+"/*png"); 
+    for f in files: os.remove(f)
+    files = glob.glob(data_dir+"/*jpg"); 
+    for f in files: os.remove(f)
+    files = glob.glob(data_dir+"/*json"); 
+    for f in files: os.remove(f)
+    files = glob.glob(data_dir+"/*hp"); 
+    for f in files: os.remove(f)
+    files = glob.glob(data_dir+"/*txt"); 
+    for f in files: os.remove(f)
+    print "done cleaning up"
 
-    exposure_list = np.array(exposure_list)
+    xposure_list = np.array(exposure_list)
     filter_list = np.array(filter_list)
     ix = filter_list == "i"
     exposure_length = exposure_list[ix].sum()
@@ -616,6 +616,7 @@ def desJson(tmpname, name, data_dir, verbose = 1) :
 
     logging.info("Begin")
     gwwide.file_gwwide(tmpname, des_json, name)
+    os.remove(tmpname)
 
 def jsonUTCName (slot, mjd, simNumber, mapDirectory) :
     time = utcFromMjd(mjd)
@@ -874,7 +875,7 @@ def observingPlot(figure, simNumber, slot, data_dir, nslots, camera, allSky=Fals
         the_mjd = mjd[ix][0]
         time = utcFromMjd(the_mjd)
     else :
-        time = ""
+        time = " no observations "
     
     title = " Slot {}    {} ".format(slot, time)
     title = title + "      {}".format(simNumber)

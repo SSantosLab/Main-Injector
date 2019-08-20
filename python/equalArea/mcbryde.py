@@ -153,7 +153,7 @@ def solveMT () :
     data_dir = os.environ["DESGW_DATA_DIR"]
     file = data_dir + "mcbrydethomas-psi.dat"
     fd = open(file,"w")
-    for i in range(-90,90) :
+    for i in range(-90,91) :
         dec = i*2*np.pi/360.
         a = np.sin(dec)*(2+np.sqrt(2))/2.
         close = 10000; enuff = -1
