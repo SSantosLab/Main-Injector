@@ -29,7 +29,7 @@ def writeJson(ra,dec,id, seqid="none", seqnum=0, seqtot=0,
         exposureList = [90,90,90], 
         filterList = ["i","z","z"],
         #tilingList = [9,9,9], 
-        tilingList = [1, 2],
+        tilingList = [1, 5],
         trigger_type = "NS", propid='propid',
         jsonFilename="des-gw.json") :
     offsets = tileOffsets()

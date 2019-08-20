@@ -321,7 +321,7 @@ def probabilityMapSaver (obs, models, times, probabilities,
                     raHexen[do_these], decHexen[do_these], idHexen[do_these]
 
             raHexen, decHexen, idHexen, hexVals, rank = \
-                hexalate.cutAndHexalateOnRaDec ( obs, sm, raHexen, decHexen, idHexen, tree, camera)
+                hexalate.cutAndHexalateOnRaDec ( obs, sm, raHexen, decHexen, idHexen, tree, camera, cutProbs=True)
 
             # where rank is to be understood as the indicies of the
             # ranked hexes in order; i.e., they have nothing to do with
