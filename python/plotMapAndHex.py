@@ -295,7 +295,6 @@ def plotDesFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax) :
 def makeImage (xMap, yMap, vals, xmin, xmax, ymin, ymax, scale, 
         badData=False, badDataVal=-11.0, verbose=False, too_far_away_scale=1.5) :
     import scipy.spatial
-    print 'xmap',xMap,'ymap',yMap
     tree = scipy.spatial.KDTree(zip(xMap, yMap))
 
     xsize = int(xmax)+1 - int(xmin)-1 
