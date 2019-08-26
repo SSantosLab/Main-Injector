@@ -11,6 +11,22 @@ import matplotlib.path
 # nside=512 resolves ccds, (47 sq-arcmin vs 165 sq-arcmin for a ccd)
 # nsides = 1024 = 3.4x3.4 arcmin vs  9x18 arcmin
 
+# frst get the ligo data, then count prob in hexes
+def countLigoProbData (ligo_map_name) :
+    import healpy as hp
+    import hp2np
+    print "\t reading {}".format(ligo_map_name)
+    ra,dec,vals = hp2np.hp2np(ligo_map_name)
+    print "\t computing spatial tree data"
+    treedata = buildtree(ra,dec,nsides=hp.get_nside(ra),recompute=True)
+    tree = treedata[2]
+    return ra,dec,vals,tree
+def countLigoProb (hexRa, hexDec, ra,dec,vals,tree) :
+    probs = hexalateMapWithoutOverlap(ra,dec,vals,tree, hexRa, hexDec, "decam")
+    print probs
+    return probs.sum()
+    
+
 # keeps count of times a hex, any hex, overlies a map pixel
 #   camera outline for the hexes given
 def hexesOnMap(ra,dec, raHexen, decHexen, camera) :
