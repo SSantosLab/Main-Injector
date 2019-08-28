@@ -52,7 +52,11 @@ class observed(object):
     Internally all coordinates, time and space, are in radians, except MJD.
     """
     def __init__(self, 
-            ra, dec, values, mjd, alpha=0., degradeRes=True, verbose=True) :
+            ra, dec, values, mjd, alpha=0., 
+            degradeRes=True, # change map resolution
+            doMaps=True,  # don't think of ra,dec,vals as a healpy map; don't do map work
+            verbose=True   # be very loud or no
+        ) :
         self.verbose      = verbose
         data_dir          = os.environ["DESGW_DATA_DIR"]
         ctio_lat          = -30.16527778
@@ -70,7 +74,10 @@ class observed(object):
         self.ra           = ra*self.degToRad
         self.dec          = dec*self.degToRad
         self.map          = values
-        self.nside        = hp.npix2nside(values.size)
+        if doMaps :
+            self.nside        = hp.npix2nside(values.size)
+        else :
+            self.nside        = 0
 
         # observational astronomy
         self.lst          = self.mjdToLST(self.mjd, self.lon)
@@ -92,6 +99,12 @@ class observed(object):
         ra,dec,ebv        = dustModel.loadDust(dust_dir, dust_file)
         if degradeRes :
             ra,dec,ebv    = hp2np.map2np (ebv, resolution=self.nside, fluxConservation=False)
+        if not doMaps :
+            ra      = self.ra/self.degToRad
+            dec     = self.dec/self.degToRad
+            ebv = hp.get_interp_val(ebv, ra,dec, lonlat=True)
+            ra      = self.ra
+            dec     = self.dec
         self.dust_ra      = ra
         self.dust_dec     = dec
         self.ebv          = ebv
@@ -101,6 +114,12 @@ class observed(object):
         ra,dec,precog     = hp2np.hp2np(data_dir + "precognize.fits")
         if degradeRes :
             ra,dec,precog = hp2np.map2np (precog, resolution=self.nside, fluxConservation=False)
+        if not doMaps :
+            ra      = self.ra/self.degToRad
+            dec     = self.dec/self.degToRad
+            precog = hp.get_interp_val(precog, ra,dec, lonlat=True)
+            ra      = self.ra
+            dec     = self.dec
         self.pra          = ra
         self.pdec         = dec
         self.precog       = precog

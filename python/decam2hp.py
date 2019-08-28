@@ -21,10 +21,13 @@ def countLigoProbData (ligo_map_name) :
     treedata = buildtree(ra,dec,nsides=hp.get_nside(ra),recompute=True)
     tree = treedata[2]
     return ra,dec,vals,tree
-def countLigoProb (hexRa, hexDec, ra,dec,vals,tree) :
+def countLigoProb (hexRa, hexDec, ra,dec,vals,tree, giveProbs=False) :
     probs = hexalateMapWithoutOverlap(ra,dec,vals,tree, hexRa, hexDec, "decam")
     print probs
-    return probs.sum()
+    if giveProbs:
+        return probs
+    else :
+        return probs.sum()
     
 
 # keeps count of times a hex, any hex, overlies a map pixel
