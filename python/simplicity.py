@@ -2,9 +2,17 @@ import numpy as np
 import mags
 import obsSlots
 
+#
+# calc produces information about a single nights observing.
+#   the information about what to observe is in the *ra-dec-*txt file that strategy produces
+#   the "ra_dec_file_dir" tells the code where that lives
+#   tigger_id tells it what the name of the *ra-dec*.txt file is
+# The expTime is used only in the limiting magnitude calculation, not in what to observe when
+#
+
 def calc(trigger_id, ra_dec_file_dir, mjd, expTime, filter, best=False) :
     # get the hexes
-    ra,dec,id,prob,obs_mjd,slotNum,dist = obsSlots.readObservingRecord(trigger_id,data_dir)
+    ra,dec,id,prob,obs_mjd,slotNum,dist = obsSlots.readObservingRecord(trigger_id,ra_dec_file_dir)
     # find the highest prob hex
     best_ix = np.argmax(prob)
 
