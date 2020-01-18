@@ -97,17 +97,31 @@ def tileOffsets() :
 # we'll use productions 9,10 (as if we were doing DES year 5)
 # production offsets: docdb 7269, offsets_cross.txt
     offsets[1] = 0.000, 0.000
-    offsets[2] = -0.76668, 0.473424 
-    offsets[3] = -0.543065, -0.828492
-    offsets[4] = 0.0479175, 0.777768 
-    offsets[5] = 0.06389, 0.287436 
+
+# real
+#    offsets[2] = -0.76668, 0.473424 
+#    offsets[3] = -0.543065, -0.828492
+#    offsets[4] = 0.0479175, 0.777768 
+#    offsets[5] = 0.06389, 0.287436 
+#    offsets[6] = -0.4632025, 0.490332 
+#    offsets[7] = 0.9423775, 0.405792 
+#    offsets[8] =-0.2395875, -0.135264 
+#    offsets[9] = 0.76668, 0.4227
+#    offsets[10] = -0.0479175, 0.388884
+# for GW work
+    offsets[2] = 0.06389, 0.287436 
+    offsets[3] =-0.2395875, -0.135264 
+    offsets[4] = -0.0479175, 0.388884
+    offsets[5] = -0.76668, 0.473424 
     offsets[6] = -0.4632025, 0.490332 
     offsets[7] = 0.9423775, 0.405792 
-    offsets[8] =-0.2395875, -0.135264 
-# production offsets 9
+    offsets[8] = -0.543065, -0.828492
     offsets[9] = 0.76668, 0.4227
+    offsets[10] = 0.0479175, 0.777768 
+# production offsets 9
+#    offsets[9] = 0.76668, 0.4227
 # production offsets 10
-    offsets[10] = -0.0479175, 0.388884
+#    offsets[10] = -0.0479175, 0.388884
 # production offsets 10
     offsets[11] = -0.5257, 0.7222
 # production offsets 17,18
