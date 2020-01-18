@@ -11,6 +11,11 @@ import obsSlots
 #
 
 def calc(trigger_id, ra_dec_file_dir, mjd, expTime, filter, best=False) :
+    # do dark siren stuff
+    #ra,dec,prob,filter = np.genfromtxt(trigger_id,unpack=True)
+    #filter = np.genfromtxt(trigger_id,unpack=True,dtype="str",usecols=3)
+    #filter = "g"
+
     # get the hexes
     ra,dec,id,prob,obs_mjd,slotNum,dist = obsSlots.readObservingRecord(trigger_id,ra_dec_file_dir)
     # find the highest prob hex
