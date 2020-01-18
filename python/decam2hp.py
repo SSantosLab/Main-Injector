@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.path
+import scipy.spatial
 
 # the intent is that these two main routines,
 #   hexesOnMap & hexalateMap
@@ -12,7 +13,7 @@ import matplotlib.path
 # nsides = 1024 = 3.4x3.4 arcmin vs  9x18 arcmin
 
 # frst get the ligo data, then count prob in hexes
-def countLigoProbData (ligo_map_name) :
+def countData (ligo_map_name) :
     import healpy as hp
     import hp2np
     print "\t reading {}".format(ligo_map_name)
@@ -28,6 +29,20 @@ def countLigoProb (hexRa, hexDec, ra,dec,vals,tree, giveProbs=False) :
         return probs
     else :
         return probs.sum()
+
+def isCatalogInHexes(hexRa, hexDec, ra, dec) :
+    tree = scipy.spatial.cKDTree(zip(ra*np.cos(dec*2*np.pi/360.),dec))
+    ix_all = np.array([])
+    for i in range(0,hexRa.size) :
+        ix =  isCatalogInHex(hexRa[i], hexDec[i], ra,dec, tree)
+        ix_all = np.append(ix_all, ix)
+    ix_all = np.unique(ix_all).astype("int")
+    return ix_all
+def isCatalogInHex(hexRa, hexDec, ra,dec, tree="") :
+    if tree == "" :
+        tree = scipy.spatial.cKDTree(zip(ra*np.cos(dec*2*np.pi/360.),dec))
+    ix = radecInHex ( hexRa, hexDec, ra,dec,tree, "decam") 
+    return ix
     
 
 # keeps count of times a hex, any hex, overlies a map pixel
@@ -136,7 +151,6 @@ def buildtree(ra,dec,nsides=1024,recompute=False, \
         wrapForMetricEval=False, dumpTree = False) :
     # I think doing this using a tree requires a projection we will
     # use a Sanon-Flamsteed projection (aka sinusoidal, x=ra*cos(dec), y=dec)
-    import scipy.spatial
     import os.path
     import cPickle
 
