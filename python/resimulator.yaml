@@ -1,0 +1,51 @@
+trigger_path  : './working/'
+real_or_sim: 'real' #must switch between 'sim' and 'real'
+debug: False
+
+# camera
+camera : 'decam'
+
+sendEmailsToEveryone : False
+sendtexts : False
+
+probHasRem_threshold: .5
+
+forceProbHasRem: False
+probHasRem: 1.
+
+do_make_maps:   True
+do_make_hexes:  True
+do_make_jsons:  True
+do_make_gifs:   True
+
+# Optimization params
+#resolution: 128 #for map making
+resolution: 32 #for map making at speed
+
+ # gif_resolution = 3. pub quality
+ # gif_resolution = 1. good to show
+ # gif_resolution = 0.1  8-bit resolution-like but tells the story and very fast
+gif_resolution: 0.1
+
+
+distance : 60.
+force_distance : False
+days_since_burst : 0
+
+skipAll : False
+skipPlots: False
+
+default_map_name : bayestar.fits
+
+# Remnant strategy
+exposure_length_Rem : [ 60., 90. ] #sec
+exposure_filter_Rem : [ 'i', 'z']
+maxHexesPerSlot_Rem : 6
+exposure_tiling_Rem : [ 0, 5 ]
+# BH strategy
+exposure_length_BH : [ 90., ] #sec
+exposure_filter_BH : [ 'r', ]
+exposure_tiling_BH : [ 10, ]
+maxHexesPerSlot_BH : 18  # related to maxHexesPerSlot_NS by x3 for x3 less images/hex, so same amount of time
+
+
