@@ -45,46 +45,32 @@ def recycle (trigger_id, skymap, trigger_type,
         do_make_jsons  = config["do_make_jsons"]
     if do_make_gifs == -1:
         do_make_gifs   = config["do_make_gifs"]
+    hoursAvailable = 20.
 
 
     # same day?
     days_since_burst = config["days_since_burst"]
 
     # strategy
-    exposure_length_ns= config["exposure_length_NS"]
-    filter_list_ns    = config["exposure_filter_NS"]
-    maxHexesPerSlot_ns= config["maxHexesPerSlot_NS"]
-    exposure_length_bh= config["exposure_length_BH"]
-    filter_list_bh    = config["exposure_filter_BH"]
-    maxHexesPerSlot_bh= config["maxHexesPerSlot_BH"]
-
-    # economics analysis for NS and for BH
-    hoursAvailable_ns = config["time_budget_for_NS"]
-    hoursAvailable_bh = config["time_budget_for_BH"]
-    lostToWeather_ns  = config["hours_lost_to_weather_for_NS"]
-    lostToWeather_bh  = config["hours_lost_to_weather_for_BH"]
-    rate_bh           = config["rate_of_bh_in_O2"];# events/year
-    rate_ns           = config["rate_of_ns_in_O2"];# events/year
-    hours_used_by_NS  = 0
-    hours_used_by_BH  = 0
-
+    exposure_length_rem = config["exposure_length_Rem"]
+    filter_list_rem     = config["exposure_filter_Rem"]
+    maxHexesPerSlot_rem = config["maxHexesPerSlot_Rem"]
+    exposure_length_bh  = config["exposure_length_BH"]
+    filter_list_bh      = config["exposure_filter_BH"]
+    maxHexesPerSlot_bh  = config["maxHexesPerSlot_BH"]
 
     # configure strategy for the event type
-    if trigger_type == "NS" :
-        hoursAvailable       = hoursAvailable_ns - lostToWeather_ns - hours_used_by_NS
-        rate                 = rate_ns
-        exposure_length      = exposure_length_ns
-        filter_list          = filter_list_ns
-        maxHexesPerSlot      = maxHexesPerSlot_ns
+    if trigger_type == "Rem" :
+        exposure_length      = exposure_length_rem
+        filter_list          = filter_list_rem
+        maxHexesPerSlot      = maxHexesPerSlot_rem
     elif trigger_type == "BH" :
-        hoursAvailable       = hoursAvailable_bh - lostToWeather_bh - hours_used_by_BH
-        rate                 = rate_bh
         exposure_length      = exposure_length_bh
         filter_list          = filter_list_bh 
         maxHexesPerSlot      = maxHexesPerSlot_bh
     else :
         raise Exception(
-            "trigger_type={}  ! Can only compute BH or NS".format(trigger_type))
+            "trigger_type={}  ! Can only compute BH or Rem".format(trigger_type))
     exposure_length   = np.array(exposure_length)
 
     gw_map_control  = gw_map_configure.control( resolution, outputDir, debug, 
