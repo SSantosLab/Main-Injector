@@ -71,6 +71,7 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     distance             = gw_map_trigger.distance
     days_since_burst     = gw_map_trigger.days_since_burst
     burst_mjd            = gw_map_trigger.burst_mjd
+    start_mjd            = gw_map_trigger.start_mjd
 
     camera               = gw_map_strategy.camera
     exposure_list        = gw_map_strategy.exposure_list
@@ -88,9 +89,11 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
 
     print "burst_mjd = {:.2f} at a distance of {:.1f} Mpc".format(
         burst_mjd, distance)
-    print "calculation starting at  {:.1f} days since burst\n".format(
+
+    print "day of burst = {:.2f}" .format(start_mjd),
+    print ", calculation starting at  sunset --- with an additional {:.1f} days added\n".format(
          days_since_burst)
-    start_mjd = burst_mjd + days_since_burst
+    start_mjd = start_mjd + days_since_burst
 
 
     if snarf_mi_maps:
@@ -107,7 +110,7 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
         return
 
 
-    print "\t cleaning up"
+    print "\t cleaning up old files",
     files = glob.glob(data_dir+"/*png"); 
     for f in files: os.remove(f)
     files = glob.glob(data_dir+"/*jpg"); 
@@ -118,17 +121,19 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     for f in files: os.remove(f)
     files = glob.glob(data_dir+"/*txt"); 
     for f in files: os.remove(f)
-    print "done cleaning up"
+    files = glob.glob(data_dir+"/*pickle"); 
+    for f in files: os.remove(f)
+    print "\t done cleaning up"
 
     xposure_list = np.array(exposure_list)
     filter_list = np.array(filter_list)
     ix = filter_list == "i"
     exposure_length = exposure_list[ix].sum()
-    print "obs slots starting"
+    print "\t obs slots starting"
 
-    answers = obsSlots.slotCalculations( burst_mjd, exposure_list, overhead, 
+    answers = obsSlots.slotCalculations( start_mjd, exposure_list, overhead, 
         hexesPerSlot=maxHexesPerSlot) 
-    print "obs slots done"
+    print "\t obs slots done"
     hoursPerNight = answers["hoursPerNight"] ;# in minutes
     slotDuration = answers["slotDuration"] ;# in minutes
     deltaTime = slotDuration/(60.*24.) ;# in days
@@ -139,7 +144,6 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
 
     # === prep the maps
     ra,dec,ligo=hp2np.hp2np(skymap, degrade=resolution, field=0)
-    print "got map"
     ligo_dist, ligo_dist_sig, ligo_dist_norm  = \
         distance*np.ones(ra.size), np.zeros(ra.size), np.zeros(ra.size)
     if not forcedistance:
@@ -161,14 +165,17 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
         obs, models, deltaTime, start_mjd, probabilityTimesCache,
         gw_map_trigger, gw_map_control)
 
-    mapsAtTimeT.probabilityMapSaver (obs, models, times, probs, 
+    made_maps_list = mapsAtTimeT.probabilityMapSaver (obs, models, times, probs, 
         gw_map_trigger, gw_map_strategy, gw_map_control)
 
     gw_map_results.probability_per_slot = probs
-    gw_map_results.time_of_slot  = times
-    gw_map_results.slotDuration  = slotDuration
-    gw_map_results.hoursPerNight = hoursPerNight
-    gw_map_results.isdark        = isdark
+    gw_map_results.time_of_slot         = times
+    gw_map_results.slotDuration         = slotDuration
+    gw_map_results.hoursPerNight        = hoursPerNight
+    gw_map_results.isdark               = isdark
+    gw_map_results.made_maps_list       = made_maps_list
+    pickle.dump(made_maps_list, open("made_maps.pickle","wb"))
+
     return 
 
 # ==== figure out what to observe
@@ -253,6 +260,7 @@ def make_hexes( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
     gw_map_results.n_slots = n_slots
     gw_map_results.first_slot = mapZero
     gw_map_results.best_slot = maxProb_slot
+    gw_map_results.slot_numbers = np.unique(slotNumbers)
     gw_map_results.sum_ligo_prob = sum_ligo_prob
 
     return 
@@ -293,6 +301,7 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
     data_dir = gw_map_control.datadir
     start_slot = gw_map_control.start_slot
     do_nslots = gw_map_control.do_nslots
+    gif_resolution= gw_map_control.gif_resolution
 
     # we are doing a quick run, avoiding most calculations as they are already done and on disk
     if (gw_map_results.hoursPerNight == False)  :
@@ -302,7 +311,8 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
     best_slot = gw_map_results.best_slot
     probs =   gw_map_results.probability_per_slot 
     times =    gw_map_results.time_of_slot 
-    isdark =    (gw_map_results.isdark).astype(int)
+
+    made_maps_list = (gw_map_results.made_maps_list).astype(int)
 
     if n_slots == 0:
         print '>>>>>>>>>>>>>>>>>>nothingToObserveShowSomething'
@@ -312,12 +322,8 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
     print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
     print "makeObservingPlots(",n_slots, trigger_id, best_slot,data_dir," )"
     print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
-    print "We're going to do {} slots with best slot={}".format(np.nonzero(isdark)[0].size, best_slot)
+    print "We're going to do {} slots with best slot={}".format(made_maps_list.size, best_slot)
     figure = plt.figure(1,figsize=(8.5*1.618,8.5))
-
-    print "\t cleaning up old png files"
-    #files = glob.glob(data_dir+"/*png"); 
-    #for f in files: os.remove(f)
 
     # first, make the probability versus something plot
     ra,dec,id,prob,slotMjd,slotNumbers,dist = obsSlots.readObservingRecord(
@@ -330,13 +336,14 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
     label = ""
     if allSky == False: label="centered-"
 
-    for i in range(isdark.size) :
-        print isdark[i]
-        if not isdark[i]: continue
+    #print "start_slot",start_slot
+    #print "do_nslots",do_nslots
+    #print "first_slot",first_slot
+    #for i in range(start_slot, start_slot+do_nslots) :
+    for i in made_maps_list:
         
-        observingPlot(figure,trigger_id,i,data_dir, n_slots, camera, allSky=allSky)
+        observingPlot(figure,trigger_id,i,data_dir, n_slots, camera, allSky=allSky, gif_resolution=gif_resolution)
         name = str(trigger_id)+"-{}observingPlot-{}.png".format(label,i)
-        print('hereeee',name)
         plt.savefig(os.path.join(data_dir,name))
         counter += 1
         counter+= equalAreaPlot(figure,i,trigger_id,data_dir)
@@ -441,7 +448,7 @@ def reuse_results(data_dir, gw_map_trigger,gw_map_strategy, gw_map_results, get_
         trigger_id = gw_map_trigger.trigger_id
         probabilityTimesCache = os.path.join(data_dir,\
         "probabilityTimesCache_"+str(trigger_id)+".txt")
-        print "=============>>>> Reuse results via reuse_results"
+        print "=============>>>> Reuse results via reuse_results",
         print "\t using probabilities, times, and maps from", probabilityTimesCache
         if os.stat(probabilityTimesCache).st_size == 0 :
             probs, times = np.array([0,]),np.array([0,])
@@ -452,12 +459,14 @@ def reuse_results(data_dir, gw_map_trigger,gw_map_strategy, gw_map_results, get_
         gw_map_results.probability_per_slot = probs
         gw_map_results.time_of_slot = times
         gw_map_results.isdark = isdark
+        gw_map_results.made_maps_list = pickle.load(open("made_maps.pickle","rb"))
 
         exposure_list   = gw_map_strategy.exposure_list
         burst_mjd       = gw_map_trigger.burst_mjd 
+        start_mjd       = gw_map_trigger.start_mjd 
         maxHexesPerSlot = gw_map_strategy.maxHexesPerSlot
         overhead        = gw_map_strategy.overhead
-        answers = obsSlots.slotCalculations(burst_mjd, exposure_list, overhead,
+        answers = obsSlots.slotCalculations(start_mjd, exposure_list, overhead,
             maxHexesPerSlot)
         hoursPerNight = answers["hoursPerNight"] ;# in minutes
         slotDuration = answers["slotDuration"] ;# in minutesk
@@ -535,12 +544,11 @@ def readMaps(mapDir, simNumber, slot) :
     import healpy as hp
     # get the maps for a reasonable slot
     name = os.path.join(mapDir, str(simNumber) + "-"+str(slot))
-    print "\t reading ",name+"-ra.hp  & etc"
+    #print "\t reading ",name+"-ra.hp  & etc"
     raMap     =hp.read_map(name+"-ra.hp", verbose=False);
     decMap    =hp.read_map(name+"-dec.hp", verbose=False);
     haMap     =hp.read_map(name+"-ha.hp", verbose=False);
     xMap      =hp.read_map(name+"-x.hp", verbose=False);
-    print 'JUST READ IN XMAP',xMap
     yMap      =hp.read_map(name+"-y.hp", verbose=False);
     hxMap     =hp.read_map(name+"-hx.hp", verbose=False);
     hyMap     =hp.read_map(name+"-hy.hp", verbose=False);
@@ -623,9 +631,11 @@ def jsonUTCName (slot, mjd, simNumber, mapDirectory) :
     tmpname, name = jsonName(slot, time, simNumber, mapDirectory)
     return tmpname, name
 
-def utcFromMjd (mjd) :
+def utcFromMjd (mjd, alt=False) :
     year,month,day,hour,minute = utc_time_from_mjd(mjd)
-    time = "UTC-{}-{:02d}-{:02d}-{:02d}:{:02d}:00".format(year,month,day,hour,minute)
+    time = "UT-{}-{:02d}-{:02d} {:02d}:{:02d}:00".format(year,month,day,hour,minute)
+    if alt:
+        time = "{:02d}:{:02d}:00UT on {}-{:02d}-{:02d}".format(hour,minute,year,month,day)
     return time
 
 def utc_time_from_mjd (mjd) :
@@ -865,7 +875,7 @@ def equalAreaPlot(figure,slot,simNumber,data_dir, title="") :
 
 # modify mcbryde to have alpha=center of plot
 #   "slot" is roughly hour during the night at which to make plot
-def observingPlot(figure, simNumber, slot, data_dir, nslots, camera, allSky=False) :
+def observingPlot(figure, simNumber, slot, data_dir, nslots, camera, allSky=False, gif_resolution=1.0) :
     import plotMapAndHex
 
     # get the planned observations
@@ -873,19 +883,19 @@ def observingPlot(figure, simNumber, slot, data_dir, nslots, camera, allSky=Fals
     ix = slotNumbers == slot
     if np.any(ix):
         the_mjd = mjd[ix][0]
-        time = utcFromMjd(the_mjd)
+        time = utcFromMjd(the_mjd, alt=False)
+        time = "Shutter open " + time
     else :
-        time = " no observations "
+        time = "Shutter closed " 
     
-    title = " Slot {}    {} ".format(slot, time)
-    title = title + "      {}".format(simNumber)
+    title = "{} Slot {} {}".format(simNumber, slot, time)
 
 
 # this is useful to debug the plots
     #print "making plotMapAndHex.mapAndHex(figure, ", simNumber, ",", slot, ",", data_dir, ",", nslots, ",ra,dec,", camera, title,"allSky=",allSky,") "
 
     d=plotMapAndHex.mapAndHex(figure, simNumber, slot, data_dir, nslots, ra, dec, \
-        camera, title, slots=slotNumbers, allSky=allSky)
+        camera, title, slots=slotNumbers, allSky=allSky, scale=gif_resolution)
     return d
 
 def writeObservingRecord(slotsObserving, data_dir, gw_map_trigger, gw_map_control) :

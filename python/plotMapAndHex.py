@@ -11,8 +11,11 @@ import matplotlib.pyplot as plt
 # exp,raHex,decHex=np.genfromtxt("ra-dec.txt",unpack=True,comments="#")
 # reload(plotMapAndHex);plotMapAndHex.mapAndHex(figure, "G211117",0,"/data/des30.a/data/annis/des-gw/Christmas16-event/maps/", 8, raHex, decHex, "" )
 #
+#    scale = 3.   # hi-res, for publication
+#    scale = 1.   # default
+#    scale = 0.1  # low-res, not filling in area, but fast
 def mapAndHex(figure, simNumber, slot, data_dir, nslots, hexRa, hexDec, camera,
-        title="", slots=np.zeros(0), doHexes=True, allSky=False, colorbar=True) :
+        title="", slots=np.zeros(0), doHexes=True, allSky=False, colorbar=True, scale=1.) :
     import healpy as hp
     import hp2np
 
@@ -23,13 +26,11 @@ def mapAndHex(figure, simNumber, slot, data_dir, nslots, hexRa, hexDec, camera,
     raMap, decMap, ligoMap, maglimMap, probMap, \
         haMap, xMap, yMap, hxMap, hyMap = readMaps(data_dir, simNumber, slot)
 
-    resolution=256
-    resolution=512
+    resolution=512 # truely nice
+    resolution=256 # ok for some things
     doStars = False
     image = False
     image = True
-    scale = 3.
-    scale = 1.
     redRa = 90.
 
     raMid = -1000
@@ -94,6 +95,7 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
     import matplotlib
     from scipy.ndimage.filters import gaussian_filter
     if allSky: contourLabels = False
+    print "\t coreMapAndHex start",
 
     cmap = "cubehelix_r"
     cmap = "YlGnBu"
@@ -130,13 +132,14 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
         #doHexes=False
 
 
+    print "\t ... makeImage",
     # plot the image, either as an image or as a hexbin
     plt.clf()
     if image :
         data = makeImage (xMap[ix], yMap[ix], map[ix], xmin, xmax, ymin, ymax, scale, 
             badData=badData, badDataVal=badDataVal)
         # hack to make this 5 sigma, not 10 sigma limitin mag
-        print "\t\t 10sigma -> 5 sigma hack",
+        #print "\t\t 10sigma -> 5 sigma hack",
         data = data +0.75257 
         low_limit = low_limit+ 0.75257
         high_limit = high_limit+ 0.75257
@@ -148,6 +151,7 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
         plt.hexbin(xMap[ix],yMap[ix],map[ix],vmin=low_limit, vmax=high_limit, gridsize=gridsize,
             cmap=cmap)
 
+    print "\t ... graticule",
     # put on a graticule
     graticule (alpha, beta, xmin, xmax, ymin, ymax,  redRa = redRa, redRaDec2 = gradRedHiDec,
         raGratDelRa= raGratDelRa, decGratDelDec= decGratDelDec)
@@ -202,7 +206,7 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
         # and not the fig1 marcelle paper, which is change lmcHexes2 to lmcHexes
 
     # deal with titles, axes, etc
-    plt.title(title)
+    plt.title(title, loc='left')
     plt.xlim(xmin, xmax)
     plt.ylim(ymin, ymax)
     plt.axes().set_aspect('equal'); 
@@ -212,6 +216,7 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
 
     plt.show()
 
+    print "\t ... coreMapAndHex done"
     return alpha, beta
 
 # compute image limits and midpoints (alpha, beta)
@@ -476,7 +481,7 @@ def plotLigoContours(x,y, vals, color="w", alpha = 1.0, lw=0.66, ls="solid", lab
     levels=[0.50, 0.90]
     #levels1=[0.50,]
     #levels2=[0.90,]
-    print "\t\t contours at confidance levels 0.5, 0.9"
+    #print "\t\t contours at confidance levels 0.5, 0.9"
     xmin = x.min(); xmax = x.max()
     ymin = y.min(); ymax = y.max()
     
@@ -532,7 +537,6 @@ def readMaps(mapDir, simNumber, slot) :
     import healpy as hp
     # get the maps for a reasonable slot
     name = os.path.join(mapDir, str(simNumber) + "-"+str(slot))
-    print "\t reading ",name+"-ra.hp  & etc"
     raMap     =hp.read_map(name+"-ra.hp", verbose=False);
     decMap    =hp.read_map(name+"-dec.hp", verbose=False);
     haMap     =hp.read_map(name+"-ha.hp", verbose=False);

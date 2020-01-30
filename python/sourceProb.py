@@ -113,7 +113,7 @@ class map(object):
         plt.contour(self.xi,self.yi,self.zi,con_levels,linewidths=0.66,colors="w")
         
 
-    def calculateProb(self, ligo, ligo_distance, ligo_distance_sigma) :
+    def calculateProb(self, ligo, ligo_distance, ligo_distance_sigma, verbose = True) :
         import scipy.integrate
         # bookkeeping for plotting
         self.zi= ""
@@ -143,7 +143,7 @@ class map(object):
             # we wish to defeat the probabilty calculation for the time being
             # May 2019
             prob_map = np.ones(ligo_spatial.size)
-            print "Defeating source probability calculation- probs set to 1."
+            if verbose: print "Defeating source probability calculation- probs set to 1."
             # the telescope limits will put a boundary on this
 
         #if test_sum == 0 :

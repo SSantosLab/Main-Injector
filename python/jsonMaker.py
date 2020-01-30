@@ -41,13 +41,11 @@ def writeJson(ra,dec,id, seqid="none", seqnum=0, seqtot=0,
     seqtot= seqtot*nexp
     for i in range(0,size) :
         for j in range(0,nexp) :
-            print i,j,size,nexp, tilingList
             seqnum +=1
             tiling = tilingList[j]
             filter = filterList[j]
             exp = exposureList[j]
             offsets[tiling]
-            #print tiling, offsets[tiling]
             delRa = offsets[tiling][0]
             delDec = offsets[tiling][1]
             tra = ra[i]
