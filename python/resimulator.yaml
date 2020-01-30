@@ -25,7 +25,7 @@ resolution: 32 #for map making at speed
  # gif_resolution = 3. pub quality
  # gif_resolution = 1. good to show
  # gif_resolution = 0.1  8-bit resolution-like but tells the story and very fast
-gif_resolution: 0.1
+gif_resolution: 1.0
 
 
 distance : 60.
