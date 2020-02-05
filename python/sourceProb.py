@@ -29,14 +29,14 @@ license="""
 class map(object):
     """
     """
-    def __init__(self, observation, type="NS") :
+    def __init__(self, observation, type="Rem") :
         """
         """
         data_dir = os.environ["DESGW_DATA_DIR"] 
 
         self.limitingMag = observation.maglim
         self.limits      = observation.limits
-        if type == "NS" :
+        if type == "Rem" :
             self.lumModel = "kn-gaussian"
             # guassian fit to the i-band mags,  Barnes and Kasen table 1
             #absMagMean = -14.05
@@ -61,7 +61,7 @@ class map(object):
             self.modelAbsoluteMagnitudeSigma = 1.0
         else :
             raise Exception (
-                "only trigger types known are BH and NS, not {}".format(type))
+                "only trigger types known are BH and Rem, not {}".format(type))
         self.absMagMean = self.modelAbsoluteMagnitude 
         self.absMagSigma = self.modelAbsoluteMagnitudeSigma 
         # I believe the following is being phased out
@@ -113,7 +113,7 @@ class map(object):
         plt.contour(self.xi,self.yi,self.zi,con_levels,linewidths=0.66,colors="w")
         
 
-    def calculateProb(self, ligo, ligo_distance, ligo_distance_sigma) :
+    def calculateProb(self, ligo, ligo_distance, ligo_distance_sigma, verbose = True) :
         import scipy.integrate
         # bookkeeping for plotting
         self.zi= ""
@@ -143,7 +143,7 @@ class map(object):
             # we wish to defeat the probabilty calculation for the time being
             # May 2019
             prob_map = np.ones(ligo_spatial.size)
-            print "Defeating source probability calculation- probs set to 1."
+            if verbose: print "Defeating source probability calculation- probs set to 1."
             # the telescope limits will put a boundary on this
 
         #if test_sum == 0 :

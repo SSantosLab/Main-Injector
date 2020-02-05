@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.path
+import scipy.spatial
 
 # the intent is that these two main routines,
 #   hexesOnMap & hexalateMap
@@ -10,6 +11,39 @@ import matplotlib.path
 # nside=256 ~ ccd     0.052 sq-degrees
 # nside=512 resolves ccds, (47 sq-arcmin vs 165 sq-arcmin for a ccd)
 # nsides = 1024 = 3.4x3.4 arcmin vs  9x18 arcmin
+
+# frst get the ligo data, then count prob in hexes
+def countData (ligo_map_name) :
+    import healpy as hp
+    import hp2np
+    print "\t reading {}".format(ligo_map_name)
+    ra,dec,vals = hp2np.hp2np(ligo_map_name)
+    print "\t computing spatial tree data"
+    treedata = buildtree(ra,dec,nsides=hp.get_nside(ra),recompute=True)
+    tree = treedata[2]
+    return ra,dec,vals,tree
+def countLigoProb (hexRa, hexDec, ra,dec,vals,tree, giveProbs=False) :
+    probs = hexalateMapWithoutOverlap(ra,dec,vals,tree, hexRa, hexDec, "decam")
+    print probs
+    if giveProbs:
+        return probs
+    else :
+        return probs.sum()
+
+def isCatalogInHexes(hexRa, hexDec, ra, dec) :
+    tree = scipy.spatial.cKDTree(zip(ra*np.cos(dec*2*np.pi/360.),dec))
+    ix_all = np.array([])
+    for i in range(0,hexRa.size) :
+        ix =  isCatalogInHex(hexRa[i], hexDec[i], ra,dec, tree)
+        ix_all = np.append(ix_all, ix)
+    ix_all = np.unique(ix_all).astype("int")
+    return ix_all
+def isCatalogInHex(hexRa, hexDec, ra,dec, tree="") :
+    if tree == "" :
+        tree = scipy.spatial.cKDTree(zip(ra*np.cos(dec*2*np.pi/360.),dec))
+    ix = radecInHex ( hexRa, hexDec, ra,dec,tree, "decam") 
+    return ix
+    
 
 # keeps count of times a hex, any hex, overlies a map pixel
 #   camera outline for the hexes given
@@ -78,6 +112,32 @@ def sumHexalatedMap(ra, dec, vals, tree, raHexen, decHexen,  camera, verbose=1) 
 '''
 
 
+
+def hexalateMapWithoutOverlap(ra, dec, vals, tree, raHexen, decHexen,  camera, verbose=1) :
+    #the order of the raHexen,decHexen will determine which hex has priority on the sky.                                                                    
+    #the first hex grabs all the ixs, then next one doesnt get those sky pixels inside the first hex                                                                                   
+    if verbose : print "\t hexalateMap \t nhex = {},".format(raHexen.size),
+    if verbose: print " npix = {}".format(ra.size)
+    hexVal = np.zeros(raHexen.size)
+    counter = 0
+    ixs = []
+    pixelsused = np.array(np.zeros(ra.size),dtype='bool')
+    for i in range(0,raHexen.size) :
+        ix = radecInHex( raHexen[i], decHexen[i], ra, dec, tree, camera)
+        #print('Inside hexalateMap, checking ixs',ix)                                                                                                                            
+        if not ix.size: continue
+        try  :
+            slicePixelsUsed = np.invert(pixelsused)[ix]
+            hexVal[i] = vals[ix][slicePixelsUsed].sum()
+            pixelsused[ix] = True
+        except Exception:
+            print "why are there exceptions in hexalateMap?"
+            hexVal[i] = 0
+    return hexVal
+
+
+
+
 # I think doing this using a tree requires a projection we will
 # use the Sanson-Flamsteed projection, aka sinusoidal projection (x=ra*cos(dec), y=dec)
 #
@@ -128,7 +188,6 @@ def buildtree(ra,dec,nsides=1024,recompute=False, \
         wrapForMetricEval=False, dumpTree = False) :
     # I think doing this using a tree requires a projection we will
     # use a Sanon-Flamsteed projection (aka sinusoidal, x=ra*cos(dec), y=dec)
-    import scipy.spatial
     import os.path
     import cPickle
 

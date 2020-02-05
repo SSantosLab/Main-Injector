@@ -62,13 +62,14 @@ def cutAndHexalate (obs, sm, camera, hexFile) :
         obs, sm, raHexen, decHexen, idHexen, camera)
     return raHexen, decHexen, idHexen, hexVals, rank
 
+
 def cutAndHexalateOnRaDec (obs, sm, raHexen, decHexen, idHexen, tree, camera, cutProbs=False) :
-    #cutProbs calls 
+    #cutProbs calls                                                                                                                                                                                  
     verbose = False
     obsHourAngle = obs.ha*360./(2*np.pi)
     obsRa        = obs.ra*360./(2*np.pi)
     obsDec       = obs.dec*360./(2*np.pi)
-    # based on blanco horizen limits  (may not be needed with tree)
+    # based on blanco horizen limits  (may not be needed with tree)                                                                                                                          
     ix = (abs(obsHourAngle) <= 83. ) & (obsDec < 43.)
     ix2 = decHexen < 43.
 
@@ -77,7 +78,12 @@ def cutAndHexalateOnRaDec (obs, sm, raHexen, decHexen, idHexen, tree, camera, cu
         print "\t cutAndHexalate probabilities sum",probabilities.sum()
 
     hexVals = np.zeros(raHexen.size)
+<<<<<<< HEAD
     #    raHexen[ix2], decHexen[ix2])
+=======
+    #    raHexen[ix2], decHexen[ix2])                                                                                                                                                 
+
+>>>>>>> 3077cab0a0bd5c2da1f11f8616b88f475a44109c
     if not cutProbs:
         hexVals[ix2] = decam2hp.hexalateMap(obsRa,obsDec, probabilities, tree,
                                             raHexen[ix2], decHexen[ix2], camera)
@@ -86,9 +92,11 @@ def cutAndHexalateOnRaDec (obs, sm, raHexen, decHexen, idHexen, tree, camera, cu
                                             raHexen[ix2], decHexen[ix2], camera)
     if verbose  :
         print "hexVals max", hexVals.max()
-    rank=np.argsort(hexVals); 
-    rank = rank[::-1];# sort from large to small by flipping natural argsort order
+    rank=np.argsort(hexVals);
+    rank = rank[::-1];# sort from large to small by flipping natural argsort order                                                                                                   
+ 
     return raHexen, decHexen, idHexen, hexVals, rank
+
 
 def getHexCenters (hexFile) :
     #allskyDesHexes="../data/all-sky-hexCenters-"+camera+".txt"

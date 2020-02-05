@@ -59,7 +59,8 @@ import modelRead
 def oneDayOfTotalProbability (obs, models, deltaTime, start_mjd, 
         probTimeFile, gw_map_trigger, gw_map_control) :
 
-    mjd = gw_map_trigger.burst_mjd
+    #mjd = gw_map_trigger.burst_mjd
+    mjd = gw_map_trigger.start_mjd
     trigger_type = gw_map_trigger.trigger_type
     spatial = gw_map_trigger.ligo
     distance = gw_map_trigger.ligo_dist
@@ -72,7 +73,6 @@ def oneDayOfTotalProbability (obs, models, deltaTime, start_mjd,
     #end_of_days=0.1
     totalProbs,times,isDark = manyDaysOfTotalProbability(
         obs, mjd, spatial, distance, distance_sig, models, 
-        start_mjd = start_mjd, 
         startOfDays=start_of_days, endOfDays=end_of_days,
         deltaTime=deltaTime, probTimeFile=probTimeFile,
         trigger_type=trigger_type)
@@ -80,9 +80,8 @@ def oneDayOfTotalProbability (obs, models, deltaTime, start_mjd,
     return totalProbs,times, isDark
 
 def manyDaysOfTotalProbability (
-        obs, burst_mjd, spatial, distance, distance_sig, 
-        models, start_mjd=0,
-        startOfDays=0, endOfDays=11, deltaTime=0.0223, 
+        obs, start_mjd, spatial, distance, distance_sig, 
+        models, startOfDays=0, endOfDays=11, deltaTime=0.0223, 
         probTimeFile="probTime.txt", trigger_type="NS",
         verbose=True) :
     times = []
@@ -90,19 +89,19 @@ def manyDaysOfTotalProbability (
 
     # one might want to delay the start of computations
     # till some time after the burst
-    if start_mjd == 0: start_mjd = burst_mjd
-    delayTime = start_mjd - burst_mjd
+    #if start_mjd == 0: start_mjd = burst_mjd
+    #delayTime = start_mjd - burst_mjd
 
     # in the language of getHexObservations:
     #   each slot is 32 minutes, each slot can hold 4 hexes
     dark = False
     isDark = []
     for time in np.arange(startOfDays,endOfDays,deltaTime) :
-        time = time + delayTime
+        #time = time + delayTime
         if time < (1.5/24.) : continue
         print "================================== ",
-        print "hours since Time Zero: {:.1f}".format(time*24.),
-        totalProb, sunIsUp = totalProbability(obs, burst_mjd, time, \
+        print "hours since Time Zero: {:5.1f}".format(time*24.),
+        totalProb, sunIsUp = totalProbability(obs, start_mjd, time, \
             spatial, distance, distance_sig, models, \
             trigger_type=trigger_type)
         if sunIsUp: print "\t ... the sun is up"
@@ -113,6 +112,10 @@ def manyDaysOfTotalProbability (
         if dark and sunIsUp:
             dark = False ;# model sunrise
         isDark.append(dark)
+    print "================================== "
+    print "================================== ",
+    print "full 24 hours calculated"
+    print "================================== "
     totalProbs =np.array(totalProbs)
     times = np.array(times)
     isDark = np.array(isDark).astype(bool)
@@ -123,13 +126,14 @@ def manyDaysOfTotalProbability (
     darkCount = np.nonzero(isDark)[0]
 
     # informational
-    if verbose: print "total all-sky summed probability of detection:"
-    if verbose: print totalProbs
-    if verbose: print "daysSinceBurst:"
-    if verbose: print times,"\n"
-    if verbose: print "isDark:"
-    if verbose: print isDark.astype(int)
-    if verbose: print "dark slots count:",darkCount.size
+    ix, = np.where(totalProbs > 0)
+    if verbose: print "total all-sky summed probability of detection (where > 0):"
+    if verbose: print totalProbs[ix]
+    if verbose: print "days since sunset:"
+    if verbose: print times[ix]
+    #if verbose: print "isDark:"
+    #if verbose: print isDark.astype(int)
+    #if verbose: print "dark slots count:",darkCount.size
     
 #    print "===== times with total prob > 10**-2"
 #    ix = totalProbs > 10**-2; 
@@ -150,10 +154,10 @@ def manyDaysOfTotalProbability (
 #
 # core computation
 #
-def totalProbability(obs, mjdOfBurst, daysSinceBurst, \
+def totalProbability(obs, start_mjd, daysSinceBurst, \
         spatial, distance, distance_sig, models,
         filter="i", exposure=180, trigger_type="NS") :
-    obs,sm,sunIsUp = probabilityMaps(obs, mjdOfBurst, daysSinceBurst, \
+    obs,sm,sunIsUp = probabilityMaps(obs, start_mjd, daysSinceBurst, \
         spatial, distance, distance_sig,
         models, filter, exposure, trigger_type=trigger_type)
     if sunIsUp:
@@ -163,10 +167,10 @@ def totalProbability(obs, mjdOfBurst, daysSinceBurst, \
     return totalProb, sunIsUp
 
 # drive the probability map calculations. In the end, distance only is used here
-def probabilityMaps(obs, mjdOfBurst, daysSinceBurst, \
+def probabilityMaps(obs, start_mjd, daysSinceBurst, \
         spatial, distance, distance_sig, models,
-        filter="i", exposure=180, trigger_type="NS") :
-    obs.resetTime(mjdOfBurst+daysSinceBurst)
+        filter="i", exposure=180, trigger_type="NS", verbose=True) :
+    obs.resetTime(start_mjd+daysSinceBurst)
 
     sunIsUp = obs.sunBrightnessModel(obs.sunZD)
     if sunIsUp: return obs, "sm", sunIsUp
@@ -186,9 +190,8 @@ def probabilityMaps(obs, mjdOfBurst, daysSinceBurst, \
         # then the sm.calculateProb assumes a source ap mag of 20,
         # and builds a source probality map where 1 if limit_mag > 20.
         distance_sig = distance_sig*0
-    sm=sourceProb.map(obs, type=trigger_type);  
-    #sm.searchDistance = np.array([distance,])   # why did I have this? Really?
-    result = sm.calculateProb(spatial, distance, distance_sig)
+    sm=sourceProb.map(obs, type=trigger_type)
+    result = sm.calculateProb(spatial, distance, distance_sig, verbose=verbose)
     if not result:
         sunIsUp = 1
     return obs,sm, sunIsUp
@@ -212,7 +215,7 @@ def probabilityMaps(obs, mjdOfBurst, daysSinceBurst, \
 def probabilityMapSaver (obs, models, times, probabilities,
         gw_map_trigger, gw_map_strategy, gw_map_control,
         performHexalatationCalculation=True) :
-    mjd          = gw_map_trigger.burst_mjd
+    start_mjd    = gw_map_trigger.start_mjd
     trigger_id   = gw_map_trigger.trigger_id
     trigger_type = gw_map_trigger.trigger_type
     ligo         = gw_map_trigger.ligo
@@ -231,8 +234,12 @@ def probabilityMapSaver (obs, models, times, probabilities,
     keep_flag = performHexalatationCalculation
     
     prob_slots = np.percentile(probabilities, 95)
-    print("95th percentile",prob_slots)
+    print("95th percentile of cumulative prob covered {}\n".format(prob_slots))
+    ix, = np.where(probabilities > 0)
+    # since we are now doing every slot in a night, counter 0 is at sunset
     counter = -1
+    # let's keep track of when the sun is down
+    made_maps_list  = np.array([])
     for time,prob  in zip(times, probabilities) :
         counter += 1
         performHexalatationCalculation = keep_flag
@@ -242,20 +249,22 @@ def probabilityMapSaver (obs, models, times, probabilities,
         if debug:
             if prob <= prob_slots : 
                 performHexalatationCalculation = False
-        #print "probabilityMapSaver: counter, time= ", counter, time
-        #if time < 0.06: time = 0.06 ;# if less than 1.5 hours, set to 1.5 hours
-        print "================== map save =====>>>>>>>>===== ",
-        print "slot {} | hours since Time Zero: {:.1f}".format(counter, time*24.),
-        if prob <= 0 : 
-            print "\t total probability is zero"
-            continue
+        #print "================== map save =====>>>>>>>>===== ",
+        #print "slot {} | hours since Time Zero: {:5.1f}".format(counter, time*24.),
+
+        # this has always been here- removing Jan 2020
+        #if prob <= 0 : 
+        #    print "\t total probability is zero"
+        #    continue
         obs,sm, isDark = \
-            probabilityMaps( obs, mjd, time, ligo, distance, distance_sig,
-            models, trigger_type=trigger_type)
+            probabilityMaps( obs, start_mjd, time, ligo, distance, distance_sig,
+            models, trigger_type=trigger_type, verbose=False)
         if obs.sunBrightnessModel (obs.sunZD ): 
-            #print "\t\tThe sun is up. Continue"
+            #print "\t\tThe sun is up. Continue", time, prob
+            #print ""
             continue
 
+        # Legend:
         # obs.ra, obs.dec, obs.map  = ligo map
         # obs.hx, obs.hy   = mcbryde projection of houar angle, dec
         # obs.maglim = limiting mag
@@ -263,7 +272,8 @@ def probabilityMapSaver (obs, models, times, probabilities,
         # sm.probMap = total prob map
         # hexRa,hexDec,hexVals
         nameStem = os.path.join(data_dir, str(trigger_id) + "-{}".format(str(counter)))
-        print "\t Writing files as {}".format(nameStem)
+        print "\t Writing files as {} for time {:.3f} and prob {:.2e}".format(nameStem,time,prob)
+        made_maps_list = np.append(made_maps_list, counter)
 
         name = nameStem + "-ra.hp"
         if os.path.exists(name): os.remove(name)
@@ -302,7 +312,11 @@ def probabilityMapSaver (obs, models, times, probabilities,
         name = nameStem + "-probMap.hp"
         if os.path.exists(name): os.remove(name)
         #sm.probMap = sm.probMap*gal
-        hp.write_map(name, sm.probMap)
+        try:
+            hp.write_map(name, sm.probMap)
+        except:
+            # there is no prob map in the sm, so prob is zero everywhere
+            hp.write_map(name, obs.map*0.0)
 
         treedata = decam2hp.buildtree(obs.ra*360./2/np.pi,obs.dec*360./2/np.pi,\
             nsides=hp.get_nside(obs.ra), recompute=True)
@@ -321,23 +335,21 @@ def probabilityMapSaver (obs, models, times, probabilities,
                     raHexen[do_these], decHexen[do_these], idHexen[do_these]
 
             raHexen, decHexen, idHexen, hexVals, rank = \
-                hexalate.cutAndHexalateOnRaDec ( obs, sm, raHexen, decHexen, idHexen, tree, camera)
+                hexalate.cutAndHexalateOnRaDec ( obs, sm, raHexen, decHexen, idHexen, tree, camera, cutProbs=True)
 
             # where rank is to be understood as the indicies of the
             # ranked hexes in order; i.e., they have nothing to do with
             # raHexen, decHexen, hexVals except as a sorting key
             name = nameStem + "-hexVals.txt"
             if os.path.exists(name): os.remove(name)
-            #print mjd,time
             
             f = open(name,'w')
             for j in range(0,raHexen.size) :
-                #pix = hp.ang2pix(npix2nside(ligo.size), raHexen[j],decHexen[j], lonlat=True)
                 f.write("{:.6f}, {:.5f}, {:s}, {:.4e}, {:d}, {:.4f}\n".format(
                     raHexen[j],decHexen[j],idHexen[j],hexVals[j],rank[j],
-                    (np.asfarray(rank*0.)+(mjd+time))[j]))
+                    (np.asfarray(rank*0.)+(start_mjd+time))[j]))
             f.close()
-            #np.savetxt(name,data.T,fmt="%.6f, %.5f, %s, %.4e, %d, %.4f")
+    return made_maps_list
     
 
             #######################################################################################

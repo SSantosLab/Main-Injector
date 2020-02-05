@@ -29,7 +29,7 @@ def writeJson(ra,dec,id, seqid="none", seqnum=0, seqtot=0,
         exposureList = [90,90,90], 
         filterList = ["i","z","z"],
         #tilingList = [9,9,9], 
-        tilingList = [10,10,10], 
+        tilingList = [1, 5],
         trigger_type = "NS", propid='propid',
         jsonFilename="des-gw.json") :
     offsets = tileOffsets()
@@ -46,7 +46,6 @@ def writeJson(ra,dec,id, seqid="none", seqnum=0, seqtot=0,
             filter = filterList[j]
             exp = exposureList[j]
             offsets[tiling]
-            #print tiling, offsets[tiling]
             delRa = offsets[tiling][0]
             delDec = offsets[tiling][1]
             tra = ra[i]
@@ -96,17 +95,31 @@ def tileOffsets() :
 # we'll use productions 9,10 (as if we were doing DES year 5)
 # production offsets: docdb 7269, offsets_cross.txt
     offsets[1] = 0.000, 0.000
-    offsets[2] = -0.76668, 0.473424 
-    offsets[3] = -0.543065, -0.828492
-    offsets[4] = 0.0479175, 0.777768 
-    offsets[5] = 0.06389, 0.287436 
+
+# real
+#    offsets[2] = -0.76668, 0.473424 
+#    offsets[3] = -0.543065, -0.828492
+#    offsets[4] = 0.0479175, 0.777768 
+#    offsets[5] = 0.06389, 0.287436 
+#    offsets[6] = -0.4632025, 0.490332 
+#    offsets[7] = 0.9423775, 0.405792 
+#    offsets[8] =-0.2395875, -0.135264 
+#    offsets[9] = 0.76668, 0.4227
+#    offsets[10] = -0.0479175, 0.388884
+# for GW work
+    offsets[2] = 0.06389, 0.287436 
+    offsets[3] =-0.2395875, -0.135264 
+    offsets[4] = -0.0479175, 0.388884
+    offsets[5] = -0.76668, 0.473424 
     offsets[6] = -0.4632025, 0.490332 
     offsets[7] = 0.9423775, 0.405792 
-    offsets[8] =-0.2395875, -0.135264 
-# production offsets 9
+    offsets[8] = -0.543065, -0.828492
     offsets[9] = 0.76668, 0.4227
+    offsets[10] = 0.0479175, 0.777768 
+# production offsets 9
+#    offsets[9] = 0.76668, 0.4227
 # production offsets 10
-    offsets[10] = -0.0479175, 0.388884
+#    offsets[10] = -0.0479175, 0.388884
 # production offsets 10
     offsets[11] = -0.5257, 0.7222
 # production offsets 17,18
@@ -115,16 +128,6 @@ def tileOffsets() :
 # fake offset 19
     offsets[19] =  0.9423775, -0.405792 
 #
-# now, we are going to assume that the hex centers are
-# read from all-sky-hexcenters-tiling9.txt
-# where the hex centers are those for tiling 9
-# i.e., the offset has already been applied.
-# Therefore, all of the offsets in this routine
-# should be made relative to tiling 9's offset
-    for i in [0,1,2,3,4,5,6,7,8,10,11,17,18,19, 9] :
-        ra =offsets[i][0]-offsets[9][0]
-        dec = offsets[i][1]-offsets[9][1]
-        offsets[i] = (ra,dec)
     return offsets
 
 

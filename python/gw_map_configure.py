@@ -28,6 +28,11 @@ class trigger(object):
         self.distance  = distance
         self.burst_mjd = burst_mjd
 
+        # ok, I'm going to declare that we want this routine to start at noon UT on JD of burst
+        # so
+        self.start_mjd = np.round(burst_mjd)-0.5
+
+
         print "\ngw_map_trigger: read map {}, {} at {:.2f} Mpc\n".format(
             skymap, trigger_type, distance)
 
@@ -67,6 +72,12 @@ class trigger(object):
         #ix = (ra > -10) & ( ra < 60) & (dec < -20)
         #ix = np.invert(ix)
         #ligo[ix] = 0.0
+
+        # GW170814 hack JTA                                                                             
+        ix = (ra > 0) & ( ra < 45) & (dec < 0) & (dec > -40)
+        ix = np.invert(ix)                                                                             
+        ligo[ix] = 0.0
+
         self.ligo_ra = ra
         self.ligo_dec = dec
         self.ligo = ligo
@@ -101,10 +112,13 @@ class control(object):
     """
     """
     def __init__(self, resolution, data_dir, debug=False, allSky=False,
-            snarf_mi_maps=False, mi_map_dir="/data/des41.a/data/desgw/O3FULL/Main-Injector/OUTPUT/O3REAL/") :
+            snarf_mi_maps=False, mi_map_dir="/data/des41.a/data/desgw/O3FULL/Main-Injector/OUTPUT/O3REAL/",
+            gif_resolution = 1.0 ) :
         """
         """
+        # healpix map resolution
         self.resolution = resolution
+        self.gif_resolution = gif_resolution
         self.debug = debug
         self.this_tiling = []
         self.reject_hexes= []
@@ -131,9 +145,11 @@ class results(object):
         self.probability_per_slot = False
         self.time_of_slot = False
         self.isdark = False
+        self.made_maps_list = False
         self.slotDuration = False
         self.hoursPerNight = False
         self.n_slots = False
         self.first_slot = False
         self.best_slot = False
+        self.slot_numbers = False
 
