@@ -62,7 +62,8 @@ def cutAndHexalate (obs, sm, camera, hexFile) :
         obs, sm, raHexen, decHexen, idHexen, camera)
     return raHexen, decHexen, idHexen, hexVals, rank
 
-def cutAndHexalateOnRaDec (obs, sm, raHexen, decHexen, idHexen, tree, camera) :
+def cutAndHexalateOnRaDec (obs, sm, raHexen, decHexen, idHexen, tree, camera, cutProbs=False) :
+    #cutProbs calls 
     verbose = False
     obsHourAngle = obs.ha*360./(2*np.pi)
     obsRa        = obs.ra*360./(2*np.pi)
@@ -77,8 +78,12 @@ def cutAndHexalateOnRaDec (obs, sm, raHexen, decHexen, idHexen, tree, camera) :
 
     hexVals = np.zeros(raHexen.size)
     #    raHexen[ix2], decHexen[ix2])
-    hexVals[ix2] = decam2hp.hexalateMap(obsRa,obsDec, probabilities, tree,
-        raHexen[ix2], decHexen[ix2], camera)
+    if not cutProbs:
+        hexVals[ix2] = decam2hp.hexalateMap(obsRa,obsDec, probabilities, tree,
+                                            raHexen[ix2], decHexen[ix2], camera)
+    else:
+        hexVals[ix2] = decam2hp.hexalateMapWithoutOverlap(obsRa,obsDec, probabilities, tree,
+                                            raHexen[ix2], decHexen[ix2], camera)
     if verbose  :
         print "hexVals max", hexVals.max()
     rank=np.argsort(hexVals); 

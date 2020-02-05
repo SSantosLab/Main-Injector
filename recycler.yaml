@@ -18,7 +18,7 @@ do_make_hexes: True
 do_make_jsons: True
 do_make_gifs: True
 
-allSky: False
+allSky: True
 
 
 start_of_season : 57444.
@@ -95,7 +95,7 @@ maxHexesPerSlot_BH : 18  # related to maxHexesPerSlot_NS by x3 for x3 less image
 
 ####Only used for running recycler.py standalone!####
 
-trigger_id : "S190706ai"
+trigger_id : "S190630ag"
 wrap_all_triggers : False
 
 mjd : 57974.3530295
@@ -104,5 +104,5 @@ force_mjd : False
 recycler_mjd : 57979.5
 force_recycler_mjd : False
 
-skymap_filename : './OUTPUT/O3REAL/S190706ai/bayestar/bayestar.fits.gz'
+skymap_filename : './OUTPUT/O3REAL/S190630ag/bayestar/bayestar.fits.gz'
 

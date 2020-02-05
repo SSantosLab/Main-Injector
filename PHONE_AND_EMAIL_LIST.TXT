@@ -27,7 +27,7 @@ mandeep gill,			msgill@slac.stanford.edu,		6509061069@mms.att.net
 paulo barchi,			paulobarchi@gmail.com,			none
 felipe olivares,		f.olivares.e@gmail.com,			none
 Ignacio Sanchez,		nachoandres_sanchezb@hotmail.com, 	none
-Jonathan Garcia, 		japinedag@unal.edu.co, 			none
-Nicolas Retamal, 		nicomezare@gmail.com,			none
-Juanita romero, 		jantilen@das.uchile.cl, 		none
-Osmar Rodriguez,		olrodrig@gmail.com,			none
+Jonathan Garcia, 		japinedag@unal.edu.co, 		none
+Nicolas Retamal, 		nmeza@astro.puc.cl,		none
+Juanita romero, 		jantilen@das.uchile.cl, 	none
+Osmar Rodriguez,		olrodrig@gmail.com,		none

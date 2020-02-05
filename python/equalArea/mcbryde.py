@@ -173,7 +173,7 @@ def readMT() :
     data_dir = os.environ["DESGW_DATA_DIR"]
     file = data_dir + "mcbrydethomas-psi.dat"
     dec,psi = np.genfromtxt(file,unpack=True)
-    psispline =interp1d(np.array(dec,dtype='float'),np.array(psi,dtype='float'),bounds_error=False)# fill_value="extrapolate",bounds_error=False)
+    psispline =interp1d(np.array(dec,dtype='float'),np.array(psi,dtype='float'),fill_value="extrapolate",bounds_error=False)
     psi_spline = psispline
     return psispline, dec, psi
 

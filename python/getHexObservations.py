@@ -101,6 +101,8 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
         os.system("cp {}/*hp {}/".format(mi_map_dir, data_dir))
         os.system("cp {}/*probabilityTimeCache*txt {}/".format(mi_map_dir, data_dir))
         os.system("cp {}/*-hexVals.txt {}/".format(mi_map_dir, data_dir))
+        os.system("cp {}/*-hexVals-cutOverlappingProb.txt {}/".format(mi_map_dir, data_dir))
+
         # cp $other_dir/*hp .
         # cp $other_dir/probabilityTimeCache*txt .
         # cp $other_dir/*-hexVals.txt .
@@ -279,12 +281,12 @@ def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control) :
 def makeGifs (gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=True) :
     # make gif centered on hexes
     n_plots = makeObservingPlots(
-        gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=allSky)
+        gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=gw_map_control.allSky)
 
-    #if  gw_map_control.allSky == True :
-    ## make gif centered on ra=0,dec=0, all sky
-    #    n_plots = makeObservingPlots(
-    #        gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=True)
+    if  gw_map_control.allSky == True :
+    # make gif centered on ra=0,dec=0, all sky
+        n_plots = makeObservingPlots(
+            gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=True)
 
 def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=True) :
     trigger_id = gw_map_trigger.trigger_id
@@ -336,7 +338,7 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
         
         observingPlot(figure,trigger_id,i,data_dir, n_slots, camera, allSky=allSky)
         name = str(trigger_id)+"-{}observingPlot-{}.png".format(label,i)
-        print('hereeee',name)
+        #print('hereeee',name)
         plt.savefig(os.path.join(data_dir,name))
         counter += 1
         counter+= equalAreaPlot(figure,i,trigger_id,data_dir)
@@ -393,9 +395,10 @@ def how_well_did_we_do(gw_map_trigger, gw_map_strategy, gw_map_control) :
     raH, decH = np.genfromtxt(name, unpack=True, usecols=(0,1))
     treedata = decam2hp.buildtree(ra, dec, resolution, recompute=True) 
     tree = treedata[2] 
-    sum = decam2hp.hexalateMap(ra,dec,ligo,tree, raH,decH,camera) 
+    #sum = decam2hp.hexalateMap(ra,dec,ligo,tree, raH,decH,camera) 
+    sum = decam2hp.hexalateMapWithoutOverlap(ra,dec,ligo,tree, raH,decH,camera)
     print "\nTotal Ligo probability covered by hexes observed: {:.3f}%".format(sum.sum()*100.)
-    print "   (from decam2hp.hexalateMap of -ra-dec-id file)\n"
+    print "   (from decam2hp.sumHexalatedMap of -ra-dec-id file)\n"
     return sum.sum()
 
 
@@ -466,7 +469,7 @@ def reuse_results(data_dir, gw_map_trigger,gw_map_strategy, gw_map_results, get_
         # but be aware that make_divisions of time has a hardwired slotDuration
 
         if get_slots:
-            hoursObserving = pickle.load(open("{}-hoursObserving.pickle".format(trigger_id),"r"))
+            hoursObserving = pickle.load(open("{}-hoursObserving.pickle".format(data_dir+'/'+trigger_id),"r"))
             gw_map_results.n_slots = hoursObserving["nslots"]
             gw_map_results.first_slot = hoursObserving["mapZero"]
             gw_map_results.best_slot = hoursObserving["maxSlot"]
@@ -689,7 +692,9 @@ def cumulPlot(trigger_id, data_dir) :
     ra,dec,id,prob,mjd,slotNum,dist = obsSlots.readObservingRecord(trigger_id,data_dir)
     u_slotNum = np.unique(slotNum)
     u_dur = np.unique(mjd)
-    duration = (u_dur[1]-u_dur[0])*24*60.
+    duration = 0.0000001
+    if len(u_dur) > 1:
+        duration = (u_dur[1]-u_dur[0])*24*60.
 
     new_x, new_y, new_mjd, new_hour = np.array([]), np.array([]), np.array([]), np.array([])
     for u in u_slotNum :
@@ -741,6 +746,15 @@ def cumulPlot(trigger_id, data_dir) :
     ax2.set_ylim(0,new_cy.max())
     fig.tight_layout()
     qtiles = new_cy/new_cy[-1]
+    print('qtiles:',qtiles, len(qtiles))
+    print('new_x:',new_x, len(new_x))
+    if len (new_x) < 2:
+        new_x = np.append(new_x,new_x[0] + 1e-9)
+    if len(qtiles) < 2:
+        qtiles = np.append(qtiles,qtiles[0] + 1e-9)
+    print('qtiles after:',qtiles,len(qtiles))
+    print('new_x after:',new_x,len(new_x))
+
     interp = interp1d(qtiles, new_x, fill_value="extrapolate")
     for q in [0.25, 0.5, 0.75] :
         ax2.plot([interp(q),interp(q)], [0, new_cy.max()],alpha=0.3,c="r", ls="dotted")

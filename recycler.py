@@ -184,6 +184,7 @@ class event:
         hours_used_by_BH  = 0
 
 
+        print(self.event_params)
 
         eventtype = self.event_params['boc']
 
@@ -357,6 +358,8 @@ class event:
         os.system('cp ' + jsonFile + ' ' + self.website_jsonpath)
 
         os.system('cp ' + os.path.join(map_dir, self.trigger_id) + '_centered_animate.gif ' + self.website_imagespath)
+        os.system('cp ' + os.path.join(map_dir, self.trigger_id) + '_animate.gif ' + self.website_imagespath)
+        os.system('cp ' + os.path.join(map_dir, self.trigger_id) + '*.png ' + self.website_imagespath)
 
 
 
@@ -1086,6 +1089,7 @@ if __name__ == "__main__":
             e.getContours(config)
             #jsonfilelist = e.makeJSON(config)
             ##e.make_cumulative_probs()
+            os.system('cp '+e.event_paramfile+' '+master_dir)
             e.updateTriggerIndex(real_or_sim=real_or_sim) # generates the homepage 
             e.updateWebpage(real_or_sim) #make a blank page with the basic info that is available
             #e.makeObservingPlots()
