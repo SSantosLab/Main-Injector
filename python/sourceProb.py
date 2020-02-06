@@ -36,36 +36,41 @@ class map(object):
 
         self.limitingMag = observation.maglim
         self.limits      = observation.limits
+        tryApparent = True
         if type == "Rem" :
-            self.lumModel = "kn-gaussian"
-            # guassian fit to the i-band mags,  Barnes and Kasen table 1
-            #absMagMean = -14.05
-            #absMagSigma = 1.34
-
-            # this can be used to scale the magnitudes from the source model
-            # this can be done as the source abs magnitude for calculations
-            # is taken from self.absMagMean, self.absMagSigma
-            # whereas we're setting the absolute scale here with
-            # self.modelAbsoluteMagnitude, self.modelAbsoluteMagnitudeSigma
-            # Currently this is done in mapsAtTimeT.probabilityMaps
-
-            # LIGO O1 and O2
-            #self.modelAbsoluteMagnitude = -11.1
-            # LIGO O3
-            self.modelAbsoluteMagnitude = -15.5
-            self.modelAbsoluteMagnitudeSigma = 1.0
+            if tryApparent :
+                self.lumModel = "apparent"
+                self.modelAbsoluteMagnitude = 21.5
+                self.modelAbsoluteMagnitudeSigma = 0
+            else : 
+                # this can be used to scale the magnitudes from the source model
+                # this can be done as the source abs magnitude for calculations
+                # is taken from self.absMagMean, self.absMagSigma
+                # whereas we're setting the absolute scale here with
+                # self.modelAbsoluteMagnitude, self.modelAbsoluteMagnitudeSigma
+                # Currently this is done in mapsAtTimeT.probabilityMaps
+    
+                self.lumModel = "kn-gaussian"
+                # LIGO O1 and O2
+                #self.modelAbsoluteMagnitude = -11.1
+                # LIGO O3
+                self.modelAbsoluteMagnitude = -15.5
+                self.modelAbsoluteMagnitudeSigma = 1.0
         elif type == "BH" :
-            # fixed luminosity
-            self.lumModel = "bh-gaussian"
-            self.modelAbsoluteMagnitude = -25.0
-            self.modelAbsoluteMagnitudeSigma = 1.0
+            if tryApparent :
+                self.lumModel = "apparent"
+                self.modelAbsoluteMagnitude = 21.5
+                self.modelAbsoluteMagnitudeSigma = 0
+            else : 
+                # fixed luminosity
+                self.lumModel = "bh-gaussian"
+                self.modelAbsoluteMagnitude = -25.0
+                self.modelAbsoluteMagnitudeSigma = 1.0
         else :
             raise Exception (
                 "only trigger types known are BH and Rem, not {}".format(type))
         self.absMagMean = self.modelAbsoluteMagnitude 
         self.absMagSigma = self.modelAbsoluteMagnitudeSigma 
-        # I believe the following is being phased out
-        #self.sourceMagnitude(self.lumModel, observation.mjd) 
 
         # get the P_recognition
         self.pra = observation.pra
@@ -78,39 +83,6 @@ class map(object):
         # for plotting contours, keep the intermediate data around
         self.xi, self.yi, self.zi = ["","",""]
         self.lastCtype = ""
-        
-    # one can choose to plot the ligo contours
-    # or the ligo*obs_prob contours
-    #   type="ligo"   type="ls"
-    #           houranlge chooses HA instead of RA projected into mcbryde coords
-    def plotLigoContours(self, obs, type="ligo", whiteLine="False", hourangle=False) :
-        import matplotlib
-        import matplotlib.pyplot as plt
-        con_levels=10
-        if self.zi == "" or self.lastCtype != type:
-            print "\t calculating contours for type = ",type
-            if hourangle == False :
-                xmin = obs.x.min(); xmax = obs.x.max()
-                ymin = obs.y.min(); ymax = obs.y.max()
-            else :
-                xmin = obs.hx.min(); xmax = obs.hx.max()
-                ymin = obs.hy.min(); ymax = obs.y.max()
-            xi=np.linspace(xmin, xmax, 500)
-            yi=np.linspace(ymin, ymax, 500)
-            if type == "ligo" :
-                probMap = obs.map
-            if type == "ls" :
-                probMap = obs.map*self.probMap
-            if hourangle == False :
-                x = obs.x; y = obs.y
-            else :
-                x = obs.hx; y = obs.hy
-            zi = matplotlib.mlab.griddata(x,y,probMap,xi,yi)
-            self.xi, self.yi, self.zi = xi,yi,zi
-            self.lastCtype = type
-        if not whiteLine :
-            plt.contour(self.xi,self.yi,self.zi,con_levels,linewidths=3,colors="k")
-        plt.contour(self.xi,self.yi,self.zi,con_levels,linewidths=0.66,colors="w")
         
 
     def calculateProb(self, ligo, ligo_distance, ligo_distance_sigma, verbose = True) :
@@ -139,21 +111,14 @@ class map(object):
         absMag_var = self.absMagSigma**2
 
         test_sum = ligo_d_var.sum()
-        if 1 == 1 :
-            # we wish to defeat the probabilty calculation for the time being
-            # May 2019
-            prob_map = np.ones(ligo_spatial.size)
-            if verbose: print "Defeating source probability calculation- probs set to 1."
-            # the telescope limits will put a boundary on this
-
-        #if test_sum == 0 :
-            # we are in the case where there is no distance field, so no distance info
-            #ap_mag = 20.0
-            #ix = (ap_mag < limitingMag)
-
-            #prob_map = np.zeros(ligo_spatial.size)
-            #prob_map = 0.0*prob_map
-            #prob_map[ix] = 1.0
+        if self.lumModel == "apparent" :
+            # implementing this in Feb 2020
+            prob_map = np.zeros(ligo_spatial.size)
+            apparent_mag = absMag_mean
+            ix = (apparent_mag < limitingMag)
+            prob_map[ix] = 1.0
+            ix = (apparent_mag >= limitingMag) & (apparent_mag < limitingMag+0.5)
+            prob_map[ix] = 0.5
 
         else :
 # we can't afford to do every pixel. 
@@ -213,22 +178,38 @@ class map(object):
         return pd
 
 
-# this used to be in the init, let's try without it
-    def sourceMagnitude(self, model, mjd) :
-        if model == "kn-gaussian" : 
-            print "\t source model: KN gaussian"
-            # this scales the model
-            self.absMagMean = self.modelAbsoluteMagnitude 
-            self.absMagSigma = self.modelAbsoluteMagnitudeSigma 
-        elif model == "kn-delta" : 
-            print "\t source model: KN delta function"
-        elif model == "bh-gaussian" : 
-            print "\t source model: BH gaussian"
-            self.absMagMean = self.modelAbsoluteMagnitude 
-            self.absMagSigma = self.modelAbsoluteMagnitudeSigma 
-        else : raise Exception("no such source model {}".format(model))
-        if model == "kn-delta" :
-            self.absMagMean = self.modelAbsoluteMagnitude 
-            self.absMagSigma = 0.001
-        return ""
 
+
+    # one can choose to plot the ligo contours
+    # or the ligo*obs_prob contours
+    #   type="ligo"   type="ls"
+    #           houranlge chooses HA instead of RA projected into mcbryde coords
+    def plotLigoContours(self, obs, type="ligo", whiteLine="False", hourangle=False) :
+        import matplotlib
+        import matplotlib.pyplot as plt
+        con_levels=10
+        if self.zi == "" or self.lastCtype != type:
+            print "\t calculating contours for type = ",type
+            if hourangle == False :
+                xmin = obs.x.min(); xmax = obs.x.max()
+                ymin = obs.y.min(); ymax = obs.y.max()
+            else :
+                xmin = obs.hx.min(); xmax = obs.hx.max()
+                ymin = obs.hy.min(); ymax = obs.y.max()
+            xi=np.linspace(xmin, xmax, 500)
+            yi=np.linspace(ymin, ymax, 500)
+            if type == "ligo" :
+                probMap = obs.map
+            if type == "ls" :
+                probMap = obs.map*self.probMap
+            if hourangle == False :
+                x = obs.x; y = obs.y
+            else :
+                x = obs.hx; y = obs.hy
+            zi = matplotlib.mlab.griddata(x,y,probMap,xi,yi)
+            self.xi, self.yi, self.zi = xi,yi,zi
+            self.lastCtype = type
+        if not whiteLine :
+            plt.contour(self.xi,self.yi,self.zi,con_levels,linewidths=3,colors="k")
+        plt.contour(self.xi,self.yi,self.zi,con_levels,linewidths=0.66,colors="w")
+        
