@@ -11,6 +11,7 @@ import obsSlots
 import gw_map_configure
 import pickle
 import glob
+import warnings
 #
 #       the routine mapsAtTimeT.oneDayOfTotalProbability
 #           breaks the night into slots of 32 minutes duration
@@ -65,6 +66,10 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     import os
     forcedistance = False
 
+    print "=================================================="
+    print "                 make_maps "
+    print "=================================================="
+
     skymap               = gw_map_trigger.skymap
     trigger_id           = gw_map_trigger.trigger_id
     trigger_type         = gw_map_trigger.trigger_type
@@ -76,6 +81,7 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     camera               = gw_map_strategy.camera
     exposure_list        = gw_map_strategy.exposure_list
     filter_list          = gw_map_strategy.filter_list
+    tiling_list          = gw_map_strategy.tiling_list
     maxHexesPerSlot      = gw_map_strategy.maxHexesPerSlot
     overhead             = gw_map_strategy.overhead 
 
@@ -125,19 +131,21 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     for f in files: os.remove(f)
     print "\t done cleaning up"
 
-    xposure_list = np.array(exposure_list)
+    exposure_list = np.array(exposure_list)
     filter_list = np.array(filter_list)
+    tiling_list = np.array(tiling_list)
     ix = filter_list == "i"
     exposure_length = exposure_list[ix].sum()
     print "\t obs slots starting"
 
-    answers = obsSlots.slotCalculations( start_mjd, exposure_list, overhead, 
-        hexesPerSlot=maxHexesPerSlot) 
-    print "\t obs slots done"
+    answers = obsSlots.slotCalculations( start_mjd, exposure_list, tiling_list, 
+        overhead, hexesPerSlot=maxHexesPerSlot) 
     hoursPerNight = answers["hoursPerNight"] ;# in minutes
     slotDuration = answers["slotDuration"] ;# in minutes
     deltaTime = slotDuration/(60.*24.) ;# in days
-
+    print "\t obs slots done: hours in night: {:.1f}, slot duration: {:.1f} minutes, ".format(
+        hoursPerNight, slotDuration),
+    print("hexes per slot: {}\n".format(maxHexesPerSlot))
         
     # ==== get the neutron star explosion models
     models = modelRead.getModels()
@@ -147,10 +155,13 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     ligo_dist, ligo_dist_sig, ligo_dist_norm  = \
         distance*np.ones(ra.size), np.zeros(ra.size), np.zeros(ra.size)
     if not forcedistance:
+        warnings.filterwarnings("error")
         try :
             junk,junk,ligo_dist =hp2np.hp2np(skymap, degrade=resolution, field=1)
             junk,junk,ligo_dist_sig =hp2np.hp2np(skymap, degrade=resolution, field=2)
             junk,junk,ligo_dist_norm =hp2np.hp2np(skymap, degrade=resolution, field=3)
+        except RuntimeWarning:
+            pass
         except:
             print "\t !!!!!!!! ------- no distance information in skymap ------ !!!!!!!!"
 
@@ -159,11 +170,12 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     print "finished setting up exposure calculation"
 
     # ==== calculate maps during a full night of observing
+    # essentially, give me the total prob, source + ligo for a 1 filter pass
     probabilityTimesCache = os.path.join(data_dir,\
         "probabilityTimesCache_"+str(trigger_id)+".txt")
     probs,times,isdark = mapsAtTimeT.oneDayOfTotalProbability(
         obs, models, deltaTime, start_mjd, probabilityTimesCache,
-        gw_map_trigger, gw_map_control)
+        gw_map_trigger, gw_map_strategy, gw_map_control)
 
     made_maps_list = mapsAtTimeT.probabilityMapSaver (obs, models, times, probs, 
         gw_map_trigger, gw_map_strategy, gw_map_control)
@@ -198,6 +210,10 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
 def make_hexes( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, 
     start_slot = -1, do_nslots=-1) :
 
+    print "=================================================="
+    print "                 make_hexes "
+    print "=================================================="
+
     trigger_id = gw_map_trigger.trigger_id
     trigger_type  = gw_map_trigger.trigger_type
     maxHexesPerSlot  = gw_map_strategy.maxHexesPerSlot
@@ -211,15 +227,18 @@ def make_hexes( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
 
     probs = gw_map_results.probability_per_slot 
     times = gw_map_results.time_of_slot 
+    slotDuration = gw_map_results.slotDuration   
     hoursPerNight = gw_map_results.hoursPerNight 
     if (hoursPerNight == False)  :
         reuse_results(data_dir, gw_map_trigger, gw_map_strategy, gw_map_results) 
         probs = gw_map_results.probability_per_slot 
         times = gw_map_results.time_of_slot 
         hoursPerNight = gw_map_results.hoursPerNight 
+        slotDuration = gw_map_results.slotDuration   
 
+# I believe as of Jan 2020, n_slots is related primarily to slotDuration and the length of the night
     n_slots, mapZero  = make_divisions_of_time (
-        probs, times, hoursPerNight, hoursAvailable) 
+        probs, times, hoursPerNight, hoursAvailable, slotDuration) 
     print "\t tonight is {:.2f} hours long with {} slots".format(hoursPerNight, n_slots)
         
     # if the number of slots is zero, nothing to observe or plot
@@ -234,10 +253,12 @@ def make_hexes( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
         maxHexesPerSlot = maxHexesPerSlot, do_nslots = do_nslots, start_slot=start_slot)
 
     # print stats to screen
-    print "=============>>>>  observingStats"
+    print "\n=============>>>>  observingStats from *ra-dec-id-* file"
     # save results to the record -- here is made the ra-dec-id- file
-    writeObservingRecord(hoursObserving,   data_dir, gw_map_trigger, gw_map_control)
-    ra,dec,id,prob,mjd,slotNumbers,islots = obsSlots.observingStats(hoursObserving, mapZero, do_nslots, start_slot)
+    writeObservingRecord(hoursObserving,   data_dir, gw_map_trigger, gw_map_control, gw_map_strategy)
+    #ra,dec,id,prob,mjd,slotNumbers,islots = obsSlots.observingStats(hoursObserving, mapZero, do_nslots, start_slot)
+    ra,dec,id,prob,mjd,slotNumbers,islots = obsSlots.observingStatsFromRaDecFile( trigger_id, data_dir, 
+        hoursObserving, mapZero, do_nslots, start_slot)
     # Get slot number  of maximum probability
     maxProb_slot = obsSlots.maxProbabilitySlot(prob,slotNumbers)
     hoursObserving["maxSlot"] = maxProb_slot
@@ -267,24 +288,33 @@ def make_hexes( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
 
 # Make the json files
 def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control) :
+    print "=================================================="
+    print "                 make_jsons "
+    print "=================================================="
+
+    skymap        = gw_map_trigger.skymap
     trigger_id    = gw_map_trigger.trigger_id
     trigger_type  = gw_map_trigger.trigger_type
     exposure_list = gw_map_strategy.exposure_list
     filter_list   = gw_map_strategy.filter_list
+    tiling_list   = gw_map_strategy.tiling_list
     propid        = gw_map_strategy.propid
     data_dir      = gw_map_control.datadir
     ra,dec,id,prob,mjd,slotNum,dist = obsSlots.readObservingRecord(trigger_id,data_dir)
-    print "\n=============>>>>  JSONs"
+    #print "\n=============>>>>  JSONs"
     turnObservingRecordIntoJSONs(
         ra,dec,id,prob,mjd,slotNum, trigger_id,
-        exposure_list=exposure_list, filter_list=filter_list, 
-            trigger_type=trigger_type, mapDirectory=data_dir, propid=propid) 
+        exposure_list, filter_list, tiling_list, trigger_type, skymap, data_dir, propid) 
 
 
 #
 # ====== there are possibilities. Show them.
 #
 def makeGifs (gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=True) :
+    print "\n=================================================="
+    print "                 make_gifs "
+    print "=================================================="
+
     # make gif centered on hexes
     n_plots = makeObservingPlots(
         gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=allSky)
@@ -319,7 +349,7 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
         nothingToObserveShowSomething(trigger_id, data_dir)
         return
 
-    print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
+    print "\n================ >>>>>>>>>>>>>>>>>>>>> =================== "
     print "makeObservingPlots(",n_slots, trigger_id, best_slot,data_dir," )"
     print "================ >>>>>>>>>>>>>>>>>>>>> =================== "
     print "We're going to do {} slots with best slot={}".format(made_maps_list.size, best_slot)
@@ -400,7 +430,7 @@ def how_well_did_we_do(gw_map_trigger, gw_map_strategy, gw_map_control) :
     raH, decH = np.genfromtxt(name, unpack=True, usecols=(0,1))
     treedata = decam2hp.buildtree(ra, dec, resolution, recompute=True) 
     tree = treedata[2] 
-    sum = decam2hp.hexalateMap(ra,dec,ligo,tree, raH,decH,camera) 
+    sum = decam2hp.hexalateMapWithoutOverlap(ra,dec,ligo,tree, raH,decH,camera, verbose=False) 
     print "\nTotal Ligo probability covered by hexes observed: {:.3f}%".format(sum.sum()*100.)
     print "   (from decam2hp.hexalateMap of -ra-dec-id file)\n"
     return sum.sum()
@@ -411,13 +441,8 @@ def how_well_did_we_do(gw_map_trigger, gw_map_strategy, gw_map_control) :
 #   one of the questions is how many hours to devote to observations
 #       hoursAvailable,  another is the slot duration
 #
-# if the 1% cut isn't in place in mapsAtTimeT.oneDayOfTotalProbability
-# then one expects circa 40-45 maps as there is about 2/hour
-#   with the 1% cut, then one expects far fewer. Perhaps zero.
-#
 def make_divisions_of_time (
-        probs, times, hoursPerNight= 10., hoursAvailable=6) :
-    slotDuration = 30. # minutes
+        probs, times, hoursPerNight= 10., hoursAvailable=6, slotDuration=30.) :
     if hoursAvailable > hoursPerNight:
         hoursAvailable = hoursPerNight
         
@@ -437,7 +462,7 @@ def make_divisions_of_time (
         mapZero = obsSlots.findStartMap ( probs, times, n_slots )
     else :
         raise Exception ("no possible way to get here")
-    print "=============>>>>  make_divisions_of_time:"
+    print "\n=============>>>>  make_divisions_of_time:"
     print "\t n_maps = {}, n_slots = {}, mapZero = {}, prob_max = {:.6}".format(
         n_maps, n_slots, mapZero, probs.max())
     return n_slots, mapZero
@@ -472,7 +497,6 @@ def reuse_results(data_dir, gw_map_trigger,gw_map_strategy, gw_map_results, get_
         slotDuration = answers["slotDuration"] ;# in minutesk
         gw_map_results.slotDuration = slotDuration
         gw_map_results.hoursPerNight = hoursPerNight
-        # but be aware that make_divisions of time has a hardwired slotDuration
 
         if get_slots:
             hoursObserving = pickle.load(open("{}-hoursObserving.pickle".format(trigger_id),"r"))
@@ -591,51 +615,51 @@ def hoursPerNight (mjd) :
 #
     
 def turnObservingRecordIntoJSONs(
-        ra,dec,id,prob,mjd,slotNumbers, simNumber, 
-        exposure_list, filter_list, trigger_type, mapDirectory, propid) :
+        ra,dec,id,prob,mjd,slotNumbers, trigger_id,
+        exposure_list, filter_list, tiling_list, trigger_type, skymap, mapDirectory, propid) :
     seqtot =  ra.size
-    seqzero = 0
+    seqzero,seqnum = 0,0
 
     # write slot json files
     for slot in np.unique(slotNumbers) :
         ix = slotNumbers == slot
         slotMJD = mjd[ix][0]  ;# just get first mjd in this slot
-        tmpname, name = jsonUTCName(slot, slotMJD, simNumber, mapDirectory)
+        tmpname, name = jsonUTCName(slot, slotMJD, trigger_id, mapDirectory)
         jsonMaker.writeJson(ra[ix],dec[ix],id[ix],
-            simNumber, seqzero, seqtot, exposureList= exposure_list, propid=propid,
-            filterList= filter_list, trigger_type=trigger_type, jsonFilename=tmpname)
+            seqzero, seqnum, seqtot, exposureList= exposure_list, 
+            filterList= filter_list, tilingList = tiling_list, trigger_id = trigger_id, 
+            trigger_type=trigger_type, propid=propid, skymap=skymap, jsonFilename=tmpname)
 
-        desJson(tmpname, name, mapDirectory) 
+        desJson(tmpname, name, mapDirectory, slotMJD) 
         seqzero += ra[ix].size
         
 # verbose can be 0, 1=info, 2=debug
-def desJson(tmpname, name, data_dir, verbose = 1) :
+def desJson(tmpname, name, data_dir, start_time, verbose = 1) :
     import os
-    import logging
-    from collections import defaultdict
+    import json
     import gwwide
-    gw_data_dir          = os.environ["DESGW_DATA_DIR"]
-    des_json  = gw_data_dir + "all_wide_sispi_queue.json"
-    log_levels = defaultdict(lambda:logging.WARNING)
-    log_levels[1] = logging.INFO
-    log_levels[2] = logging.DEBUG
-    logging.basicConfig(filename=data_dir+"json-conversion.log",
-        format='%(asctime)s %(message)s', level=verbose)
+    warnings.filterwarnings("ignore")
 
-    logging.info("Begin")
-    gwwide.file_gwwide(tmpname, des_json, name)
+    fd = open(tmpname,"r")
+    gw_queue = json.load(fd); fd.close()
+    # seconds to leave before hitting the Blanco limits
+    time_buffer= 300.
+    fixed_queue = gwwide.gwwide([],gw_queue, start_time, time_buffer, sort=True)
+    fd = open(name,"w")
+    print "make ericJson {}".format(name)
+    json.dump(fixed_queue, fd, indent=4); fd.close()
     os.remove(tmpname)
 
 def jsonUTCName (slot, mjd, simNumber, mapDirectory) :
-    time = utcFromMjd(mjd)
+    time = utcFromMjd(mjd, alt=True)
     tmpname, name = jsonName(slot, time, simNumber, mapDirectory)
     return tmpname, name
 
-def utcFromMjd (mjd, alt=False) :
+def utcFromMjd (mjd, alt=True) :
     year,month,day,hour,minute = utc_time_from_mjd(mjd)
     time = "UT-{}-{:02d}-{:02d} {:02d}:{:02d}:00".format(year,month,day,hour,minute)
     if alt:
-        time = "{:02d}:{:02d}:00UT on {}-{:02d}-{:02d}".format(hour,minute,year,month,day)
+        time = "UT-{}-{:02d}-{:02d}_{:02d}:{:02d}:00".format(year,month,day,hour,minute)
     return time
 
 def utc_time_from_mjd (mjd) :
@@ -655,7 +679,7 @@ def jsonName (slot, utcString, simNumber, mapDirectory) :
     return tmpname, name
 
 def jsonFromRaDecFile(radecfile, nslots, slotZero, 
-        hexesPerSlot, simNumber, mjdList, trigger_type, data_dir) :
+        hexesPerSlot, simNumber, mjdList, trigger_id, trigger_type, data_dir) :
     ra,dec = np.genfromtxt(radecfile, unpack=True,usecols=(0,1),comments="#",propid="propid")
 
     seqtot =  ra.size
@@ -677,7 +701,7 @@ def jsonFromRaDecFile(radecfile, nslots, slotZero,
                 simNumber,data_dir)
             jsonMaker.writeJson(slotRa,slotDec, 
                 simNumber, seqzero+(hexesPerSlot*(slot-slotZero)), 
-                seqtot, trigger_type, jsonFilename=tmpname, propid=propid)
+                seqtot, trigger_id, trigger_type, jsonFilename=tmpname, propid=propid)
             desJson(tmpname, name, data_dir) 
             counter = 0
             slot += 1
@@ -688,7 +712,7 @@ def jsonFromRaDecFile(radecfile, nslots, slotZero,
             simNumber,data_dir)
         jsonMaker.writeJson(slotRa,slotDec, 
             simNumber, seqzero+(hexesPerSlot*(slot-slotZero)), 
-            seqtot, trigger_type, jsonFilename=tmpname, propid=propid)
+            seqtot, trigger_id, trigger_type, jsonFilename=tmpname, propid=propid)
         desJson(tmpname, name, data_dir) 
         
 # ==================================
@@ -898,12 +922,28 @@ def observingPlot(figure, simNumber, slot, data_dir, nslots, camera, allSky=Fals
         camera, title, slots=slotNumbers, allSky=allSky, scale=gif_resolution)
     return d
 
-def writeObservingRecord(slotsObserving, data_dir, gw_map_trigger, gw_map_control) :
+def writeObservingRecord(slotsObserving, data_dir, gw_map_trigger, gw_map_control, gw_map_strategy) :
     trigger_id = gw_map_trigger.trigger_id
     just_sort_by_ra = gw_map_control.just_sort_by_ra
+    max_number_of_hexes_to_do = gw_map_strategy.max_number_of_hexes_to_do
 
     name = os.path.join(data_dir, str(trigger_id) + "-ra-dec-id-prob-mjd-slot-dist.txt")
     ra,dec,id,prob,mjd,slotNum,islot = obsSlots.slotsObservingToNpArrays(slotsObserving)
+
+    # let's optionally limit the number of hexes going into the file:
+    #    of course, this assumes they are sorted by prob
+    if max_number_of_hexes_to_do < 10000 :
+        ra = ra[0:max_number_of_hexes_to_do]
+        dec = dec[0:max_number_of_hexes_to_do]
+        id = id[0:max_number_of_hexes_to_do]
+        prob = prob[0:max_number_of_hexes_to_do]
+        mjd = mjd[0:max_number_of_hexes_to_do]
+        slotNum = slotNum[0:max_number_of_hexes_to_do]
+        islot = islot[0:max_number_of_hexes_to_do]
+        print "\t ========================================"
+        print "\t number of hexes kept for jsons = {}".format( max_number_of_hexes_to_do)
+        print "\t ========================================"
+    
     if just_sort_by_ra :
         # rearrange inside the slots if desired
         ix = np.argsort(ra)
