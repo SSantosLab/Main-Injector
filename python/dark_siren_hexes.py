@@ -3,6 +3,12 @@ import healpy as hp
 import hp2np as hp2np
 import matplotlib.pyplot as plt
 
+# make the json files
+# Jan 4
+# reload(dsh); dsh.get_tiling_ra_dec(raHexen, decHexen, sumProb, nu, ng, nr, ni, nz, slice=24, n=3)
+# Feb 2
+# reload(dsh); dsh.get_tiling_ra_dec(raHexen, decHexen, sumProb, nu, ng, nr, ni, nz, slice=30, n=4)
+# reload(dsh); dsh.get_tiling_ra_dec(raHexen, decHexen, sumProb, nu, ng, nr, ni, nz, slice=62, n=3)
 def get_tiling_ra_dec(raHexen, decHexen, sumProb, nu, ng, nr, ni, nz, slice=24, n=3) :
 
     ix=np.argsort(sumProb)[::-1]
@@ -12,6 +18,51 @@ def get_tiling_ra_dec(raHexen, decHexen, sumProb, nu, ng, nr, ni, nz, slice=24, 
         raHexen[0:slice], decHexen[0:slice], sumProb[0:slice], \
         nu[0:slice], ng[0:slice], nr[0:slice], ni[0:slice], nz[0:slice]
 
+    feb2 = True
+    if feb2:
+        file = "tiling-riz-feb2-ra-dec.txt"
+        file = "tiling-rz-feb2-ra-dec.txt"
+        fd = open(file,"w")
+        for i in range(0,raHexen.size) :
+            if nz[i] < 0.5 :
+                fd.write("{:10.5f} {:10.5f} {:10.8f} {:2s} {:2d}\n".format(
+                    raHexen[i], decHexen[i], sumProb[i], "z", 1))
+            #if ni[i] < 0.5 :
+            #    fd.write("{:10.5f} {:10.5f} {:10.8f} {:2s} {:2d}\n".format(
+            #        raHexen[i], decHexen[i], sumProb[i], "i", 1))
+            if nr[i] < 0.5 :
+                fd.write("{:10.5f} {:10.5f} {:10.8f} {:2s} {:2d}\n".format(
+                    raHexen[i], decHexen[i], sumProb[i], "r", 1))
+            if nz[i] < 1.5 :
+                fd.write("{:10.5f} {:10.5f} {:10.8f} {:2s} {:2d}\n".format(
+                    raHexen[i], decHexen[i], sumProb[i], "z", 2))
+            #if ni[i] < 1.5 :
+            #    fd.write("{:10.5f} {:10.5f} {:10.8f} {:2s} {:2d}\n".format(
+            #        raHexen[i], decHexen[i], sumProb[i], "i", 2))
+            if nr[i] < 1.5 :
+                fd.write("{:10.5f} {:10.5f} {:10.8f} {:2s} {:2d}\n".format(
+                    raHexen[i], decHexen[i], sumProb[i], "r", 2))
+            if nz[i] < 2.5 :
+                fd.write("{:10.5f} {:10.5f} {:10.8f} {:2s} {:2d}\n".format(
+                    raHexen[i], decHexen[i], sumProb[i], "z", 3))
+            #if ni[i] < 2.5 :
+            #    fd.write("{:10.5f} {:10.5f} {:10.8f} {:2s} {:2d}\n".format(
+            #        raHexen[i], decHexen[i], sumProb[i], "i", 3))
+            if nr[i] < 2.5 :
+                fd.write("{:10.5f} {:10.5f} {:10.8f} {:2s} {:2d}\n".format(
+                    raHexen[i], decHexen[i], sumProb[i], "r", 3))
+            if nz[i] < 3.5 :
+                fd.write("{:10.5f} {:10.5f} {:10.8f} {:2s} {:2d}\n".format(
+                    raHexen[i], decHexen[i], sumProb[i], "z", 4))
+            #if ni[i] < 3.5 :
+            #    fd.write("{:10.5f} {:10.5f} {:10.8f} {:2s} {:2d}\n".format(
+            #        raHexen[i], decHexen[i], sumProb[i], "i", 4))
+            if nr[i] < 3.5 :
+                fd.write("{:10.5f} {:10.5f} {:10.8f} {:2s} {:2d}\n".format(
+                    raHexen[i], decHexen[i], sumProb[i], "r", 4))
+        fd.close()
+        sort_on_ra_n_write(file) 
+        return
     
     file = "tiling1-ra-dec.txt"
     fd = open(file,"w")
@@ -138,10 +189,31 @@ def sort_on_ra_n_write(file) :
             a[ix[i]], b[ix[i]], c[ix[i]], d[ix[i]], e[ix[i]]))
     fd.close()
 
+# for jan 4: see message on Jan 4 to slack channel #gw
+# The dark siren run is a Blanco-DECam run, half night on Friday, full night on Saturday. Gray time, last two hours of the night moon free. 
+# In the event, we traded the Friday night time for time around Feb 2 with Alfredo. What we're going to do tonight is as follows:
+#   a) take the LALinfreance map for GW150914 (our old friend)
+#   b) from the telemtry database, extract all u,g,r,i,z images with seeing < 1.5" and t_eff > 0.3. 
+#   c) take the hex map from delve and us.
+# Then, pixelate the GW map to healpix nside=64, eliminate low prob pixels. Take the decam image centers, filter by filter, 
+# assign to the nside=64 healpix map pixel closest, and accumlate exp_time*t_eff. At the end, divide by 90s to turn into fiducial images
+# Finally, take these two healpix maps and accumulate them onto the closest hex map pixel, so we obtain n_exp(filter) and total GW prob. 
+# Sort on hex probability. Build target lists on the top n hexes.
+# We went with n=24 which gets us close to 25% total probability with 3-image coverage in g,r,i,z, leaving about 1.5 hours at the end 
+# of the night to get 15 or so u-band 4-image coverage of about half the region.
+# That's the plan: the aim is to get photo-z over as much of the GW150914 area as we can. We can use the u-band data to explore the benefits of that
+# We still need to delve offsets for tilings after the first- we're looking for the 3 next offset values.
+#
+# And we finished the complete set of tiles. 24% of spatial probability in 3 tilings in griz, 20% in 4 tilings of u. 
+# We'll have to finalize the trade of time with Alfredo- Feb 2, I believe. It will be better placed to do more work on GW150914.
 
+# for Feb 2, we'll used slice=30, n=4. This is 4.1 hours, we'll just tell alfredo to stop when its his time- ours is 3.6 hours
+
+# reload(dsh); dsh.examine(raHexen, decHexen, sumProb, nu, ng, nr, ni, nz, slice=24, n=3)
 def examine (raHexen, decHexen, sumProb, nu, ng, nr, ni, nz, slice=30, n=4) :
     ix=np.argsort(sumProb)[::-1]
 
+    print(" i  cumProb   nu  ng  nr  ni  nz     raHexen   decHexen")
     for i in range(0,slice): 
         print "{:3d} {:5.1f}%   {:3.0f} {:3.0f} {:3.0f} {:3.0f} {:3.0f}   {:10.4f} {:10.4f}".format(
             i, 100*sumProb[ix[0:i+1]].sum(), 
@@ -150,13 +222,16 @@ def examine (raHexen, decHexen, sumProb, nu, ng, nr, ni, nz, slice=30, n=4) :
     how (nu[ix],ng[ix],nr[ix],ni[ix],nz[ix], n=n, slice=slice) 
 
 
-
+# used in examine
 def how (nu,ng,nr,ni,nz, n=2, slice=40) :
-    nexp = 0
+    print ("total number of exposures")
 
+    nexp = 0
     sum = 0
     for i in range(0,n+1) :
         ix,=np.where( (ng[0:slice]>i-0.5) & (ng[0:slice]<=i+0.5 ) ); sum = sum + (n-i)*ix.size; 
+# feb 2, moon goes down at end, so no g band
+    sum = 0
     print "ng", sum
     nexp = nexp+sum
 
@@ -169,6 +244,8 @@ def how (nu,ng,nr,ni,nz, n=2, slice=40) :
     sum = 0
     for i in range(0,n+1) :
         ix,=np.where( (ni[0:slice]>i-0.5) & (ni[0:slice]<=i+0.5 ) ); sum = sum + (n-i)*ix.size; 
+# feb 2, moon goes down at end, so no g band, and sheer greed- let alex do it
+    sum = 0
     print "ni", sum
     nexp = nexp+sum
 
@@ -179,6 +256,8 @@ def how (nu,ng,nr,ni,nz, n=2, slice=40) :
     nexp = nexp+sum
     print "nexp= ", nexp
     print "time = ", nexp*2, "   hours=", nexp*2/60.
+# feb 2, moon goes down at end, so no u-band
+    return
 
     sum = 0
     slice = int(slice/1.2)
@@ -196,10 +275,9 @@ def how (nu,ng,nr,ni,nz, n=2, slice=40) :
 
 
 
-# reload(find_hexen); ra,dec,vals,raHexen, decHexen=  find_hexen.gw_map_hex ( nside=64)
-# reload(find_hexen); raHexen, decHexen=  find_hexen.gw_map_hex ( nside=64)
+# import dark_siren_hexes as dsh
 
-# reload(find_hexen); raHexen, decHexen, sumProb = find_hexen(nside=64)
+# reload(dsh); raHexen, decHexen, sumProb = dsh.gw_map_hex(nside=64)
 
 def gw_map_hex (nside=32) :
     ra, dec, vals = gw_map(nside=nside)
@@ -210,12 +288,12 @@ def gw_map_hex (nside=32) :
     #return ra,dec,vals,gw_hexen_ra, gw_hexen_dec
     return raHexen, decHexen, sumProb
 
-# reload(find_hexen); ra,dec,vals,nu,ng,nr,ni,nz = find_hexen.gw_map_nexp( nside=64)
+# reload(dsh); ra,dec,vals,nu,ng,nr,ni,nz = dsh.gw_map_nexp(raHexen, decHexen,  nside=64)
 
-# reload(find_hexen); nu,ng,nr,ni,nz = find_hexen.gw_map_nexp(raHexen, decHexen,nside=64)
-
+# get the map on raHexen, decHexen of the effective number of exposures
 def gw_map_nexp (raHexen, decHexen, file="LALInference_skymap.fits.gz", nside=32) :
     dir = "/data/des60.a/data/annis/new_mi_desgw/Main-Injector4/python/work4/"
+    dir = "/data/des60.a/data/annis/new_mi_desgw/Main-Injector4/python/work4b/"
     ra,dec,vals=hp2np.hp2np(dir+file,degrade=nside)
     if nside == 32 : ix,=np.where((vals>2e-3)&(dec<40));
     if nside == 64 : ix,=np.where((vals>5e-4)&(dec<40));
@@ -247,6 +325,7 @@ def gw_map_nexp (raHexen, decHexen, file="LALInference_skymap.fits.gz", nside=32
 
 def gw_map (file="LALInference_skymap.fits.gz", nside=32) :
     dir = "/data/des60.a/data/annis/new_mi_desgw/Main-Injector4/python/work4/"
+    dir = "/data/des60.a/data/annis/new_mi_desgw/Main-Injector4/python/work4b/"
     ra,dec,vals=hp2np.hp2np(dir+file,degrade=nside)
     if nside == 32 : ix,=np.where((vals>2e-3)&(dec<40));
     if nside == 64 : ix,=np.where((vals>5e-4)&(dec<40));
@@ -258,12 +337,17 @@ def gw_map (file="LALInference_skymap.fits.gz", nside=32) :
 
 def decam_map (file="gw150914.csv") :
     dir = "/data/des60.a/data/annis/new_mi_desgw/Main-Injector4/python/work4/"
+    dir = "/data/des60.a/data/annis/new_mi_desgw/Main-Injector4/python/work4b/"
     id,ra,dec,exptime,qc_fwhm,qc_teff,airmass,filter,date,propid,mag_lim_10sigma= \
         np.genfromtxt(file,unpack=True,delimiter=",")
     filter,date,propid= \
         np.genfromtxt(file,unpack=True,delimiter=",",dtype="str",usecols=(7,8,9))
 
-    ix, = np.where( (qc_fwhm <= 1.5) & ( qc_teff >= 0.3) )
+# jan 4
+    #ix, = np.where( (qc_fwhm <= 1.5) & ( qc_teff >= 0.3) )
+# jan 29
+    ix, = np.where( (qc_fwhm <= 1.5) & ( qc_teff >= 0.05) & (id>924002))
+    ix, = np.where( (qc_fwhm <= 1.5) & ( qc_teff >= 0.05) )
     id,ra,dec,exptime,qc_fwhm,qc_teff,airmass,filter,date,propid,mag_lim_10sigma= \
         id[ix],ra[ix],dec[ix],exptime[ix],qc_fwhm[ix],qc_teff[ix],airmass[ix],\
         filter[ix],date[ix],propid[ix],mag_lim_10sigma[ix] 
@@ -275,7 +359,9 @@ def hexen (file = "all-sky-hexCenters-decam.txt") :
     raHexen,decHexen = np.genfromtxt(dir+file, unpack=True)
     return raHexen,decHexen
 
-# return a list of hexes that contain summed ligo probability
+# return a list of hexes that contain summed "vals"
+#   that could be ligo probability
+#   that could be effective number of exposures
 def gw_sum_prob (ra,dec,vals, raHexen, decHexen, cut_zero=True) :
     # in order of raHexen
     sumProb = np.zeros(raHexen.size)
