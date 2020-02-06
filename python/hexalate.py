@@ -78,12 +78,6 @@ def cutAndHexalateOnRaDec (obs, sm, raHexen, decHexen, idHexen, tree, camera, cu
         print "\t cutAndHexalate probabilities sum",probabilities.sum()
 
     hexVals = np.zeros(raHexen.size)
-<<<<<<< HEAD
-    #    raHexen[ix2], decHexen[ix2])
-=======
-    #    raHexen[ix2], decHexen[ix2])                                                                                                                                                 
-
->>>>>>> 3077cab0a0bd5c2da1f11f8616b88f475a44109c
     if not cutProbs:
         hexVals[ix2] = decam2hp.hexalateMap(obsRa,obsDec, probabilities, tree,
                                             raHexen[ix2], decHexen[ix2], camera)

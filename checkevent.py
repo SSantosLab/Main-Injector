@@ -19,7 +19,8 @@ import time
 import checkevent_config as config
 import send_texts_and_emails
 global official
-official = False
+#official = False
+atchannel = False
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -28,7 +29,7 @@ logger.addHandler(logging.FileHandler('checkevent.log', 'a'))
 print_ = logger.info
 
 
-def sendFirstTriggerEmail(trigger_id,far,mapname='NA',retraction=0):
+def sendFirstTriggerEmail(trigger_id,far,mapname='NA',retraction=0,event_params=None):
     import smtplib
     from email.mime.text import MIMEText
     plus = ''
@@ -37,40 +38,24 @@ def sendFirstTriggerEmail(trigger_id,far,mapname='NA',retraction=0):
     if config.mode.lower() == 'mdc':
         plus = 'FAKE'
     #if retraction == False:
+    print "AG TEST: print retraction: "+str(retraction)
+    if retraction == 'Retraction':
+        subject = 'Rectraction for '+str(trigger_id)
+        text = ''
+        send_texts_and_emails.postToSLACK(subject,text,official=official, atchannel=False)
+        print(" Retraction notice sent, exiting")
+        sys.exit()
 
-    text = plus+' Trigger '+trigger_id+'\nAlert Type: '+str(retraction)+'\nFAR: '+str(far)+'\nMap: '+mapname+'\nURL: https://gracedb.ligo.org/superevents/'+trigger_id+'/view \nAnalysis has begun, please hold tight for a DESGW webpage which will be located here shortly: \nhttp://des-ops.fnal.gov:8080/desgw/Triggers/'+trigger_id+'/'+trigger_id+'_trigger.html \n\nDO NOT REPLY TO THIS THREAD, NOT ALL USERS WILL SEE YOUR RESPONSE.'
-    #msg = MIMEText(text)
+    if event_params is None:
+        text = plus+' Trigger '+trigger_id+'\nAlert Type: '+str(retraction)+'\nFAR: '+str(far)+'\nMap: '+mapname+'\nURL: https://gracedb.ligo.org/superevents/'+trigger_id+'/view \nAnalysis has begun, please hold tight for a DESGW webpage which will be located here shortly: \nhttp://des-ops.fnal.gov:8080/desgw/Triggers/'+trigger_id+'/'+trigger_id+'_trigger.html \n\nDO NOT REPLY TO THIS THREAD, NOT ALL USERS WILL SEE YOUR RESPONSE.'
+    else:
+        text = plus+' Trigger '+trigger_id+'\nHasRemnant: '+str(event_params['hasremnant'])+'\nAlert Type: '+str(retraction)+'\nFAR: '+str(far)+'\nMap: '+mapname+'\nURL: https://gracedb.ligo.org/superevents/'+trigger_id+'/view \nAnalysis has begun, please hold tight for a DESGW webpage which will be located here shortly: \nhttp://des-ops.fnal.gov:8080/desgw/Triggers/'+trigger_id+'/'+trigger_id+'_trigger.html \n\nDO NOT REPLY TO THIS THREAD, NOT ALL USERS WILL SEE YOUR RESPONSE.'
 
-    #me = 'automated-desGW@fnal.gov'
-    #if config.sendEveryoneEmails:
-    #    you = config.allemails
-    #else:
-    #    you = ['djbrout@gmail.com']
 
-    #if config.sendtexts:
-    #    t = config.alltexts
-    #    you.extend(t)
-    #else:
-    #    you.extend(['2153008763@mms.att.net'])
-
-    #for y in you:
-    #    try:
     subject =  plus+' Trigger '+trigger_id+' FAR: '+str(far)+' Map: '+mapname+' NOREPLY'
-    #global official
-    #print(official)
-    #asdf
-    send_texts_and_emails.send(subject,text,official=official)
-            #msg['From'] = me
-            #msg['To'] = y
-            
-            #s = smtplib.SMTP('localhost')
-            #s.sendmail(me, y, msg.as_string())
-            #s.quit()
-    #    except:
-    #        print 'could not send alert! '*100
 
-    #if config.sendtexts:
-    #    os.system('curl http://textbelt.com/text -d number=2153008763 -d "message=New Trigger FAR:'+str(far)+'"')
+    send_texts_and_emails.postToSLACK(subject,text,official=official, atchannel=True)
+
     print_('Trigger email sent...')
 
 def sendFailedEmail(trigger_id,message='FAILED'):
@@ -100,7 +85,7 @@ def sendFailedEmail(trigger_id,message='FAILED'):
     subject =  plus+' Trigger '+trigger_id+' FAILED!'
 
     #global official
-    send_texts_and_emails.send(subject,text,official=official)
+    send_texts_and_emails.send(subject,text,official=official,atchannel=True)
 
     #    msg['From'] = me
     #    msg['To'] = y
@@ -144,7 +129,7 @@ def get_skymap(skymap_url,skymap_path):
     gcn.notice_types.LVC_PRELIMINARY,
     gcn.notice_types.LVC_INITIAL,
     gcn.notice_types.LVC_UPDATE)
-def process_gcn(payload, root, dontwritepayload=False):
+def process_gcn(payload, root):
     # Print the alert
     #import checkevent_config as config
 
@@ -174,7 +159,34 @@ def process_gcn(payload, root, dontwritepayload=False):
             print_('This event was not of type '+str(config.mode.upper()))
             return #This can be changed in the config file          
     print_(payload)
-    alerttype = params['AlertType']
+    try:
+        alerttype = params['AlertType']
+    except:
+        alerttype = 'N/A'
+    try:
+        hasremnant = params['HasRemnant']
+    except:
+        hasremnant = -9
+    try:
+        terrestrial = params['Terrestrial']
+    except:
+        terrestrial = -9
+    try:
+        massgap = params['MassGap']
+    except:
+        massgap = -9
+    try:
+        BNS = params['BNS']
+        BBH = params['BBH']
+        NSBH = params['NSBH']
+    except:
+        BNS = -9
+        BBH = -9
+        NSBH = -9
+
+    print(params)
+    #asdf
+
     #sendFirstTriggerEmail(trigger_id,'NA',retraction=alerttype)
     if alerttype.lower() == 'retraction':
         sendFirstTriggerEmail(trigger_id,'NA',retraction=alerttype)
@@ -255,6 +267,14 @@ def process_gcn(payload, root, dontwritepayload=False):
         trigger_mjd = round(nt.mjd,4)
 
     event_params['MJD'] = str(trigger_mjd)
+    event_params['alerttype'] = alerttype
+    event_params['terrestrial'] = terrestrial
+    event_params['hasremnant'] = hasremnant
+    event_params['massgap'] = massgap
+    event_params['BBH'] = BBH
+    event_params['BNS'] = BNS
+    event_params['NSBH'] = NSBH
+
     try:
         event_params['ETA'] = str(params['Eta'])
     except:
@@ -299,13 +319,14 @@ def process_gcn(payload, root, dontwritepayload=False):
     #if config.mode.lower() == 'observation':
 
     try:
-        sendFirstTriggerEmail(trigger_id,event_params['FAR'],mapname=skymap_url.split('/')[-1].split('.')[0],retraction=alerttype)
+        sendFirstTriggerEmail(trigger_id,event_params['FAR'],mapname=skymap_url.split('/')[-1].split('.')[0],retraction=alerttype,event_params=event_params)
     except:
         sendFirstTriggerEmail(trigger_id,event_params['FAR'],retraction=alerttype)
     print_('Trigger ID HEERERERERE '+trigger_id)
     #save payload to file
-    if not dontwritepayload:
-        open(os.path.join(outfolder,trigger_id+'_payload.xml'), 'w').write(payload)
+    
+    #if not dontwritepayload:
+    open(os.path.join(outfolder,trigger_id+'_payload.xml'), 'w').write(str(payload))
     #save url to file
     open(os.path.join(outfolder,trigger_id+'_skymapURL.txt'), 'w').write(skymap_url)
     #save mjd to file
@@ -314,7 +335,7 @@ def process_gcn(payload, root, dontwritepayload=False):
     # Read sky map
     skymap, header, mapname = get_skymap(skymap_url,outfolder)
 
-
+    print('saving event paramfile',event_paramfile)
     np.savez(event_paramfile,
              MJD=event_params['MJD'],
              ETA=event_params['ETA'],
@@ -328,7 +349,14 @@ def process_gcn(payload, root, dontwritepayload=False):
              CentralFreq = event_params['CentralFreq'],
              time_processed = event_params['time_processed'],
              boc = event_params['boc'],
-             mapname= mapname
+             mapname= mapname,
+             hasremnant = event_params['hasremnant'],
+             massgap = event_params['massgap'],
+             terrestrial = event_params['terrestrial'],
+             alerttype = event_params['alerttype'],
+             BBH = event_params['BBH'],
+             BNS = event_params['BNS'],
+             NSBH = event_params['NSBH']
              )
 
     
@@ -340,12 +368,13 @@ def process_gcn(payload, root, dontwritepayload=False):
         args = ['python', 'recycler.py','--skymapfilename='+skymap_filename, '--triggerpath='+config.trigger_outpath, '--triggerid='+trigger_id, '--mjd='+str(trigger_mjd)]
     print_('ARGSSSSSSSSSSSSSSSSSSSSS')
     print_(args)
+    ppp = ''
     for arg in args:
         try:
-            print_(arg,)
+            ppp+=arg+' '
         except:
             pass
-    print_('')
+    print_(ppp)
     #os.mkdir(os.path.join(config.trigger_outpath,trigger_id))
     try:
         os.mkdir(os.path.join(config.trigger_outpath,trigger_id,skymap_filename.split('/')[-1].split('.')[0]))
@@ -430,19 +459,21 @@ if __name__ == "__main__":
 
 
     official = False
-
     #try:
     #runnow=False
     for o,a in opt:
         print_(o)
         if o in ['--payload']:
+            if '--official' in np.array(opt):
+                official = True
             payloadpath=a
             payload=open(payloadpath).readlines()
             import xml.etree.ElementTree as ET
             tree = ET.parse(payloadpath)
             root = tree.getroot()
-            process_gcn(payload, root,dontwritepayload=True)
+            process_gcn(payload, root)
             runnow=True
+            sys.exit()
         if o in ['--official']:
             official = True
             print_('Official!!!'*10)

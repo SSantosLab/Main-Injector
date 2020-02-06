@@ -20,7 +20,7 @@ do_make_gifs:   True
 
 # Optimization params
 #resolution: 128 #for map making
-resolution: 32 #for map making at speed
+resolution: 8 #for map making at speed
 
  # gif_resolution = 3. pub quality
  # gif_resolution = 1. good to show

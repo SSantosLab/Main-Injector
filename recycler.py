@@ -44,7 +44,10 @@ class event:
             self.recycler_mjd = self.getmjd(datetime.datetime.now())
 
         self.event_paramfile = os.path.join(work_area, trigger_id + '_params.npz')
-        print(self.event_paramfile)
+        #self.event_paramfile = os.path.join(work_area,'..', trigger_id + '_params.npz')
+
+        #print(self.event_paramfile)
+        #asdf
         #raw_input()
         self.weHaveParamFile = True
         try:
@@ -52,6 +55,9 @@ class event:
         except:
             self.event_params = {}
             self.weHaveParamFile = False
+        print(self.event_paramfile)
+        print(self.event_params.items())
+        #asdf
         yaml_dir = os.path.join(work_area, 'strategy.yaml')
         os.system('cp recycler.yaml ' + yaml_dir)
         print('***** Copied recycler.yaml to ' + yaml_dir + ' for future reference *****')
@@ -128,7 +134,9 @@ class event:
         resolution = float(config["resolution"])
 
         overhead = config["overhead"]
-        #nvisits = config["nvisits"]                                                                                                                                                                                                          
+        #nvisits = config["nvisits"]                                    
+        allSky = config['allSky']                                                              
+                                  
         area_per_hex = config["area_per_hex"]
         start_of_season = config["start_of_season"]
         end_of_season = config["end_of_season"]
@@ -164,7 +172,7 @@ class event:
     # same day?
         days_since_burst = 0
         #days_since_burst = config["days_since_burst"]
-
+        '''
     # strategy
         exposure_length_ns= np.array(config["exposure_length_NS"],dtype='float')
         filter_list_ns    = config["exposure_filter_NS"]
@@ -183,8 +191,83 @@ class event:
         hours_used_by_NS  = 0
         hours_used_by_BH  = 0
 
-
+        '''
         print(self.event_params)
+        hoursAvailable = 20.
+        self.distance = 1.
+
+        # same day?
+        try:
+            days_since_burst = config["days_since_burst"]
+        except:
+            pass
+    # strategy
+        exposure_length_rem = config["exposure_length_Rem"]
+        filter_list_rem     = config["exposure_filter_Rem"]
+        maxHexesPerSlot_rem = config["maxHexesPerSlot_Rem"]
+        exposure_length_bh  = config["exposure_length_BH"]
+        filter_list_bh      = config["exposure_filter_BH"]
+        maxHexesPerSlot_bh  = config["maxHexesPerSlot_BH"]
+        
+        print(self.event_params.items())
+        hasremnant = self.event_params['hasremnant']
+        if hasremnant> 0.01:
+            trigger_type = 'Rem'
+        else:
+            trigger_type = 'BH'
+    # configure strategy for the event type
+        if trigger_type == "Rem" :
+            exposure_length      = exposure_length_rem
+            filter_list          = filter_list_rem
+            maxHexesPerSlot      = maxHexesPerSlot_rem
+            propid = config['propid_Rem']
+        elif trigger_type == "BH" :
+            exposure_length      = exposure_length_bh
+            filter_list          = filter_list_bh 
+            maxHexesPerSlot      = maxHexesPerSlot_bh
+            propid = config['propid_BH']
+
+        else :
+            raise Exception(
+                "trigger_type={}  ! Can only compute BH or Rem".format(trigger_type))
+        exposure_length   = np.array(exposure_length)
+
+        gif_resolution = config['gif_resolution']
+
+        gw_map_control  = gw_map_configure.control( resolution, outputDir, debug, 
+                                                    allSky=allSky, snarf_mi_maps=snarf_mi_maps, mi_map_dir = mi_map_dir,
+                                                    gif_resolution = gif_resolution)
+        gw_map_trigger  = gw_map_configure.trigger( skymap, trigger_id, trigger_type, 
+                                                    resolution, days_since_burst=days_since_burst)
+        gw_map_strategy = gw_map_configure.strategy( camera, exposure_length, 
+                                                     filter_list, maxHexesPerSlot, hoursAvailable, propid)
+        gw_map_results = gw_map_configure.results()
+        
+        if not os.path.exists(outputDir): os.makedirs(outputDir)
+        
+        if do_make_maps :
+            # make the computationally expensive maps of everything
+            getHexObservations.make_maps( 
+                gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
+            
+        if do_make_hexes :
+            # compute the best observations
+            getHexObservations.make_hexes( 
+                gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
+                start_slot = start_slot, do_nslots= do_nslots)
+            # if start_slot = -1, do_nslots = -1, then do whole night, as if called like:
+            #    getHexObservations.make_hexes( 
+            #        gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
+            # the web page maker version of main injector should default to -1, -1
+
+        if do_make_jsons :
+            # make the jsons 
+            getHexObservations.make_jsons( gw_map_trigger, gw_map_strategy, gw_map_control)
+            
+        if do_make_gifs :
+            getHexObservations.makeGifs( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
+
+        allSky = config['allSky']                                                            
 
         eventtype = self.event_params['boc']
 
@@ -192,7 +275,7 @@ class event:
             probhasns = self.event_params['probhasns']
         except:
             probhasns = 0. #for old maps...                                                                                                                                                                                                   
-
+        '''
         if config['forceProbHasNS']: probhasns = config['probHasNS']
 
         self.probhasns = probhasns
@@ -200,6 +283,9 @@ class event:
 
         #print 'eventtype',eventtype                                                                                                                                                                                                          
         self.time_budget = hoursAvailable_ns
+
+
+
         if eventtype == 'Burst':
             gethexobstype = 'BH'
             self.distance = 1.
@@ -293,6 +379,7 @@ class event:
         if do_make_gifs :
             getHexObservations.makeGifs( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky = allSky)
 
+        '''
         ra, dec, id, self.prob, mjd, slotNum, dist = \
             obsSlots.readObservingRecord(self.trigger_id, mapDir)
 
@@ -417,50 +504,42 @@ class event:
 
         self.probhasns = probhasns
         gethexobstype = None
-        
-        #print 'eventtype',eventtype
-        if eventtype == 'Burst':
-            gethexobstype = 'BH'
-            self.distance = 1.
-            self.propid = config['BBH_propid']
-        elif eventtype == 'CBC':
-            #print 'probhasns'*100
-            print('PROB HAS NS',probhasns)
-            if probhasns > config['probHasNS_threshold']:
-                gethexobstype = 'NS'
-                try:
-                    self.distance = getdistance.dist_from_map(self.skymap)
-                except:
-                    print('failed to get distance from map')
-                    print('using 1mpc')
-                    self.distance = 1.
-                self.propid = config['BNS_propid']
-            else:
-                gethexobstype = 'BH'
-                self.distance = 1.
-                self.propid = config['BBH_propid']
-        else: #we dont know what we're looking at... do default obs for lightcurve
-            print('WE DONT KNOW WHAT WERE LOOKING AT!'*5)
-            gethexobstype = 'BH'
-            self.distance = 1.
-            self.propid = config['BBH_propid']
+   
+        self.distance = 1
+     
+        exposure_length_rem = config["exposure_length_Rem"]
+        filter_list_rem     = config["exposure_filter_Rem"]
+        maxHexesPerSlot_rem = config["maxHexesPerSlot_Rem"]
+        exposure_length_bh  = config["exposure_length_BH"]
+        filter_list_bh      = config["exposure_filter_BH"]
+        maxHexesPerSlot_bh  = config["maxHexesPerSlot_BH"]
+
+    # configure strategy for the event type                                                                                                                                                    
+        if trigger_type == "Rem" :
+            exposure_length      = exposure_length_rem
+            filter_list          = filter_list_rem
+            maxHexesPerSlot      = maxHexesPerSlot_rem
+            self.propid = config['BNS_propid'] 
+        elif trigger_type == "BH" :
+            exposure_length      = exposure_length_bh
+            filter_list          = filter_list_bh
+            maxHexesPerSlot      = maxHexesPerSlot_bh
+            self.propid = config['BBH_propid']  
+        else :
+            send_texts_and_emails.postToSLACK(subject,text,official=self.official,atchannel=False)
+            raise Exception(
+                "trigger_type={}  ! Can only compute BH or Rem".format(trigger_type))
+        exposure_length   = np.array(exposure_length)
 
 
-
-        if gethexobstype == 'BH':
-            filter_list = config["exposure_filter_BH"]
-            maxHexesPerSlot = config["maxHexesPerSlot_BH"]
-            exposure_length = config["exposure_length_BH"]
-            hoursAvailable = config["time_budget_for_BH"]
-            tiling_list = config["exposure_tiling_BH"]
-            self.propid = config['BBH_propid']
-        else:
-            filter_list = config["exposure_filter_NS"]
-            maxHexesPerSlot = config["maxHexesPerSlot_NS"]
-            exposure_length = config["exposure_length_NS"]
-            hoursAvailable = config["time_budget_for_NS"]
-            tiling_list = config["exposure_tiling_NS"]
-            self.propid = config['BNS_propid']
+        gw_map_control  = gw_map_configure.control( resolution, outputDir, debug,
+                                                    allSky=allSky, snarf_mi_maps=snarf_mi_maps, mi_map_dir = mi_map_dir,
+                                                    gif_resolution = gif_resolution)
+        gw_map_trigger  = gw_map_configure.trigger( skymap, trigger_id, trigger_type,
+                                                    resolution, days_since_burst=days_since_burst)
+        gw_map_strategy = gw_map_configure.strategy( camera, exposure_length,
+                                                     filter_list, maxHexesPerSlot, hoursAvailable, propid)
+        gw_map_results = gw_map_configure.results()
 
         exposure_length = np.array(exposure_length)
         self.time_budget = hoursAvailable
@@ -479,10 +558,32 @@ class event:
         #print 'triggertype'*100
         print('TRIGGER TYPE:',self.gethexobstype)
 
-        #raw_input()
 
+        if not os.path.exists(outputDir): os.makedirs(outputDir)
+    
+        if do_make_maps :
+            # make the computationally expensive maps of everything
+            getHexObservations.make_maps( 
+                gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
+
+        if do_make_hexes :
+            # compute the best observations
+            getHexObservations.make_hexes( 
+                gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
+                start_slot = start_slot, do_nslots= do_nslots)
+            # if start_slot = -1, do_nslots = -1, then do whole night, as if called like:
+            #    getHexObservations.make_hexes( 
+            #        gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
+            # the web page maker version of main injector should default to -1, -1
+
+        if do_make_jsons :
+            # make the jsons 
+            getHexObservations.make_jsons( gw_map_trigger, gw_map_strategy, gw_map_control)
+
+        if do_make_gifs :
+            getHexObservations.makeGifs( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
         
-
+        '''
         probs, times, slotDuration, hoursPerNight = getHexObservations.prepare(
                     self.skymap, trigger_id, outputDir, mapDir, distance=self.distance,
                     trigger_type=gethexobstype,start_days_since_burst=start_days_since_burst,camera=self.camera,
@@ -608,7 +709,7 @@ class event:
                  , need_area=need_area
                  , quality=quality
                  )
-
+        '''
         ra, dec, id, self.prob, mjd, slotNum, dist = \
             obsSlots.readObservingRecord(self.trigger_id, mapDir)
         self.slotNum = slotNum

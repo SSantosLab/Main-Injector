@@ -351,7 +351,7 @@ def probabilityMapSaver (obs, models, times, probabilities,
             f.close()
     return made_maps_list
     
-
+'''
             #######################################################################################
             ##### Brout: new, we have to run again where we dont double up on probability in the ##
             ##### hexes, but this cannot be used for prioritization. ##############################
@@ -365,7 +365,7 @@ def probabilityMapSaver (obs, models, times, probabilities,
                     raHexencut[j],decHexencut[j],idHexencut[j],hexValscut[j],rankcut[j],
                     (np.asfarray(rankcut*0.)+(mjd+time))[j]))
             f.close()
-
+'''
 
 
 # Get the saved maps for each day and hour.
