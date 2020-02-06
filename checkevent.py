@@ -21,6 +21,13 @@ import send_texts_and_emails
 global official
 official = False
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
+logger.addHandler(logging.FileHandler('checkevent.log', 'a'))
+print_ = logger.info
+
+
 def sendFirstTriggerEmail(trigger_id,far,mapname='NA',retraction=0):
     import smtplib
     from email.mime.text import MIMEText
@@ -64,7 +71,7 @@ def sendFirstTriggerEmail(trigger_id,far,mapname='NA',retraction=0):
 
     #if config.sendtexts:
     #    os.system('curl http://textbelt.com/text -d number=2153008763 -d "message=New Trigger FAR:'+str(far)+'"')
-    print 'Trigger email sent...'
+    print_('Trigger email sent...')
 
 def sendFailedEmail(trigger_id,message='FAILED'):
     plus = ''
@@ -111,8 +118,9 @@ def get_skymap(skymap_url,skymap_path):
     skymap_filename = os.path.join(skymap_path,mapname)
     #try:
     if True:
-        print 'wget'+' --auth-no-challenge '+skymap_url+' -O '+skymap_filename 
-        os.system('wget  --auth-no-challenge '+skymap_url+' -O '+skymap_filename)
+        print_('wget'+' '+skymap_url+' -O '+skymap_filename)
+        os.system('wget  '+skymap_url+' -O '+skymap_filename)    
+        #os.system('wget  --auth-no-challenge '+skymap_url+' -O '+skymap_filename)
     #except:
     #    print 'excepted 1'
     #    sendFailedEmail(skymap_url.split('/')[-1].split('.')[0],message='FAILED TO OBTAIN SKYMAP WITH WGET\n'+'wget'+' --auth-no-challenge '+skymap_url+' -O '+skymap_filename)
@@ -120,7 +128,7 @@ def get_skymap(skymap_url,skymap_path):
     try:
         skymap, header = hp.read_map(skymap_filename, h=True, verbose=False)
     except:
-        print 'failed to read skymap '+skymap_filename
+        print_('failed to read skymap '+skymap_filename)
         sys.exit()
     header = dict(header)
     
@@ -140,8 +148,8 @@ def process_gcn(payload, root, dontwritepayload=False):
     # Print the alert
     #import checkevent_config as config
 
-    print payload
-    print 'GOT GCN LIGO EVENT'
+    #print_(payload)
+    print_('GOT GCN LIGO EVENT')
 
     #if root.attrib['role'] != config.mode.lower():
     #    print 'This event was not of type '+str(config.mode.upper())
@@ -159,13 +167,13 @@ def process_gcn(payload, root, dontwritepayload=False):
 
     if config.mode.lower() == 'observation':
         if trigger_id[0] == 'M':
-            print 'This event was not of type '+str(config.mode.upper())
+            print_('This event was not of type '+str(config.mode.upper()))
             return #This can be changed in the config file              
     if config.mode.lower() == 'mdc':
         if trigger_id[0] == 'S':
-            print 'This event was not of type '+str(config.mode.upper())
+            print_('This event was not of type '+str(config.mode.upper()))
             return #This can be changed in the config file          
-
+    print_(payload)
     alerttype = params['AlertType']
     #sendFirstTriggerEmail(trigger_id,'NA',retraction=alerttype)
     if alerttype.lower() == 'retraction':
@@ -182,8 +190,8 @@ def process_gcn(payload, root, dontwritepayload=False):
     #    if event_type.lower() != 'Burst':
     #        print 'not cbc or burst'
     #        return
-    print('Got LIGO VOEvent!!!!!!!')
-    print(payload)
+    print_('Got LIGO VOEvent!!!!!!!')
+    print_(payload)
     #print(root.attrib.items())
 
 
@@ -206,7 +214,7 @@ def process_gcn(payload, root, dontwritepayload=False):
         notice_type = 'Not Available'
 
     skymap_url = params['skymap_fits'] 
-    print params
+    print_(params)
     #skymap, header = hp.read_map(params['skymap_fits'],
     #                             h=True, verbose=False)
     #    #skymap_name = trigger_id+'_bayestar.fits'
@@ -214,9 +222,9 @@ def process_gcn(payload, root, dontwritepayload=False):
     #    skymap_url = 'https://gracedb.ligo.org/events/'+str(trigger_id)+'/files/skyprobcc_cWB_complete.fits'
     #    #skymap_name = trigger_id+'_skyprobcc_cWB_complete.fits'
 
-    print('Trigger outpath')
+    print_('Trigger outpath')
     outfolder = os.path.join(config.trigger_outpath,trigger_id)
-    print(outfolder)
+    print_(outfolder)
 
     if 'lalinference' in skymap_url:
         if not os.path.exists(outfolder):
@@ -294,7 +302,7 @@ def process_gcn(payload, root, dontwritepayload=False):
         sendFirstTriggerEmail(trigger_id,event_params['FAR'],mapname=skymap_url.split('/')[-1].split('.')[0],retraction=alerttype)
     except:
         sendFirstTriggerEmail(trigger_id,event_params['FAR'],retraction=alerttype)
-    print 'Trigger ID HEERERERERE '+trigger_id
+    print_('Trigger ID HEERERERERE '+trigger_id)
     #save payload to file
     if not dontwritepayload:
         open(os.path.join(outfolder,trigger_id+'_payload.xml'), 'w').write(payload)
@@ -330,10 +338,14 @@ def process_gcn(payload, root, dontwritepayload=False):
         args = ['python', 'recycler.py','--skymapfilename='+skymap_filename, '--triggerpath='+config.trigger_outpath, '--triggerid='+trigger_id, '--mjd='+str(trigger_mjd),'--official']
     else:
         args = ['python', 'recycler.py','--skymapfilename='+skymap_filename, '--triggerpath='+config.trigger_outpath, '--triggerid='+trigger_id, '--mjd='+str(trigger_mjd)]
-    print 'ARGSSSSSSSSSSSSSSSSSSSSS'
+    print_('ARGSSSSSSSSSSSSSSSSSSSSS')
+    print_(args)
     for arg in args:
-        print arg,
-    print ''
+        try:
+            print_(arg,)
+        except:
+            pass
+    print_('')
     #os.mkdir(os.path.join(config.trigger_outpath,trigger_id))
     try:
         os.mkdir(os.path.join(config.trigger_outpath,trigger_id,skymap_filename.split('/')[-1].split('.')[0]))
@@ -344,8 +356,8 @@ def process_gcn(payload, root, dontwritepayload=False):
     f.close()
     #Need to send an email here saying analysis code was fired
     
-    print 'Finished downloading, fired off job'
-    print 'See log here: '+ os.path.join(config.trigger_outpath,trigger_id,skymap_filename.split('/')[-1].split('.')[0],skymap_filename.split('/')[-1].split('.')[0]+'_recycler.log')
+    print_('Finished downloading, fired off job')
+    print_('See log here: '+ os.path.join(config.trigger_outpath,trigger_id,skymap_filename.split('/')[-1].split('.')[0],skymap_filename.split('/')[-1].split('.')[0]+'_recycler.log'))
 
 from threading import Timer
 def imAliveEmail():
@@ -409,23 +421,20 @@ if __name__ == "__main__":
             longopts=["payload=", "ligomap=", "official",])
 
     except getopt.GetoptError as err:
-        print(str(err))
-        print("Error : incorrect option or missing argument.")
-        print(__doc__)
+        print_(str(err))
+        print_("Error : incorrect option or missing argument.")
+        print_(__doc__)
         sys.exit(1)
 
     #global official
 
 
-    import logging
-# Set up logger
-    logging.basicConfig(level=logging.INFO)
     official = False
 
     #try:
     #runnow=False
     for o,a in opt:
-        print(o)
+        print_(o)
         if o in ['--payload']:
             payloadpath=a
             payload=open(payloadpath).readlines()
@@ -436,11 +445,11 @@ if __name__ == "__main__":
             runnow=True
         if o in ['--official']:
             official = True
-            print('Official!!!'*10)
+            print_('Official!!!'*10)
             if config.mode.lower() != 'observation':
-                print('This is official, but mode is not observation!!!'*5)
+                print_('This is official, but mode is not observation!!!'*5)
         else:
-            print('Not Official!'*10)
+            print_('Not Official!'*10)
 
     if config.mode.lower() == 'test':
         import xml.etree.ElementTree as ET
@@ -460,14 +469,14 @@ if __name__ == "__main__":
     #except:
     #if not runnow:
 #Start timer - use threading to say I'm Alive
-    print 'Started Threading'
+    print_('Started Threading')
         #imAliveEmail()
     imAliveHTML()
     kinit()
 # Listen for GCNs until the program is interrupted
 # (killed or interrupted with control-C).
 
-    print 'Listening...'
+    print_('Listening...')
     gcn.listen(port=8096, handler=process_gcn)
 
 #IF YOU END UP HERE THEN SEND AN EMAIL AND REBOOT

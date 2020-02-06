@@ -151,11 +151,11 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
                     <div class="container text-center">\
                         <div class="gallery-item" style="width: 50%; left: 50%; margin-right: -50%; transform: translate(50%, 0%)">\
                          <div class="gallery-thumb" >\
-                            <img name="Trigger" src="'+tmapfolder+'/'+str(trigger_id)+'_centered_animate.gif" onerror="this.src=\'/desgw/image_placeholder.jpg\'" \
+                            <img name="Trigger" src="'+tmapfolder+'/'+str(trigger_id)+'_animate.gif" onerror="this.src=\'/desgw/image_placeholder.jpg\'" \
                             class="img-responsive" alt="2nd gallery Thumb" width="50%">\
                             <div class="image-overlay"></div>\
-                            <a href="'+tmapfolder+'/'+str(trigger_id)+'_centered_animate.gif" onerror="this.href=\'/desgw/image_placeholder.jpg\'" class="gallery-zoom"><i class="fa fa-eye"></i></a>\
-                            <a href="'+tmapfolder+'/'+str(trigger_id)+'_centered_animate.gif" onerror="this.href=\'/desgw/image_placeholder.jpg\'" download class="gallery-link"><i class="fa fa-link"></i></a>\
+                            <a href="'+tmapfolder+'/'+str(trigger_id)+'_animate.gif" onerror="this.href=\'/desgw/image_placeholder.jpg\'" class="gallery-zoom"><i class="fa fa-eye"></i></a>\
+                            <a href="'+tmapfolder+'/'+str(trigger_id)+'_animate.gif" onerror="this.href=\'/desgw/image_placeholder.jpg\'" download class="gallery-link"><i class="fa fa-link"></i></a>\
                           </div>\
                         </div>\
                         <h1>Trigger '+str(trigger_id)+'</h1>\
@@ -205,7 +205,6 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
 
     html += '</h2>'
     html +='<h2>LIGO Probability of Detection (in our hexes): ' + str(round(float(str(event_params['LIGO_prob'])), 6)) + '</h2>\
-         <h2>DES X LIGO Probability of Detection: '+str(round(float(str(event_params['DESXLIGO_prob'])),6))+'</h2>\
                         <h2>Trigger Type: '+str(event_params['boc'])+'</h2>\
                         <h2>Strategy: ' + str(event_params['gethexobstype']) + '</h2>\
     <a href="'+'./'+str(trigger_id)+"_"+thismap+'_JSON.zip" download class="btn btn-outline btn-outline-xl outline-light">Download .json <span class="fa fa-download"></span></a>\
@@ -374,21 +373,7 @@ def makeNewPage(master_dir,outfilename,trigger_id,event_paramfile,mapfolder,proc
                                     <!--</div>\
                                 <!--</div>-->\
                                 <!-- /.gallery-item-wrapper -->\
-                                <div class="col-sm-6 col-xs-12 gallery-item-wrapper nature outside">\
-                                    <div class="gallery-item">\
-                                        <div class="gallery-thumb">\
-                                            <img src="'+tmapfolder+'/'+str(trigger_id)+'-probabilityPlot.png" class="img-responsive" alt="2nd gallery Thumb">\
-                                            <div class="image-overlay"></div>\
-                                            <a href="'+tmapfolder+'/'+str(trigger_id)+'-probabilityPlot.png" class="gallery-zoom"><i class="fa fa-eye"></i></a>\
-                                            <a href="'+tmapfolder+'/'+str(trigger_id)+'-probabilityPlot.png" download class="gallery-link"><i class="fa fa-link"></i></a>\
-                                        </div>\
-                                        <div class="gallery-details">\
-                                            <h5>Integrated DES Probability vs Slot Number</h5>\
-                                            <p><br></p>\
-                                        </div>\
-                                    </div>\
-                                </div>\
-                                <div class="col-sm-6 col-xs-12 gallery-item-wrapper nature outside">\
+                                <div class="col-sm-6 col-xs-12 gallery-item-wrapper nature outside"><div class="gallery-item"><div class="gallery-thumb"><img src="'+tmapfolder+'/'+str(trigger_id)+'-slot-probabilities.png" class="img-responsive" alt="2nd gallery Thumb"><div class="image-overlay"></div><a href="'+tmapfolder+'/'+str(trigger_id)+'-slot-probabilities.png" class="gallery-zoom"><i class="fa fa-eye"></i></a><a href="'+tmapfolder+'/'+str(trigger_id)+'-slot-probabilities.png" download class="gallery-link"><i class="fa fa-link"></i></a></div><div class="gallery-details"><h5>DES Probability vs Slot Number</h5><p><br></p></div></div></div><div class="col-sm-6 col-xs-12 gallery-item-wrapper nature outside"><div class="gallery-item"><div class="gallery-thumb"><img src="'+tmapfolder+'/'+str(trigger_id)+'_centered_animate.gif.png" class="img-responsive" alt="2nd gallery Thumb"><div class="image-overlay"></div><a href="'+tmapfolder+'/'+str(trigger_id)+'_centered_animate.gif.png" class="gallery-zoom"><i class="fa fa-eye"></i></a><a href="'+tmapfolder+'/'+str(trigger_id)+'_centered_animate.gif.png" download class="gallery-link"><i class="fa fa-link"></i></a></div><div class="gallery-details"><h5>Zoomed Centered GIF</h5><p><br></p></div></div></div><div class="col-sm-6 col-xs-12 gallery-item-wrapper nature outside">\
                                     <div class="gallery-item">\
                                         <div class="gallery-thumb">\
                                             <img src="'+tmapfolder+'/'+str(trigger_id)+'_LIGO.png" class="img-responsive" alt="2nd gallery Thumb">\
@@ -673,7 +658,7 @@ def make_index_page(webpage_dir, real_or_sim='real'):
                 <th></th>\
                 <th id="trigger" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);">Trigger</th><th id="type" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >Type</th>\
                 <th id="iprob" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >LIGO Prob</th>\
-                <th id="far" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >FAR</th><th id="dist" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >Dist.</th><th id="cmass" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >Chirp Mass</th>\
+                <th id="far" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >FAR</th><th id="dist" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >Dist.</th>\
                 <th id="mjd" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >MJD</th>\
                 <th id="date" onmouseover="ChangeColor(this, true);" onmouseout="ChangeColor(this, false);" >Date</th>\
             </tr>\
@@ -698,7 +683,6 @@ def make_index_page(webpage_dir, real_or_sim='real'):
                           <td >'+str(params['gethexobstype'])+'</td><td >'+str(round(float(str(params['LIGO_prob'])), 6))+'</td>\
                           <td >'+str(params['FAR'])+'</td>\
                           <td >'+str(params['codeDistance'])+' Mpc</td>\
-                          <td >'+str(params['ChirpMass'])+'</td>\
                           <td >'+str(params['MJD'])+'</td>\
                           <td >'+str(d.strftime('%H:%M:%S \t %b %d, %Y UTC'))+'</td>\
                         </tr>'
@@ -711,7 +695,6 @@ def make_index_page(webpage_dir, real_or_sim='real'):
                           <td >NA</td>\
                           <td >'+str(params['FAR'])+'</td>\
                           <td >NA</td>\
-                          <td >'+str(params['ChirpMass'])+'</td>\
                           <td >'+str(params['MJD'])+'</td>\
                           <td >'+str(d.strftime('%H:%M:%S \t %b %d, %Y UTC'))+'</td>\
                         </tr>'

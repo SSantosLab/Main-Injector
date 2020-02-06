@@ -20,7 +20,11 @@ class trigger(object):
 
         hdr = fitsio.read_header(skymap,1)
         burst_mjd = np.float(hdr["mjd-obs"])
-        distance = hdr["distmean"]
+        try:
+            distance = hdr["distmean"]
+        except:
+            print('distmean was not in payload... setting distance to 60mpc')
+            distance = 60
         self.distance  = distance
         self.burst_mjd = burst_mjd
 

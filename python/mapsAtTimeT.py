@@ -359,6 +359,22 @@ def probabilityMapSaver (obs, models, times, probabilities,
     return made_maps_list
     
 
+            #######################################################################################
+            ##### Brout: new, we have to run again where we dont double up on probability in the ##
+            ##### hexes, but this cannot be used for prioritization. ##############################
+            raHexencut, decHexencut, idHexencut, hexValscut, rankcut = \
+                hexalate.cutAndHexalateOnRaDec( obs, sm, raHexen, decHexen, idHexen, tree, camera, cutProbs=True)
+            name = nameStem + "-hexVals-cutOverlappingProb.txt"
+            if os.path.exists(name): os.remove(name)
+            f = open(name,'w')
+            for j in range(0,raHexencut.size) :
+                f.write("{:.6f}, {:.5f}, {:s}, {:.4e}, {:d}, {:.4f}\n".format(
+                    raHexencut[j],decHexencut[j],idHexencut[j],hexValscut[j],rankcut[j],
+                    (np.asfarray(rankcut*0.)+(mjd+time))[j]))
+            f.close()
+
+
+
 # Get the saved maps for each day and hour.
 def readMaps (data_dir, simNumber, slot) :
     name = os.path.join(data_dir, str(simNumber) + "-{}".format(str(slot)))
