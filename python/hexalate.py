@@ -82,10 +82,10 @@ def cutAndHexalateOnRaDec (obs, sm, raHexen, decHexen, idHexen, tree, camera, cu
 
     if not cutProbs:
         hexVals[ix2] = decam2hp.hexalateMap(obsRa,obsDec, probabilities, tree,
-                                            raHexen[ix2], decHexen[ix2], camera)
+                                            raHexen[ix2], decHexen[ix2], camera, verbose=False)
     else:
         hexVals[ix2] = decam2hp.hexalateMapWithoutOverlap(obsRa,obsDec, probabilities, tree,
-                                            raHexen[ix2], decHexen[ix2], camera)
+                                            raHexen[ix2], decHexen[ix2], camera, verbose=False)
     if verbose  :
         print "hexVals max", hexVals.max()
     rank=np.argsort(hexVals);
