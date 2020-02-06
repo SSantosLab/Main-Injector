@@ -29,8 +29,18 @@ class trigger(object):
         self.start_mjd = np.round(burst_mjd)-0.5
 
 
-        print "\ngw_map_trigger: read map {}, {} at {:.2f} Mpc\n".format(
-            skymap, trigger_type, distance)
+        if trigger_type == "Rem" :
+            named_trigger = "has remnant"
+        else:
+            named_trigger = "dark"
+
+        print ""
+        print "=================================================="
+        print "=================  desgw-map ====================="
+        print "=================================================="
+        print "                                        since 2015"
+        print "\ngw_map_trigger: {} map {}, {} at {:.0f} Mpc\n".format(
+            trigger_id, skymap, named_trigger, distance)
 
         ra,dec,ligo=hp2np.hp2np(skymap, degrade=resolution, field=0)
         ligo_dist, ligo_dist_sig, ligo_dist_norm  = \
@@ -86,15 +96,18 @@ class trigger(object):
 class strategy(object) :
     """
     """
-    def __init__(self, camera, exposure_list, filter_list, maxHexesPerSlot, hoursAvailable, propid):
+    def __init__(self, camera, exposure_list, filter_list, tiling_list, maxHexesPerSlot, 
+            hoursAvailable, propid, max_number_of_hexes_to_do):
         """
         """
         self.camera = camera
         self.exposure_list = exposure_list
         self.filter_list = filter_list
+        self.tiling_list = tiling_list
         self.maxHexesPerSlot = maxHexesPerSlot
         self.hoursAvailable = hoursAvailable
         self.propid = propid
+        self.max_number_of_hexes_to_do = max_number_of_hexes_to_do
 
         if camera == "decam" :
             self.overhead =  30. # seconds
