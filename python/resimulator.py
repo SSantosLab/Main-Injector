@@ -54,24 +54,30 @@ def recycle (trigger_id, skymap, trigger_type,
     # strategy
     exposure_length_rem = config["exposure_length_Rem"]
     filter_list_rem     = config["exposure_filter_Rem"]
+    exposure_tiling_rem = config["exposure_tiling_Rem"]
     maxHexesPerSlot_rem = config["maxHexesPerSlot_Rem"]
     exposure_length_bh  = config["exposure_length_BH"]
     filter_list_bh      = config["exposure_filter_BH"]
+    exposure_tiling_bh  = config["exposure_tiling_BH"]
     maxHexesPerSlot_bh  = config["maxHexesPerSlot_BH"]
+    max_number_of_hexes_to_do = config["max_number_of_hexes_to_do"]
 
     # configure strategy for the event type
     if trigger_type == "Rem" :
         exposure_length      = exposure_length_rem
         filter_list          = filter_list_rem
+        tiling_list          = exposure_tiling_rem
         maxHexesPerSlot      = maxHexesPerSlot_rem
     elif trigger_type == "BH" :
         exposure_length      = exposure_length_bh
         filter_list          = filter_list_bh 
+        tiling_list          = exposure_tiling_bh
         maxHexesPerSlot      = maxHexesPerSlot_bh
     else :
         raise Exception(
             "trigger_type={}  ! Can only compute BH or Rem".format(trigger_type))
     exposure_length   = np.array(exposure_length)
+    maxHexesPerSlot = np.int(np.round(maxHexesPerSlot/np.size(tiling_list)))
 
     gw_map_control  = gw_map_configure.control( resolution, outputDir, debug, 
         allSky=allSky, snarf_mi_maps=snarf_mi_maps, mi_map_dir = mi_map_dir,
@@ -79,7 +85,8 @@ def recycle (trigger_id, skymap, trigger_type,
     gw_map_trigger  = gw_map_configure.trigger( skymap, trigger_id, trigger_type, 
         resolution, days_since_burst=days_since_burst)
     gw_map_strategy = gw_map_configure.strategy( camera, exposure_length, 
-        filter_list, maxHexesPerSlot, hoursAvailable, propid)
+        filter_list, tiling_list, maxHexesPerSlot, hoursAvailable, propid,
+        max_number_of_hexes_to_do)
     gw_map_results = gw_map_configure.results()
 
     if not os.path.exists(outputDir): os.makedirs(outputDir)

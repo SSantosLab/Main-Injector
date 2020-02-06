@@ -28,61 +28,70 @@ import numpy as np
 def writeJson(ra,dec,id, seqid="none", seqnum=0, seqtot=0,
         exposureList = [90,90,90], 
         filterList = ["i","z","z"],
-        #tilingList = [9,9,9], 
         tilingList = [1, 5],
-        trigger_type = "NS", propid='propid',
-        jsonFilename="des-gw.json") :
+        trigger_id = "LIGO/Virgo", trigger_type = "Rem", propid='propid',
+        skymap="bayestar.fits", jsonFilename="des-gw.json") :
     offsets = tileOffsets()
     fd = open(jsonFilename,"w")
     fd.write("[\n")
 
+# we're going to implement tiling by running Francisco's code
+# git clone git@github.com:paztronomer/gw_helper.git
+# which duplicates json files with changes-
+# here we underfill the slot with just 1 tiling,
+# then use gw_helper to duplicate the json with a different
+# dither/tile
+    tilingList = [tilingList[0],]
+
     size = ra.size
     nexp = np.size(exposureList)
+    ntiles = np.size(tilingList) 
     seqtot= seqtot*nexp
     for i in range(0,size) :
-        for j in range(0,nexp) :
-            seqnum +=1
-            tiling = tilingList[j]
-            filter = filterList[j]
-            exp = exposureList[j]
-            offsets[tiling]
-            delRa = offsets[tiling][0]
-            delDec = offsets[tiling][1]
-            tra = ra[i]
-            tdec = dec[i]
-            tdec = tdec+delDec
-            tra = tra + delRa/np.cos(tdec*2*np.pi/360.)
-            if tra < 0 : tra = tra+360.
-            if tra > 360. : tra = tra-360.
-            #comment = "DESGW: LIGO {} event {}: {} of {}, hex {} tiling {}".format(
-            #    trigger_type, seqid, seqnum, seqtot, id[i], 9)
-            comment = "{} event {}: {} of {}, hex {} tiling {}".format(
-                trigger_type, seqid, seqnum, seqtot, id[i], tiling)
-            object = comment
-
-            fd.write("{")
-            fd.write(" \"expType\" : \"object\",\n")
-            fd.write("  \"object\" : \"{}\",\n".format(object))
-            fd.write("  \"seqid\" : \"{}\",\n".format(seqid))
-            fd.write("  \"seqnum\" : \"{:d}\",\n".format(int(seqnum)))
-            fd.write("  \"seqtot\" : \"{:d}\",\n".format(int(seqtot)))
-            fd.write("  \"expTime\" : {:d},\n".format(int(exp)))
-            fd.write("  \"wait\" : \"False\",\n")
-            fd.write("  \"count\" : \"1\",\n")
-            fd.write("  \"note\" : \"Added to queue from desgw json file, not obstac\",\n")
-            fd.write("  \"filter\" : \"{}\",\n".format(filter))
-            fd.write("  \"program\" : \"des gw\",\n")
-            fd.write("  \"RA\" : {:.6f},\n".format(tra))
-            fd.write("  \"dec\" : {:.5f},\n".format(tdec))
-            fd.write("  \"propid\" : \"{}\",\n".format(propid))
-            fd.write("  \"comment\" : \"{}\"\n".format(comment)) 
-            # note lack of comma for end
-            fd.write("}")
-            if (i == size-1) and ( j == nexp-1) :
-                pass
-            else :
-                fd.write(",")
-            fd.write("\n")
+        for k in range(0,ntiles) :
+            for j in range(0,nexp) :
+                seqnum +=1
+                tiling = tilingList[k]
+                filter = filterList[j]
+                exp = exposureList[j]
+                offsets[tiling]
+                delRa = offsets[tiling][0]
+                delDec = offsets[tiling][1]
+                tra = ra[i]
+                tdec = dec[i]
+                tdec = tdec+delDec
+                tra = tra + delRa/np.cos(tdec*2*np.pi/360.)
+                if tra < 0 : tra = tra+360.
+                if tra > 360. : tra = tra-360.
+                #comment = "DESGW: LIGO {} event {}: {} of {}, hex {} tiling {}".format(
+                #    trigger_type, seqid, seqnum, seqtot, id[i], 9)
+                comment = "{} strategy {} on {}: image {} of {}, filter {}, tiling {} in {}".format(
+                    trigger_id, trigger_type, skymap, j+1, nexp, filter, tiling, tilingList)
+                object = comment
+    
+                fd.write("{")
+                fd.write(" \"expType\" : \"object\",\n")
+                fd.write("  \"object\" : \"{}\",\n".format(object))
+                #fd.write("  \"seqid\" : \"{}\",\n".format(seqid))
+                #fd.write("  \"seqnum\" : \"{:d}\",\n".format(int(seqnum)))
+                #fd.write("  \"seqtot\" : \"{:d}\",\n".format(int(seqtot)))
+                fd.write("  \"expTime\" : {:d},\n".format(int(exp)))
+                fd.write("  \"wait\" : \"False\",\n")
+                #fd.write("  \"count\" : \"1\",\n")
+                #fd.write("  \"note\" : \"Added to queue from desgw json file, not obstac\",\n")
+                fd.write("  \"filter\" : \"{}\",\n".format(filter))
+                fd.write("  \"program\" : \"des gw\",\n")
+                fd.write("  \"RA\" : {:.6f},\n".format(tra))
+                fd.write("  \"dec\" : {:.5f},\n".format(tdec))
+                fd.write("  \"propid\" : \"{}\",\n".format(propid))
+                fd.write("  \"comment\" : \"{}\"\n".format(comment)) 
+                # note lack of comma for end
+                fd.write("}")
+                if (i == size-1) and ( j == nexp-1) and ( k == ntiles-1) :
+                    pass
+                else :
+                    fd.write(",")
+                fd.write("\n")
     fd.write("]\n")
     fd.close()
 

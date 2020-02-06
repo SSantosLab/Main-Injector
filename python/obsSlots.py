@@ -39,24 +39,24 @@ import os
 # and one hour, so close to the original defintion, and by force is an
 # even number of hexes. Ok. Use n=6 for the forcing definition
 #
-# This is based on the current NS observing strategy, izz at 90s each.
+# This is based on the current "Rem" observing strategy, izz at 90s each.
 # If instead we move to a BH strategy that is 1xi at 90s, then
 # one could still use 6 hexes/slot but that means the number of slots rises by x3.
 # Instead, what if we used 18 hexes/slot for the BH case.
 #
 # Ok, then, code:
 #
-def slotCalculations(mjd, exposure_lengths, overhead, hexesPerSlot = 6) :
+def slotCalculations(mjd, exposure_lengths, tiling_list, overhead, hexesPerSlot = 6) :
     from getHexObservations import hoursPerNight
-    slot_duration = slotDuration(exposure_lengths, overhead, hexesPerSlot) 
+    slot_duration = slotDuration(exposure_lengths, tiling_list, overhead, hexesPerSlot) 
     hoursAvailable = hoursPerNight(mjd)
     answers = dict()
     answers["slotDuration"] = slot_duration
     answers["hoursPerNight"] = hoursAvailable
     return answers
 
-def slotDuration(exposure_lengths, overhead, hexesPerSlot = 6) :
-    tot_exptime = (np.array(overhead)+np.array(exposure_lengths)).sum()
+def slotDuration(exposure_lengths, tiling_list, overhead, hexesPerSlot = 6) :
+    tot_exptime = np.size(tiling_list)*(np.array(overhead)+np.array(exposure_lengths)).sum()
     slot_time = tot_exptime*hexesPerSlot
     slot_duration = slot_time/60. ;# in minutes
     return slot_duration
@@ -243,16 +243,38 @@ def observingStats( slotsObserving, mapZero=0, do_nslots=-1, start_slot=-1 ) :
 # JTA 2
         if start_slot > -1 and do_nslots > -1 :
             if i+mapZero < start_slot or i+mapZero >= start_slot+do_nslots : continue
-        print "\t ",i+mapZero, 
-        #print "slotnum={} ".format( slotsObserving[i,"slotNum"]),
-        print "n obs= {}".format( slotsObserving[i,"ra"].size), 
-        print "  sum prob= {:7.4f} %".format( 100*slotsObserving[i,"prob"].sum())
+        slot_sum_prob = 100*slotsObserving[i,"prob"].sum() 
+        if slot_sum_prob > 1e-7 :
+            print "\t ",i+mapZero, 
+            #print "slotnum={} ".format( slotsObserving[i,"slotNum"]),
+            print "n hexes= {}".format( slotsObserving[i,"ra"].size), 
+            print "  sum prob= {:7.4f} %".format( 100*slotsObserving[i,"prob"].sum())
     ra,dec,id,prob,mjd,slotNum,islot = slotsObservingToNpArrays(slotsObserving) 
 
     print "\t observingStats:  ",
     print "observable prob_tot = {:.1f}%".format(100.*prob.sum())
     print "\t   (from the prob in each slot, summed)"
     return ra,dec,id,prob,mjd,slotNum,islot
+
+def observingStatsFromRaDecFile( trigger_id, data_dir, slotsObserving, mapZero=0, do_nslots=-1, start_slot=-1 ) :
+    nslots = slotsObserving["nslots"]
+    ra,dec,id,prob,mjd,slotNum,dist = readObservingRecord(trigger_id,data_dir)
+    for i in range(0,nslots) :
+# JTA 2
+        if start_slot > -1 and do_nslots > -1 :
+            if i+mapZero < start_slot or i+mapZero >= start_slot+do_nslots : continue
+        ix, = np.where(slotNum == i)
+        if ix.size > 0 :
+            slot_sum_prob = 100*prob[ix].sum() 
+            if slot_sum_prob > 1e-7 :
+                print "\t ",i+mapZero, 
+                print "n hexes= {}".format( ix.size ),
+                print "  sum prob= {:7.4f} %".format( slot_sum_prob )
+    print "\t observingStats:  ",
+    print "observable prob_tot = {:.1f}%".format(100.*prob.sum())
+    print "\t   (from the prob in each slot, summed)"
+    return ra,dec,id,prob,mjd,slotNum,dist
+
 
 #  ra,dec,id,prob,mjd,slotNum,dist = obsSlots.readObservingRecord(trigger_id,data_dir)
 def readObservingRecord(trigger_id, data_dir) :

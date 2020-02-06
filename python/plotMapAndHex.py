@@ -2,6 +2,8 @@ import numpy as np
 import os
 from equalArea import mcbryde
 import matplotlib.pyplot as plt
+import warnings
+warnings.filterwarnings("ignore")
 
 #  raHex, decHex = np.genfromtxt("512/lmc-ra-dec-prob-mjd-slot.txt", unpack=True, usecols=(0,1))
 #  raHex, decHex = plotMapAndHex.getG184098_iband_hexes() 

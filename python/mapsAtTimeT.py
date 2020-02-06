@@ -57,7 +57,7 @@ import modelRead
 
 
 def oneDayOfTotalProbability (obs, models, deltaTime, start_mjd, 
-        probTimeFile, gw_map_trigger, gw_map_control) :
+        probTimeFile, gw_map_trigger, gw_map_strategy, gw_map_control) :
 
     #mjd = gw_map_trigger.burst_mjd
     mjd = gw_map_trigger.start_mjd
@@ -65,6 +65,9 @@ def oneDayOfTotalProbability (obs, models, deltaTime, start_mjd,
     spatial = gw_map_trigger.ligo
     distance = gw_map_trigger.ligo_dist
     distance_sig= gw_map_trigger.ligo_dist_sig
+    filter = gw_map_strategy.filter_list[0]
+    exposure = gw_map_strategy.exposure_list[0]
+
 
     # the work.
     start_of_days=0
@@ -75,15 +78,16 @@ def oneDayOfTotalProbability (obs, models, deltaTime, start_mjd,
         obs, mjd, spatial, distance, distance_sig, models, 
         startOfDays=start_of_days, endOfDays=end_of_days,
         deltaTime=deltaTime, probTimeFile=probTimeFile,
-        trigger_type=trigger_type)
+        trigger_type=trigger_type, filter=filter, 
+        exposure=exposure )
 
     return totalProbs,times, isDark
 
 def manyDaysOfTotalProbability (
         obs, start_mjd, spatial, distance, distance_sig, 
         models, startOfDays=0, endOfDays=11, deltaTime=0.0223, 
-        probTimeFile="probTime.txt", trigger_type="NS",
-        verbose=True) :
+        probTimeFile="probTime.txt", trigger_type="Rem",
+        filter="i", exposure=90, verbose=True) :
     times = []
     totalProbs = []
 
@@ -103,8 +107,11 @@ def manyDaysOfTotalProbability (
         print "hours since Time Zero: {:5.1f}".format(time*24.),
         totalProb, sunIsUp = totalProbability(obs, start_mjd, time, \
             spatial, distance, distance_sig, models, \
-            trigger_type=trigger_type)
-        if sunIsUp: print "\t ... the sun is up"
+            trigger_type=trigger_type, filter=filter, exposure=exposure)
+        if sunIsUp: 
+            print "\t ... the sun is up"
+        else:
+            print ""
         times.append(time)
         totalProbs.append(totalProb)
         if not dark and not sunIsUp:
@@ -156,7 +163,7 @@ def manyDaysOfTotalProbability (
 #
 def totalProbability(obs, start_mjd, daysSinceBurst, \
         spatial, distance, distance_sig, models,
-        filter="i", exposure=180, trigger_type="NS") :
+        filter="i", exposure=180, trigger_type="Rem") :
     obs,sm,sunIsUp = probabilityMaps(obs, start_mjd, daysSinceBurst, \
         spatial, distance, distance_sig,
         models, filter, exposure, trigger_type=trigger_type)
@@ -169,14 +176,14 @@ def totalProbability(obs, start_mjd, daysSinceBurst, \
 # drive the probability map calculations. In the end, distance only is used here
 def probabilityMaps(obs, start_mjd, daysSinceBurst, \
         spatial, distance, distance_sig, models,
-        filter="i", exposure=180, trigger_type="NS", verbose=True) :
+        filter="i", exposure=180, trigger_type="Rem", verbose=True) :
     obs.resetTime(start_mjd+daysSinceBurst)
 
     sunIsUp = obs.sunBrightnessModel(obs.sunZD)
     if sunIsUp: return obs, "sm", sunIsUp
 
     obs.limitMag(filter, exposure=exposure)
-    if trigger_type == "NS" :
+    if trigger_type == "Rem" :
         # as of O3, let's not use source probability
         #   # we may need to rescale the light curve in the models
         #   models_at_t = modelRead.modelsAtTimeT (models, daysSinceBurst)
@@ -272,7 +279,7 @@ def probabilityMapSaver (obs, models, times, probabilities,
         # sm.probMap = total prob map
         # hexRa,hexDec,hexVals
         nameStem = os.path.join(data_dir, str(trigger_id) + "-{}".format(str(counter)))
-        print "\t Writing files as {} for time {:.3f} and prob {:.2e}".format(nameStem,time,prob)
+        print "\t Writing map files as {} for time {:.3f} and prob {:.2e}".format(nameStem,time,prob)
         made_maps_list = np.append(made_maps_list, counter)
 
         name = nameStem + "-ra.hp"
