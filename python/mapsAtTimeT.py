@@ -347,8 +347,12 @@ def probabilityMapSaver (obs, models, times, probabilities,
                 raHexen, decHexen, idHexen = \
                     raHexen[do_these], decHexen[do_these], idHexen[do_these]
 
+        #    import pickle
+        #    fd=open("saveme.pickle","wb")
+        #    pickle.dump([obs, sm, raHexen, decHexen, idHexen, tree, camera], fd)
+        #    fd.close()
             raHexen, decHexen, idHexen, hexVals, rank = \
-                hexalate.cutAndHexalateOnRaDec ( obs, sm, raHexen, decHexen, idHexen, tree, camera, cutProbs=True)
+                hexalate.cutAndHexalateOnRaDec ( obs, sm, raHexen, decHexen, idHexen, tree, camera, cutProbs=False)
 
             # where rank is to be understood as the indicies of the
             # ranked hexes in order; i.e., they have nothing to do with

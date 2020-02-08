@@ -250,6 +250,11 @@ def make_hexes( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
     print "=============>>>>  observing"
     if start_slot != -1 or do_nslots != -1 :
         print "\t tonight we will use {} slots starting at {}".format(do_nslots, start_slot)
+    #print "hoursObserving=obsSlots.observing("
+    #print trigger_id,n_slots, data_dir, "mapZero=",mapZero, "maxHexesPerSlot =", maxHexesPerSlot,
+    #print "do_nslots =", do_nslots, "start_slot=",start_slot
+    #print ")"
+    #raise Exception("here")
     hoursObserving=obsSlots.observing(
         trigger_id,n_slots, data_dir, mapZero=mapZero,
         maxHexesPerSlot = maxHexesPerSlot, do_nslots = do_nslots, start_slot=start_slot)
@@ -312,19 +317,21 @@ def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control) :
 #
 # ====== there are possibilities. Show them.
 #
-def makeGifs (gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=True) :
+def makeGifs (gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     print "\n=================================================="
     print "                 make_gifs "
     print "=================================================="
 
-    # make gif centered on hexes
-    n_plots = makeObservingPlots(
-        gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=gw_map_control.allSky)
 
-    if  gw_map_control.allSky == True :
     # make gif centered on ra=0,dec=0, all sky
+    if  gw_map_control.allSky == True :
         n_plots = makeObservingPlots(
             gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=True)
+
+    # make gif centered on hexes
+    if  gw_map_control.centeredSky== True :
+        n_plots = makeObservingPlots(
+            gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=False)
 
 def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=True) :
     trigger_id = gw_map_trigger.trigger_id
@@ -368,10 +375,6 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
     label = ""
     if allSky == False: label="centered-"
 
-    #print "start_slot",start_slot
-    #print "do_nslots",do_nslots
-    #print "first_slot",first_slot
-    #for i in range(start_slot, start_slot+do_nslots) :
     for i in made_maps_list:
         
         observingPlot(figure,trigger_id,i,data_dir, n_slots, camera, allSky=allSky, gif_resolution=gif_resolution)
@@ -379,9 +382,6 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
         plt.savefig(os.path.join(data_dir,name))
         counter += 1
         counter+= equalAreaPlot(figure,i,trigger_id,data_dir)
-
-    #label = ""
-    #if allSky == False: label="centered-"
 
     string = "$(ls -v {}observingPlot*)  {}_{}animate.gif".format(data_dir+'/'+trigger_id+'-'+label, data_dir+'/'+trigger_id, label)
     print string
@@ -723,6 +723,8 @@ def jsonFromRaDecFile(radecfile, nslots, slotZero,
 
 def cumulPlot(trigger_id, data_dir) :
     from scipy.interpolate import interp1d
+    verbose = False
+
     ra,dec,id,prob,mjd,slotNum,dist = obsSlots.readObservingRecord(trigger_id,data_dir)
     u_slotNum = np.unique(slotNum)
     u_dur = np.unique(mjd)
@@ -780,14 +782,14 @@ def cumulPlot(trigger_id, data_dir) :
     ax2.set_ylim(0,new_cy.max())
     fig.tight_layout()
     qtiles = new_cy/new_cy[-1]
-    print('qtiles:',qtiles, len(qtiles))
-    print('new_x:',new_x, len(new_x))
+    if verbose: print('qtiles:',qtiles, len(qtiles))
+    if verbose: print('new_x:',new_x, len(new_x))
     if len (new_x) < 2:
         new_x = np.append(new_x,new_x[0] + 1e-9)
     if len(qtiles) < 2:
         qtiles = np.append(qtiles,qtiles[0] + 1e-9)
-    print('qtiles after:',qtiles,len(qtiles))
-    print('new_x after:',new_x,len(new_x))
+    if verbose: print('qtiles after:',qtiles,len(qtiles))
+    if verbose: print('new_x after:',new_x,len(new_x))
 
     interp = interp1d(qtiles, new_x, fill_value="extrapolate")
     for q in [0.25, 0.5, 0.75] :
@@ -925,7 +927,10 @@ def observingPlot(figure, simNumber, slot, data_dir, nslots, camera, allSky=Fals
     else :
         time = "Shutter closed " 
     
-    title = "{} Slot {} {}".format(simNumber, slot, time)
+    if allSky :
+        title = "{} Slot {} {}".format(simNumber, slot, time)
+    else :
+        title = "{} Slot {}".format(simNumber, slot)
 
 
 # this is useful to debug the plots

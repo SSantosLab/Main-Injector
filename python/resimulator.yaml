@@ -27,15 +27,22 @@ resolution: 8 #for map making at speed
  # gif_resolution = 0.1  8-bit resolution-like but tells the story and very fast
 gif_resolution: 1.0
 
+skipAll : False
+skipPlots: False
+allSkyGif: True
+centeredSkyGif : True
+
+
 
 distance : 60.
 force_distance : False
 days_since_burst : 0
 
-skipAll : False
-skipPlots: False
-
 default_map_name : bayestar.fits
+
+# the desgw-map code will calculate the hours availble in the night
+# and will report and use the smaller of hoursPerNight and hoursAvailable
+hoursAvailable : 24 
 
 # Remnant strategy
 exposure_length_Rem : [ 60., 90. ] #sec

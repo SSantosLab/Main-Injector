@@ -40,8 +40,8 @@ def mapAndHex(figure, simNumber, slot, data_dir, nslots, hexRa, hexDec, camera,
     #decBoxSize = 16.
     #mod_ra = -12
     #mod_dec = 5
-    mod_ra = 0; mod_dec=3; raBoxSize=60; decBoxSize=15
-    mod_ra = 0; mod_dec=0; raBoxSize=25; decBoxSize=25
+    #mod_ra = 0; mod_dec=3; raBoxSize=60; decBoxSize=15
+    mod_ra = 0; mod_dec=0; raBoxSize=10; decBoxSize=10
 
     low_limit = 21.; high_limit=23.8
     if doStars :
@@ -259,10 +259,12 @@ def computeLimits (raHex, decHex, raMid = -1000, raBoxSize=5., decBoxSize=5, mod
         ybox = 0.01*(ymax-ymin)
     else :
         # autoscaling
-        x,y = mcbryde.mcbryde(raHex, decHex, alpha=alpha, beta=beta)
-        #x,y = mcbryde.mcbryde(np.array([raMin,raMax]), np.array([1,1]), alpha=alpha, beta=beta)
+        #x,y = mcbryde.mcbryde(raHex, decHex, alpha=alpha, beta=beta)
+        #xmin = x.min(); xmax = x.max()
+        #ymin = y.min(); ymax = y.max()
+        x,y = mcbryde.mcbryde(np.array([raMin,raMax]), np.array([1,1]), alpha=alpha, beta=beta)
         xmin = x.min(); xmax = x.max()
-        #x,y = mcbryde.mcbryde(np.array([-1,1]), np.array([decMin,decMax]), alpha=alpha, beta=beta)
+        x,y = mcbryde.mcbryde(np.array([-1,1]), np.array([decMin,decMax]), alpha=alpha, beta=beta)
         ymin = y.min(); ymax = y.max()
         xbox = 0.1*(xmax-xmin)
         ybox = 0.1*(ymax-ymin)
@@ -524,7 +526,10 @@ def plotLigoContours(x,y, vals, color="w", alpha = 1.0, lw=0.66, ls="solid", lab
         try:
             plt.clabel(ct, levels, inline=inline, fontsize=fontsize)
         except:
-            plt.clabel(ct, levels[1:], inline=inline, fontsize=fontsize)
+            try:
+                plt.clabel(ct, levels[1:], inline=inline, fontsize=fontsize)
+            except:
+                pass
 
 def confidenceLevels(map) :
     map = np.array(map, copy=True)

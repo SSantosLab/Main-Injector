@@ -125,7 +125,7 @@ class strategy(object) :
 class control(object):
     """
     """
-    def __init__(self, resolution, data_dir, debug=False, allSky=False,
+    def __init__(self, resolution, data_dir, debug=False, allSky=False, centeredSky=True,
             snarf_mi_maps=False, mi_map_dir="/data/des41.a/data/desgw/O3FULL/Main-Injector/OUTPUT/O3REAL/",
             gif_resolution = 1.0 ) :
         """
@@ -137,6 +137,7 @@ class control(object):
         self.this_tiling = []
         self.reject_hexes= []
         self.allSky = allSky
+        self.centeredSky = centeredSky
         self.datadir = data_dir
         # find hexes starting with slot start_slot. Carries on to jsons
         self.start_slot = -1

@@ -64,7 +64,7 @@ def cutAndHexalate (obs, sm, camera, hexFile) :
 
 
 def cutAndHexalateOnRaDec (obs, sm, raHexen, decHexen, idHexen, tree, camera, cutProbs=False) :
-    #cutProbs calls                                                                                                                                                                                  
+    #cutProbs calls without Overlap
     verbose = False
     obsHourAngle = obs.ha*360./(2*np.pi)
     obsRa        = obs.ra*360./(2*np.pi)

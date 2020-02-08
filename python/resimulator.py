@@ -13,7 +13,7 @@ import healpy as hp
 #   and the defaults in gw_map_configure.py are correct for it.
 #
 def recycle (trigger_id, skymap, trigger_type,
-        outputDir, propid = -1, allSky = True, do_make_maps = -1, do_make_hexes = -1,
+        outputDir, propid = -1, do_make_maps = -1, do_make_hexes = -1,
         do_make_jsons = -1, do_make_gifs = -1, 
         start_slot = -1, do_nslots= -1,  mi_map_dir = "./", 
         snarf_mi_maps = False) :
@@ -45,13 +45,15 @@ def recycle (trigger_id, skymap, trigger_type,
         do_make_jsons  = config["do_make_jsons"]
     if do_make_gifs == -1:
         do_make_gifs   = config["do_make_gifs"]
-    hoursAvailable = 20.
+    allSky = config["allSkyGif"]
+    centeredSky = config["centeredSkyGif"]
 
 
     # same day?
     days_since_burst = config["days_since_burst"]
 
     # strategy
+    hoursAvailable      = config["hoursAvailable"]
     exposure_length_rem = config["exposure_length_Rem"]
     filter_list_rem     = config["exposure_filter_Rem"]
     exposure_tiling_rem = config["exposure_tiling_Rem"]
@@ -81,7 +83,8 @@ def recycle (trigger_id, skymap, trigger_type,
     maxHexesPerSlot = np.int(np.round(maxHexesPerSlot/np.size(tiling_list)))
 
     gw_map_control  = gw_map_configure.control( resolution, outputDir, debug, 
-        allSky=allSky, snarf_mi_maps=snarf_mi_maps, mi_map_dir = mi_map_dir,
+        snarf_mi_maps=snarf_mi_maps, mi_map_dir = mi_map_dir,
+        allSky=allSky, centeredSky=centeredSky, 
         gif_resolution = gif_resolution)
     gw_map_trigger  = gw_map_configure.trigger( skymap, trigger_id, trigger_type, 
         resolution, days_since_burst=days_since_burst)

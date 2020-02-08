@@ -113,30 +113,6 @@ def sumHexalatedMap(ra, dec, vals, tree, raHexen, decHexen,  camera, verbose=1) 
 
 
 
-def hexalateMapWithoutOverlap(ra, dec, vals, tree, raHexen, decHexen,  camera, verbose=1) :
-    #the order of the raHexen,decHexen will determine which hex has priority on the sky.                                                                    
-    #the first hex grabs all the ixs, then next one doesnt get those sky pixels inside the first hex                                                                                   
-    if verbose : print "\t hexalateMap \t nhex = {},".format(raHexen.size),
-    if verbose: print " npix = {}".format(ra.size)
-    hexVal = np.zeros(raHexen.size)
-    counter = 0
-    ixs = []
-    pixelsused = np.array(np.zeros(ra.size),dtype='bool')
-    for i in range(0,raHexen.size) :
-        ix = radecInHex( raHexen[i], decHexen[i], ra, dec, tree, camera)
-        #print('Inside hexalateMap, checking ixs',ix)                                                                                                                            
-        if not ix.size: continue
-        try  :
-            slicePixelsUsed = np.invert(pixelsused)[ix]
-            hexVal[i] = vals[ix][slicePixelsUsed].sum()
-            pixelsused[ix] = True
-        except Exception:
-            print "why are there exceptions in hexalateMap?"
-            hexVal[i] = 0
-    return hexVal
-
-
-
 
 # I think doing this using a tree requires a projection we will
 # use the Sanson-Flamsteed projection, aka sinusoidal projection (x=ra*cos(dec), y=dec)
