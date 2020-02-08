@@ -61,6 +61,7 @@ def recycle (trigger_id, skymap, trigger_type,
     exposure_tiling_bh  = config["exposure_tiling_BH"]
     maxHexesPerSlot_bh  = config["maxHexesPerSlot_BH"]
     max_number_of_hexes_to_do = config["max_number_of_hexes_to_do"]
+    apparent_mag_source_model = config["apparent_mag_source_model"]
 
     # configure strategy for the event type
     if trigger_type == "Rem" :
@@ -86,7 +87,7 @@ def recycle (trigger_id, skymap, trigger_type,
         resolution, days_since_burst=days_since_burst)
     gw_map_strategy = gw_map_configure.strategy( camera, exposure_length, 
         filter_list, tiling_list, maxHexesPerSlot, hoursAvailable, propid,
-        max_number_of_hexes_to_do)
+        max_number_of_hexes_to_do, apparent_mag_source_model)
     gw_map_results = gw_map_configure.results()
 
     if not os.path.exists(outputDir): os.makedirs(outputDir)

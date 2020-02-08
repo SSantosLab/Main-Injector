@@ -29,7 +29,7 @@ license="""
 class map(object):
     """
     """
-    def __init__(self, observation, type="Rem") :
+    def __init__(self, observation, type="Rem", apparent_mag_source=21.5) :
         """
         """
         data_dir = os.environ["DESGW_DATA_DIR"] 
@@ -40,7 +40,7 @@ class map(object):
         if type == "Rem" :
             if tryApparent :
                 self.lumModel = "apparent"
-                self.modelAbsoluteMagnitude = 21.5
+                self.modelAbsoluteMagnitude = apparent_mag_source
                 self.modelAbsoluteMagnitudeSigma = 0
             else : 
                 # this can be used to scale the magnitudes from the source model

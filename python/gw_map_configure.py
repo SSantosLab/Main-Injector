@@ -101,7 +101,7 @@ class strategy(object) :
     """
     """
     def __init__(self, camera, exposure_list, filter_list, tiling_list, maxHexesPerSlot, 
-            hoursAvailable, propid, max_number_of_hexes_to_do):
+            hoursAvailable, propid, max_number_of_hexes_to_do, apparent_mag_source_model):
         """
         """
         self.camera = camera
@@ -112,6 +112,7 @@ class strategy(object) :
         self.hoursAvailable = hoursAvailable
         self.propid = propid
         self.max_number_of_hexes_to_do = max_number_of_hexes_to_do
+        self.apparent_mag_source_model = apparent_mag_source_model
 
         if camera == "decam" :
             self.overhead =  30. # seconds
