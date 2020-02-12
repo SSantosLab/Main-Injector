@@ -32,11 +32,14 @@ camera_radius = 1.3
 ctio_latitude = Latitude(-30.16527778, unit=deg)
 ctio_longitude = Longitude(-70.815, unit=deg)
 ctio_elevation = 2215.0
+kpno_latitude    = 31.9600784
+kpno_longitude   = -111.598169
+kpno_elevation   =  2067.
 
 # exception classes
 # interface functions
 
-def gwwide(wide_queue, gw_queue, start_time, dt, sort):
+def gwwide(wide_queue, gw_queue, start_time, dt, sort, camera-"decam"):
     """Replace entries in a GW quere with nearby entries in the DES wide survey
 
     :Parameters:
@@ -48,11 +51,19 @@ def gwwide(wide_queue, gw_queue, start_time, dt, sort):
 
     @returns: a queue (list of dicts) with entries replaced
     """
-    start_time = Time(start_time, format='mjd', scale='utc', location=(ctio_longitude, ctio_latitude))
+    if camera == "decam" :
+        obs_longitude = ctio_longitude
+        obs_latitude = ctio_latitude
+        obs_elevation = ctio_elevation
+    elif camera == "desi"
+        obs_longitude = kpno_longitude
+        obs_latitude = kpno_latitude
+        obs_elevation = kpno_elevation
+    start_time = Time(start_time, format='mjd', scale='utc', location=(obs_longitude, obs_latitude))
     start_time.format="iso"
     start_time = start_time.value
 
-    fixed_queue = [fix_obs(gw_obs, wide_queue, start_time, dt) for gw_obs in gw_queue]
+    fixed_queue = [fix_obs(gw_obs, wide_queue, start_time, dt, camera) for gw_obs in gw_queue]
 
     if sort:
         fixed_queue = sorted(fixed_queue, key = lambda e: e['lateTime'])
@@ -105,7 +116,7 @@ def wide_covered(gw_obs, wide_queue):
             return False
     return True
     
-def fix_obs(gw_obs, all_filter_wide_queue, start_time, dt):
+def fix_obs(gw_obs, all_filter_wide_queue, start_time, dt, camera):
     """Adjust an exposure queue entry to match a wide field entry, if close
 
     :Parameters:
@@ -122,8 +133,8 @@ def fix_obs(gw_obs, all_filter_wide_queue, start_time, dt):
     if gw_obs['RA'] > 360:
         gw_obs['RA'] = gw_obs['RA'] - 360.0
 
-    gw_obs['earlyTime'] = rising_iso8601(gw_obs['RA'], gw_obs['dec'], start_time, dt)
-    gw_obs['lateTime'] = setting_iso8601(gw_obs['RA'], gw_obs['dec'], start_time, dt)
+    gw_obs['earlyTime'] = rising_iso8601(gw_obs['RA'], gw_obs['dec'], start_time, dt, camera)
+    gw_obs['lateTime'] = setting_iso8601(gw_obs['RA'], gw_obs['dec'], start_time, dt, camera)
     
     wide_queue = [w for w in all_filter_wide_queue 
                   if w['filter']==gw_obs['filter']]
@@ -200,7 +211,7 @@ def file_gwwide(gw_fnames, wide_fname, start_time, dt, fixed_fname, sort):
 
     return 0
 
-def lst(mjd):
+def lst(mjd, camera):
     """Return the local sidereal time at CTIO
 
     :Parameters:
@@ -208,9 +219,17 @@ def lst(mjd):
 
     @Return: LST in degrees
     """
-    t = Time(mjd, scale='utc', format='mjd', location=(ctio_longitude, ctio_latitude))
+    if camera == "decam" :
+        obs_longitude = ctio_longitude
+        obs_latitude = ctio_latitude
+        obs_elevation = ctio_elevation
+    elif camera == "desi"
+        obs_longitude = kpno_longitude
+        obs_latitude = kpno_latitude
+        obs_elevation = kpno_elevation
+    t = Time(mjd, scale='utc', format='mjd', location=(obs_longitude, obs_latitude))
     t.delta_ut1_utc = 0.
-    local_sidereal_time = t.sidereal_time('mean', longitude=ctio_longitude)
+    local_sidereal_time = t.sidereal_time('mean', longitude=obs_longitude)
     lst_deg = float(local_sidereal_time / deg)
     return lst_deg
 
@@ -224,7 +243,7 @@ def in_blanco_limits(ra, decl, mjd):
 
     @Return: boolean true of false
     """
-    ha = lst(mjd) - ra
+    ha = lst(mjd,"decam") - ra
     ha_limits, decl_limits = load_blanco_limits()
     ha_limits = np.degrees(ha_limits)
     decl_limits = np.degrees(decl_limits)
@@ -343,7 +362,7 @@ def rising_lst(ra, decl):
     lst = float( Angle(lst_deg*deg).wrap_at(360*deg)/deg )
     return lst
 
-def setting_mjd(ra, decl, mjd, dt=0.0):
+def setting_mjd(ra, decl, mjd, dt=0.0, camera):
     """Return the next setting time after MJD
 
     :Parameters:
@@ -355,7 +374,7 @@ def setting_mjd(ra, decl, mjd, dt=0.0):
     @Returns: the setting MJD
     """
     set_lst = Angle(setting_lst(ra, decl), unit=deg)
-    current_lst = Angle(lst(mjd), unit=deg)
+    current_lst = Angle(lst(mjd,camera), unit=deg)
     deg_in_future = float( (set_lst-current_lst).wrap_at(360*deg)/deg )
 
     # factor of 1/360 converts from degrees to sidereal days,
@@ -368,7 +387,7 @@ def setting_mjd(ra, decl, mjd, dt=0.0):
     set_mjd = set_mjd - dt/(24*60*60.0)
     return set_mjd
 
-def rising_mjd(ra, decl, mjd, dt=0.0):
+def rising_mjd(ra, decl, mjd, dt=0.0, camera):
     """Return the next rising time after MJD
 
     :Parameters:
@@ -380,7 +399,7 @@ def rising_mjd(ra, decl, mjd, dt=0.0):
     @Returns: the rising MJD
     """
     rise_lst = Angle(rising_lst(ra, decl), unit=deg)
-    current_lst = Angle(lst(mjd), unit=deg)
+    current_lst = Angle(lst(mjd,camera), unit=deg)
     deg_in_past = float( (current_lst-rise_lst).wrap_at(360*deg)/deg )
 
     # factor of 1/360 converts from degrees to sidereal days,
@@ -405,7 +424,7 @@ def setting_iso8601(ra, decl, tstring, dt=0.0):
     @Returns: the setting date string
     """
     t = Time(parse_date(tstring))
-    set_mjd = setting_mjd(ra, decl, t.mjd, dt)
+    set_mjd = setting_mjd(ra, decl, t.mjd, dt, camera)
     set_t = Time(set_mjd, scale='tt', format='mjd', out_subfmt='date_hms')
     set_date = set_t.iso[:10]
     set_time = set_t.iso[11:19]
@@ -413,7 +432,7 @@ def setting_iso8601(ra, decl, tstring, dt=0.0):
     return set_iso
     
 
-def rising_iso8601(ra, decl, tstring, dt=0.0):
+def rising_iso8601(ra, decl, tstring, dt=0.0, camera):
     """Return the ISO 8601 string representation of the rising time
 
     :Parameters:
@@ -425,7 +444,7 @@ def rising_iso8601(ra, decl, tstring, dt=0.0):
     @Returns: the rising date string
     """
     t = Time(parse_date(tstring))
-    rise_mjd = rising_mjd(ra, decl, t.mjd, dt)
+    rise_mjd = rising_mjd(ra, decl, t.mjd, dt, camera)
     rise_t = Time(rise_mjd, scale='tt', format='mjd', out_subfmt='date_hms')
     rise_date = rise_t.iso[:10]
     rise_time = rise_t.iso[11:19]
