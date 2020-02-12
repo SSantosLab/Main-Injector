@@ -141,7 +141,7 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     print "\t obs slots starting"
 
     answers = obsSlots.slotCalculations( start_mjd, exposure_list, tiling_list, 
-        overhead, hexesPerSlot=maxHexesPerSlot) 
+        overhead, hexesPerSlot=maxHexesPerSlot, camera=camera) 
     hoursPerNight = answers["hoursPerNight"] ;# in minutes
     slotDuration = answers["slotDuration"] ;# in minutes
     deltaTime = slotDuration/(60.*24.) ;# in days
@@ -473,6 +473,7 @@ def make_divisions_of_time (
 # make_observingPlots needs slot information, so get_slots = true
 def reuse_results(data_dir, gw_map_trigger,gw_map_strategy, gw_map_results, get_slots=False) :
         trigger_id = gw_map_trigger.trigger_id
+        camera = gw_map_strategy.camera
         probabilityTimesCache = os.path.join(data_dir,\
         "probabilityTimesCache_"+str(trigger_id)+".txt")
         print "=============>>>> Reuse results via reuse_results",
@@ -494,7 +495,7 @@ def reuse_results(data_dir, gw_map_trigger,gw_map_strategy, gw_map_results, get_
         maxHexesPerSlot = gw_map_strategy.maxHexesPerSlot
         overhead        = gw_map_strategy.overhead
         answers = obsSlots.slotCalculations(start_mjd, exposure_list, overhead,
-            maxHexesPerSlot)
+            maxHexesPerSlot, camera=camera)
         hoursPerNight = answers["hoursPerNight"] ;# in minutes
         slotDuration = answers["slotDuration"] ;# in minutesk
         gw_map_results.slotDuration = slotDuration
@@ -606,9 +607,9 @@ def area_left (area_per_hex, time_budget, time_cost_per_hex) :
 #area_left =  area_per_hex * (time_budget * 3600)/(time_cost_per_hex)
 
 # place holder for the code brought from desisurvey...
-def hoursPerNight (mjd) :
+def hoursPerNight (mjd, camera="decam") :
     import mags
-    night,sunset,sunrise = mags.findNightDuration(mjd)
+    night,sunset,sunrise = mags.findNightDuration(mjd, camera)
     night = night*24.
     return night
 

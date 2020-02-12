@@ -47,10 +47,10 @@ import warnings
 #
 # Ok, then, code:
 #
-def slotCalculations(mjd, exposure_lengths, tiling_list, overhead, hexesPerSlot = 6) :
+def slotCalculations(mjd, exposure_lengths, tiling_list, overhead, hexesPerSlot = 6, camera="decam") :
     from getHexObservations import hoursPerNight
     slot_duration = slotDuration(exposure_lengths, tiling_list, overhead, hexesPerSlot) 
-    hoursAvailable = hoursPerNight(mjd)
+    hoursAvailable = hoursPerNight(mjd, camera)
     answers = dict()
     answers["slotDuration"] = slot_duration
     answers["hoursPerNight"] = hoursAvailable

@@ -120,6 +120,9 @@ class strategy(object) :
         elif camera == "hsc" :
             self.overhead = 20.
             self.area_per_hex = 1.5
+        elif camera == "desi" :
+            self.overhead = 300.
+            self.area_per_hex = 9.8
         else: raise Exception("camera {} not handled".format(camera))
 
 class control(object):
