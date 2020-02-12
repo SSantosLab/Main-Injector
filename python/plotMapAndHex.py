@@ -42,6 +42,7 @@ def mapAndHex(figure, simNumber, slot, data_dir, nslots, hexRa, hexDec, camera,
     #mod_dec = 5
     #mod_ra = 0; mod_dec=3; raBoxSize=60; decBoxSize=15
     mod_ra = 0; mod_dec=0; raBoxSize=10; decBoxSize=10
+    mod_ra = 0; mod_dec=0; raBoxSize=20; decBoxSize=20
 
     low_limit = 21.; high_limit=23.8
     if doStars :
@@ -161,7 +162,10 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
     # fig 1
     ax = figure.add_subplot(1,1,1)
     #Plot Des Footprint in the observing plots
-    plotDesFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax)
+    if camera == "des" :
+        plotDesFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax, camera)
+    elif camera == "desi" :
+        plotDesiFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax, camera)
 
     if colorbar and not allSky:
         cb = plt.colorbar(shrink=0.5,pad=0.03); 
@@ -283,22 +287,132 @@ def getDesFootprint () :
     import insideDesFootprint
     ra,dec = insideDesFootprint.getFootprintRaDec() 
     return ra,dec
-def plotDesFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax) :
+
+def getDesiFootprint (blob=1) :
+    import insideDesiFootprint
+    ra,dec = insideDesiFootprint.getFootprintRaDec(blob) 
+    return ra,dec
+
+def plotDesiFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax, camera) :
+    import matplotlib.pyplot as plt
+    import matplotlib.path
+    import matplotlib.patches
+    from equalArea import mcbryde
+    for i in [1,2] :
+        desiRa, desiDec = getDesiFootprint(i)
+        plotFootprint(desiRa,desiDec, alpha, beta, xmin, xmax, ymin, ymax, ax, camera) 
+
+def plotDesFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax, camera) :
     import matplotlib.pyplot as plt
     import matplotlib.path
     import matplotlib.patches
     from equalArea import mcbryde
     desRa, desDec = getDesFootprint()
-    x,y = mcbryde.mcbryde(desRa, desDec, alpha=alpha, beta=beta)
-    ix = (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
-    #plt.plot(x[ix],y[ix],c="k",alpha=0.5)
-    footprint = matplotlib.path.Path(zip(x,y))
-    patch = matplotlib.patches.PathPatch(footprint, facecolor='gold', lw=1, alpha=0.066, fill=True)
-    ax.add_patch(patch)
-    patch = matplotlib.patches.PathPatch(footprint, edgecolor='gold', lw=1, alpha=1, fill=False)
-    #patch = matplotlib.patches.PathPatch(footprint, edgecolor='gold', lw=1, alpha=0.33, fill=False)
-    ax.add_patch(patch)
+    plotFootprint(desRa,desDec, alpha, beta, xmin, xmax, ymin, ymax, ax, camera) 
+
+def plotFootprint(ra,dec, alpha, beta, xmin, xmax, ymin, ymax, ax, camera) :
+    import matplotlib.pyplot as plt
+    import matplotlib.path
+    import matplotlib.patches
+    from equalArea import mcbryde
+    ra_array, dec_array = splitFootprintAcrossSingularity(ra,dec,alpha,beta) 
+    size = len(ra_array)
+    for i in range(0,size) :
+        ra = ra_array[i]
+        dec = dec_array[i]
+        x,y = mcbryde.mcbryde(ra, dec, alpha=alpha, beta=beta)
+        ix = (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
+        #plt.plot(x[ix],y[ix],c="k",alpha=0.5)
+        footprint = matplotlib.path.Path(zip(x,y))
+        patch = matplotlib.patches.PathPatch(footprint, facecolor='gold', lw=1, alpha=0.066, fill=True)
+        ax.add_patch(patch)
+        patch = matplotlib.patches.PathPatch(footprint, edgecolor='gold', lw=1, alpha=1, fill=False)
+        #patch = matplotlib.patches.PathPatch(footprint, edgecolor='gold', lw=1, alpha=0.33, fill=False)
+        ax.add_patch(patch)
     
+# not supposed to fix, just identify blobs in ra that will cross projection singularity
+# once identified, split, and add interpolation along meridian so that the projection and plot
+# doesnt produce lines at the wrong angle.
+def splitFootprintAcrossSingularity(ra,dec,alpha,beta) :
+    from equalArea import rotate
+    lon = ra; lat = dec
+    x,y,z = rotate.sphericalToCartesian(lon,lat)
+    x,y,z = rotate.rotateAboutZaxis(x,y,z, alpha)
+    x,y,z = rotate.rotateAboutYaxis(x,y,z, beta)
+    if ra.min() < 0 :
+        lon,lat,r = cartesianToSpherical(x,y,z)
+    else :
+        lon,lat,r = rotate.cartesianToSpherical(x,y,z)
+    # return lon, lat
+
+    # things off plot need to be gotten onto plot
+    lat_array = [lat]  ; lon_array = [lon] # rotated coords
+    ra_array = [ra]    ; dec_array = [dec] # un-rotated coords
+    for i in [0,1] :   # for each branch, pos and neg
+        size = len(lat_array)
+        for j in range(0,size) :  # for each blob
+            lat = lat_array[j] ; lon = lon_array[j]
+            ra = ra_array[j]  ;  dec = dec_array[j]
+            # things off plot to right
+            if i == 0 : index = lon > 180
+            # things off plot to left
+            if i == 1 : index = lon < -180
+            do_work = False
+            if (np.where(index)[0].size > 0 ) : 
+                do_work = True
+                lat_array.pop(j) ; lon_array.pop(j)
+                ra_array.pop(j)  ; dec_array.pop(j)
+            if do_work :
+    #            print i,j, "# off plot=", np.where(index)[0].size, "  # ra arrays=",len(ra_array)
+                # find edge
+                first_True = index.argmax()
+                last_True = len(index) - 1 - index[::-1].argmax()
+                new_ra  = np.linspace(ra[first_True], ra[last_True], 100)
+                new_dec = np.linspace(dec[first_True], dec[last_True], 100)
+                #return lon[index], lat[index]
+
+                # arrays filled with data we test on;
+                lon_1 = lon[index]; lat_1 = lat[index]
+                lat_array.append(lat_1) ; lon_array.append(lon_1)
+                # parallel arrays filled with data we want, placed at the right place in the right order
+                ra_1 = np.concatenate( [new_ra[::-1], ra[index]] )
+                dec_1 = np.concatenate( [new_dec[::-1], dec[index]] )
+                ra_array.append(ra_1) ; dec_array.append(dec_1) 
+
+            if do_work and np.where(np.invert(index))[0].size > 0 :  
+                index = np.invert(index)
+    #            print i,j, "on_plot", np.where(index)[0].size, len(ra_array)
+
+                # interpolate over the cut
+                new_ra  = np.linspace(ra[index][first_True-1], ra[index][first_True], 100)
+                new_dec = np.linspace(dec[index][first_True-1], dec[index][first_True], 100)
+
+                # place the new interpolation into the right place
+                ra_2 = np.zeros(ra[index].size+new_ra.size)
+                ra_2[:first_True] = ra[index][:first_True]
+                ra_2[first_True: first_True+new_ra.size] = new_ra
+                ra_2[first_True+new_ra.size:] = ra[index][first_True:]
+
+                dec_2 = np.zeros(ra[index].size+new_ra.size)
+                dec_2[:first_True] = dec[index][:first_True]
+                dec_2[first_True: first_True+new_dec.size] = new_dec
+                dec_2[first_True+new_dec.size:] = dec[index][first_True:]
+
+                ra_array.append(ra_2) ; dec_array.append(dec_2) ;
+                lon_2 = lon[index]      ; lat_2 = lat[index]
+                lat_array.append(lat_2) ; lon_array.append(lon_2)
+
+
+    #return lon_array,lat_array
+    return ra_array,dec_array
+
+def cartesianToSpherical (x, y, z) :
+    r = np.sqrt( x**2 + y**2 + z**2)
+    npd = np.arccos(z/r)
+    ra  = np.arctan2(y,x)
+    ra  =   ra*360/(2*np.pi)
+    dec =   90- npd*360/(2*np.pi)
+    return ra, dec, r
 
 
 # @profile
@@ -445,14 +559,17 @@ def plotDecamHexen(ax, ra,dec,alpha, camera, beta=0, color="r", lw=1, plateCaree
                 
             #x,y=mcbryde.mcbryde(tra[i],tdec[i], alpha=alpha, beta=beta)
             #plt.text(x,y,"{}".format(i), ha="center", va="center", color="w")
-    if camera == 'hsc':
+    if (camera == 'hsc') or (camera == "desi") :
         import decam2hp
         import matplotlib.patches
         import matplotlib.path
         from equalArea import mcbryde
         import matplotlib.pyplot as plt
         nHex = ra.size
-        radius = 1.5 / 2
+        if camera == "hsc" :
+            radius = 1.5 / 2
+        elif camera == "desi" :
+            radius = 1.59
         for i in range(0,nHex) :
             hexRa,hexDec = decam2hp.cameraOutline(ra[i], dec[i], camera)
             hexX,hexY = mcbryde.mcbryde(hexRa,hexDec, alpha=alpha, beta=beta, )
