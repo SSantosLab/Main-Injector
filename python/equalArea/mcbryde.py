@@ -48,7 +48,6 @@ def mcbryde (ra,dec, southUp=0, test=0, alpha=0, beta=0, isLine=False) :
         ix = np.argsort(ra)
         ra = ra[ix]; dec=dec[ix]
 
-    #print(dec)
     try :
         psi = psi_spline(dec)
     except :
@@ -69,6 +68,13 @@ def mcbryde (ra,dec, southUp=0, test=0, alpha=0, beta=0, isLine=False) :
 
     x = x*R
     y = y*R
+
+
+    if southUp : 
+        y = -y
+    if type(x) is np.array   and len(x) == 1 : x = x[0]; y = y[0]
+    if type(x) is np.ndarray and len(x) == 1 : x = x[0]; y = y[0]
+    return x,y
 
     if test :
         print "psi= ", psi*2*360/(2*np.pi)
@@ -126,12 +132,6 @@ def mcbryde (ra,dec, southUp=0, test=0, alpha=0, beta=0, isLine=False) :
         print("alt x,y for {:d} {:d}= {:8.3f} {:8.3f}".format(rao,alpha, round(q1,3), round(r1,3)))
         print("cal x,y for {:d} {:d}= {:8.3f} {:8.3f}".format(rai,deci, round(x,3), round(y,3)))
 
-
-    if southUp : 
-        y = -y
-    if type(x) is np.array   and len(x) == 1 : x = x[0]; y = y[0]
-    if type(x) is np.ndarray and len(x) == 1 : x = x[0]; y = y[0]
-    return x,y
 
 def mtCoord (ra,dec, alpha, beta) :
     lon = ra; lat = dec
