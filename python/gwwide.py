@@ -292,16 +292,14 @@ def setting_ha(decl):
     rad_ha_limits, rad_decl_limits = load_blanco_limits()
     ha_limits = np.degrees(rad_ha_limits)
     decl_limits = np.degrees(rad_decl_limits)
-    setting_ixs = ( ha_limits > 0) & (decl_limits > -88)
+    setting_ixs = ( ha_limits < 0) & (decl_limits >= -90)  # Eric had -88; I do not know why.
     setting_has = ha_limits[setting_ixs]
     setting_decls = decl_limits[setting_ixs]
-    if not setting_decls.min()<decl<setting_decls.max():
-        raise ValueError
-
     setting_ixs = np.argsort(setting_decls)
     setting_decls = setting_decls[setting_ixs]
     setting_has = setting_has[setting_ixs]
-    assert np.all(np.diff(setting_decls) > 0)
+    #assert np.all(np.diff(setting_decls) > 0)
+    # some declinations never set
     ha_deg = np.interp(decl, setting_decls, setting_has)
 
     ha = float( Angle(ha_deg*deg).wrap_at(360*deg)/deg )
@@ -319,7 +317,7 @@ def rising_ha(decl):
     rad_ha_limits, rad_decl_limits = load_blanco_limits()
     ha_limits = np.degrees(rad_ha_limits)
     decl_limits = np.degrees(rad_decl_limits)
-    rising_ixs = ( ha_limits < 0) & (decl_limits > -88)
+    rising_ixs = ( ha_limits < 0) & (decl_limits >= -90)  # Eric had -88; I do not know why.
     rising_has = ha_limits[rising_ixs]
     rising_decls = decl_limits[rising_ixs]
     if not rising_decls.min()<decl<rising_decls.max():
@@ -381,8 +379,11 @@ def setting_mjd(ra, decl, mjd, dt=0.0, camera="decam"):
     # 365.2422/366.2422 from sidereal days to solar days
     set_mjd = mjd+(deg_in_future*(365.2422/366.2422)/360.0)
 
-    assert in_blanco_limits(ra, decl, set_mjd-1.0/(24*60*60))
-    assert (not in_blanco_limits(ra, decl, set_mjd + 1.0/(24*60*60)))
+
+    # these don't handle near the south pole where things never set
+    # JTA Feb 2020
+    #assert in_blanco_limits(ra, decl, set_mjd-1.0/(24*60*60))
+    #assert (not in_blanco_limits(ra, decl, set_mjd + 1.0/(24*60*60)))
 
     set_mjd = set_mjd - dt/(24*60*60.0)
     return set_mjd
