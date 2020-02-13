@@ -64,7 +64,6 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     import modelRead
     import healpy as hp
     import os
-    forcedistance = False
 
     print "=================================================="
     print "                 make_maps "
@@ -74,6 +73,7 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     trigger_id           = gw_map_trigger.trigger_id
     trigger_type         = gw_map_trigger.trigger_type
     distance             = gw_map_trigger.distance
+    dist_err             = gw_map_trigger.diststd
     days_since_burst     = gw_map_trigger.days_since_burst
     burst_mjd            = gw_map_trigger.burst_mjd
     start_mjd            = gw_map_trigger.start_mjd
@@ -84,6 +84,7 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     tiling_list          = gw_map_strategy.tiling_list
     maxHexesPerSlot      = gw_map_strategy.maxHexesPerSlot
     overhead             = gw_map_strategy.overhead 
+    kasen_fraction       = gw_map_strategy.kasen_fraction
 
     resolution           = gw_map_control.resolution
     this_tiling          = gw_map_control.this_tiling
@@ -136,10 +137,18 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     exposure_list = np.array(exposure_list)
     filter_list = np.array(filter_list)
     tiling_list = np.array(tiling_list)
-    ix = filter_list == "i"
+    ix = filter_list == filter_list[0]
     exposure_length = exposure_list[ix].sum()
-    print "\t obs slots starting"
 
+    #  ==== run Rob's evaluate the kasen sim universe code
+    print "\n\t examining Kasen universe KN models for coverage",
+    apparent_mag = run_ap_mag_for_kasen_models (filter_list[0], distance, dist_err, 
+        days_since_burst, kasen_fraction, data_dir) 
+    apparent_mag = np.float(apparent_mag)
+    gw_map_strategy.apparent_mag_source_model = apparent_mag
+    print " {}% requires observations at {} <= {:5.2f}".format(kasen_fraction, filter_list[0], apparent_mag)
+
+    print "\t obs slots starting"
     answers = obsSlots.slotCalculations( start_mjd, exposure_list, tiling_list, 
         overhead, hexesPerSlot=maxHexesPerSlot, camera=camera) 
     hoursPerNight = answers["hoursPerNight"] ;# in minutes
@@ -156,16 +165,15 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     ra,dec,ligo=hp2np.hp2np(skymap, degrade=resolution, field=0)
     ligo_dist, ligo_dist_sig, ligo_dist_norm  = \
         distance*np.ones(ra.size), np.zeros(ra.size), np.zeros(ra.size)
-    if not forcedistance:
-        warnings.filterwarnings("error")
-        try :
-            junk,junk,ligo_dist =hp2np.hp2np(skymap, degrade=resolution, field=1)
-            junk,junk,ligo_dist_sig =hp2np.hp2np(skymap, degrade=resolution, field=2)
-            junk,junk,ligo_dist_norm =hp2np.hp2np(skymap, degrade=resolution, field=3)
-        except RuntimeWarning:
-            pass
-        except:
-            print "\t !!!!!!!! ------- no distance information in skymap ------ !!!!!!!!"
+    warnings.filterwarnings("error")
+    try :
+        junk,junk,ligo_dist =hp2np.hp2np(skymap, degrade=resolution, field=1)
+        junk,junk,ligo_dist_sig =hp2np.hp2np(skymap, degrade=resolution, field=2)
+        junk,junk,ligo_dist_norm =hp2np.hp2np(skymap, degrade=resolution, field=3)
+    except RuntimeWarning:
+        pass
+    except:
+        print "\t !!!!!!!! ------- no distance information in skymap ------ !!!!!!!!"
 
     obs = mags.observed(ra,dec,ligo, start_mjd, verbose=False)
     obs.limitMag("i",exposure=exposure_length)
@@ -191,6 +199,27 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     pickle.dump(made_maps_list, open("made_maps.pickle","wb"))
 
     return 
+
+def run_ap_mag_for_kasen_models (filter, distance, dist_err, days_since_burst, kasen_fraction, data_dir="./") :
+    knlc_dir = os.getenv("DESGW_DIR", "./")+ "/knlc/"
+    code = knlc_dir+"kn_brightness_estimate.py"
+    cmd = "python {} --distance {} --distance_err {} --time_delay {} ".format(code, distance, dist_err, days_since_burst)
+    cmd = cmd + "--fraction {} ".format(kasen_fraction)
+    cmd = cmd + "--magplot_file kn_mag_plot.png --expplot_file kn_exp_plot.png --report_file kn_report.txt"
+    os.system(cmd)
+    file = data_dir+"/kn_report.txt"
+    fd = open(file,"r")
+    for i in range(0,16): fd.readline()
+    line = fd.readline().split()
+    apparent_mag = dict()
+    apparent_mag["g"] = line[0]
+    apparent_mag["r"] = line[3]
+    apparent_mag["i"] = line[6]
+    apparent_mag["z"] = line[9]
+    ap_mag = apparent_mag[filter]
+    # python kn_brightness_estimate.py --distance 150 --distance_err 50 --time_delay 6.0 --magplot_file kn_mag_plot.png --expplot_file kn_exp_plot.png --report_file kn_report.txt
+    return ap_mag
+
 
 # ==== figure out what to observe
 #
@@ -264,8 +293,13 @@ def make_hexes( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
     # save results to the record -- here is made the ra-dec-id- file
     writeObservingRecord(hoursObserving,   data_dir, gw_map_trigger, gw_map_control, gw_map_strategy)
     #ra,dec,id,prob,mjd,slotNumbers,islots = obsSlots.observingStats(hoursObserving, mapZero, do_nslots, start_slot)
-    ra,dec,id,prob,mjd,slotNumbers,islots = obsSlots.observingStatsFromRaDecFile( trigger_id, data_dir, 
-        hoursObserving, mapZero, do_nslots, start_slot)
+    try :
+        ra,dec,id,prob,mjd,slotNumbers,islots = obsSlots.observingStatsFromRaDecFile( trigger_id, data_dir, 
+            hoursObserving, mapZero, do_nslots, start_slot)
+    except :
+        # no hexes to observe
+        ra = np.array([0,])
+        maxProb_slot = -1
     # Get slot number  of maximum probability
     maxProb_slot = obsSlots.maxProbabilitySlot(prob,slotNumbers)
     hoursObserving["maxSlot"] = maxProb_slot

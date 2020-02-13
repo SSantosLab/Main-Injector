@@ -3,6 +3,7 @@ import os
 import scipy.stats
 import mags
 import hp2np
+import warnings
 
 license="""
    Copyright (C) 2014 James Annis
@@ -29,7 +30,7 @@ license="""
 class map(object):
     """
     """
-    def __init__(self, observation, type="Rem", apparent_mag_source=21.5) :
+    def __init__(self, observation, type="bright", apparent_mag_source=21.5) :
         """
         """
         data_dir = os.environ["DESGW_DATA_DIR"] 
@@ -37,7 +38,7 @@ class map(object):
         self.limitingMag = observation.maglim
         self.limits      = observation.limits
         tryApparent = True
-        if type == "Rem" :
+        if type == "bright" :
             if tryApparent :
                 self.lumModel = "apparent"
                 self.modelAbsoluteMagnitude = apparent_mag_source
@@ -56,7 +57,7 @@ class map(object):
                 # LIGO O3
                 self.modelAbsoluteMagnitude = -15.5
                 self.modelAbsoluteMagnitudeSigma = 1.0
-        elif type == "BH" :
+        elif type == "dark" :
             if tryApparent :
                 self.lumModel = "apparent"
                 self.modelAbsoluteMagnitude = 21.5
@@ -68,7 +69,7 @@ class map(object):
                 self.modelAbsoluteMagnitudeSigma = 1.0
         else :
             raise Exception (
-                "only trigger types known are BH and Rem, not {}".format(type))
+                "only trigger types known are bright and dark, not {}".format(type))
         self.absMagMean = self.modelAbsoluteMagnitude 
         self.absMagSigma = self.modelAbsoluteMagnitudeSigma 
 
@@ -87,6 +88,7 @@ class map(object):
 
     def calculateProb(self, ligo, ligo_distance, ligo_distance_sigma, verbose = True) :
         import scipy.integrate
+        warnings.filterwarnings("ignore")
         # bookkeeping for plotting
         self.zi= ""
 
@@ -115,9 +117,9 @@ class map(object):
             # implementing this in Feb 2020
             prob_map = np.zeros(ligo_spatial.size)
             apparent_mag = absMag_mean
-            ix = (apparent_mag < limitingMag)
+            ix, = np.where(apparent_mag < limitingMag)
             prob_map[ix] = 1.0
-            ix = (apparent_mag >= limitingMag) & (apparent_mag < limitingMag+0.5)
+            ix, = np.where((apparent_mag >= limitingMag) & (apparent_mag < limitingMag+0.5))
             prob_map[ix] = 0.5
 
         else :

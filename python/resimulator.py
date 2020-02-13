@@ -53,32 +53,32 @@ def recycle (trigger_id, skymap, trigger_type,
     days_since_burst = config["days_since_burst"]
 
     # strategy
-    hoursAvailable      = config["hoursAvailable"]
-    exposure_length_rem = config["exposure_length_Rem"]
-    filter_list_rem     = config["exposure_filter_Rem"]
-    exposure_tiling_rem = config["exposure_tiling_Rem"]
-    maxHexesPerSlot_rem = config["maxHexesPerSlot_Rem"]
-    exposure_length_bh  = config["exposure_length_BH"]
-    filter_list_bh      = config["exposure_filter_BH"]
-    exposure_tiling_bh  = config["exposure_tiling_BH"]
-    maxHexesPerSlot_bh  = config["maxHexesPerSlot_BH"]
+    kasen_fraction         = config["kasen_fraction"]
+    hoursAvailable         = config["hoursAvailable"]
+    exposure_length_bright  = config["exposure_length_bright"]
+    filter_list_bright     = config["exposure_filter_bright"]
+    exposure_tiling_bright = config["exposure_tiling_bright"]
+    maxHexesPerSlot_bright = config["maxHexesPerSlot_bright"]
+    exposure_length_dark  = config["exposure_length_dark"]
+    filter_list_dark      = config["exposure_filter_dark"]
+    exposure_tiling_dark  = config["exposure_tiling_dark"]
+    maxHexesPerSlot_dark  = config["maxHexesPerSlot_dark"]
     max_number_of_hexes_to_do = config["max_number_of_hexes_to_do"]
-    apparent_mag_source_model = config["apparent_mag_source_model"]
 
     # configure strategy for the event type
-    if trigger_type == "Rem" :
-        exposure_length      = exposure_length_rem
-        filter_list          = filter_list_rem
-        tiling_list          = exposure_tiling_rem
-        maxHexesPerSlot      = maxHexesPerSlot_rem
-    elif trigger_type == "BH" :
-        exposure_length      = exposure_length_bh
-        filter_list          = filter_list_bh 
-        tiling_list          = exposure_tiling_bh
-        maxHexesPerSlot      = maxHexesPerSlot_bh
+    if trigger_type == "bright" :
+        exposure_length      = exposure_length_bright
+        filter_list          = filter_list_bright
+        tiling_list          = exposure_tiling_bright
+        maxHexesPerSlot      = maxHexesPerSlot_bright
+    elif trigger_type == "dark" :
+        exposure_length      = exposure_length_dark
+        filter_list          = filter_list_dark 
+        tiling_list          = exposure_tiling_dark
+        maxHexesPerSlot      = maxHexesPerSlot_dark
     else :
         raise Exception(
-            "trigger_type={}  ! Can only compute BH or Rem".format(trigger_type))
+            "trigger_type={}  ! Can only compute bright or dark".format(trigger_type))
     exposure_length   = np.array(exposure_length)
     maxHexesPerSlot = np.int(np.round(maxHexesPerSlot/np.size(tiling_list)))
 
@@ -90,7 +90,7 @@ def recycle (trigger_id, skymap, trigger_type,
         resolution, days_since_burst=days_since_burst)
     gw_map_strategy = gw_map_configure.strategy( camera, exposure_length, 
         filter_list, tiling_list, maxHexesPerSlot, hoursAvailable, propid,
-        max_number_of_hexes_to_do, apparent_mag_source_model)
+        max_number_of_hexes_to_do, kasen_fraction)
     gw_map_results = gw_map_configure.results()
 
     if not os.path.exists(outputDir): os.makedirs(outputDir)

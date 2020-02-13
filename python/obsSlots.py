@@ -40,7 +40,7 @@ import warnings
 # and one hour, so close to the original defintion, and by force is an
 # even number of hexes. Ok. Use n=6 for the forcing definition
 #
-# This is based on the current "Rem" observing strategy, izz at 90s each.
+# This is based on the current "NS" observing strategy, izz at 90s each.
 # If instead we move to a BH strategy that is 1xi at 90s, then
 # one could still use 6 hexes/slot but that means the number of slots rises by x3.
 # Instead, what if we used 18 hexes/slot for the BH case.
@@ -364,9 +364,12 @@ def findMaxProbOfAllHexes(hexData, slotsObserving, observingSlots, n="", verbose
         maxRa, maxDec, maxId, maxVal, maxMjd, maxSlot, islot = \
             -1,-1,-1,-1,-1,-1,-1
         #raise Exception("no max probability found")
-    if len(maxRa) > 1 :
-        maxRa, maxDec, maxId, maxVal, maxMjd, maxSlot, islot = \
-        maxRa[0], maxDec[0], maxId[0], maxVal[0], maxMjd[0], maxSlot[0], islot
+    try :
+        if len(maxRa) > 1 :
+            maxRa, maxDec, maxId, maxVal, maxMjd, maxSlot, islot = \
+            maxRa[0], maxDec[0], maxId[0], maxVal[0], maxMjd[0], maxSlot[0], islot
+    except :
+        pass
     return maxRa, maxDec, maxId, maxVal, maxMjd, maxSlot, islot
 
 # we've found a hex,slot that can be observed so add it the the observing lists

@@ -22,10 +22,12 @@ class trigger(object):
         burst_mjd = np.float(hdr["mjd-obs"])
         try:
             distance = hdr["distmean"]
+            diststd = hdr["diststd"]
         except:
             print('distmean was not in payload... setting distance to 60mpc')
             distance = 60
         self.distance  = distance
+        self.diststd  = diststd
         self.burst_mjd = burst_mjd
 
         # ok, I'm going to declare that we want this routine to start at noon UT on JD of burst
@@ -33,7 +35,7 @@ class trigger(object):
         self.start_mjd = np.round(burst_mjd)-0.5
 
 
-        if trigger_type == "Rem" :
+        if trigger_type == "bright" :
             named_trigger = "has remnant"
         else:
             named_trigger = "dark"
@@ -101,7 +103,7 @@ class strategy(object) :
     """
     """
     def __init__(self, camera, exposure_list, filter_list, tiling_list, maxHexesPerSlot, 
-            hoursAvailable, propid, max_number_of_hexes_to_do, apparent_mag_source_model):
+            hoursAvailable, propid, max_number_of_hexes_to_do, kasen_fraction):
         """
         """
         self.camera = camera
@@ -112,7 +114,8 @@ class strategy(object) :
         self.hoursAvailable = hoursAvailable
         self.propid = propid
         self.max_number_of_hexes_to_do = max_number_of_hexes_to_do
-        self.apparent_mag_source_model = apparent_mag_source_model
+        self.kasen_fraction = kasen_fraction
+        self.apparent_mag_source_model = 21.5
 
         if camera == "decam" :
             self.overhead =  30. # seconds

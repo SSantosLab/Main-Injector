@@ -88,7 +88,7 @@ def oneDayOfTotalProbability (obs, models, deltaTime, start_mjd,
 def manyDaysOfTotalProbability (
         obs, start_mjd, spatial, distance, distance_sig, 
         models, startOfDays=0, endOfDays=11, deltaTime=0.0223, 
-        probTimeFile="probTime.txt", trigger_type="Rem",
+        probTimeFile="probTime.txt", trigger_type="bright",
         filter="i", exposure=90, apparent_mag_source_model=21.5, verbose=True) :
     times = []
     totalProbs = []
@@ -165,7 +165,7 @@ def manyDaysOfTotalProbability (
 #
 def totalProbability(obs, start_mjd, daysSinceBurst, \
         spatial, distance, distance_sig, models,
-        filter="i", exposure=180, trigger_type="Rem", apparent_mag_source_model=21.5) :
+        filter="i", exposure=180, trigger_type="bright", apparent_mag_source_model=21.5) :
     obs,sm,sunIsUp = probabilityMaps(obs, start_mjd, daysSinceBurst, \
         spatial, distance, distance_sig,
         models, filter, exposure, trigger_type=trigger_type, 
@@ -179,7 +179,7 @@ def totalProbability(obs, start_mjd, daysSinceBurst, \
 # drive the probability map calculations. In the end, distance only is used here
 def probabilityMaps(obs, start_mjd, daysSinceBurst, \
         spatial, distance, distance_sig, models,
-        filter="i", exposure=180, trigger_type="Rem", 
+        filter="i", exposure=180, trigger_type="bright", 
         apparent_mag_source_model=21.5, verbose=True) :
     obs.resetTime(start_mjd+daysSinceBurst)
 
@@ -187,7 +187,7 @@ def probabilityMaps(obs, start_mjd, daysSinceBurst, \
     if sunIsUp: return obs, "sm", sunIsUp
 
     obs.limitMag(filter, exposure=exposure)
-    if trigger_type == "Rem" :
+    if trigger_type == "bright" :
         # as of O3, let's not use source probability
         #   # we may need to rescale the light curve in the models
         #   models_at_t = modelRead.modelsAtTimeT (models, daysSinceBurst)
