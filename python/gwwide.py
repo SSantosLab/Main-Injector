@@ -39,7 +39,7 @@ kpno_elevation   =  2067.
 # exception classes
 # interface functions
 
-def gwwide(wide_queue, gw_queue, start_time, dt, sort, camera-"decam"):
+def gwwide(wide_queue, gw_queue, start_time, dt, sort, camera="decam"):
     """Replace entries in a GW quere with nearby entries in the DES wide survey
 
     :Parameters:
