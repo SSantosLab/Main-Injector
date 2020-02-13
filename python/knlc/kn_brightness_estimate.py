@@ -7,6 +7,7 @@ from optparse import OptionParser
 import pandas as pd
 from scipy.stats import norm
 import sys
+import os
 
 from astropy.cosmology import WMAP9 as cosmo
 from astropy.cosmology import z_at_value
@@ -26,7 +27,9 @@ class KNCalc():
         self.delta_mjd = round(float(time_delay) / 24.0, 1)
         
         # Read KN brightness lookup table
-        df = pd.read_csv('data/grouped_photometry.csv')
+        knlc_dir = os.getenv("DESGW_DIR", "./")
+        if knlc_dir != "./" : knlc_dir = knlc_dir + "/knlc/"
+        df = pd.read_csv(knlc_dir+'data/grouped_photometry.csv')
         df['ZMEAN'] = np.mean(df[['ZMIN', 'ZMAX']].values, axis=1)
 
         # Mean distance calculation 
