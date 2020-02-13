@@ -55,7 +55,7 @@ def gwwide(wide_queue, gw_queue, start_time, dt, sort, camera="decam"):
         obs_longitude = ctio_longitude
         obs_latitude = ctio_latitude
         obs_elevation = ctio_elevation
-    elif camera == "desi"
+    elif camera == "desi" :
         obs_longitude = kpno_longitude
         obs_latitude = kpno_latitude
         obs_elevation = kpno_elevation
@@ -223,7 +223,7 @@ def lst(mjd, camera):
         obs_longitude = ctio_longitude
         obs_latitude = ctio_latitude
         obs_elevation = ctio_elevation
-    elif camera == "desi"
+    elif camera == "desi" :
         obs_longitude = kpno_longitude
         obs_latitude = kpno_latitude
         obs_elevation = kpno_elevation
@@ -362,7 +362,7 @@ def rising_lst(ra, decl):
     lst = float( Angle(lst_deg*deg).wrap_at(360*deg)/deg )
     return lst
 
-def setting_mjd(ra, decl, mjd, dt=0.0, camera):
+def setting_mjd(ra, decl, mjd, dt=0.0, camera="decam"):
     """Return the next setting time after MJD
 
     :Parameters:
@@ -387,7 +387,7 @@ def setting_mjd(ra, decl, mjd, dt=0.0, camera):
     set_mjd = set_mjd - dt/(24*60*60.0)
     return set_mjd
 
-def rising_mjd(ra, decl, mjd, dt=0.0, camera):
+def rising_mjd(ra, decl, mjd, dt=0.0, camera="decam"):
     """Return the next rising time after MJD
 
     :Parameters:
@@ -412,7 +412,7 @@ def rising_mjd(ra, decl, mjd, dt=0.0, camera):
     rise_mjd = rise_mjd + dt/(24*60*60.0)
     return rise_mjd
 
-def setting_iso8601(ra, decl, tstring, dt=0.0):
+def setting_iso8601(ra, decl, tstring, dt=0.0, camera="decam"):
     """Return the ISO 8601 string representation of the setting tem
 
     :Parameters:
@@ -432,7 +432,7 @@ def setting_iso8601(ra, decl, tstring, dt=0.0):
     return set_iso
     
 
-def rising_iso8601(ra, decl, tstring, dt=0.0, camera):
+def rising_iso8601(ra, decl, tstring, dt=0.0, camera="decam"):
     """Return the ISO 8601 string representation of the rising time
 
     :Parameters:
