@@ -67,6 +67,7 @@ def oneDayOfTotalProbability (obs, models, deltaTime, start_mjd,
     distance_sig= gw_map_trigger.ligo_dist_sig
     filter = gw_map_strategy.filter_list[0]
     exposure = gw_map_strategy.exposure_list[0]
+    apparent_mag_source_model  = gw_map_strategy.apparent_mag_source_model
 
 
     # the work.
@@ -79,15 +80,16 @@ def oneDayOfTotalProbability (obs, models, deltaTime, start_mjd,
         startOfDays=start_of_days, endOfDays=end_of_days,
         deltaTime=deltaTime, probTimeFile=probTimeFile,
         trigger_type=trigger_type, filter=filter, 
-        exposure=exposure )
+        exposure=exposure, 
+        apparent_mag_source_model = apparent_mag_source_model )
 
     return totalProbs,times, isDark
 
 def manyDaysOfTotalProbability (
         obs, start_mjd, spatial, distance, distance_sig, 
         models, startOfDays=0, endOfDays=11, deltaTime=0.0223, 
-        probTimeFile="probTime.txt", trigger_type="Rem",
-        filter="i", exposure=90, verbose=True) :
+        probTimeFile="probTime.txt", trigger_type="bright",
+        filter="i", exposure=90, apparent_mag_source_model=21.5, verbose=True) :
     times = []
     totalProbs = []
 
@@ -163,10 +165,11 @@ def manyDaysOfTotalProbability (
 #
 def totalProbability(obs, start_mjd, daysSinceBurst, \
         spatial, distance, distance_sig, models,
-        filter="i", exposure=180, trigger_type="Rem") :
+        filter="i", exposure=180, trigger_type="bright", apparent_mag_source_model=21.5) :
     obs,sm,sunIsUp = probabilityMaps(obs, start_mjd, daysSinceBurst, \
         spatial, distance, distance_sig,
-        models, filter, exposure, trigger_type=trigger_type)
+        models, filter, exposure, trigger_type=trigger_type, 
+        apparent_mag_source_model=apparent_mag_source_model)
     if sunIsUp:
         totalProb = 0.0
     else :
@@ -176,14 +179,15 @@ def totalProbability(obs, start_mjd, daysSinceBurst, \
 # drive the probability map calculations. In the end, distance only is used here
 def probabilityMaps(obs, start_mjd, daysSinceBurst, \
         spatial, distance, distance_sig, models,
-        filter="i", exposure=180, trigger_type="Rem", verbose=True) :
+        filter="i", exposure=180, trigger_type="bright", 
+        apparent_mag_source_model=21.5, verbose=True) :
     obs.resetTime(start_mjd+daysSinceBurst)
 
     sunIsUp = obs.sunBrightnessModel(obs.sunZD)
     if sunIsUp: return obs, "sm", sunIsUp
 
     obs.limitMag(filter, exposure=exposure)
-    if trigger_type == "Rem" :
+    if trigger_type == "bright" :
         # as of O3, let's not use source probability
         #   # we may need to rescale the light curve in the models
         #   models_at_t = modelRead.modelsAtTimeT (models, daysSinceBurst)
@@ -197,7 +201,7 @@ def probabilityMaps(obs, start_mjd, daysSinceBurst, \
         # then the sm.calculateProb assumes a source ap mag of 20,
         # and builds a source probality map where 1 if limit_mag > 20.
         distance_sig = distance_sig*0
-    sm=sourceProb.map(obs, type=trigger_type)
+    sm=sourceProb.map(obs, type=trigger_type, apparent_mag_source=apparent_mag_source_model)
     result = sm.calculateProb(spatial, distance, distance_sig, verbose=verbose)
     if not result:
         sunIsUp = 1
@@ -222,16 +226,17 @@ def probabilityMaps(obs, start_mjd, daysSinceBurst, \
 def probabilityMapSaver (obs, models, times, probabilities,
         gw_map_trigger, gw_map_strategy, gw_map_control,
         performHexalatationCalculation=True) :
-    start_mjd    = gw_map_trigger.start_mjd
-    trigger_id   = gw_map_trigger.trigger_id
-    trigger_type = gw_map_trigger.trigger_type
-    ligo         = gw_map_trigger.ligo
-    distance     = gw_map_trigger.ligo_dist
-    distance_sig = gw_map_trigger.ligo_dist_sig
-    camera       = gw_map_strategy.camera
-    debug        = gw_map_control.debug
-    reject_hexes = gw_map_control.reject_hexes
-    data_dir     = gw_map_control.datadir
+    start_mjd                  = gw_map_trigger.start_mjd
+    trigger_id                 = gw_map_trigger.trigger_id
+    trigger_type               = gw_map_trigger.trigger_type
+    ligo                       = gw_map_trigger.ligo
+    distance                   = gw_map_trigger.ligo_dist
+    distance_sig               = gw_map_trigger.ligo_dist_sig
+    camera                     = gw_map_strategy.camera
+    apparent_mag_source_model  = gw_map_strategy.apparent_mag_source_model
+    debug                      = gw_map_control.debug
+    reject_hexes               = gw_map_control.reject_hexes
+    data_dir                   = gw_map_control.datadir
     #onlyHexesAlreadyDone  = gw_map_control.this_tiling
     onlyHexesAlreadyDone  = []
 
@@ -265,7 +270,8 @@ def probabilityMapSaver (obs, models, times, probabilities,
         #    continue
         obs,sm, isDark = \
             probabilityMaps( obs, start_mjd, time, ligo, distance, distance_sig,
-            models, trigger_type=trigger_type, verbose=False)
+            models, trigger_type=trigger_type, 
+            apparent_mag_source_model=apparent_mag_source_model,verbose=False)
         if obs.sunBrightnessModel (obs.sunZD ): 
             #print "\t\tThe sun is up. Continue", time, prob
             #print ""
@@ -341,8 +347,12 @@ def probabilityMapSaver (obs, models, times, probabilities,
                 raHexen, decHexen, idHexen = \
                     raHexen[do_these], decHexen[do_these], idHexen[do_these]
 
+        #    import pickle
+        #    fd=open("saveme.pickle","wb")
+        #    pickle.dump([obs, sm, raHexen, decHexen, idHexen, tree, camera], fd)
+        #    fd.close()
             raHexen, decHexen, idHexen, hexVals, rank = \
-                hexalate.cutAndHexalateOnRaDec ( obs, sm, raHexen, decHexen, idHexen, tree, camera, cutProbs=True)
+                hexalate.cutAndHexalateOnRaDec ( obs, sm, raHexen, decHexen, idHexen, tree, camera, cutProbs=False)
 
             # where rank is to be understood as the indicies of the
             # ranked hexes in order; i.e., they have nothing to do with
@@ -356,9 +366,7 @@ def probabilityMapSaver (obs, models, times, probabilities,
                     raHexen[j],decHexen[j],idHexen[j],hexVals[j],rank[j],
                     (np.asfarray(rank*0.)+(start_mjd+time))[j]))
             f.close()
-    return made_maps_list
     
-'''
             #######################################################################################
             ##### Brout: new, we have to run again where we dont double up on probability in the ##
             ##### hexes, but this cannot be used for prioritization. ##############################
@@ -370,9 +378,11 @@ def probabilityMapSaver (obs, models, times, probabilities,
             for j in range(0,raHexencut.size) :
                 f.write("{:.6f}, {:.5f}, {:s}, {:.4e}, {:d}, {:.4f}\n".format(
                     raHexencut[j],decHexencut[j],idHexencut[j],hexValscut[j],rankcut[j],
-                    (np.asfarray(rankcut*0.)+(mjd+time))[j]))
+                    (np.asfarray(rankcut*0.)+(start_mjd+time))[j]))
             f.close()
-'''
+    return made_maps_list
+
+# pass apparent mag from yaml file to sourceProb
 
 
 # Get the saved maps for each day and hour.

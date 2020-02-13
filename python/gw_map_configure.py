@@ -22,10 +22,12 @@ class trigger(object):
         burst_mjd = np.float(hdr["mjd-obs"])
         try:
             distance = hdr["distmean"]
+            diststd = hdr["diststd"]
         except:
             print('distmean was not in payload... setting distance to 60mpc')
             distance = 60
         self.distance  = distance
+        self.diststd  = diststd
         self.burst_mjd = burst_mjd
 
         # ok, I'm going to declare that we want this routine to start at noon UT on JD of burst
@@ -33,7 +35,7 @@ class trigger(object):
         self.start_mjd = np.round(burst_mjd)-0.5
 
 
-        if trigger_type == "Rem" :
+        if trigger_type == "bright" :
             named_trigger = "has remnant"
         else:
             named_trigger = "dark"
@@ -101,7 +103,7 @@ class strategy(object) :
     """
     """
     def __init__(self, camera, exposure_list, filter_list, tiling_list, maxHexesPerSlot, 
-            hoursAvailable, propid, max_number_of_hexes_to_do):
+            hoursAvailable, propid, max_number_of_hexes_to_do, kasen_fraction):
         """
         """
         self.camera = camera
@@ -112,6 +114,8 @@ class strategy(object) :
         self.hoursAvailable = hoursAvailable
         self.propid = propid
         self.max_number_of_hexes_to_do = max_number_of_hexes_to_do
+        self.kasen_fraction = kasen_fraction
+        self.apparent_mag_source_model = 21.5
 
         if camera == "decam" :
             self.overhead =  30. # seconds
@@ -119,12 +123,15 @@ class strategy(object) :
         elif camera == "hsc" :
             self.overhead = 20.
             self.area_per_hex = 1.5
+        elif camera == "desi" :
+            self.overhead = 300.
+            self.area_per_hex = 9.8
         else: raise Exception("camera {} not handled".format(camera))
 
 class control(object):
     """
     """
-    def __init__(self, resolution, data_dir, debug=False, allSky=False,
+    def __init__(self, resolution, data_dir, debug=False, allSky=False, centeredSky=True,
             snarf_mi_maps=False, mi_map_dir="/data/des41.a/data/desgw/O3FULL/Main-Injector/OUTPUT/O3REAL/",
             gif_resolution = 1.0 ) :
         """
@@ -136,6 +143,7 @@ class control(object):
         self.this_tiling = []
         self.reject_hexes= []
         self.allSky = allSky
+        self.centeredSky = centeredSky
         self.datadir = data_dir
         # find hexes starting with slot start_slot. Carries on to jsons
         self.start_slot = -1

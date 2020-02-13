@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import warnings
 
 # ========== do simple calculations on how to divide the night
 #
@@ -39,17 +40,17 @@ import os
 # and one hour, so close to the original defintion, and by force is an
 # even number of hexes. Ok. Use n=6 for the forcing definition
 #
-# This is based on the current "Rem" observing strategy, izz at 90s each.
+# This is based on the current "NS" observing strategy, izz at 90s each.
 # If instead we move to a BH strategy that is 1xi at 90s, then
 # one could still use 6 hexes/slot but that means the number of slots rises by x3.
 # Instead, what if we used 18 hexes/slot for the BH case.
 #
 # Ok, then, code:
 #
-def slotCalculations(mjd, exposure_lengths, tiling_list, overhead, hexesPerSlot = 6) :
+def slotCalculations(mjd, exposure_lengths, tiling_list, overhead, hexesPerSlot = 6, camera="decam") :
     from getHexObservations import hoursPerNight
     slot_duration = slotDuration(exposure_lengths, tiling_list, overhead, hexesPerSlot) 
-    hoursAvailable = hoursPerNight(mjd)
+    hoursAvailable = hoursPerNight(mjd, camera)
     answers = dict()
     answers["slotDuration"] = slot_duration
     answers["hoursPerNight"] = hoursAvailable
@@ -139,7 +140,7 @@ def observing(sim, nslots, data_dir,
         raHexen, decHexen, idHexen, hexVal, rank, mjd, slotNum = \
            loadHexalatedProbabilities( sim, map_i, data_dir)
         islot = i*np.ones(raHexen.size)
-        print "\t", map_i, "map size= {};".format(raHexen.size), 
+        print "\t", map_i, "map size= {:10d};".format(raHexen.size), 
 
         impossible = 1e-5
         impossible = 1e-7
@@ -224,7 +225,7 @@ def observing(sim, nslots, data_dir,
             if verbose >= 1: 
                 print "n slots =", len(observingSlots)," == 0?"
                 print "sumHexes = ", sumHexes, "==? 0"
-            print "\tnumber of hexes observed = ", sumObs
+            print "\tnumber of hexes possible to observe = ", sumObs
             print "\t======================================== "
             return slotsObserving 
 
@@ -251,7 +252,7 @@ def observingStats( slotsObserving, mapZero=0, do_nslots=-1, start_slot=-1 ) :
             print "  sum prob= {:7.4f} %".format( 100*slotsObserving[i,"prob"].sum())
     ra,dec,id,prob,mjd,slotNum,islot = slotsObservingToNpArrays(slotsObserving) 
 
-    print "\t observingStats:  ",
+    print "\tobservingStats:  ",
     print "observable prob_tot = {:.1f}%".format(100.*prob.sum())
     print "\t   (from the prob in each slot, summed)"
     return ra,dec,id,prob,mjd,slotNum,islot
@@ -267,10 +268,10 @@ def observingStatsFromRaDecFile( trigger_id, data_dir, slotsObserving, mapZero=0
         if ix.size > 0 :
             slot_sum_prob = 100*prob[ix].sum() 
             if slot_sum_prob > 1e-7 :
-                print "\t ",i+mapZero, 
+                print "\t",i+mapZero, 
                 print "n hexes= {}".format( ix.size ),
                 print "  sum prob= {:7.4f} %".format( slot_sum_prob )
-    print "\t observingStats:  ",
+    print "\tobservingStats:  ",
     print "observable prob_tot = {:.1f}%".format(100.*prob.sum())
     print "\t   (from the prob in each slot, summed)"
     return ra,dec,id,prob,mjd,slotNum,dist
@@ -349,7 +350,7 @@ def findMaxProbOfAllHexes(hexData, slotsObserving, observingSlots, n="", verbose
         if verbose >= 4: print n,i, maxProb, ">?", newProb, "     n=",hexVal.size
         if newProb > maxProb :
             if verbose >= 1: print n,"==== new max", i, "       ",newProb , ">", maxProb
-            ix = hexVal == newProb
+            ix = np.where(hexVal == newProb)
             maxRa     = hexRa[ix]
             maxDec    = hexDec[ix]
             maxId     = hexId[ix]
@@ -363,6 +364,12 @@ def findMaxProbOfAllHexes(hexData, slotsObserving, observingSlots, n="", verbose
         maxRa, maxDec, maxId, maxVal, maxMjd, maxSlot, islot = \
             -1,-1,-1,-1,-1,-1,-1
         #raise Exception("no max probability found")
+    try :
+        if len(maxRa) > 1 :
+            maxRa, maxDec, maxId, maxVal, maxMjd, maxSlot, islot = \
+            maxRa[0], maxDec[0], maxId[0], maxVal[0], maxMjd[0], maxSlot[0], islot
+    except :
+        pass
     return maxRa, maxDec, maxId, maxVal, maxMjd, maxSlot, islot
 
 # we've found a hex,slot that can be observed so add it the the observing lists
@@ -400,6 +407,7 @@ def deleteHexFromSlot (hexData, slot, maxProb) :
 # the hex,slot has made it onto an observing list, so remove the hex
 # from all hex lists ( rm hex,*)
 def deleteHexFromAllSlots (hexData, slotsObserving, observingSlots, maxRa, maxDec, verbose=0, n="") :
+    warnings.filterwarnings("ignore")
     do_nslots  = slotsObserving["do_nslots"]
     start_slot = slotsObserving["start_slot"]
     nslots     = slotsObserving["nslots"]

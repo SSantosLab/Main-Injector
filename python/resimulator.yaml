@@ -2,14 +2,16 @@ trigger_path  : './working/'
 real_or_sim: 'real' #must switch between 'sim' and 'real'
 debug: False
 
-# camera
-camera : 'decam'
-
 sendEmailsToEveryone : False
 sendtexts : False
 
-probHasRem_threshold: .5
+# camera
+camera : 'decam'
+days_since_burst : 0
+default_map_name : bayestar.fits
 
+# delete?
+probHasRem_threshold: .5
 forceProbHasRem: False
 probHasRem: 1.
 
@@ -17,6 +19,8 @@ do_make_maps:   True
 do_make_hexes:  True
 do_make_jsons:  True
 do_make_gifs:   True
+allSkyGif: True
+centeredSkyGif : True
 
 # Optimization params
 #resolution: 128 #for map making
@@ -27,26 +31,23 @@ resolution: 8 #for map making at speed
  # gif_resolution = 0.1  8-bit resolution-like but tells the story and very fast
 gif_resolution: 1.0
 
+# the desgw-map code will calculate the hours availble in the night
+# and will report and use the smaller of hoursPerNight and hoursAvailable
+hoursAvailable : 24 
 
-distance : 60.
-force_distance : False
-days_since_burst : 0
-
-skipAll : False
-skipPlots: False
-
-default_map_name : bayestar.fits
+# find the apparent_magnitude for which we recover  % of kasen models
+kasen_fraction : 50   
 
 # Remnant strategy
-exposure_length_Rem : [ 60., 90. ] #sec
-exposure_filter_Rem : [ 'i', 'z']
-maxHexesPerSlot_Rem : 12              # maxHexesPerSlot goes down in propotion to how many images per hex, really cumul exp time per hex
-exposure_tiling_Rem : [ 0, ]         # to be interpreted as do all exp in exp_length for each tiling in exp_tiling
+exposure_length_bright : [ 90., 90. , 90.] #sec
+exposure_filter_bright : [ 'i', 'z', 'z']
+exposure_tiling_bright : [ 0,1 ]         # to be interpreted as do all exp in exp_length for each tiling in exp_tiling
+maxHexesPerSlot_bright : 16             # maxHexesPerSlot goes down in propotion to how many images per hex, really cumul exp time per hex
 # BH strategy
-exposure_length_BH : [ 90., ] #sec
-exposure_filter_BH : [ 'r', ]
-exposure_tiling_BH : [ 0, ]
-maxHexesPerSlot_BH : 20  # related to maxHexesPerSlot_Rem by (60+90)/90 for 1/1.667 less images/hex, so same amount of time
+exposure_length_dark : [ 90., ] #sec
+exposure_filter_dark : [ 'r', ]
+exposure_tiling_dark : [ 0,1 ]
+maxHexesPerSlot_dark : 48  # related to maxHexesPerSlot_bright by (90+90+90)/90 for 1/3 less images/hex, so same amount of time
 
 # lastly- say you have looked at the *ra-dec-id-prob-mjd-slot-dist.txt file,
 # and find that you can reach 30% of total prob by observing 10 hexes, but

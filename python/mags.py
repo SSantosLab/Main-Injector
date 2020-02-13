@@ -55,6 +55,7 @@ class observed(object):
             ra, dec, values, mjd, alpha=0., 
             degradeRes=True, # change map resolution
             doMaps=True,  # don't think of ra,dec,vals as a healpy map; don't do map work
+            camera="decam",
             verbose=True   # be very loud or no
         ) :
         self.verbose      = verbose
@@ -62,13 +63,24 @@ class observed(object):
         ctio_lat          = -30.16527778
         ctio_lon          = -70.8125
         ctio_height       = 2215.
+        kpno_lat          = 31.9600784
+        kpno_lon          = -111.598169
+        kpno_height       =  2067.
+        if camera == "decam" :
+            obs_lat = ctio_lat
+            obs_lon = ctio_lon
+            obs_height = ctio_height
+        elif camera == "desi" :
+            obs_lat = kpno_lat
+            obs_lon = kpno_lon
+            obs_height = kpno_height
 
         self.date         = slalib.sla_djcl(mjd)
 
         self.degToRad     = 0.0174532925199
-        self.lat          = ctio_lat*self.degToRad
-        self.lon          = ctio_lon*self.degToRad
-        self.height       = ctio_height
+        self.lat          = obs_lat*self.degToRad
+        self.lon          = obs_lon*self.degToRad
+        self.height       = obs_height
 
         self.mjd          = mjd
         self.ra           = ra*self.degToRad
@@ -364,15 +376,26 @@ class observed(object):
         ahav = 2*np.arcsin(np.sqrt(x))
         return ahav
 
-def findNightDuration(mjd) :
+def findNightDuration(mjd, camera="decam") :
     ctio_lat          = -30.16527778
     ctio_lon          = -70.8125
     ctio_height       = 2215.
+    kpno_lat          = 31.9600784
+    kpno_lon          = -111.598169
+    kpno_height       =  2067.
+    if camera == "decam" :
+        obs_lat = ctio_lat
+        obs_lon = ctio_lon
+        obs_height = ctio_height
+    elif camera == "desi" :
+        obs_lat = kpno_lat
+        obs_lon = kpno_lon
+        obs_height = kpno_height
 
     degToRad = 2.*np.pi/360.
-    lat          = ctio_lat*degToRad
-    lon          = ctio_lon*degToRad
-    height       = ctio_height
+    lat          = obs_lat*degToRad
+    lon          = obs_lon*degToRad
+    height       = obs_height
 
     imjd = np.int(mjd)
     start_mjd = imjd - 6./24.  ;# before sunset at CTIO

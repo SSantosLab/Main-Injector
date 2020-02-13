@@ -10,7 +10,7 @@ import obsSlots
 # The expTime is used only in the limiting magnitude calculation, not in what to observe when
 #
 
-def calc(trigger_id, ra_dec_file_dir, mjd, expTime, filter, best=False) :
+def calc(trigger_id, ra_dec_file_dir, mjd, expTime, filter, best=False, camera="decam") :
     # do dark siren stuff
     #ra,dec,prob,filter = np.genfromtxt(trigger_id,unpack=True)
     #filter = np.genfromtxt(trigger_id,unpack=True,dtype="str",usecols=3)
@@ -22,7 +22,7 @@ def calc(trigger_id, ra_dec_file_dir, mjd, expTime, filter, best=False) :
     best_ix = np.argmax(prob)
 
     # find night statistics
-    night,sunset,sunrise = mags.findNightDuration(mjd)
+    night,sunset,sunrise = mags.findNightDuration(mjd, camera)
     night = np.float(night)*24.
     sunset = np.float(sunset)
     sunrise = np.float(sunrise)
