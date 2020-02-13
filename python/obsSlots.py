@@ -418,7 +418,20 @@ def deleteHexFromAllSlots (hexData, slotsObserving, observingSlots, maxRa, maxDe
         hexMjd = data[4]
         hexSlotNum = data[5]
         hexIslot   = data[6]
-        ix = np.nonzero((hexRa == maxRa) & (hexDec == maxDec))
+        #print len(hexRa)
+        #print len(maxRa)
+        try:
+            ix = np.nonzero((hexRa == maxRa) & (hexDec == maxDec))
+        except:
+            print "len hexRA hexDec "+str(len(hexRa))+" "+str(len(hexDec))
+            print "len maxRA maxDec "+str(len(maxRa))+" "+str(len(maxDec))
+            maxRa = max(maxRa)
+            maxDec = max(maxDec)
+            ix = np.nonzero((hexRa == maxRa) & (hexDec == maxDec))
+            print i
+            print ix              
+#        print "ag compare i "+str(i)
+#        print ix
         if verbose >=4 : print ix, hexRa, maxRa
         if verbose >=2 : 
             ixs = np.shape(ix)[1]

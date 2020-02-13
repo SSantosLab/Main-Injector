@@ -108,7 +108,7 @@ exposure_length_BH : [ 90., ] #sec
 exposure_filter_BH : [ 'r', ]
 exposure_tiling_BH : [ 10, ]
 maxHexesPerSlot_BH : 18  # related to maxHexesPerSlot_NS by x3 for x3 less images/hex, so same amount of time
-
+max_number_of_hexes_to_do : 10000
 
 
 

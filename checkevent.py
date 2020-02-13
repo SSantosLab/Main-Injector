@@ -363,30 +363,53 @@ def process_gcn(payload, root):
     #Fire off analysis code    
     #if skymap_url.split('/')[-1] == 'bayestar.fits.gz':
     if official:
-        args = ['python', 'recycler.py','--skymapfilename='+skymap_filename, '--triggerpath='+config.trigger_outpath, '--triggerid='+trigger_id, '--mjd='+str(trigger_mjd),'--official']
+        args_rem = ['python', 'recycler.py','--skymapfilename='+skymap_filename, '--triggerpath='+config.trigger_outpath, '--triggerid='+trigger_id, '--mjd='+str(trigger_mjd),'--official', '--hasrem']
+        args_norem = ['python', 'recycler.py','--skymapfilename='+skymap_filename, '--triggerpath='+config.trigger_outpath, '--triggerid='+trigger_id, '--mjd='+str(trigger_mjd),'--official', '--norem']
+
+        print_('ARGSSSSSSSSSSSSSSSSSSSSS')
+        print_(args)
+        ppp = ''
+        for argrem, argno in zip(args_rem, args_norem):
+            try:
+                ppp+=argrem+' '+argno+' '
+            except:
+                pass
     else:
         args = ['python', 'recycler.py','--skymapfilename='+skymap_filename, '--triggerpath='+config.trigger_outpath, '--triggerid='+trigger_id, '--mjd='+str(trigger_mjd)]
-    print_('ARGSSSSSSSSSSSSSSSSSSSSS')
-    print_(args)
-    ppp = ''
-    for arg in args:
-        try:
-            ppp+=arg+' '
-        except:
-            pass
+        print_('ARGSSSSSSSSSSSSSSSSSSSSS')
+
+        print_(args)
+        ppp = ''
+        for arg in args:
+            try:
+                ppp+=arg+' '
+            except:
+                pass
     print_(ppp)
     #os.mkdir(os.path.join(config.trigger_outpath,trigger_id))
-    try:
-        os.mkdir(os.path.join(config.trigger_outpath,trigger_id,skymap_filename.split('/')[-1].split('.')[0]))
-    except:
-        print 'path exists'
-    f = open(os.path.join(config.trigger_outpath,trigger_id,skymap_filename.split('/')[-1].split('.')[0],skymap_filename.split('/')[-1].split('.')[0]+'_recycler.log'), "w")
-    subprocess.Popen(args,stdout=f,stderr=f)
-    f.close()
+    if official:
+        try:
+            os.mkdir(os.path.join(config.trigger_outpath,trigger_id+'hasrem/',skymap_filename.split('/')[-1].split('.')[0]))
+        except:
+            print 'path exists'
+        try:
+            os.mkdir(os.path.join(config.trigger_outpath,trigger_id+'norem/',skymap_filename.split('/')[-1].split('.')[0]))
+        except:
+            print 'path exists'
+    
+
+    f_rem = open(os.path.join(config.trigger_outpath,trigger_id,skymap_filename.split('/')[-1].split('.')[0],skymap_filename.split('/')[-1].split('.')[0]+'_recycler_rem.log'), "w")
+    f_norem = open(os.path.join(config.trigger_outpath,trigger_id,skymap_filename.split('/')[-1].split('.')[0],skymap_filename.split('/')[-1].split('.')[0]+'_recycler_norem.log'), "w")
+
+    subprocess.Popen(args_rem,stdout=f_rem,stderr=f_rem)
+    subprocess.Popen(args_norem,stdout=f_norem,stderr=f_norem)
+    f_rem.close()
+    f_norem.close()
+
     #Need to send an email here saying analysis code was fired
     
     print_('Finished downloading, fired off job')
-    print_('See log here: '+ os.path.join(config.trigger_outpath,trigger_id,skymap_filename.split('/')[-1].split('.')[0],skymap_filename.split('/')[-1].split('.')[0]+'_recycler.log'))
+    print_('See log here: '+ os.path.join(config.trigger_outpath,trigger_id)#,skymap_filename.split('/')[-1].split('.')[0],skymap_filename.split('/')[-1].split('.')[0]+'_recycler.log'))
 
 from threading import Timer
 def imAliveEmail():

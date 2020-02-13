@@ -21,7 +21,7 @@ import gw_map_configure
 import matplotlib.pyplot as plt
 
 class event:
-    def __init__(self, skymap_filename, master_dir, trigger_id, mjd, config, official):
+    def __init__(self, skymap_filename, master_dir, trigger_id, mjd, config, official, hasrem):
 
         '''
         event:
@@ -33,7 +33,7 @@ class event:
         '''
         
         # set up the working directories
-        self.modify_filesystem(skymap_filename, master_dir, trigger_id, mjd) 
+        self.modify_filesystem(skymap_filename, master_dir, trigger_id, mjd, hasrem) 
         work_area = self.work_area 
 
         self.trigger_id = trigger_id
@@ -64,7 +64,8 @@ class event:
         os.system('kinit -k -t /var/keytab/desgw.keytab desgw/des/des41.fnal.gov@FNAL.GOV')
         self.official = official
 
-    def modify_filesystem(self, skymap_filename, master_dir, trigger_id, mjd) :
+    def modify_filesystem(self, skymap_filename, master_dir, trigger_id, mjd, hasrem) :
+        #skymap_filename, master_dir, trigger_id, mjd, config, official, hasrem
 
         # master_dir is the directory holding all the trigger directories
         # trigger_dir is the directory holding everything to do with a single trigger
@@ -80,14 +81,19 @@ class event:
             os.system('mkdir '+master_dir+'/'+ trigger_dir)
 
         self.master_dir = master_dir
-        work_area = master_dir+'/'+ trigger_dir +'/'
+        if hasrem:
+            work_area = master_dir+'/'+ trigger_dir +'/hasrem/'
+        else:
+            work_area = master_dir+'/'+ trigger_dir +'/norem/'
 
         os.system('cp '+skymap_filename.strip()+' '+work_area)
+#        print("ag copy skymap")
         os.system('cp '+self.master_dir+'/'+trigger_id +'_params.npz '+work_area)
+#        print("ag copy params npz")
         print('cp '+skymap_filename.strip()+' '+work_area)
-        print(work_area)
+        print("work area "+work_area)
         self.skymap = skymap_filename
-        print(self.skymap)
+        print("skymaps "+self.skymap)
 
         # Setup website directories
         website = "./DES_GW_Website/"
@@ -119,7 +125,8 @@ class event:
 # desgw-maps. 
 
 
-    def mapMaker2(self, trigger_id, skymap, config, snarf_mi_maps=False, start_slot = -1, do_nslots= -1,  mi_map_dir = "./"):
+    def mapMaker2(self, trigger_id, skymap, config, hasrem, snarf_mi_maps=False, start_slot = -1, do_nslots= -1,  mi_map_dir = "./"):
+        #skymap_filename, master_dir, trigger_id, mjd, config, official, hasrem
         import os
         import yaml
         import getHexObservations
@@ -208,6 +215,13 @@ class event:
         exposure_length_bh  = config["exposure_length_BH"]
         filter_list_bh      = config["exposure_filter_BH"]
         maxHexesPerSlot_bh  = config["maxHexesPerSlot_BH"]
+
+        #ag added 
+        exposure_tiling_rem = config["exposure_tiling_Rem"]
+        exposure_tiling_bh  = config["exposure_tiling_BH"]
+        max_number_of_hexes_to_do = config["max_number_of_hexes_to_do"]
+        hoursAvailable = 20.
+        self.time_budget = hoursAvailable
         
         print(self.event_params.items())
         hasremnant = self.event_params['hasremnant']
@@ -215,16 +229,19 @@ class event:
             trigger_type = 'Rem'
         else:
             trigger_type = 'BH'
+        
     # configure strategy for the event type
         if trigger_type == "Rem" :
             exposure_length      = exposure_length_rem
             filter_list          = filter_list_rem
             maxHexesPerSlot      = maxHexesPerSlot_rem
+            tiling_list          = exposure_tiling_rem
             propid = config['propid_Rem']
         elif trigger_type == "BH" :
             exposure_length      = exposure_length_bh
             filter_list          = filter_list_bh 
             maxHexesPerSlot      = maxHexesPerSlot_bh
+            tiling_list          = exposure_tiling_bh
             propid = config['propid_BH']
 
         else :
@@ -240,7 +257,9 @@ class event:
         gw_map_trigger  = gw_map_configure.trigger( skymap, trigger_id, trigger_type, 
                                                     resolution, days_since_burst=days_since_burst)
         gw_map_strategy = gw_map_configure.strategy( camera, exposure_length, 
-                                                     filter_list, maxHexesPerSlot, hoursAvailable, propid)
+                                                     filter_list, tiling_list, maxHexesPerSlot, hoursAvailable, propid, max_number_of_hexes_to_do)
+        #strat need max number of hexes and tiling list
+
         gw_map_results = gw_map_configure.results()
         
         if not os.path.exists(outputDir): os.makedirs(outputDir)
@@ -425,7 +444,8 @@ class event:
                      mapname='NAN',
                      filename=self.skymap,
                      gethexobstype=trigger_type,
-                     probhasns=self.probhasns
+                     #probhasns=self.probhasns
+                     probhasns=probhasns
                      )
 
 
@@ -1078,7 +1098,7 @@ if __name__ == "__main__":
         args = sys.argv[1:]
         opt, arg = getopt.getopt(
             args, "tp:tid:mjd:exp:sky",
-            longopts=["triggerpath=", "triggerid=", "mjd=", "exposure_length=", "official","skymapfilename="])
+            longopts=["triggerpath=", "triggerid=", "mjd=", "exposure_length=", "official","skymapfilename=", "hasrem="])
 
     except getopt.GetoptError as err:
         print(str(err))
@@ -1105,11 +1125,14 @@ if __name__ == "__main__":
 
     force_mjd = config["force_mjd"]
 
+
     #exposure_length = config["exposure_length"]
 
     # Override defaults with command line arguments
     # THESE NOT GUARANTEED TO WORK EVER SINCE WE SWITCHED TO YAML
-
+    hasrem = False
+#    norem = False
+    
     dontwrap = False
     for o,a in opt:
         print('Option')
@@ -1129,8 +1152,16 @@ if __name__ == "__main__":
             hours_available = float(a)
         elif o in ["-sky","--skymapfilename"]:
             skymap_filename = str(a)
+        elif o in ['--hasrem']:
+            hasrem = str(a)
+            print("HASREM "+hasrem)
         elif o in ['--official']:
             official = True
+#        elif o in ['--hasrem']:
+#            hasrem = str(a)
+        #elif o in ['--norem']:
+        #    hasrem = False
+
         else:
             print("Warning: option", o, "with argument", a, "is not recognized")
 
@@ -1182,11 +1213,11 @@ if __name__ == "__main__":
                 print('WARNING: Could not convert mjd to float. Trigger: ' + trigger_id + ' flagged as bad.')
 # here is where the object is made, and parts of it are filed in
             master_dir = os.path.join(trigger_path, trigger_id)
-            e = event(skymap_filename, master_dir, trigger_id, mjd, config, official)
+            e = event(skymap_filename, master_dir, trigger_id, mjd, config, official, hasrem)
 
 # e has variables and code assocaiated with it. The mapMaker is called "e" or "self"
             
-            e.mapMaker2(trigger_id, skymap_filename, config)
+            e.mapMaker2(trigger_id, skymap_filename, config, hasrem)
             e.getContours(config)
             #jsonfilelist = e.makeJSON(config)
             ##e.make_cumulative_probs()
