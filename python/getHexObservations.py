@@ -142,6 +142,7 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
 
     #  ==== run Rob's evaluate the kasen sim universe code
     print "\n\t examining Kasen universe KN models for coverage",
+    print "AG DATA DIR "+str(data_dir)
     apparent_mag = run_ap_mag_for_kasen_models (filter_list[0], distance, dist_err, 
         days_since_burst, kasen_fraction, data_dir) 
     apparent_mag = np.float(apparent_mag)
@@ -205,8 +206,15 @@ def run_ap_mag_for_kasen_models (filter, distance, dist_err, days_since_burst, k
     code = knlc_dir+"kn_brightness_estimate.py"
     cmd = "python {} --distance {} --distance_err {} --time_delay {} ".format(code, distance, dist_err, days_since_burst)
     cmd = cmd + "--fraction {} ".format(kasen_fraction)
-    cmd = cmd + "--magplot_file kn_mag_plot.png --expplot_file kn_exp_plot.png --report_file kn_report"
+    cmd = cmd + "--magplot_file kn_mag_plot.png "
+    cmd = cmd + "--expplot_file kn_exp_plot.png "
+    cmd = cmd + "--report_file {}".format(data_dir+"/kn_report.txt")
+
+#    cmd = cmd + "--magplot_file kn_mag_plot.png --expplot_file kn_exp_plot.png --report_file kn_report"
+
     os.system(cmd)
+#    print "AG PRINT datadir "+str(data_dir)
+#    print "AG CMD "+str(cmd)
     file = data_dir+"/kn_report.txt"
     fd = open(file,"r")
     for i in range(0,16): fd.readline()

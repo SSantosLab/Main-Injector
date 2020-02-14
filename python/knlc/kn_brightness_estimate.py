@@ -1,5 +1,7 @@
 # A module to print brightness estimates
 
+import matplotlib
+matplotlib.use("Agg");
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import numpy as np
