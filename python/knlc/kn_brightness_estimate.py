@@ -29,6 +29,7 @@ class KNCalc():
         self.delta_mjd = round(float(time_delay) / 24.0, 1)
         
         # Read KN brightness lookup table
+        # Read KN brightness lookup table
         knlc_dir = os.getenv("DESGW_DIR", "./")
         if knlc_dir != "./" : knlc_dir = knlc_dir + "/knlc/"
         df = pd.read_csv(knlc_dir+'data/grouped_photometry.csv')
@@ -114,6 +115,19 @@ def mags_of_percentile(cutoff, percentile_dict):
     index = int(round(cutoff))
     return {band: percentile_dict['%s_cutoff' %band][index] for band in ['g', 'r', 'i', 'z']}
 
+def make_output_csv(cutoffs, percentile_dict, outfile=None, return_df=False):
+    if not outfile and not return_df:
+        #with this combination of options, this function does nothing, so just return
+        return
+
+    out_data = [mags_of_percentile(cutoff, percentile_dict) for cutoff in cutoffs]
+    out_df = pd.DataFrame(out_data)
+    out_df['PERCENTILE'] = cutoffs
+    if outfile:
+        out_df.to_csv(outfile, index=False)
+    
+    if return_df:
+        return out_df
 
 def make_plot(percentile_dict, blue, red, title='', outfile=None, fraction=None):
     plt.figure()
@@ -168,6 +182,17 @@ def make_plot(percentile_dict, blue, red, title='', outfile=None, fraction=None)
 
     return
 
+def get_percentile_at_exp_time(exptime, band, percentile_dict):
+    m0 = get_m0(band)
+    mag = m0 + 1.25 * np.log10(exptime / 90.0)
+
+    df = make_output_csv(np.linspace(0.0, 100.0, 101), percentile_dict, outfile=None, return_df=True)
+
+    index_of_closest_mag = np.argmin(np.abs(mag - df[band].values))
+    percentile = df.iloc[index_of_closest_mag]['PERCENTILE']
+    return percentile
+
+
 def get_exptime(m0, mag):
     return 90.0 * 10 ** ((mag - m0) / 1.25)
 
@@ -193,6 +218,16 @@ def make_exptime_plot(percentile_dict, title='', outfile=None):
         ax1.plot(exptimes, percentile_levels, lw=2, label=band, color=color_dict[band])
 #        ax2.plot(percentile_dict['%s_cutoff' %band], percentile_levels, lw=2, ls='--', color=color_dict[band])
 #        ax3.plot(percentile_dict['%s_cutoff' %band], percentile_levels, lw=2, ls='--', color=color_dict[band])
+
+    ax1.axvline(x=90.0, ls='--', lw=0.5)
+
+    percentiles_at_90_sec = {band: get_percentile_at_exp_time(90.0, band, percentile_dict) for band in ['g', 'r', 'i', 'z']}
+    
+
+    ax1.text(105, 25, "90 sec in g = %.1f %%" %(percentiles_at_90_sec['g']), horizontalalignment='left', verticalalignment='center', fontsize=11)
+    ax1.text(105, 20, "90 sec in r = %.1f %%" %(percentiles_at_90_sec['r']), horizontalalignment='left', verticalalignment='center', fontsize=11)
+    ax1.text(105, 15, "90 sec in i = %.1f %%" %(percentiles_at_90_sec['i']), horizontalalignment='left', verticalalignment='center', fontsize=11)
+    ax1.text(105, 10, "90 sec in z = %.1f %%" %(percentiles_at_90_sec['z']), horizontalalignment='left', verticalalignment='center', fontsize=11)
 
     ax1.set_xlabel("exptime * teff", fontsize=14)
     ax1.set_ylabel("percent (< 10$\sigma$ limiting mag)", fontsize=14)
@@ -234,7 +269,7 @@ if __name__ == '__main__':
     parser.add_option('--fraction', default=90, help="Fraction of models you want to detect")
     parser.add_option('--magplot_file', default=None, help="Outfile for mag plot")
     parser.add_option('--expplot_file', default=None, help="Outfile for exp plot")
-    parser.add_option('--report_file', default=None, help="Outfile for report")
+    parser.add_option('--report_file', default=None, help="Prefix for reports")
     options, args = parser.parse_args(sys.argv[1:])
 
     if not options.distance:
@@ -249,13 +284,17 @@ if __name__ == '__main__':
         print("ERROR: You must specify the time since merger in hours with the --time_delay flag")
         sys.exit()
 
+    if options.report_file:
+        if options.report_file.find('.') != -1:
+            print("WARNING: report file argument is not supposed to include a .txt, .csv, etc.")
+
     kn_calc = KNCalc(float(options.distance), float(options.distance_err), float(options.time_delay))
 
     blue, red = gw170817(kn_calc.template_df_full)
 
     
-    print_dict(blue, "GW170817-blue", outfile=options.report_file)
-    print_dict(red, "GW170817-red", outfile=options.report_file)
+    print_dict(blue, "GW170817-blue", outfile=options.report_file + '.txt')
+    print_dict(red, "GW170817-red", outfile=options.report_file + '.txt')
 
 
     percentile_dict = calc_mag_fractions(kn_calc.template_df_full)
@@ -264,15 +303,18 @@ if __name__ == '__main__':
     for band in ['g', 'r', 'i', 'z']:
         cutoff_dict['%s_magerr' %band] = 0.00
     
+    make_output_csv(np.linspace(0., 100., 101), percentile_dict, outfile=options.report_file + '.csv')
     
     if options.fraction < 1.0:
-        print_dict(cutoff_dict, "%.2f Detection Probability Magnitude Thresholds" %float(options.fraction * 100), outfile=options.report_file)
+        print_dict(cutoff_dict, "%.2f Detection Probability Magnitude Thresholds" %float(options.fraction * 100), outfile=options.report_file + '.txt')
     else:
-        print_dict(cutoff_dict, "%.2f Detection Probability Magnitude Thresholds" %float(options.fraction), outfile=options.report_file)
+        print_dict(cutoff_dict, "%.2f Detection Probability Magnitude Thresholds" %float(options.fraction), outfile=options.report_file + '.txt')
 
     plot_title = "%s +/- %s Mpc  -- %.2f Days After Merger" %(options.distance, options.distance_err, float(options.time_delay) / 24.0)
     make_plot(percentile_dict, blue, red, title=plot_title, outfile=options.magplot_file, fraction=options.fraction)
     make_exptime_plot(percentile_dict, title=plot_title, outfile=options.expplot_file)
+
+
 
 
 
