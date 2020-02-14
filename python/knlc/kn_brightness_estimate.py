@@ -7,6 +7,7 @@ from optparse import OptionParser
 import pandas as pd
 from scipy.stats import norm
 import sys
+import os
 
 from astropy.cosmology import WMAP9 as cosmo
 from astropy.cosmology import z_at_value

@@ -205,7 +205,7 @@ def run_ap_mag_for_kasen_models (filter, distance, dist_err, days_since_burst, k
     code = knlc_dir+"kn_brightness_estimate.py"
     cmd = "python {} --distance {} --distance_err {} --time_delay {} ".format(code, distance, dist_err, days_since_burst)
     cmd = cmd + "--fraction {} ".format(kasen_fraction)
-    cmd = cmd + "--magplot_file kn_mag_plot.png --expplot_file kn_exp_plot.png --report_file kn_report.txt"
+    cmd = cmd + "--magplot_file kn_mag_plot.png --expplot_file kn_exp_plot.png --report_file kn_report"
     os.system(cmd)
     file = data_dir+"/kn_report.txt"
     fd = open(file,"r")
