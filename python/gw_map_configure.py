@@ -173,4 +173,5 @@ class results(object):
         self.first_slot = False
         self.best_slot = False
         self.slot_numbers = False
+        self.n_hexes = False
 

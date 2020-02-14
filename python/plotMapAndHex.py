@@ -133,6 +133,7 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
         xmin=xMap.min(); xmax=xMap.max()
         ymin=yMap.min(); ymax=yMap.max()
         #doHexes=False
+    if hexRa == -999 or hexDec == -999: doHexes = False
 
 
     print "\t ... makeImage",
@@ -427,6 +428,7 @@ def makeImage (xMap, yMap, vals, xmin, xmax, ymin, ymax, scale,
     nsteps_y = int(ysize*scale)
     step_size = 1.0/scale
 
+    print "nsteps_y, nsteps_x=",nsteps_y, nsteps_x
     data = np.zeros( (nsteps_y, nsteps_x) )
     
     if verbose: print xmin, xmax, ymin, ymax, "    ", xsize, ysize

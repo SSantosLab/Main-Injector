@@ -265,7 +265,7 @@ def observingStatsFromRaDecFile( trigger_id, data_dir, slotsObserving, mapZero=0
         if start_slot > -1 and do_nslots > -1 :
             if i+mapZero < start_slot or i+mapZero >= start_slot+do_nslots : continue
         ix, = np.where(slotNum == i)
-        if ix.size > 0 :
+        if not (prob.size == 1 and prob.sum() == 0) and ix.size > 0 :
             slot_sum_prob = 100*prob[ix].sum() 
             if slot_sum_prob > 1e-7 :
                 print "\t",i+mapZero, 
@@ -281,14 +281,14 @@ def observingStatsFromRaDecFile( trigger_id, data_dir, slotsObserving, mapZero=0
 def readObservingRecord(trigger_id, data_dir) :
     import os
     name = os.path.join(data_dir, str(trigger_id) + "-ra-dec-id-prob-mjd-slot-dist.txt")
-    if not os.path.exists(name) or os.stat(name).st_size == 0 :
-        ra,dec,id,prob,mjd,slotNum,dist = \
-            np.array(0),np.array(0),np.array("0"), \
-            np.array(0),np.array(0),np.array(0),np.array(0)
-    else :
+    try :
         ra,dec,prob,mjd,slotNum,dist = \
             np.genfromtxt(name,unpack=True,comments="#",usecols=(0,1,3,4,5,6))
         id = np.genfromtxt(name,unpack=True,comments="#", usecols=(2),dtype="str")
+    except :
+        ra,dec,id,prob,mjd,slotNum,dist = \
+            np.array([0,]),np.array([0,]),np.array(["0",]), \
+            np.array([0,]),np.array([0,]),np.array([0,]),np.array([0,])
     return ra,dec,id,prob,mjd,slotNum,dist
 
 def slotsObservingToNpArrays(slotsObserving) :

@@ -112,7 +112,7 @@ def recycle (trigger_id, skymap, trigger_type,
 
     if do_make_jsons :
         # make the jsons 
-        getHexObservations.make_jsons( gw_map_trigger, gw_map_strategy, gw_map_control)
+        getHexObservations.make_jsons( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
 
     if do_make_gifs :
         getHexObservations.makeGifs( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)

@@ -293,42 +293,41 @@ def make_hexes( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
     # save results to the record -- here is made the ra-dec-id- file
     writeObservingRecord(hoursObserving,   data_dir, gw_map_trigger, gw_map_control, gw_map_strategy)
     #ra,dec,id,prob,mjd,slotNumbers,islots = obsSlots.observingStats(hoursObserving, mapZero, do_nslots, start_slot)
-    try :
-        ra,dec,id,prob,mjd,slotNumbers,islots = obsSlots.observingStatsFromRaDecFile( trigger_id, data_dir, 
-            hoursObserving, mapZero, do_nslots, start_slot)
-    except :
-        # no hexes to observe
-        ra = np.array([0,])
-        maxProb_slot = -1
-    # Get slot number  of maximum probability
+    ra,dec,id,prob,mjd,slotNumbers,islots = obsSlots.observingStatsFromRaDecFile( trigger_id, data_dir, 
+        hoursObserving, mapZero, do_nslots, start_slot)
     maxProb_slot = obsSlots.maxProbabilitySlot(prob,slotNumbers)
     hoursObserving["maxSlot"] = maxProb_slot
     pickle.dump(hoursObserving, open("{}-hoursObserving.pickle".format(trigger_id),"w"))
     # if the length of ra is one and value zero, nothing to observe or plot
-    if ra.size == 1 and ra[0] == 0: 
-        return 0
-    # shall we measure the total ligo probability covered?
-    # Lets find out how well we did in covering Ligo probability
-    try:
-        sum_ligo_prob = how_well_did_we_do( gw_map_trigger, gw_map_strategy, gw_map_control)
-    except:
-        print '=============>>>> ZERO PROBABILITY!'
+    if ra.size == 1 and prob.sum() == 0: 
+        print '\t ZERO PROBABILITY observed!'
         sum_ligo_prob = 0.
+    else :
+        # shall we measure the total ligo probability covered?
+        # Lets find out how well we did in covering Ligo probability
+        try:
+            sum_ligo_prob = how_well_did_we_do( gw_map_trigger, gw_map_strategy, gw_map_control)
+        except:
+            print '\t ZERO PROBABILITY observed!'
+            sum_ligo_prob = 0.
         
-    if do_nslots == -1 :
-        cumulPlot(trigger_id, data_dir) 
-        cumulPlot2(trigger_id, data_dir) 
+        if do_nslots == -1 :
+            cumulPlot(trigger_id, data_dir) 
+            cumulPlot2(trigger_id, data_dir) 
 
     gw_map_results.n_slots = n_slots
     gw_map_results.first_slot = mapZero
     gw_map_results.best_slot = maxProb_slot
     gw_map_results.slot_numbers = np.unique(slotNumbers)
     gw_map_results.sum_ligo_prob = sum_ligo_prob
+    gw_map_results.n_hexes = ra.size
+    if ra.size == 1 and prob.sum() == 0: 
+        gw_map_results.n_hexes = 0
 
     return 
 
 # Make the json files
-def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control) :
+def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     print "=================================================="
     print "                 make_jsons "
     print "=================================================="
@@ -341,8 +340,12 @@ def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control) :
     tiling_list   = gw_map_strategy.tiling_list
     propid        = gw_map_strategy.propid
     data_dir      = gw_map_control.datadir
-    ra,dec,id,prob,mjd,slotNum,dist = obsSlots.readObservingRecord(trigger_id,data_dir)
-    #print "\n=============>>>>  JSONs"
+    n_hexes       = gw_map_results.n_hexes
+
+    if n_hexes == 0 :
+        print "\t no hexes to turn into json files"
+        return 
+
     turnObservingRecordIntoJSONs(
         ra,dec,id,prob,mjd,slotNum, trigger_id,
         exposure_list, filter_list, tiling_list, trigger_type, skymap, data_dir, propid) 
@@ -355,6 +358,7 @@ def makeGifs (gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     print "\n=================================================="
     print "                 make_gifs "
     print "=================================================="
+    n_hexes       = gw_map_results.n_hexes
 
 
     # make gif centered on ra=0,dec=0, all sky
@@ -364,33 +368,32 @@ def makeGifs (gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
 
     # make gif centered on hexes
     if  gw_map_control.centeredSky== True :
-        n_plots = makeObservingPlots(
-            gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=False)
+        if n_hexes != 0:
+            n_plots = makeObservingPlots(
+                gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=False)
+        else :
+            print "\t skipping centered gif as no hexes observed"
 
 def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=True) :
-    trigger_id = gw_map_trigger.trigger_id
-    camera = gw_map_strategy.camera
 
-    data_dir = gw_map_control.datadir
-    start_slot = gw_map_control.start_slot
-    do_nslots = gw_map_control.do_nslots
-    gif_resolution= gw_map_control.gif_resolution
+    trigger_id     = gw_map_trigger.trigger_id
+    camera         = gw_map_strategy.camera
+    data_dir       = gw_map_control.datadir
+    start_slot     = gw_map_control.start_slot
+    do_nslots      = gw_map_control.do_nslots
+    gif_resolution = gw_map_control.gif_resolution
 
     # we are doing a quick run, avoiding most calculations as they are already done and on disk
     if (gw_map_results.hoursPerNight == False)  :
         reuse_results(data_dir, gw_map_trigger, gw_map_strategy, gw_map_results, get_slots=True)
-    n_slots = gw_map_results.n_slots
-    first_slot = gw_map_results.first_slot
-    best_slot = gw_map_results.best_slot
-    probs =   gw_map_results.probability_per_slot 
-    times =    gw_map_results.time_of_slot 
+    n_slots        = gw_map_results.n_slots
+    n_hexes        = gw_map_results.n_hexes
+    first_slot     = gw_map_results.first_slot
+    best_slot      = gw_map_results.best_slot
+    probs          = gw_map_results.probability_per_slot 
+    times          =  gw_map_results.time_of_slot 
 
     made_maps_list = (gw_map_results.made_maps_list).astype(int)
-
-    if n_slots == 0:
-        print '>>>>>>>>>>>>>>>>>>nothingToObserveShowSomething'
-        nothingToObserveShowSomething(trigger_id, data_dir)
-        return
 
     print "\n================ >>>>>>>>>>>>>>>>>>>>> =================== "
     print "makeObservingPlots(",n_slots, trigger_id, best_slot,data_dir," )"
@@ -399,8 +402,7 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
     figure = plt.figure(1,figsize=(8.5*1.618,8.5))
 
     # first, make the probability versus something plot
-    ra,dec,id,prob,slotMjd,slotNumbers,dist = obsSlots.readObservingRecord(
-        trigger_id, data_dir)
+    ra,dec,id,prob,slotMjd,slotNumbers,dist = obsSlots.readObservingRecord( trigger_id, data_dir)
 
     # now make the hex observation plots
     counter = 1   ;# already made one
@@ -411,7 +413,7 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
 
     for i in made_maps_list:
         
-        observingPlot(figure,trigger_id,i,data_dir, n_slots, camera, allSky=allSky, gif_resolution=gif_resolution)
+        observingPlot(figure,trigger_id,i,data_dir, n_slots, n_hexes, camera, allSky=allSky, gif_resolution=gif_resolution)
         name = str(trigger_id)+"-{}observingPlot-{}.png".format(label,i)
         plt.savefig(os.path.join(data_dir,name))
         counter += 1
@@ -422,34 +424,6 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
     os.system("convert  -delay 40 -loop 0  " + string)
 
     # return the number of plots made
-    return counter
-#
-# ===== its a disaster, compute something
-#
-def nothingToObserveShowSomething(simNumber, data_dir) :
-    import matplotlib.pyplot as plt
-    print "nothingToObserveShowSomething",
-    figure = plt.figure(1,figsize=(8.5*1.618,8.5))
-    ra,dec,id,prob,mjd,slotNum,dist=obsSlots.readObservingRecord(simNumber, data_dir)
-    ix = np.argmax(prob)
-    try:
-        slot = np.int(slotNum[ix])
-        title = "slot {} hex maxProb {:.6f}, nothing to observe".format(slot, prob[ix])
-    except:
-        print "nothingToObserveShowSomething: fiasco."
-        print "ra",ra
-        print "dec",dec
-        print "id",id
-        print "prob",prob
-        print "mjd",mjd
-        print "slotNum", slotNum
-        print "ix",ix
-        print "ix index",np.nonzero(ix)
-        print "nothingToObserveShowSomething: fiasco. attempting to go on"
-        slot = 0
-        #raise Exception("this failed once, but ran fine when I did it in the directory. NSF thing?")
-        title = "slot {} hex maxProb {:.6f}, nothing to observe".format("nothing", 0.0)
-    counter = equalAreaPlot(figure,slot,simNumber,data_dir,title) 
     return counter
 
 def how_well_did_we_do(gw_map_trigger, gw_map_strategy, gw_map_control) :
@@ -949,18 +923,23 @@ def equalAreaPlot(figure,slot,simNumber,data_dir, title="") :
 
 # modify mcbryde to have alpha=center of plot
 #   "slot" is roughly hour during the night at which to make plot
-def observingPlot(figure, simNumber, slot, data_dir, nslots, camera, allSky=False, gif_resolution=1.0) :
+def observingPlot(figure, simNumber, slot, data_dir, nslots, n_hexes, camera, allSky=False, gif_resolution=1.0) :
     import plotMapAndHex
 
-    # get the planned observations
-    ra,dec,id,prob,mjd,slotNumbers,dist = obsSlots.readObservingRecord(simNumber, data_dir)
-    ix = slotNumbers == slot
-    if np.any(ix):
-        the_mjd = mjd[ix][0]
-        time = utcFromMjd(the_mjd, alt=False)
-        time = "Shutter open " + time
+    if n_hexes > 0 :
+        # get the planned observations
+        ra,dec,id,prob,mjd,slotNumbers,dist = obsSlots.readObservingRecord(simNumber, data_dir)
+        ix = slotNumbers == slot
+        if np.any(ix):
+            the_mjd = mjd[ix][0]
+            time = utcFromMjd(the_mjd, alt=False)
+            time = "Shutter open " + time
+        else :
+            time = "Shutter closed " 
     else :
         time = "Shutter closed " 
+        ra = -999; dec = -999
+        slotNumbers = -999
     
     if allSky :
         title = "{} Slot {} {}".format(simNumber, slot, time)
