@@ -23,19 +23,9 @@ def recycle (trigger_id, skymap, trigger_type,
 
     # debug
     debug = config["debug"]    
-
     # camera
     camera   = config["camera"]
 
-    #resolution
-    #resolution = 256 ;# default, resolution element on order of ccd area size
-    #resolution = 128 ;# roughly 4 ccds
-    #resolution = 64 ;# very fast, debuging, roughly 1/4 of the camera size
-    resolution     = config["resolution"]
-    # gif_resolution = 3. pub quality
-    # gif_resolution = 1. good to show
-    # gif_resolution = 0.1  8-bit resolution-like but tells the story and very fast
-    gif_resolution     = config["gif_resolution"]
     # control the code running
     if do_make_maps == -1:
         do_make_maps   = config["do_make_maps"]
@@ -48,6 +38,11 @@ def recycle (trigger_id, skymap, trigger_type,
     allSky = config["allSkyGif"]
     centeredSky = config["centeredSkyGif"]
 
+    # healpix map resolution
+    resolution     = config["resolution"]
+    # gif pixel resolution
+    gif_resolution     = config["gif_resolution"]
+
 
     # same day?
     days_since_burst = config["days_since_burst"]
@@ -55,6 +50,7 @@ def recycle (trigger_id, skymap, trigger_type,
     # strategy
     kasen_fraction         = config["kasen_fraction"]
     hoursAvailable         = config["hoursAvailable"]
+    use_teff               = config["use_teff"]
     exposure_length_bright  = config["exposure_length_bright"]
     filter_list_bright     = config["exposure_filter_bright"]
     exposure_tiling_bright = config["exposure_tiling_bright"]
@@ -90,7 +86,7 @@ def recycle (trigger_id, skymap, trigger_type,
         resolution, days_since_burst=days_since_burst)
     gw_map_strategy = gw_map_configure.strategy( camera, exposure_length, 
         filter_list, tiling_list, maxHexesPerSlot, hoursAvailable, propid,
-        max_number_of_hexes_to_do, kasen_fraction)
+        max_number_of_hexes_to_do, kasen_fraction, use_teff)
     gw_map_results = gw_map_configure.results()
 
     if not os.path.exists(outputDir): os.makedirs(outputDir)

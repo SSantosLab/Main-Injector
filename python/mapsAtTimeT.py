@@ -65,9 +65,9 @@ def oneDayOfTotalProbability (obs, models, deltaTime, start_mjd,
     spatial = gw_map_trigger.ligo
     distance = gw_map_trigger.ligo_dist
     distance_sig= gw_map_trigger.ligo_dist_sig
-    filter = gw_map_strategy.filter_list[0]
-    exposure = gw_map_strategy.exposure_list[0]
     apparent_mag_source_model  = gw_map_strategy.apparent_mag_source_model
+    filter = gw_map_strategy.working_filter
+    exposure = gw_map_strategy.summed_exposure_time
 
 
     # the work.
@@ -109,7 +109,9 @@ def manyDaysOfTotalProbability (
         print "hours since Time Zero: {:5.1f}".format(time*24.),
         totalProb, sunIsUp = totalProbability(obs, start_mjd, time, \
             spatial, distance, distance_sig, models, \
-            trigger_type=trigger_type, filter=filter, exposure=exposure)
+            filter=filter, exposure=exposure, \
+            trigger_type=trigger_type,  \
+            apparent_mag_source_model= apparent_mag_source_model)
         if sunIsUp: 
             print "\t ... the sun is up"
         else:
@@ -165,7 +167,9 @@ def manyDaysOfTotalProbability (
 #
 def totalProbability(obs, start_mjd, daysSinceBurst, \
         spatial, distance, distance_sig, models,
-        filter="i", exposure=180, trigger_type="bright", apparent_mag_source_model=21.5) :
+        filter="i", exposure=180, trigger_type="bright", 
+        apparent_mag_source_model=21.5) :
+
     obs,sm,sunIsUp = probabilityMaps(obs, start_mjd, daysSinceBurst, \
         spatial, distance, distance_sig,
         models, filter, exposure, trigger_type=trigger_type, 
@@ -232,11 +236,11 @@ def probabilityMapSaver (obs, models, times, probabilities,
     ligo                       = gw_map_trigger.ligo
     distance                   = gw_map_trigger.ligo_dist
     distance_sig               = gw_map_trigger.ligo_dist_sig
-    camera                     = gw_map_strategy.camera
-    apparent_mag_source_model  = gw_map_strategy.apparent_mag_source_model
     debug                      = gw_map_control.debug
     reject_hexes               = gw_map_control.reject_hexes
     data_dir                   = gw_map_control.datadir
+    camera                     = gw_map_strategy.camera
+    apparent_mag_source_model  = gw_map_strategy.apparent_mag_source_model
     #onlyHexesAlreadyDone  = gw_map_control.this_tiling
     onlyHexesAlreadyDone  = []
 
@@ -261,13 +265,7 @@ def probabilityMapSaver (obs, models, times, probabilities,
         if debug:
             if prob <= prob_slots : 
                 performHexalatationCalculation = False
-        #print "================== map save =====>>>>>>>>===== ",
-        #print "slot {} | hours since Time Zero: {:5.1f}".format(counter, time*24.),
 
-        # this has always been here- removing Jan 2020
-        #if prob <= 0 : 
-        #    print "\t total probability is zero"
-        #    continue
         obs,sm, isDark = \
             probabilityMaps( obs, start_mjd, time, ligo, distance, distance_sig,
             models, trigger_type=trigger_type, 

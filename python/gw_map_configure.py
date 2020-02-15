@@ -6,6 +6,7 @@ import fitsio
 import numpy as np
 import hp2np
 import healpy as hp
+import yaml
 
 class trigger(object):
     """
@@ -31,8 +32,8 @@ class trigger(object):
         self.burst_mjd = burst_mjd
 
         # ok, I'm going to declare that we want this routine to start at noon UT on JD of burst
-        # so
-        self.start_mjd = np.round(burst_mjd)-0.5
+        # As there is automatic sunrise, sunset calculations given MJD, we will pick midnight
+        self.start_mjd = np.round(burst_mjd)
 
 
         if trigger_type == "bright" :
@@ -98,24 +99,33 @@ class trigger(object):
         self.ligo_norm = ligo_dist_norm
 
 
-
+# control the observations
 class strategy(object) :
     """
     """
     def __init__(self, camera, exposure_list, filter_list, tiling_list, maxHexesPerSlot, 
-            hoursAvailable, propid, max_number_of_hexes_to_do, kasen_fraction):
+            hoursAvailable, propid, max_number_of_hexes_to_do, kasen_fraction, use_teff):
         """
         """
-        self.camera = camera
-        self.exposure_list = exposure_list
-        self.filter_list = filter_list
-        self.tiling_list = tiling_list
-        self.maxHexesPerSlot = maxHexesPerSlot
-        self.hoursAvailable = hoursAvailable
-        self.propid = propid
+        self.camera                    = camera
+        self.exposure_list             = np.array(exposure_list)
+        self.filter_list               = np.array(filter_list)
+        self.tiling_list               = np.array(tiling_list)
+        self.maxHexesPerSlot           = maxHexesPerSlot
+        self.hoursAvailable            = hoursAvailable
+        self.propid                    = propid
         self.max_number_of_hexes_to_do = max_number_of_hexes_to_do
-        self.kasen_fraction = kasen_fraction
+        self.kasen_fraction            = kasen_fraction
         self.apparent_mag_source_model = 21.5
+        self.use_teff                  = use_teff
+        if abs(use_teff - 1.0) > 0.01 :
+           print "\t scaling summed exposure time by teff {}".format(use_teff)
+
+        working_filter            = self.filter_list[0]
+        ix                        = self.filter_list == working_filter
+        sum_exposure_time         = self.exposure_list[ix].sum() * use_teff
+        self.summed_exposure_time = sum_exposure_time
+        self.working_filter       = working_filter
 
         if camera == "decam" :
             self.overhead =  30. # seconds
@@ -128,6 +138,9 @@ class strategy(object) :
             self.area_per_hex = 9.8
         else: raise Exception("camera {} not handled".format(camera))
 
+
+
+# control the code technically
 class control(object):
     """
     """
@@ -157,6 +170,7 @@ class control(object):
         self.mi_map_dir = mi_map_dir 
  
 
+# save intermediate results
 class results(object):
     """
     """

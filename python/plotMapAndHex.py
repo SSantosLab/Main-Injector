@@ -117,7 +117,7 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
 
     # project into mcbryde 
     xMap,yMap = mcbryde.mcbryde(raMap, decMap, alpha=alpha, beta=beta)
-    if hexRa != -999 :
+    if len(hexRa) == 1 and hexRa != -999 :
         x,y = mcbryde.mcbryde(hexRa, hexDec, alpha=alpha, beta=beta)
 
     if xmin==xmax and ymin==ymax:
@@ -134,7 +134,7 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
         xmin=xMap.min(); xmax=xMap.max()
         ymin=yMap.min(); ymax=yMap.max()
         #doHexes=False
-    if hexRa == -999 or hexDec == -999: doHexes = False
+    if len(hexRa) == 1 and (hexRa == -999 or hexDec == -999): doHexes = False
 
 
     print "\t ... makeImage",

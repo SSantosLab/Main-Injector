@@ -85,6 +85,9 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     maxHexesPerSlot      = gw_map_strategy.maxHexesPerSlot
     overhead             = gw_map_strategy.overhead 
     kasen_fraction       = gw_map_strategy.kasen_fraction
+    use_teff             = gw_map_strategy.use_teff
+    summed_exposure_time = gw_map_strategy.summed_exposure_time 
+    working_filter       = gw_map_strategy.working_filter  
 
     resolution           = gw_map_control.resolution
     this_tiling          = gw_map_control.this_tiling
@@ -102,7 +105,6 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
          days_since_burst)
     start_mjd = start_mjd + days_since_burst
 
-
     if snarf_mi_maps:
         if mi_map_dir == "/data/des41.a/data/desgw/O3FULL/Main-Injector/OUTPUT/O3REAL/":
             mi_map_dir = mi_map_dir + trigger_id 
@@ -112,12 +114,7 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
         os.system("cp {}/*probabilityTimeCache*txt {}/".format(mi_map_dir, data_dir))
         os.system("cp {}/*-hexVals.txt {}/".format(mi_map_dir, data_dir))
         os.system("cp {}/*-hexVals-cutOverlappingProb.txt {}/".format(mi_map_dir, data_dir))
-
-        # cp $other_dir/*hp .
-        # cp $other_dir/probabilityTimeCache*txt .
-        # cp $other_dir/*-hexVals.txt .
         return
-
 
     print "\t cleaning up old files",
     files = glob.glob(data_dir+"/*png"); 
@@ -134,20 +131,7 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     for f in files: os.remove(f)
     print "\t done cleaning up"
 
-    exposure_list = np.array(exposure_list)
-    filter_list = np.array(filter_list)
-    tiling_list = np.array(tiling_list)
-    ix = filter_list == filter_list[0]
-    exposure_length = exposure_list[ix].sum()
-
-    #  ==== run Rob's evaluate the kasen sim universe code
-    print "\n\t examining Kasen universe KN models for coverage",
-    apparent_mag = run_ap_mag_for_kasen_models (filter_list[0], distance, dist_err, 
-        days_since_burst, kasen_fraction, data_dir) 
-    apparent_mag = np.float(apparent_mag)
-    gw_map_strategy.apparent_mag_source_model = apparent_mag
-    print " {}% requires observations at {} <= {:5.2f}".format(kasen_fraction, filter_list[0], apparent_mag)
-
+# we need to understand the night, how long it is, etc
     print "\t obs slots starting"
     answers = obsSlots.slotCalculations( start_mjd, exposure_list, tiling_list, 
         overhead, hexesPerSlot=maxHexesPerSlot, camera=camera) 
@@ -157,6 +141,20 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     print "\t obs slots done: hours in night: {:.1f}, slot duration: {:.1f} minutes, ".format(
         hoursPerNight, slotDuration),
     print("hexes per slot: {}\n".format(maxHexesPerSlot))
+
+    #  ==== run Rob's evaluate the kasen sim universe code
+    print "\t examining Kasen universe KN models for coverage"
+    night_dur,sunset,sunrise = mags.findNightDuration(start_mjd, camera)
+    midnight_since_burst = 24*(sunset+night_dur/2. - burst_mjd) 
+    apparent_mag = run_ap_mag_for_kasen_models (working_filter, 
+        distance, dist_err, 
+        midnight_since_burst,
+        kasen_fraction, data_dir) 
+    apparent_mag = np.float(apparent_mag)
+    gw_map_strategy.apparent_mag_source_model = apparent_mag
+    print "\t\t at a time halfway through night, {:.2f} days after merger:".format(midnight_since_burst/24.)
+    print "\t\t {}% requires observations at {} <= {:5.2f}\n".format(kasen_fraction, filter_list[0], apparent_mag)
+
         
     # ==== get the neutron star explosion models
     models = modelRead.getModels()
@@ -175,8 +173,9 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     except:
         print "\t !!!!!!!! ------- no distance information in skymap ------ !!!!!!!!"
 
+    # details of the observations
     obs = mags.observed(ra,dec,ligo, start_mjd, verbose=False)
-    obs.limitMag("i",exposure=exposure_length)
+    obs.limitMag(working_filter,exposure=summed_exposure_time)
     print "finished setting up exposure calculation"
 
     # ==== calculate maps during a full night of observing
@@ -266,7 +265,7 @@ def make_hexes( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
     slotDuration = gw_map_results.slotDuration   
     hoursPerNight = gw_map_results.hoursPerNight 
     if (hoursPerNight == False)  :
-        reuse_results(data_dir, gw_map_trigger, gw_map_strategy, gw_map_results) 
+        reuse_results(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
         probs = gw_map_results.probability_per_slot 
         times = gw_map_results.time_of_slot 
         hoursPerNight = gw_map_results.hoursPerNight 
@@ -345,11 +344,17 @@ def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
     tiling_list   = gw_map_strategy.tiling_list
     propid        = gw_map_strategy.propid
     data_dir      = gw_map_control.datadir
+
+    hoursPerNight = gw_map_results.hoursPerNight
+    if (hoursPerNight == False)  :
+        reuse_results(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, get_slots=True) 
     n_hexes       = gw_map_results.n_hexes
 
     if n_hexes == 0 :
         print "\t no hexes to turn into json files"
         return 
+
+    ra,dec,id,prob,mjd,slotNum,dist = obsSlots.readObservingRecord(trigger_id,data_dir)
 
     turnObservingRecordIntoJSONs(
         ra,dec,id,prob,mjd,slotNum, trigger_id,
@@ -390,7 +395,7 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
 
     # we are doing a quick run, avoiding most calculations as they are already done and on disk
     if (gw_map_results.hoursPerNight == False)  :
-        reuse_results(data_dir, gw_map_trigger, gw_map_strategy, gw_map_results, get_slots=True)
+        reuse_results(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, get_slots=True)
     n_slots        = gw_map_results.n_slots
     n_hexes        = gw_map_results.n_hexes
     first_slot     = gw_map_results.first_slot
@@ -484,13 +489,14 @@ def make_divisions_of_time (
 
 # make_hexes computes slot information, so get_slots = false
 # make_observingPlots needs slot information, so get_slots = true
-def reuse_results(data_dir, gw_map_trigger,gw_map_strategy, gw_map_results, get_slots=False) :
-        trigger_id = gw_map_trigger.trigger_id
-        camera = gw_map_strategy.camera
+def reuse_results(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, get_slots=False) :
+        trigger_id      = gw_map_trigger.trigger_id
+        data_dir        = gw_map_control.datadir
+        camera           = gw_map_strategy.camera
         probabilityTimesCache = os.path.join(data_dir,\
         "probabilityTimesCache_"+str(trigger_id)+".txt")
-        print "=============>>>> Reuse results via reuse_results",
-        print "\t using probabilities, times, and maps from", probabilityTimesCache
+        print "=============>>>> Reuse results via reuse_results"
+        #print "\t using probabilities, times, and maps from", probabilityTimesCache
         if os.stat(probabilityTimesCache).st_size == 0 :
             probs, times = np.array([0,]),np.array([0,])
             print "\t got nothing- we're skipping this one"
@@ -516,9 +522,11 @@ def reuse_results(data_dir, gw_map_trigger,gw_map_strategy, gw_map_results, get_
 
         if get_slots:
             hoursObserving = pickle.load(open("{}-hoursObserving.pickle".format(data_dir+'/'+trigger_id),"r"))
-            gw_map_results.n_slots = hoursObserving["nslots"]
+            ra,dec,id,prob,mjd,slotNum,islot = obsSlots.slotsObservingToNpArrays(hoursObserving)
+            gw_map_results.n_slots    = hoursObserving["nslots"]
             gw_map_results.first_slot = hoursObserving["mapZero"]
-            gw_map_results.best_slot = hoursObserving["maxSlot"]
+            gw_map_results.best_slot  = hoursObserving["maxSlot"]
+            gw_map_results.n_hexes    = ra.size
 
 # ===== The economics analysis
 #
