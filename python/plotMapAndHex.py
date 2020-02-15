@@ -117,7 +117,8 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
 
     # project into mcbryde 
     xMap,yMap = mcbryde.mcbryde(raMap, decMap, alpha=alpha, beta=beta)
-    x,y = mcbryde.mcbryde(hexRa, hexDec, alpha=alpha, beta=beta)
+    if hexRa != -999 :
+        x,y = mcbryde.mcbryde(hexRa, hexDec, alpha=alpha, beta=beta)
 
     if xmin==xmax and ymin==ymax:
         ix = np.ones(xMap.size).astype(bool)
@@ -428,7 +429,6 @@ def makeImage (xMap, yMap, vals, xmin, xmax, ymin, ymax, scale,
     nsteps_y = int(ysize*scale)
     step_size = 1.0/scale
 
-    print "nsteps_y, nsteps_x=",nsteps_y, nsteps_x
     data = np.zeros( (nsteps_y, nsteps_x) )
     
     if verbose: print xmin, xmax, ymin, ymax, "    ", xsize, ysize

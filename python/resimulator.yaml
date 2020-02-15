@@ -24,7 +24,7 @@ centeredSkyGif : True
 
 # Optimization params
 #resolution: 128 #for map making
-resolution: 8 #for map making at speed
+resolution: 64  # what resolution to make all healpix maps. 64, maybe 32 is lowest workable.
 
  # gif_resolution = 3. pub quality
  # gif_resolution = 1. good to show
