@@ -285,8 +285,9 @@ if __name__ == '__main__':
         sys.exit()
 
     if options.report_file:
-        if options.report_file.find('.') != -1:
-            print("WARNING: report file argument is not supposed to include a .txt, .csv, etc.")
+        suffix = os.path.splitext(options.report_file)[1]
+        if (suffix == ".txt" or suffix == ".csv" ) :
+            print("WARNING: report file argument is not supposed to include a .txt, .csv")
 
     kn_calc = KNCalc(float(options.distance), float(options.distance_err), float(options.time_delay))
 
