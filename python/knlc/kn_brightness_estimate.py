@@ -85,7 +85,7 @@ def print_dict(d, title='', outfile=None):
                                                                                 d['i_mag'], d['i_magerr'],
                                                                                 d['z_mag'], d['z_magerr'])]
     if outfile:
-        stream = open(outfile, 'a+')
+        stream = open(outfile + '.txt', 'a+')
         stream.writelines(outdata)
         stream.close()
     else:
@@ -115,19 +115,26 @@ def mags_of_percentile(cutoff, percentile_dict):
     index = int(round(cutoff))
     return {band: percentile_dict['%s_cutoff' %band][index] for band in ['g', 'r', 'i', 'z']}
 
-def make_output_csv(cutoffs, percentile_dict, outfile=None, return_df=False):
-    if not outfile and not return_df:
-        #with this combination of options, this function does nothing, so just return
-        return
+def make_output_csv(cutoffs, percentile_dict, outfile=None, return_df=False, write_answer=False, flt='', fraction=90.0):
 
     out_data = [mags_of_percentile(cutoff, percentile_dict) for cutoff in cutoffs]
     out_df = pd.DataFrame(out_data)
     out_df['PERCENTILE'] = cutoffs
     if outfile:
-        out_df.to_csv(outfile, index=False)
+        out_df.to_csv(outfile + '.csv', index=False)
+
+    if write_answer:
+        if fraction < 1.0:
+            farction *= 100
+        #get closest index to fraction
+        closest_index = np.argmin(np.abs(float(fraction) - out_df['PERCENTILE'].values))
+        stream = open('answer_%s.txt' %flt, 'w+')
+        stream.write('%.2f' %out_df[flt].values[closest_index])
+        stream.close()
     
     if return_df:
         return out_df
+
 
 def make_plot(percentile_dict, blue, red, title='', outfile=None, fraction=None):
     plt.figure()
@@ -270,6 +277,7 @@ if __name__ == '__main__':
     parser.add_option('--magplot_file', default=None, help="Outfile for mag plot")
     parser.add_option('--expplot_file', default=None, help="Outfile for exp plot")
     parser.add_option('--report_file', default=None, help="Prefix for reports")
+    parser.add_option('--filter', default=None, help="Single band for mag calculation")
     options, args = parser.parse_args(sys.argv[1:])
 
     if not options.distance:
@@ -288,14 +296,18 @@ if __name__ == '__main__':
         suffix = os.path.splitext(options.report_file)[1]
         if (suffix == ".txt" or suffix == ".csv" ) :
             print("WARNING: report file argument is not supposed to include a .txt, .csv")
+            
+    if options.filter:
+        if options.filter not in ['g', 'r', 'i', 'z']:
+            print("ERROR: filter argument must be in ['g', 'r', 'i', 'z']")
+            sys.exit()
 
     kn_calc = KNCalc(float(options.distance), float(options.distance_err), float(options.time_delay))
 
-    blue, red = gw170817(kn_calc.template_df_full)
-
-    
-    print_dict(blue, "GW170817-blue", outfile=options.report_file + '.txt')
-    print_dict(red, "GW170817-red", outfile=options.report_file + '.txt')
+    if options.report_file:
+        blue, red = gw170817(kn_calc.template_df_full)
+        print_dict(blue, "GW170817-blue", outfile=options.report_file)
+        print_dict(red, "GW170817-red", outfile=options.report_file)
 
 
     percentile_dict = calc_mag_fractions(kn_calc.template_df_full)
@@ -304,16 +316,21 @@ if __name__ == '__main__':
     for band in ['g', 'r', 'i', 'z']:
         cutoff_dict['%s_magerr' %band] = 0.00
     
-    make_output_csv(np.linspace(0., 100., 101), percentile_dict, outfile=options.report_file + '.csv')
+    if options.filter:
+        make_output_csv(np.linspace(0., 100., 101), percentile_dict, outfile=options.report_file, write_answer=True, flt=options.filter, fraction=options.fraction)
+    else:
+        make_output_csv(np.linspace(0., 100., 101), percentile_dict, outfile=options.report_file)
     
     if options.fraction < 1.0:
-        print_dict(cutoff_dict, "%.2f Detection Probability Magnitude Thresholds" %float(options.fraction * 100), outfile=options.report_file + '.txt')
+        print_dict(cutoff_dict, "%.2f Detection Probability Magnitude Thresholds" %float(options.fraction * 100), outfile=options.report_file)
     else:
-        print_dict(cutoff_dict, "%.2f Detection Probability Magnitude Thresholds" %float(options.fraction), outfile=options.report_file + '.txt')
+        print_dict(cutoff_dict, "%.2f Detection Probability Magnitude Thresholds" %float(options.fraction), outfile=options.report_file)
 
     plot_title = "%s +/- %s Mpc  -- %.2f Days After Merger" %(options.distance, options.distance_err, float(options.time_delay) / 24.0)
-    make_plot(percentile_dict, blue, red, title=plot_title, outfile=options.magplot_file, fraction=options.fraction)
-    make_exptime_plot(percentile_dict, title=plot_title, outfile=options.expplot_file)
+    if options.magplot_file:
+        make_plot(percentile_dict, blue, red, title=plot_title, outfile=options.magplot_file, fraction=options.fraction)
+    if options.expplot_file:
+        make_exptime_plot(percentile_dict, title=plot_title, outfile=options.expplot_file)
 
 
 
