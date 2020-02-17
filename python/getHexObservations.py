@@ -9,6 +9,7 @@ import decam2hp
 import jsonMaker
 import obsSlots
 import gw_map_configure
+import kasen_modelspace
 import pickle
 import glob
 import warnings
@@ -146,18 +147,18 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     print "\t examining Kasen universe KN models for coverage"
     night_dur,sunset,sunrise = mags.findNightDuration(start_mjd, camera)
     midnight_since_burst = 24*(sunset+night_dur/2. - burst_mjd) 
-    apparent_mag = run_ap_mag_for_kasen_models (working_filter, 
+    apparent_mag = kasen_modelspace.run_ap_mag_for_kasen_models (
+        working_filter,
         distance, dist_err, 
         midnight_since_burst,
-        kasen_fraction, data_dir) 
-    apparent_mag = np.float(apparent_mag)
-    gw_map_strategy.apparent_mag_source_model = apparent_mag
+        kasen_fraction, data_dir,
+        fast = False)
     print "\t\t at a time halfway through night, {:.2f} days after merger:".format(midnight_since_burst/24.)
     print "\t\t {}% requires observations at {} <= {:5.2f}\n".format(kasen_fraction, filter_list[0], apparent_mag)
 
         
     # ==== get the neutron star explosion models
-    models = modelRead.getModels()
+    #models = modelRead.getModels()
 
     # === prep the maps
     ra,dec,ligo=hp2np.hp2np(skymap, degrade=resolution, field=0)
@@ -183,10 +184,10 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     probabilityTimesCache = os.path.join(data_dir,\
         "probabilityTimesCache_"+str(trigger_id)+".txt")
     probs,times,isdark = mapsAtTimeT.oneDayOfTotalProbability(
-        obs, models, deltaTime, start_mjd, probabilityTimesCache,
+        obs, deltaTime, start_mjd, probabilityTimesCache,
         gw_map_trigger, gw_map_strategy, gw_map_control)
 
-    made_maps_list = mapsAtTimeT.probabilityMapSaver (obs, models, times, probs, 
+    made_maps_list = mapsAtTimeT.probabilityMapSaver (obs, times, probs, 
         gw_map_trigger, gw_map_strategy, gw_map_control)
 
     gw_map_results.probability_per_slot = probs
@@ -195,35 +196,13 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     gw_map_results.hoursPerNight        = hoursPerNight
     gw_map_results.isdark               = isdark
     gw_map_results.made_maps_list       = made_maps_list
+    gw_map_results.moonRa               = obs.moonRa*360./2/np.pi
+    gw_map_results.moonDec              = obs.moonDec*360./2/np.pi
+    gw_map_results.moonIllumination     = obs.moonPhase/100.
     pickle.dump(made_maps_list, open("made_maps.pickle","wb"))
+    pickle.dump(gw_map_results, open("gw_map_results.pickle","wb"))
 
     return 
-
-def run_ap_mag_for_kasen_models (filter, distance, dist_err, days_since_burst, kasen_fraction, data_dir="./") :
-    knlc_dir = os.getenv("DESGW_DIR", "./")+ "/knlc/"
-    code = knlc_dir+"kn_brightness_estimate.py"
-    cmd = "python {} --distance {} --distance_err {} --time_delay {} ".format(code, distance, dist_err, days_since_burst)
-    cmd = cmd + "--fraction {} ".format(kasen_fraction)
-    cmd = cmd + "--magplot_file kn_mag_plot.png "
-    cmd = cmd + "--expplot_file kn_exp_plot.png "
-    cmd = cmd + "--report_file {}".format(data_dir+"/kn_report")
-    os.system(cmd)
-#    cmd = cmd + "--magplot_file kn_mag_plot.png --expplot_file kn_exp_plot.png --report_file kn_report"
-
-
-    file = data_dir+"/kn_report.txt"
-    fd = open(file,"r")
-    for i in range(0,16): fd.readline()
-    line = fd.readline().split()
-    apparent_mag = dict()
-    apparent_mag["g"] = line[0]
-    apparent_mag["r"] = line[3]
-    apparent_mag["i"] = line[6]
-    apparent_mag["z"] = line[9]
-    ap_mag = apparent_mag[filter]
-    # python kn_brightness_estimate.py --distance 150 --distance_err 50 --time_delay 6.0 --magplot_file kn_mag_plot.png --expplot_file kn_exp_plot.png --report_file kn_report
-    return ap_mag
-
 
 # ==== figure out what to observe
 #
@@ -265,7 +244,8 @@ def make_hexes( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
     slotDuration = gw_map_results.slotDuration   
     hoursPerNight = gw_map_results.hoursPerNight 
     if (hoursPerNight == False)  :
-        reuse_results(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
+        #reuse_results(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
+        gw_map_results = reuse_results(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
         probs = gw_map_results.probability_per_slot 
         times = gw_map_results.time_of_slot 
         hoursPerNight = gw_map_results.hoursPerNight 
@@ -327,11 +307,18 @@ def make_hexes( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results,
     gw_map_results.n_hexes = ra.size
     if ra.size == 1 and prob.sum() == 0: 
         gw_map_results.n_hexes = 0
+    pickle.dump(gw_map_results, open("gw_map_results.pickle","wb"))
 
     return 
 
 # Make the json files
+# you will have to add a
+# import gw_helper to your code and use the function
+# gw_helper.setup_tilings()
+
 def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
+    import shutil
+    from gw_helper import gw_helper
     print "=================================================="
     print "                 make_jsons "
     print "=================================================="
@@ -347,7 +334,8 @@ def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
 
     hoursPerNight = gw_map_results.hoursPerNight
     if (hoursPerNight == False)  :
-        reuse_results(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, get_slots=True) 
+        gw_map_results = reuse_results(
+            gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
     n_hexes       = gw_map_results.n_hexes
 
     if n_hexes == 0 :
@@ -356,10 +344,28 @@ def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
 
     ra,dec,id,prob,mjd,slotNum,dist = obsSlots.readObservingRecord(trigger_id,data_dir)
 
-    turnObservingRecordIntoJSONs(
+    list_of_jsons = turnObservingRecordIntoJSONs(
         ra,dec,id,prob,mjd,slotNum, trigger_id,
         exposure_list, filter_list, tiling_list, trigger_type, skymap, data_dir, propid) 
 
+    for tiling in tiling_list[1:] :
+        if tiling == 0: ra_shift, dec_shift =  0.00, 0.00
+        if tiling == 1: ra_shift, dec_shift =  0.02, 0.00
+        if tiling == 2: ra_shift, dec_shift =  0.00, 0.02
+        if tiling == 3: ra_shift, dec_shift = -0.02, 0.00
+        if tiling == 4: ra_shift, dec_shift =  0.00,-0.02
+        print("\t tiling {} ra,dec shift by {},{}".format(tiling, ra_shift, dec_shift))
+        gw_helper.setup_tilings(
+            list_of_jsons,
+            ra_shift = [ra_shift], dec_shift = [dec_shift],
+            tilings = tiling,
+            prefix='tiling_{}'.format(tiling),
+            overwrite=False,
+        )
+    for file in list_of_jsons:
+        dir = os.path.dirname(file)
+        file = os.path.basename(file)
+        shutil.copyfile(dir+"/"+file, "json/tiling_{}_".format(tiling_list[0]) + file)
 
 #
 # ====== there are possibilities. Show them.
@@ -368,6 +374,10 @@ def makeGifs (gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     print "\n=================================================="
     print "                 make_gifs "
     print "=================================================="
+    hoursPerNight = gw_map_results.hoursPerNight
+    if (hoursPerNight == False)  :
+        gw_map_results = reuse_results(
+            gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
     n_hexes       = gw_map_results.n_hexes
 
 
@@ -378,6 +388,7 @@ def makeGifs (gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
 
     # make gif centered on hexes
     if  gw_map_control.centeredSky== True :
+        print "n_hexes=",n_hexes
         if n_hexes != 0:
             n_plots = makeObservingPlots(
                 gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=False)
@@ -386,22 +397,26 @@ def makeGifs (gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
 
 def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, allSky=True) :
 
-    trigger_id     = gw_map_trigger.trigger_id
-    camera         = gw_map_strategy.camera
-    data_dir       = gw_map_control.datadir
-    start_slot     = gw_map_control.start_slot
-    do_nslots      = gw_map_control.do_nslots
-    gif_resolution = gw_map_control.gif_resolution
+    trigger_id      = gw_map_trigger.trigger_id
+    camera          = gw_map_strategy.camera
+    data_dir        = gw_map_control.datadir
+    start_slot      = gw_map_control.start_slot
+    do_nslots       = gw_map_control.do_nslots
+    gif_resolution  = gw_map_control.gif_resolution
 
     # we are doing a quick run, avoiding most calculations as they are already done and on disk
     if (gw_map_results.hoursPerNight == False)  :
-        reuse_results(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, get_slots=True)
-    n_slots        = gw_map_results.n_slots
-    n_hexes        = gw_map_results.n_hexes
-    first_slot     = gw_map_results.first_slot
-    best_slot      = gw_map_results.best_slot
-    probs          = gw_map_results.probability_per_slot 
-    times          =  gw_map_results.time_of_slot 
+        #reuse_results(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, get_slots=True)
+        gw_map_results = reuse_results(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
+    n_slots         = gw_map_results.n_slots
+    n_hexes         = gw_map_results.n_hexes
+    first_slot      = gw_map_results.first_slot
+    best_slot       = gw_map_results.best_slot
+    probs           = gw_map_results.probability_per_slot 
+    times           = gw_map_results.time_of_slot 
+    moonRa          = gw_map_results.moonRa
+    moonDec         = gw_map_results.moonDec
+    moonIllumination = gw_map_results.moonIllumination
 
     made_maps_list = (gw_map_results.made_maps_list).astype(int)
 
@@ -423,7 +438,9 @@ def makeObservingPlots( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_
 
     for i in made_maps_list:
         
-        observingPlot(figure,trigger_id,i,data_dir, n_slots, n_hexes, camera, allSky=allSky, gif_resolution=gif_resolution)
+        observingPlot(figure,trigger_id,i,data_dir, n_slots, n_hexes, camera, 
+            allSky=allSky, gif_resolution=gif_resolution, 
+            moonRa=moonRa, moonDec=moonDec, moonIllumination=moonIllumination)
         name = str(trigger_id)+"-{}observingPlot-{}.png".format(label,i)
         plt.savefig(os.path.join(data_dir,name))
         counter += 1
@@ -490,6 +507,11 @@ def make_divisions_of_time (
 # make_hexes computes slot information, so get_slots = false
 # make_observingPlots needs slot information, so get_slots = true
 def reuse_results(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, get_slots=False) :
+        gw_map_results = pickle.load(open("gw_map_results.pickle","rb"))
+        return gw_map_results
+
+# delete this when comfortable
+def old_reuse_results(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results, get_slots=False) :
         trigger_id      = gw_map_trigger.trigger_id
         data_dir        = gw_map_control.datadir
         camera           = gw_map_strategy.camera
@@ -645,17 +667,21 @@ def turnObservingRecordIntoJSONs(
     seqzero,seqnum = 0,0
 
     # write slot json files
+    list_of_jsons = []
     for slot in np.unique(slotNumbers) :
         ix = slotNumbers == slot
         slotMJD = mjd[ix][0]  ;# just get first mjd in this slot
         tmpname, name = jsonUTCName(slot, slotMJD, trigger_id, mapDirectory)
+        tmpname = mapDirectory + tmpname
+        name = mapDirectory + name
         jsonMaker.writeJson(ra[ix],dec[ix],id[ix],
             seqzero, seqnum, seqtot, exposureList= exposure_list, 
             filterList= filter_list, tilingList = tiling_list, trigger_id = trigger_id, 
             trigger_type=trigger_type, propid=propid, skymap=skymap, jsonFilename=tmpname)
-
         desJson(tmpname, name, mapDirectory, slotMJD) 
         seqzero += ra[ix].size
+        list_of_jsons.append(mapDirectory+name)
+    return list_of_jsons
         
 # verbose can be 0, 1=info, 2=debug
 def desJson(tmpname, name, data_dir, start_time, verbose = 1) :
@@ -698,8 +724,10 @@ def utc_time_from_mjd (mjd) :
 
 def jsonName (slot, utcString, simNumber, mapDirectory) :
     slot = "-{}-".format(np.int(slot))
-    tmpname = os.path.join(mapDirectory, str(simNumber) + slot + utcString + "-tmp.json")
-    name = os.path.join(mapDirectory, str(simNumber) + slot + utcString + ".json")
+    #tmpname = os.path.join(mapDirectory, str(simNumber) + slot + utcString + "-tmp.json")
+    #name = os.path.join(mapDirectory, str(simNumber) + slot + utcString + ".json")
+    tmpname = str(simNumber) + slot + utcString + "-tmp.json"
+    name = str(simNumber) + slot + utcString + ".json"
     return tmpname, name
 
 def jsonFromRaDecFile(radecfile, nslots, slotZero, 
@@ -936,7 +964,9 @@ def equalAreaPlot(figure,slot,simNumber,data_dir, title="") :
 
 # modify mcbryde to have alpha=center of plot
 #   "slot" is roughly hour during the night at which to make plot
-def observingPlot(figure, simNumber, slot, data_dir, nslots, n_hexes, camera, allSky=False, gif_resolution=1.0) :
+def observingPlot(figure, simNumber, slot, data_dir, nslots, n_hexes, camera, 
+        allSky=False, gif_resolution=1.0,
+        moonRa=-999, moonDec=-999, moonIllumination=0):
     import plotMapAndHex
 
     if n_hexes > 0 :
@@ -964,7 +994,8 @@ def observingPlot(figure, simNumber, slot, data_dir, nslots, n_hexes, camera, al
     #print "making plotMapAndHex.mapAndHex(figure, ", simNumber, ",", slot, ",", data_dir, ",", nslots, ",ra,dec,", camera, title,"allSky=",allSky,") "
 
     d=plotMapAndHex.mapAndHex(figure, simNumber, slot, data_dir, nslots, ra, dec, \
-        camera, title, slots=slotNumbers, allSky=allSky, scale=gif_resolution)
+        camera, title, slots=slotNumbers, allSky=allSky, scale=gif_resolution,
+        moonRa=moonRa, moonDec=moonDec, moonIllumination=moonIllumination)
     return d
 
 def writeObservingRecord(slotsObserving, data_dir, gw_map_trigger, gw_map_control, gw_map_strategy) :

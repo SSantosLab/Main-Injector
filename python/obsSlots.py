@@ -246,7 +246,7 @@ def observingStats( slotsObserving, mapZero=0, do_nslots=-1, start_slot=-1 ) :
             if i+mapZero < start_slot or i+mapZero >= start_slot+do_nslots : continue
         slot_sum_prob = 100*slotsObserving[i,"prob"].sum() 
         if slot_sum_prob > 1e-7 :
-            print "\t {:2d}",i+mapZero, 
+            print "\t {:2d}".format(i+mapZero), 
             #print "slotnum={} ".format( slotsObserving[i,"slotNum"]),
             print "n hexes= {}".format( slotsObserving[i,"ra"].size), 
             print "  sum prob= {:7.4f} %".format( 100*slotsObserving[i,"prob"].sum())
@@ -268,7 +268,7 @@ def observingStatsFromRaDecFile( trigger_id, data_dir, slotsObserving, mapZero=0
         if not (prob.size == 1 and prob.sum() == 0) and ix.size > 0 :
             slot_sum_prob = 100*prob[ix].sum() 
             if slot_sum_prob > 1e-7 :
-                print "\t {:2d}",i+mapZero, 
+                print "\t {:2d}".format(i+mapZero), 
                 print "n hexes= {}".format( ix.size ),
                 print "  sum prob= {:7.4f} %".format( slot_sum_prob )
     print "\tobservingStats:  ",

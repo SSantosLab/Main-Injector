@@ -25,8 +25,8 @@ class trigger(object):
             distance = hdr["distmean"]
             diststd = hdr["diststd"]
         except:
-            print('distmean was not in payload... setting distance to 60mpc')
-            distance = 60
+            print('distmean was not in payload... ')
+            raise Exception("now")
         self.distance  = distance
         self.diststd  = diststd
         self.burst_mjd = burst_mjd
@@ -34,7 +34,6 @@ class trigger(object):
         # ok, I'm going to declare that we want this routine to start at noon UT on JD of burst
         # As there is automatic sunrise, sunset calculations given MJD, we will pick midnight
         self.start_mjd = np.round(burst_mjd)
-
 
         if trigger_type == "bright" :
             named_trigger = "has remnant"
@@ -48,6 +47,10 @@ class trigger(object):
         print "                                        since 2015"
         print "\ngw_map_trigger: {} map {}, {} at {:.0f} Mpc\n".format(
             trigger_id, skymap, named_trigger, distance)
+        if trigger_type == "dark" :
+            print('\t strategy=dark,  setting distance, dist_err to 100 Mpc, 30 Mpc')
+            self.distance = 100.
+            self.diststd = 30.
 
         ra,dec,ligo=hp2np.hp2np(skymap, degrade=resolution, field=0)
         ligo_dist, ligo_dist_sig, ligo_dist_norm  = \
@@ -116,7 +119,6 @@ class strategy(object) :
         self.propid                    = propid
         self.max_number_of_hexes_to_do = max_number_of_hexes_to_do
         self.kasen_fraction            = kasen_fraction
-        self.apparent_mag_source_model = 21.5
         self.use_teff                  = use_teff
         if abs(use_teff - 1.0) > 0.01 :
            print "\t scaling summed exposure time by teff {}".format(use_teff)
@@ -188,4 +190,6 @@ class results(object):
         self.best_slot = False
         self.slot_numbers = False
         self.n_hexes = False
+        self.moonRa = False
+        self.moonDec = False
 

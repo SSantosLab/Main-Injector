@@ -3,6 +3,7 @@ import healpy as hp
 import os
 import decam2hp
 import hexalate
+import kasen_modelspace
 
 import sourceProb
 import modelRead
@@ -56,18 +57,20 @@ import modelRead
 #   deltaTime = 0.223*2 ;# twice as long slots, (8 hexes/slot)
 
 
-def oneDayOfTotalProbability (obs, models, deltaTime, start_mjd, 
+def oneDayOfTotalProbability (obs, deltaTime, start_mjd, 
         probTimeFile, gw_map_trigger, gw_map_strategy, gw_map_control) :
 
-    #mjd = gw_map_trigger.burst_mjd
-    mjd = gw_map_trigger.start_mjd
-    trigger_type = gw_map_trigger.trigger_type
-    spatial = gw_map_trigger.ligo
-    distance = gw_map_trigger.ligo_dist
-    distance_sig= gw_map_trigger.ligo_dist_sig
-    apparent_mag_source_model  = gw_map_strategy.apparent_mag_source_model
-    filter = gw_map_strategy.working_filter
-    exposure = gw_map_strategy.summed_exposure_time
+    burst_mjd      = gw_map_trigger.burst_mjd
+    trigger_type   = gw_map_trigger.trigger_type
+    spatial        = gw_map_trigger.ligo
+    distance       = gw_map_trigger.ligo_dist
+    distance_sig   = gw_map_trigger.ligo_dist_sig
+    filter         = gw_map_strategy.working_filter
+    exposure       = gw_map_strategy.summed_exposure_time
+    kasen_fraction = gw_map_strategy.kasen_fraction 
+    data_dir       = gw_map_control.datadir
+    simple_distance = gw_map_trigger.distance
+    simple_dist_err = gw_map_trigger.diststd
 
 
     # the work.
@@ -76,47 +79,44 @@ def oneDayOfTotalProbability (obs, models, deltaTime, start_mjd,
     #print "JTA debugging  ====="
     #end_of_days=0.1
     totalProbs,times,isDark = manyDaysOfTotalProbability(
-        obs, mjd, spatial, distance, distance_sig, models, 
-        startOfDays=start_of_days, endOfDays=end_of_days,
-        deltaTime=deltaTime, probTimeFile=probTimeFile,
-        trigger_type=trigger_type, filter=filter, 
-        exposure=exposure, 
-        apparent_mag_source_model = apparent_mag_source_model )
+        obs, burst_mjd, start_mjd, spatial, distance, distance_sig, 
+        startOfDays=start_of_days, endOfDays=end_of_days, deltaTime=deltaTime, 
+        probTimeFile=probTimeFile, trigger_type=trigger_type, 
+        filter=filter, exposure=exposure, 
+        kasen_fraction=kasen_fraction, data_dir = data_dir,
+        simple_distance=simple_distance, simple_dist_err=simple_dist_err)
 
     return totalProbs,times, isDark
 
 def manyDaysOfTotalProbability (
-        obs, start_mjd, spatial, distance, distance_sig, 
-        models, startOfDays=0, endOfDays=11, deltaTime=0.0223, 
+        obs, burst_mjd, start_mjd, spatial, distance, distance_sig, 
+        startOfDays=0, endOfDays=11, deltaTime=0.0223, 
         probTimeFile="probTime.txt", trigger_type="bright",
-        filter="i", exposure=90, apparent_mag_source_model=21.5, verbose=True) :
+        filter="i", exposure=90, 
+        kasen_fraction=50, data_dir = "./", 
+        simple_distance=100, simple_dist_err=30,
+        verbose=True) :
     times = []
     totalProbs = []
-
-    # one might want to delay the start of computations
-    # till some time after the burst
-    #if start_mjd == 0: start_mjd = burst_mjd
-    #delayTime = start_mjd - burst_mjd
 
     # in the language of getHexObservations:
     #   each slot is 32 minutes, each slot can hold 4 hexes
     dark = False
     isDark = []
-    for time in np.arange(startOfDays,endOfDays,deltaTime) :
-        #time = time + delayTime
-        if time < (1.5/24.) : continue
+    for time_since_start in np.arange(startOfDays,endOfDays,deltaTime) :
         print "================================== ",
-        print "hours since Time Zero: {:5.1f}".format(time*24.),
-        totalProb, sunIsUp = totalProbability(obs, start_mjd, time, \
-            spatial, distance, distance_sig, models, \
+        print "hours since Time Zero: {:5.1f}".format(time_since_start*24.),
+        totalProb, sunIsUp = totalProbability(obs, burst_mjd, start_mjd, time_since_start, \
+            spatial, distance, distance_sig, \
             filter=filter, exposure=exposure, \
-            trigger_type=trigger_type,  \
-            apparent_mag_source_model= apparent_mag_source_model)
+            trigger_type=trigger_type, \
+            kasen_fraction=kasen_fraction, data_dir = data_dir,
+            simple_distance=simple_distance, simple_dist_err=simple_dist_err)
         if sunIsUp: 
             print "\t ... the sun is up"
         else:
             print ""
-        times.append(time)
+        times.append(time_since_start)
         totalProbs.append(totalProb)
         if not dark and not sunIsUp:
             dark = True ;# model sunset
@@ -165,15 +165,17 @@ def manyDaysOfTotalProbability (
 #
 # core computation
 #
-def totalProbability(obs, start_mjd, daysSinceBurst, \
-        spatial, distance, distance_sig, models,
+def totalProbability(obs, burst_mjd, start_mjd, daysSinceStart, \
+        spatial, distance, distance_sig, 
         filter="i", exposure=180, trigger_type="bright", 
-        apparent_mag_source_model=21.5) :
+        kasen_fraction=50, data_dir="./",
+        simple_distance=100, simple_dist_err=30) :
 
-    obs,sm,sunIsUp = probabilityMaps(obs, start_mjd, daysSinceBurst, \
+    obs,sm,sunIsUp = probabilityMaps(obs, burst_mjd, start_mjd, daysSinceStart, \
         spatial, distance, distance_sig,
-        models, filter, exposure, trigger_type=trigger_type, 
-        apparent_mag_source_model=apparent_mag_source_model)
+        filter, exposure, trigger_type=trigger_type, 
+        kasen_fraction=kasen_fraction, data_dir = data_dir,
+        simple_distance=simple_distance, simple_dist_err=simple_dist_err)
     if sunIsUp:
         totalProb = 0.0
     else :
@@ -181,11 +183,13 @@ def totalProbability(obs, start_mjd, daysSinceBurst, \
     return totalProb, sunIsUp
 
 # drive the probability map calculations. In the end, distance only is used here
-def probabilityMaps(obs, start_mjd, daysSinceBurst, \
-        spatial, distance, distance_sig, models,
+def probabilityMaps(obs, burst_mjd, start_mjd, daysSinceStart, \
+        spatial, distance, distance_sig, 
         filter="i", exposure=180, trigger_type="bright", 
-        apparent_mag_source_model=21.5, verbose=True) :
-    obs.resetTime(start_mjd+daysSinceBurst)
+        kasen_fraction=50, data_dir="./", 
+        simple_distance=100, simple_dist_err=30, verbose=True) :
+
+    obs.resetTime(start_mjd+daysSinceStart)
 
     sunIsUp = obs.sunBrightnessModel(obs.sunZD)
     if sunIsUp: return obs, "sm", sunIsUp
@@ -204,8 +208,17 @@ def probabilityMaps(obs, start_mjd, daysSinceBurst, \
         # turns out that in the case of distance_sig.sum()=0,
         # then the sm.calculateProb assumes a source ap mag of 20,
         # and builds a source probality map where 1 if limit_mag > 20.
-        distance_sig = distance_sig*0
-    sm=sourceProb.map(obs, type=trigger_type, apparent_mag_source=apparent_mag_source_model)
+        pass
+
+    daysSinceBurst = start_mjd + daysSinceStart - burst_mjd
+    #print "daysSinceBurst:",daysSinceBurst, burst_mjd
+    #print "daysSinceBurst uses daysSinceStart: ", daysSinceStart,  start_mjd
+
+    apparent_mag = kasen_modelspace.run_ap_mag_for_kasen_models (filter,
+         simple_distance, simple_dist_err, daysSinceBurst,
+         kasen_fraction, data_dir, doPlots=False, fast=True)
+
+    sm=sourceProb.map(obs, type=trigger_type, apparent_mag_source=apparent_mag)
     result = sm.calculateProb(spatial, distance, distance_sig, verbose=verbose)
     if not result:
         sunIsUp = 1
@@ -227,9 +240,10 @@ def probabilityMaps(obs, start_mjd, daysSinceBurst, \
 # ra,decs that are already done, and these will replace the
 # all sky hexes
 # 
-def probabilityMapSaver (obs, models, times, probabilities,
+def probabilityMapSaver (obs, times, probabilities,
         gw_map_trigger, gw_map_strategy, gw_map_control,
         performHexalatationCalculation=True) :
+    burst_mjd                  = gw_map_trigger.burst_mjd
     start_mjd                  = gw_map_trigger.start_mjd
     trigger_id                 = gw_map_trigger.trigger_id
     trigger_type               = gw_map_trigger.trigger_type
@@ -240,7 +254,11 @@ def probabilityMapSaver (obs, models, times, probabilities,
     reject_hexes               = gw_map_control.reject_hexes
     data_dir                   = gw_map_control.datadir
     camera                     = gw_map_strategy.camera
-    apparent_mag_source_model  = gw_map_strategy.apparent_mag_source_model
+    filter                     = gw_map_strategy.working_filter
+    exposure                   = gw_map_strategy.summed_exposure_time
+    kasen_fraction             = gw_map_strategy.kasen_fraction 
+    simple_distance            = gw_map_trigger.distance
+    simple_dist_err            = gw_map_trigger.diststd
     #onlyHexesAlreadyDone  = gw_map_control.this_tiling
     onlyHexesAlreadyDone  = []
 
@@ -266,10 +284,14 @@ def probabilityMapSaver (obs, models, times, probabilities,
             if prob <= prob_slots : 
                 performHexalatationCalculation = False
 
+        daysSinceStart = time
+        #print "daysSinceStart:", daysSinceStart, time, start_mjd, burst_mjd
         obs,sm, isDark = \
-            probabilityMaps( obs, start_mjd, time, ligo, distance, distance_sig,
-            models, trigger_type=trigger_type, 
-            apparent_mag_source_model=apparent_mag_source_model,verbose=False)
+            probabilityMaps( obs, burst_mjd, start_mjd, daysSinceStart, 
+            ligo, distance, distance_sig,
+            filter, exposure, trigger_type=trigger_type, 
+            kasen_fraction=kasen_fraction, data_dir = data_dir,
+            simple_distance=simple_distance, simple_dist_err=simple_dist_err)
         if obs.sunBrightnessModel (obs.sunZD ): 
             #print "\t\tThe sun is up. Continue", time, prob
             #print ""

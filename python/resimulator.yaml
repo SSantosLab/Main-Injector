@@ -54,14 +54,21 @@ use_teff : 1.0
 max_number_of_hexes_to_do : 10000
 
 # Remnant strategy
-exposure_length_bright : [ 90., 90. , 90.] #sec
-exposure_filter_bright : [ 'g', 'z', 'z']
+exposure_length_bright : [ 90.] #sec
+exposure_filter_bright : [ 'g']
 exposure_tiling_bright : [ 0,1 ]         # to be interpreted as do all exp in exp_length for each tiling in exp_tiling
-maxHexesPerSlot_bright : 12             # maxHexesPerSlot goes down in propotion to how many images per hex, really cumul exp time per hex
+maxHexesPerSlot_bright : 15             # maxHexesPerSlot goes down in propotion to how many images per hex, really cumul exp time per hex
 # BH strategy
 exposure_length_dark : [ 90., ] #sec
-exposure_filter_dark : [ 'r', ]
+exposure_filter_dark : [ 'i', ]
 exposure_tiling_dark : [ 0,1 ]
-maxHexesPerSlot_dark : 36  # related to maxHexesPerSlot_bright by (90+90+90)/90 for 1/3 less images/hex, so same amount of time
+maxHexesPerSlot_dark : 15  # related to maxHexesPerSlot_bright by (90+90+90)/90 for 1/3 less images/hex, so same amount of time
+
+# The idea here is that one can set use_teff to some number and it scales the exposure time- 
+# what I'm doing for exposure time is to get the first filter off the filter list, then asking 
+# how many exposures of that filter are on the filter list, then summing the exposures for that filter. 
+# This allows "g, g, z, z, z, z" sequences. It is the tiling list that controls dithered offsets- 
+# so a tiling list of "0," just does what is on the filter list. If it is "[0,1]", then we 
+# get the json files that half-fill the time that we need gw_helper to use up.
 
 

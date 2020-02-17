@@ -17,7 +17,8 @@ warnings.filterwarnings("ignore")
 #    scale = 1.   # default
 #    scale = 0.1  # low-res, not filling in area, but fast
 def mapAndHex(figure, simNumber, slot, data_dir, nslots, hexRa, hexDec, camera,
-        title="", slots=np.zeros(0), doHexes=True, allSky=False, colorbar=True, scale=1.) :
+        title="", slots=np.zeros(0), doHexes=True, allSky=False, colorbar=True, scale=1.,
+        moonRa=-999, moonDec=-999, moonIllumination=0) :
     import healpy as hp
     import hp2np
 
@@ -81,7 +82,8 @@ def mapAndHex(figure, simNumber, slot, data_dir, nslots, hexRa, hexDec, camera,
         resolution=resolution, image=image, scale=scale, badData=badData, badDataVal=badDataVal, 
         redRa = redRa, title=title, raMid=raMid, raBoxSize=raBoxSize, decBoxSize = decBoxSize, 
         mod_ra=mod_ra, mod_dec= mod_dec , colorbar=colorbar, slots=slots, thisSlot=slot, 
-        doHexes=doHexes, allSky = allSky)
+        doHexes=doHexes, allSky = allSky, 
+        moonRa=moonRa, moonDec=moonDec, moonIllumination=moonIllumination)
 
     return alpha,beta
 
@@ -90,7 +92,8 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
         resolution=512, image=False, scale=1., badData=False, badDataVal=-11.0,
         redRa = 90., title="", raMid=-1000, raBoxSize=5., decBoxSize=5., mod_ra = 0, mod_dec=0.,
         doHexes = True, gradRedHiDec = -80, raGratDelRa=30., decGratDelDec=10. , colorbar=True,
-        contourLabels=True , slots=np.zeros(0), thisSlot=0, allSky = False) :
+        contourLabels=True , slots=np.zeros(0), thisSlot=0, allSky = False,
+        moonRa=-999, moonDec=-999, moonIllumination=0) :
     from equalArea import mcbryde
     import matplotlib.pyplot as plt
     from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -117,7 +120,7 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
 
     # project into mcbryde 
     xMap,yMap = mcbryde.mcbryde(raMap, decMap, alpha=alpha, beta=beta)
-    if len(hexRa) == 1 and hexRa != -999 :
+    if (type(hexRa) != type(-999)) or (type(hexRa) == type(-999)  and hexRa != -999) :
         x,y = mcbryde.mcbryde(hexRa, hexDec, alpha=alpha, beta=beta)
 
     if xmin==xmax and ymin==ymax:
@@ -134,7 +137,8 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
         xmin=xMap.min(); xmax=xMap.max()
         ymin=yMap.min(); ymax=yMap.max()
         #doHexes=False
-    if len(hexRa) == 1 and (hexRa == -999 or hexDec == -999): doHexes = False
+    if (type(hexRa) == type(-999)  and hexRa == -999) :
+        doHexes = False
 
 
     print "\t ... makeImage",
@@ -164,10 +168,13 @@ def coreMapAndHex(figure, hexRa, hexDec, raMap, decMap, camera, map,
     # fig 1
     ax = figure.add_subplot(1,1,1)
     #Plot Des Footprint in the observing plots
-    if camera == "des" :
+    if camera == "des" or camera == "decam":
         plotDesFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax, camera)
     elif camera == "desi" :
         plotDesiFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax, camera)
+    if moonRa != -999:
+        plotMoonFootprint(moonRa, moonDec, moonIllumination,
+            alpha, beta, xmin, xmax, ymin, ymax, ax, camera)
 
     if colorbar and not allSky:
         cb = plt.colorbar(shrink=0.5,pad=0.03); 
@@ -312,25 +319,68 @@ def plotDesFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax, camera) :
     desRa, desDec = getDesFootprint()
     plotFootprint(desRa,desDec, alpha, beta, xmin, xmax, ymin, ymax, ax, camera) 
 
-def plotFootprint(ra,dec, alpha, beta, xmin, xmax, ymin, ymax, ax, camera) :
+def plotMoonFootprint(ra, dec, illumination, alpha, beta, xmin, xmax, ymin, ymax, ax, camera) :
+    import matplotlib.pyplot as plt
+    import matplotlib.path
+    import matplotlib.patches
+    from equalArea import mcbryde
+
+    edge_alpha=1
+    for radius in [1.0, 30.0] :
+        raCircle = np.array([])
+        decCircle = np.array([])
+        for i in range(0,360) :
+            rac  =  ra  + (radius*np.cos(i*2*np.pi/360.))/(np.cos(dec*2*np.pi/360.))
+            decc =  dec + radius*np.sin(i*2*np.pi/360.)
+            raCircle  = np.append(raCircle, rac)
+            decCircle = np.append(decCircle, decc)
+        ra,dec = raCircle, decCircle
+        if radius == 30. : 
+            illumination = illumination/5.
+            edge_alpha = 0
+        plotPatch (ra, dec,  alpha, beta, xmin, xmax, ymin, ymax, ax,
+            "yellow", "yellow", illumination, edge_alpha) 
+    
+def plotPatch (ra, dec,  alpha, beta, xmin, xmax, ymin, ymax, ax,
+        facecolor, edgecolor, face_alpha, edge_alpha=1) :
     import matplotlib.pyplot as plt
     import matplotlib.path
     import matplotlib.patches
     from equalArea import mcbryde
     ra_array, dec_array = splitFootprintAcrossSingularity(ra,dec,alpha,beta) 
-    size = len(ra_array)
-    for i in range(0,size) :
+    for i in range(0, len(ra_array)) :
         ra = ra_array[i]
         dec = dec_array[i]
         x,y = mcbryde.mcbryde(ra, dec, alpha=alpha, beta=beta)
         ix = (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
-        #plt.plot(x[ix],y[ix],c="k",alpha=0.5)
         footprint = matplotlib.path.Path(zip(x,y))
-        patch = matplotlib.patches.PathPatch(footprint, facecolor='gold', lw=1, alpha=0.066, fill=True)
+        patch = matplotlib.patches.PathPatch(footprint, 
+            facecolor=facecolor, lw=1, alpha=face_alpha, fill=True)
         ax.add_patch(patch)
-        patch = matplotlib.patches.PathPatch(footprint, edgecolor='gold', lw=1, alpha=1, fill=False)
-        #patch = matplotlib.patches.PathPatch(footprint, edgecolor='gold', lw=1, alpha=0.33, fill=False)
+        patch = matplotlib.patches.PathPatch(footprint, 
+            edgecolor=edgecolor, lw=1, alpha=edge_alpha, fill=False)
         ax.add_patch(patch)
+
+
+def plotFootprint(ra,dec, alpha, beta, xmin, xmax, ymin, ymax, ax, camera) :
+    #import matplotlib.pyplot as plt
+    #import matplotlib.path
+    #import matplotlib.patches
+    #from equalArea import mcbryde
+    plotPatch (ra, dec,  alpha, beta, xmin, xmax, ymin, ymax, ax, "gold", "gold", 0.066) 
+    #ra_array, dec_array = splitFootprintAcrossSingularity(ra,dec,alpha,beta) 
+    #for i in range(0, len(ra_array)) :
+    #    ra = ra_array[i]
+    #    dec = dec_array[i]
+    #    x,y = mcbryde.mcbryde(ra, dec, alpha=alpha, beta=beta)
+    #    ix = (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
+    #    #plt.plot(x[ix],y[ix],c="k",alpha=0.5)
+    #    footprint = matplotlib.path.Path(zip(x,y))
+    #    patch = matplotlib.patches.PathPatch(footprint, facecolor='gold', lw=1, alpha=0.066, fill=True)
+    #    ax.add_patch(patch)
+    #    patch = matplotlib.patches.PathPatch(footprint, edgecolor='gold', lw=1, alpha=1, fill=False)
+    #    #patch = matplotlib.patches.PathPatch(footprint, edgecolor='gold', lw=1, alpha=0.33, fill=False)
+    #    ax.add_patch(patch)
     
 # not supposed to fix, just identify blobs in ra that will cross projection singularity
 # once identified, split, and add interpolation along meridian so that the projection and plot

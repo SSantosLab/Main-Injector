@@ -101,6 +101,8 @@ class observed(object):
         self.moonZD       = self.moonData[2]
         self.moonSep      = self.getLunarSeparation(self.ra, self.dec, self.moonData)
         self.moonPhase    = self.getLunarPhase()
+        self.moonRa       = self.moonData[0]
+        self.moonDec      = self.moonData[1]
 
         # telescope limits
         self.limits       = 0.0
@@ -158,6 +160,8 @@ class observed(object):
         self.moonData     = self.getLunarPosition (self.mjd, self.lon, self.lat, self.lst)
         self.moonZD       = self.moonData[2]
         self.moonSep      = self.getLunarSeparation(self.ra, self.dec, self.moonData)
+        self.moonRa       = self.moonData[0]
+        self.moonDec      = self.moonData[1]
 
     def limitMag (self, filter, exposure=30, verbose=True) :
         #print "\t JTA limiting magnitude", self.mjd, self.mjdToLST(self.mjd, self.lon)
