@@ -23,8 +23,8 @@ class KNCalc():
         self.distance_err = distance_err
         
         # Convert time_delay from hours to days
-        if float(time_delay) > 343.2:
-            print("Currently, only time delays less than 343.2 hours (14.3 days) post merger are supported")
+        if float(time_delay) > 400.8:
+            print("Currently, only time delays less than 400.8 hours (16.7 days) post merger are supported")
             sys.exit()
         self.delta_mjd = round(float(time_delay) / 24.0, 1)
         
@@ -45,6 +45,8 @@ class KNCalc():
             df = pd.read_csv(knlc_dir+'data/grouped_photometry_5.csv')
         elif self.delta_mjd < 14.3:
             df = pd.read_csv(knlc_dir+'data/grouped_photometry_6.csv')
+        elif self.delta_mjd < 16.7:
+            df = pd.read_csv(knlc_dir+'data/grouped_photometry_7.csv')
         df['ZMEAN'] = np.mean(df[['ZMIN', 'ZMAX']].values, axis=1)
 
         # Mean distance calculation 
