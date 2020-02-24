@@ -325,7 +325,9 @@ class observed(object):
         return ra,dec,zd
 
     #
-    # returns moon phase in degrees where 0 is full, 180 is new
+    # returns moon phase in degrees 
+        # K&S want moon phase as angle in degrees, 
+        #   where 0 = full, 90 equals half, and  180 = new
     #
     def getLunarPhase (self) :
         moon_ra, moon_dec = self.moonData[0], self.moonData[1]

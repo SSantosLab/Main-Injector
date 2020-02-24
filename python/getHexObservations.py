@@ -12,6 +12,7 @@ import gw_map_configure
 import kasen_modelspace
 import pickle
 import glob
+import shutil
 import warnings
 #
 #       the routine mapsAtTimeT.oneDayOfTotalProbability
@@ -118,6 +119,8 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
         return
 
     print "\t cleaning up old files",
+    if os.path.exists(data_dir+"/json") :
+        shutil.rmtree("json/")
     files = glob.glob(data_dir+"/*png"); 
     for f in files: os.remove(f)
     files = glob.glob(data_dir+"/*jpg"); 
@@ -198,7 +201,8 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     gw_map_results.made_maps_list       = made_maps_list
     gw_map_results.moonRa               = obs.moonRa*360./2/np.pi
     gw_map_results.moonDec              = obs.moonDec*360./2/np.pi
-    gw_map_results.moonIllumination     = obs.moonPhase/100.
+    # where 0 = full, 90 equals half, and  180 = new
+    gw_map_results.moonIllumination     = (180-obs.moonPhase)/180.
     pickle.dump(made_maps_list, open("made_maps.pickle","wb"))
     pickle.dump(gw_map_results, open("gw_map_results.pickle","wb"))
 
