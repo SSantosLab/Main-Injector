@@ -67,7 +67,7 @@ def writeJson(ra,dec,id, seqid="none", seqnum=0, seqtot=0,
                 #    trigger_type, seqid, seqnum, seqtot, id[i], 9)
                 comment = "{} strategy {} on {}: image {} of {}, filter {}, tiling {} in {}".format(
                     trigger_id, trigger_type, skymap, j+1, nexp, filter, tiling, tilingList)
-                object = comment
+                object = trigger_id
     
                 fd.write("{")
                 fd.write(" \"expType\" : \"object\",\n")

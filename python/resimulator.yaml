@@ -52,6 +52,7 @@ use_teff : 1.0
 # This will limit the number of hexes going into the *ra-dec-id-prob-* file,
 # and hence into the json files
 max_number_of_hexes_to_do : 10000
+# if you are going to cut back, recall you have to rerun hex generation
 
 # Remnant strategy
 exposure_length_bright : [ 90.] #sec

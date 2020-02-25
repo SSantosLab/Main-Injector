@@ -336,6 +336,13 @@ def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
     propid        = gw_map_strategy.propid
     data_dir      = gw_map_control.datadir
 
+    print "\t cleaning up old jsons"
+    if os.path.exists(data_dir+"/json") :
+        shutil.rmtree("json/")
+    files = glob.glob(data_dir+"/*json"); 
+    for f in files: os.remove(f)
+    os.mkdir(data_dir+"/json")
+
     hoursPerNight = gw_map_results.hoursPerNight
     if (hoursPerNight == False)  :
         gw_map_results = reuse_results(
