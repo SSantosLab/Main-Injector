@@ -23,16 +23,30 @@ class KNCalc():
         self.distance_err = distance_err
         
         # Convert time_delay from hours to days
-        if float(time_delay) > 56.3:
-            print("Currently, only time delays less than 56.3 hours post merger are supported")
+        if float(time_delay) > 400.8:
+            print("Currently, only time delays less than 400.8 hours (16.7 days) post merger are supported")
             sys.exit()
         self.delta_mjd = round(float(time_delay) / 24.0, 1)
         
-        # Read KN brightness lookup table
-        # Read KN brightness lookup table
+        # Set directory for lookup table
         knlc_dir = os.getenv("DESGW_DIR", "./")
         if knlc_dir != "./" : knlc_dir = knlc_dir + "/knlc/"
-        df = pd.read_csv(knlc_dir+'data/grouped_photometry.csv')
+            
+        # Choose lookup table based on time_delay
+        if self.delta_mjd < 2.3:
+            df = pd.read_csv(knlc_dir+'data/grouped_photometry.csv')
+        elif self.delta_mjd < 4.7:
+            df = pd.read_csv(knlc_dir+'data/grouped_photometry_2.csv')
+        elif self.delta_mjd < 7.1:
+            df = pd.read_csv(knlc_dir+'data/grouped_photometry_3.csv')
+        elif self.delta_mjd < 9.5:
+            df = pd.read_csv(knlc_dir+'data/grouped_photometry_4.csv')
+        elif self.delta_mjd < 11.9:
+            df = pd.read_csv(knlc_dir+'data/grouped_photometry_5.csv')
+        elif self.delta_mjd < 14.3:
+            df = pd.read_csv(knlc_dir+'data/grouped_photometry_6.csv')
+        elif self.delta_mjd < 16.7:
+            df = pd.read_csv(knlc_dir+'data/grouped_photometry_7.csv')
         df['ZMEAN'] = np.mean(df[['ZMIN', 'ZMAX']].values, axis=1)
 
         # Mean distance calculation 
