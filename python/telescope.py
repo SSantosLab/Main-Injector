@@ -49,7 +49,6 @@ def blancoLimits (ha, dec) :
     transmission[near_ix] = 1.0
     return transmission
 
-
 # read from http://www.ctio.noao.edu/noao/content/Horizon-Limits
 def blancoHorizonLimitsOrig () :
     ha = [-78., -70., -60., -50., -40., -30., -20., -10.,   0.,  10.,  20.,  30.,  40.,  50.,  60.,
