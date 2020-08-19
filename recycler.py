@@ -154,6 +154,8 @@ class event:
         mapDir = self.mapspath
         recycler_mjd = self.recycler_mjd
 
+        kasen_fraction = config['kasen_fraction']
+
             # debug
         debug = config["debug"]    
 
@@ -224,20 +226,21 @@ class event:
         self.time_budget = hoursAvailable
         
         print(self.event_params.items())
-        hasremnant = self.event_params['hasremnant']
-        if hasremnant> 0.01:
-            trigger_type = 'Rem'
+        #hasremnant = self.event_params['hasremnant']
+
+        if hasrem:
+            trigger_type = 'hasrem'
         else:
-            trigger_type = 'BH'
+            trigger_type = 'norem'
         
     # configure strategy for the event type
-        if trigger_type == "Rem" :
+        if trigger_type == "hasrem" :
             exposure_length      = exposure_length_rem
             filter_list          = filter_list_rem
             maxHexesPerSlot      = maxHexesPerSlot_rem
             tiling_list          = exposure_tiling_rem
             propid = config['propid_Rem']
-        elif trigger_type == "BH" :
+        elif trigger_type == "norem" :
             exposure_length      = exposure_length_bh
             filter_list          = filter_list_bh 
             maxHexesPerSlot      = maxHexesPerSlot_bh
@@ -256,8 +259,10 @@ class event:
                                                     gif_resolution = gif_resolution)
         gw_map_trigger  = gw_map_configure.trigger( skymap, trigger_id, trigger_type, 
                                                     resolution, days_since_burst=days_since_burst)
+        ##ag test jul 30
+        use_teff = 1.0
         gw_map_strategy = gw_map_configure.strategy( camera, exposure_length, 
-                                                     filter_list, tiling_list, maxHexesPerSlot, hoursAvailable, propid, max_number_of_hexes_to_do)
+                                                     filter_list, tiling_list, maxHexesPerSlot, hoursAvailable, propid, max_number_of_hexes_to_do,kasen_fraction, use_teff)
         #strat need max number of hexes and tiling list
 
         gw_map_results = gw_map_configure.results()
@@ -281,8 +286,8 @@ class event:
 
         if do_make_jsons :
             # make the jsons 
-            getHexObservations.make_jsons( gw_map_trigger, gw_map_strategy, gw_map_control)
-            
+            getHexObservations.make_jsons( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
+
         if do_make_gifs :
             getHexObservations.makeGifs( gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
 
@@ -1098,7 +1103,7 @@ if __name__ == "__main__":
         args = sys.argv[1:]
         opt, arg = getopt.getopt(
             args, "tp:tid:mjd:exp:sky",
-            longopts=["triggerpath=", "triggerid=", "mjd=", "exposure_length=", "official","skymapfilename=", "hasrem="])
+            longopts=["triggerpath=", "triggerid=", "mjd=", "exposure_length=", "official","skymapfilename=", "hasrem"])
 
     except getopt.GetoptError as err:
         print(str(err))
@@ -1153,8 +1158,8 @@ if __name__ == "__main__":
         elif o in ["-sky","--skymapfilename"]:
             skymap_filename = str(a)
         elif o in ['--hasrem']:
-            hasrem = str(a)
-            print("HASREM "+hasrem)
+            hasrem = True#str(a)
+            print("HASREM ",hasrem)
         elif o in ['--official']:
             official = True
 #        elif o in ['--hasrem']:
