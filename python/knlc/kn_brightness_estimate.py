@@ -52,6 +52,16 @@ class KNCalc():
         # Mean distance calculation 
         mean_z = z_at_value(cosmo.luminosity_distance, float(self.distance) * u.Mpc)
         template_df_mean = df[(df['ZMIN'].values < mean_z) & (df['ZMAX'].values > mean_z) & (df['DELTA_MJD'].values == self.delta_mjd)].copy().reset_index(drop=True)
+        # check that the event is not too far away
+        if template_df_mean.empty:
+            checkzmax = df['ZMAX'].values > mean_z
+            if not all(checkzmax):
+                print("Object is too far away. mean_z is "+str(mean_z)+". Exiting.")
+                sys.exit()
+            else:
+                print("Something wrong with knlc photometry template library. Exiting")
+                sys.exit()
+
         template_df_mean['WEIGHT'] = 1.0 / template_df_mean.shape[0]
         self.template_df_mean = template_df_mean
 
@@ -129,20 +139,22 @@ def mags_of_percentile(cutoff, percentile_dict):
     index = int(round(cutoff))
     return {band: percentile_dict['%s_cutoff' %band][index] for band in ['g', 'r', 'i', 'z']}
 
-def make_output_csv(cutoffs, percentile_dict, outfile=None, return_df=False, write_answer=False, flt='', fraction=90.0):
+def make_output_csv(cutoffs, percentile_dict, outfile=None, return_df=False, write_answer=False, flt='', fraction=90.0, datadir='./'):
 
     out_data = [mags_of_percentile(cutoff, percentile_dict) for cutoff in cutoffs]
     out_df = pd.DataFrame(out_data)
     out_df['PERCENTILE'] = cutoffs
+    #knlc_dir = os.getenv("DESGW_DIR", "./")
     if outfile:
         out_df.to_csv(outfile + '.csv', index=False)
 
     if write_answer:
         if fraction < 1.0:
-            farction *= 100
+            fraction *= 100
         #get closest index to fraction
         closest_index = np.argmin(np.abs(float(fraction) - out_df['PERCENTILE'].values))
-        stream = open('answer_%s.txt' %flt, 'w+')
+        stream = open(datadir+'answer_%s.txt' %flt, 'w+')
+        #stream = open('answer_%s.txt' %flt, 'w+')
         stream.write('%.2f' %out_df[flt].values[closest_index])
         stream.close()
     

@@ -4,9 +4,9 @@ from knlc import kn_brightness_estimate
 
 def run_ap_mag_for_kasen_models (filter, distance, dist_err, days_since_burst, 
         kasen_fraction, data_dir="./", fast=False, doPlots=True) :
-    report_file = data_dir + "/kn_report"
+    report_file = data_dir + "kn_report"
     if not fast :
-        knlc_dir = os.getenv("DESGW_DIR", "./")+ "/knlc/"
+        knlc_dir = os.getenv("DESGW_DIR", "./")+ "knlc/"
         code = knlc_dir+"kn_brightness_estimate.py"
         cmd = "python {} --distance {} --distance_err {} --time_delay {} ".format(
             code, distance, dist_err, days_since_burst)
@@ -15,6 +15,7 @@ def run_ap_mag_for_kasen_models (filter, distance, dist_err, days_since_burst,
             cmd = cmd + "--magplot_file kn_mag_plot.png "
             cmd = cmd + "--expplot_file kn_exp_plot.png "
             cmd = cmd + "--report_file {} ".format(report_file)
+        print(cmd) #ag test 8.5.2020
         os.system(cmd)
 
         file = report_file + ".txt"
@@ -38,9 +39,9 @@ def run_ap_mag_for_kasen_models (filter, distance, dist_err, days_since_burst,
             percentile_dict, 
             write_answer=True, 
             flt=filter, 
-            fraction=kasen_fraction)
-
-        file = data_dir+"/answer_{}.txt".format(filter)
+            fraction=kasen_fraction,
+            datadir=data_dir)
+        file = data_dir+"answer_{}.txt".format(filter)
         ap_mag = np.genfromtxt(file)
  
     return ap_mag

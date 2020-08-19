@@ -38,7 +38,7 @@ class map(object):
         self.limitingMag = observation.maglim
         self.limits      = observation.limits
         tryApparent = True
-        if type == "bright" :
+        if type == "bright" or type == "hasrem": #ag added or type=hasrem 8.10.20
             if tryApparent :
                 self.lumModel = "apparent"
                 self.modelAbsoluteMagnitude = apparent_mag_source
@@ -57,7 +57,7 @@ class map(object):
                 # LIGO O3
                 self.modelAbsoluteMagnitude = -15.5
                 self.modelAbsoluteMagnitudeSigma = 1.0
-        elif type == "dark" :
+        elif type == "dark" or type == 'norem':
             if tryApparent :
                 self.lumModel = "apparent"
                 self.modelAbsoluteMagnitude = 21.5
@@ -73,6 +73,7 @@ class map(object):
         self.absMagMean = self.modelAbsoluteMagnitude 
         self.absMagSigma = self.modelAbsoluteMagnitudeSigma 
 
+        #print("apparent_mag_source", apparent_mag_source)
         # get the P_recognition
         self.pra = observation.pra
         self.pdec = observation.pdec

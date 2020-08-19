@@ -116,6 +116,8 @@ def manyDaysOfTotalProbability (
             print "\t ... the sun is up"
         else:
             print ""
+        print("totalprob", totalProb)
+        print("startOfDays,endOfDays,deltaTime ", startOfDays,endOfDays,deltaTime)
         times.append(time_since_start)
         totalProbs.append(totalProb)
         if not dark and not sunIsUp:
@@ -220,6 +222,8 @@ def probabilityMaps(obs, burst_mjd, start_mjd, daysSinceStart, \
 
     sm=sourceProb.map(obs, type=trigger_type, apparent_mag_source=apparent_mag)
     result = sm.calculateProb(spatial, distance, distance_sig, verbose=verbose)
+    #print("trigger_type, apparent_mag", trigger_type, apparent_mag)
+    #print("spatial, distance, distance_sig", spatial, distance, distance_sig)
     if not result:
         sunIsUp = 1
     return obs,sm, sunIsUp

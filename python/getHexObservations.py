@@ -120,7 +120,7 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
 
     print "\t cleaning up old files",
     if os.path.exists(data_dir+"/json") :
-        shutil.rmtree("json/")
+        shutil.rmtree(data_dir+"json/")
     files = glob.glob(data_dir+"/*png"); 
     for f in files: os.remove(f)
     files = glob.glob(data_dir+"/*jpg"); 
@@ -164,6 +164,7 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     #models = modelRead.getModels()
 
     # === prep the maps
+    print("map inputs:skymap, res",skymap, resolution)
     ra,dec,ligo=hp2np.hp2np(skymap, degrade=resolution, field=0)
     ligo_dist, ligo_dist_sig, ligo_dist_norm  = \
         distance*np.ones(ra.size), np.zeros(ra.size), np.zeros(ra.size)
@@ -178,6 +179,7 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
         print "\t !!!!!!!! ------- no distance information in skymap ------ !!!!!!!!"
 
     # details of the observations
+    print("obs input:ra,dec,start_mjd,camera ", ra,dec, start_mjd, camera)
     obs = mags.observed(ra,dec,ligo, start_mjd, camera=camera, verbose=False)
     obs.limitMag(working_filter,exposure=summed_exposure_time)
     print "finished setting up exposure calculation"
@@ -189,6 +191,8 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     probs,times,isdark = mapsAtTimeT.oneDayOfTotalProbability(
         obs, deltaTime, start_mjd, probabilityTimesCache,
         gw_map_trigger, gw_map_strategy, gw_map_control)
+    #print("probs, times, isdark", probs,times,isdark)
+    #print("obs.map, deltaTime, start_mjd, probabilityTimesCache", obs.map, deltaTime, start_mjd, probabilityTimesCache)
 
     made_maps_list = mapsAtTimeT.probabilityMapSaver (obs, times, probs, 
         gw_map_trigger, gw_map_strategy, gw_map_control)
@@ -358,7 +362,8 @@ def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
     list_of_jsons = turnObservingRecordIntoJSONs(
         ra,dec,id,prob,mjd,slotNum, trigger_id,
         exposure_list, filter_list, tiling_list, trigger_type, skymap, data_dir, propid) 
-
+    print("tiling list", tiling_list) #ag check 8.11.20
+    print("list of jsons", list_of_jsons)
     for tiling in tiling_list[1:] :
         if tiling == 0: ra_shift, dec_shift =  0.00, 0.00
         if tiling == 1: ra_shift, dec_shift =  0.02, 0.00
@@ -366,6 +371,7 @@ def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
         if tiling == 3: ra_shift, dec_shift = -0.02, 0.00
         if tiling == 4: ra_shift, dec_shift =  0.00,-0.02
         print("\t tiling {} ra,dec shift by {},{}".format(tiling, ra_shift, dec_shift))
+        print("list of jsons, rashift, decshift, tiling", list_of_jsons, ra_shift, dec_shift, tiling)
         gw_helper.setup_tilings(
             list_of_jsons,
             ra_shift = [ra_shift], dec_shift = [dec_shift],
@@ -376,6 +382,8 @@ def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
     for file in list_of_jsons:
         dir = os.path.dirname(file)
         file = os.path.basename(file)
+        print("basename file", file)
+        print("basename dir", dir)
         shutil.copyfile(dir+"/"+file, "json/tiling_{}_".format(tiling_list[0]) + file)
 
 #
@@ -691,7 +699,9 @@ def turnObservingRecordIntoJSONs(
             trigger_type=trigger_type, propid=propid, skymap=skymap, jsonFilename=tmpname)
         desJson(tmpname, name, mapDirectory, slotMJD) 
         seqzero += ra[ix].size
-        list_of_jsons.append(mapDirectory+name)
+#        list_of_jsons.append(mapDirectory+name) #ag commented out 8.10.20
+        list_of_jsons.append(name)
+#        print("mapDirectory, name", mapDirectory, name)
     return list_of_jsons
         
 # verbose can be 0, 1=info, 2=debug
@@ -802,7 +812,6 @@ def cumulPlot(trigger_id, data_dir) :
         new_mjd = np.append(new_mjd, mjd[ix].min())
         year,month,day,hour,minute = utc_time_from_mjd(mjd[ix].min())
         new_hour = np.append(new_hour, hour+minute/60.)
-
     plt.close()
     fig, ax1 = plt.subplots() ; 
     ax2 = ax1.twinx()
@@ -859,12 +868,19 @@ def cumulPlot(trigger_id, data_dir) :
             verticalalignment='bottom', alpha=0.3, color="r")
 
     mjd_h = (new_mjd - new_mjd[0])*24.
+    print("new_mjd, new_mjd[0]", new_mjd, new_mjd[0])
+    print("newx, u_slotnum, mjd_h", new_x, u_slotNum, mjd_h) #ag test 8.11.20
+    if len (mjd_h) < 2:
+        mjd_h = np.append(mjd_h,mjd_h[0]) #added if to make interp1d inputs the same
     interp = interp1d(mjd_h,new_x)
     x_ticks = interp( np.arange(0, mjd_h.max(), 1) )
 
     mjd_24 = (new_mjd - new_mjd[0])*24. + new_hour[0]
     ix = mjd_24 > 24
     mjd_24[ix] = mjd_24[ix]-24.0
+    if len (mjd_24) < 2: #interp1d requires arrays to have at least 2 entries
+        mjd_24 = np.append(mjd_24,mjd_24[0])
+    print(mjd_h, mjd_24)
     interp = interp1d(mjd_h, mjd_24)
     hours_labels = interp( np.arange(0, mjd_h.max(), 1) )
     labels = []
