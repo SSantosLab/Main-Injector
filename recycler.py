@@ -53,15 +53,19 @@ class event:
         try:
             self.event_params = np.load(self.event_paramfile)
         except:
-            self.event_params = {}
+            self.event_params = {'ETA': 'NAN', 'FAR':'NAN', 'ChirpMass': 'NAN', 'MaxDistance':'NAN', 'M1':'NAN', 
+                                 'M2':'NAN', 'boc':'NAN', 'CentralFreq': 'NAN'}
             self.weHaveParamFile = False
+        print("EVENT PARAMFILE:")
         print(self.event_paramfile)
         print(self.event_params.items())
+        print(self.weHaveParamFile)
+
         #asdf
         yaml_dir = os.path.join(work_area, 'strategy.yaml')
         os.system('cp recycler.yaml ' + yaml_dir)
         print('***** Copied recycler.yaml to ' + yaml_dir + ' for future reference *****')
-        os.system('kinit -k -t /var/keytab/desgw.keytab desgw/des/des41.fnal.gov@FNAL.GOV')
+        #os.system('kinit -k -t /var/keytab/desgw.keytab desgw/des/des41.fnal.gov@FNAL.GOV')
         self.official = official
 
     def modify_filesystem(self, skymap_filename, master_dir, trigger_id, mjd, hasrem) :
@@ -88,6 +92,7 @@ class event:
 
         os.system('cp '+skymap_filename.strip()+' '+work_area)
 #        print("ag copy skymap")
+        print('WORK AREA', work_area)
         os.system('cp '+self.master_dir+'/'+trigger_id +'_params.npz '+work_area)
 #        print("ag copy params npz")
         print('cp '+skymap_filename.strip()+' '+work_area)
@@ -293,7 +298,11 @@ class event:
 
         allSky = config['allSky']                                                            
 
-        eventtype = self.event_params['boc']
+        
+        try:
+            eventtype = self.event_params['boc']
+        except:
+            eventtype = None
 
         try:
             probhasns = self.event_params['probhasns']
@@ -419,7 +428,8 @@ class event:
         self.n_slots = gw_map_results.n_slots
         self.first_slot = gw_map_results.first_slot
         self.exposure_length = exposure_length
-        if do_make_maps:
+#        if do_make_maps:
+        if 1==1:
             np.savez(self.event_paramfile,
                      MJD=self.mjd,
                      ETA=self.event_params['ETA'],
@@ -427,7 +437,7 @@ class event:
                      ChirpMass=self.event_params['ChirpMass'],
                      MaxDistance=self.event_params['MaxDistance'],
                      DESXLIGO_prob=integrated_prob,
-                     LIGO_prob=gw_map_results.sum_ligo_prob,
+                     LIGO_prob = 0.0, ## AG changed gw_map_results.sum_ligo_prob -> 0.0 because sum_ligo_prob doesn't make sense here??? sept 6 2022
                      M1=self.event_params['M1'],
                      M2=self.event_params['M2'],
                      nHexes=self.prob.size,
@@ -515,10 +525,15 @@ class event:
         if self.skymap is None:
             self.skymap = os.path.join(outputDir,'lalinference.fits.gz')
 
-
-        #print(self.event_params.keys())
+            
+        print("AG TEST: EVENT_PARAMS AND KEYS")
+        print(self.event_params)
+        print(self.event_params.keys())
         #asdf
-        eventtype = self.event_params['boc']
+        try:
+            eventtype = self.event_params['boc']
+        except:
+            eventtype = None
 
         try:
             probhasns = self.event_params['probhasns']
@@ -747,7 +762,8 @@ class event:
         self.outputDir = outputDir
         self.mapDir = mapDir
 
-        self.weHaveParamFile = True
+#        self.weHaveParamFile = True ## JA test sept 6 2022
+        print("weHaveParamFile", self.weHaveParamFile)
 
         if self.weHaveParamFile:
             np.savez(self.event_paramfile,
@@ -840,12 +856,8 @@ class event:
         cp_string = os.path.join(self.work_area, bestslot_name) + ' ' + image_dir +"/"
         trigger_id =  self.trigger_id 
         trigger_best_slot =  trigger_id + "-" + str(self.best_slot) 
-        
-        if self.n_slots<1:
-            counter = getHexObservations.nothingToObserveShowSomething(trigger_id, self.work_area, self.mapspath)
-            bestslot_name = trigger_best_slot + "-ligo-eq.png"
-            oname = trigger_id + "-probabilityPlot.png"
-            os.system('cp ' + cp_string + oname)
+ 
+
         if True:
             bestslot_name = trigger_best_slot + "-maglim-eq.png"
             cp_string = os.path.join(map_dir, bestslot_name) + ' ' + image_dir +"/"
@@ -1209,7 +1221,8 @@ if __name__ == "__main__":
         if 'bayestar' in skymap_filename:
             print('bayestar' * 50)
 
-        try:
+#        try:
+        if 1==1:
             try:
                 mjd = float(mjd)
             except:
@@ -1234,10 +1247,10 @@ if __name__ == "__main__":
             #e.send_nonurgent_Email()
             #e.updateWebpage(real_or_sim)
 
-        except KeyError:
-            print("Unexpected error:", sys.exc_info())
-            badtriggers = open('badtriggers.txt', 'a')
-            badtriggers.write(trigger_id + '\n')
+#        except KeyError:
+#            print("Unexpected error:", sys.exc_info())
+#            badtriggers = open('badtriggers.txt', 'a')
+#            badtriggers.write(trigger_id + '\n')
     #############################################################################
 
     print('Done')

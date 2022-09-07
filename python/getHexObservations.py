@@ -150,14 +150,17 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) :
     print "\t examining Kasen universe KN models for coverage"
     night_dur,sunset,sunrise = mags.findNightDuration(start_mjd, camera)
     midnight_since_burst = 24*(sunset+night_dur/2. - burst_mjd) 
-    apparent_mag = kasen_modelspace.run_ap_mag_for_kasen_models (
-        working_filter,
-        distance, dist_err, 
-        midnight_since_burst,
-        kasen_fraction, data_dir,
-        fast = False)
-    print "\t\t at a time halfway through night, {:.2f} days after merger:".format(midnight_since_burst/24.)
-    print "\t\t {}% requires observations at {} <= {:5.2f}\n".format(kasen_fraction, filter_list[0], apparent_mag)
+    try: ## ag  test to see if we can get past this spot. sept 6 2022
+        apparent_mag = kasen_modelspace.run_ap_mag_for_kasen_models (
+            working_filter,
+            distance, dist_err, 
+            midnight_since_burst,
+            kasen_fraction, data_dir,
+            fast = False)
+        print "\t\t at a time halfway through night, {:.2f} days after merger:".format(midnight_since_burst/24.)
+        print "\t\t {}% requires observations at {} <= {:5.2f}\n".format(kasen_fraction, filter_list[0], apparent_mag)
+    except:
+        print("problem with kasen models")
 
         
     # ==== get the neutron star explosion models
@@ -342,7 +345,8 @@ def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
 
     print "\t cleaning up old jsons"
     if os.path.exists(data_dir+"/json") :
-        shutil.rmtree("json/")
+#        shutil.rmtree("json/")
+        shutil.rmtree(data_dir+"/json") 
     files = glob.glob(data_dir+"/*json"); 
     for f in files: os.remove(f)
     os.mkdir(data_dir+"/json")
@@ -384,7 +388,7 @@ def make_jsons(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results) 
         file = os.path.basename(file)
         print("basename file", file)
         print("basename dir", dir)
-        shutil.copyfile(dir+"/"+file, "json/tiling_{}_".format(tiling_list[0]) + file)
+        shutil.copyfile(dir+"/"+file, dir+"/json/tiling_{}_".format(tiling_list[0]) + file)
 
 #
 # ====== there are possibilities. Show them.
