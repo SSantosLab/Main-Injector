@@ -50,3 +50,16 @@ python recycler.py --skymapfilename=OUTPUT/TESTING/S190814bv/bayestar.fits.gz --
 optional: --hasrem: this will run recycler in "bright"/"has remnant". Omission of this argument will run the code in "dark"/"no remnant" mode
 
 
+## Getting extra package
+
+get pyslalib, python over industrial grade spherical astronomy code slalib
+https://github.com/scottransom/pyslalib
+```
+wget  https://github.com/scottransom/pyslalib/archive/master.zip
+unzip master.zip
+cd pyslalib-master
+make
+python setup.py install --home=$WORK_DIR/python-home-stash/
+python test/test_slalib.py
+PYTHONPATH=$PYTHONPATH:$WORK_DIR/python-home-stash/ ;export PYTHONPATH
+```

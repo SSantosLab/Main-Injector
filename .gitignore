@@ -2,3 +2,9 @@
 *~
 python/*.pyc
 python/*~
+wtest*
+working*
+*pyc
+*py~
+knlc/*png
+knlc/*txt
