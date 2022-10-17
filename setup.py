@@ -2,15 +2,23 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='MainInjectr',
-    version='4.0',
+    name="MainInjector",
+    version="4.0",
     description="MainInjector tools to Search for GW Counterparts",
     author="SSantosLab",
     packages=find_packages(),
     include_package_data=True,
-    entry_points = {
-        'main-injector scripts': [
-            'main-injector run = main-injector.test:hello_world'
-        ]
-    }
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Fortran :: 77",
+        "Programming Language :: C",
+        'License :: ',
+        'Natural Language :: English',
+        'Topic :: Scientific/Engineering :: Astronomy',
+        'Topic :: Scientific/Engineering :: Physics'
+    ],
+    entry_points='''
+    [console_scripts]
+    main-injector run=main-injector.test:hello_world
+    '''
 )

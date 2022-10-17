@@ -1,14 +1,16 @@
-#!/bin/sh
+#!/bin/bash
 
-MAIN_INJECTOR="/home/andsantos/phd/Main-Injector"
-DESGW_DATA_DIR="$MAIN_INJECTOR/data"
-DESGW_WEB="$MAIN_INJECTOR/DES_GW_website"
-PYTHONPATH="$PYTHONPATH:$MAIN_INJECTOR"
-
-#export $DESGW_DIR
-#export $PYTHONPATH
-echo $MAIN_INJECTOR
-echo $DESGW_DATA_DIR
-echo $DESGW_DIR
-echo $PYTHONPATH
-#export PS1
+if [[ $HOSTNAME =~ "LAPTOP-67HIEHMC" ]] ; then
+    export ROOT_DIR="/home/asantos/phd/Main-Injector/main_injector"
+    export MAIN_INJECTOR="/home/asantos/MI_test"
+    export DATA_DIR="$MAIN_INJECTOR/data"
+    export WEB="$MAIN_INJECTOR/DES_GW_website"
+    export GCN_DIR="$MAIN_INJECTOR/GCN"
+    export PYTHONPATH="$PYTHONPATH:$MAIN_INJECTOR"
+    export PYTHONPATH="$PYTHONPATH:$MAIN_INJECTOR/src/main-injector/pyslalib"
+    export DESGW_DATA_DIR="$MAIN_INJECTOR/OUTPUT"
+    export DESGW_MAP_DIR="$MAIN_INJECTOR/skymaps"
+    export DESGW_CATALOGS="$MAIN_INJECTOR/catalogs"
+    export DESGW_CONFIG="$MAIN_INJECTOR/configs"
+    #export DESGW_CATALOGS="/home/s1/annis/daedalean/desgw-map/data/2MASS-J-lt-16-starcounts-hp.fits"
+fi

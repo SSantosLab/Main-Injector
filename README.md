@@ -1,65 +1,77 @@
-# Main-Injector
+# Main Injector Docs
 
-As of June 2018, run as user gw in the gw account. 
+Main Injector is a python package designed by the SoaresSantosLab team in order to retrieve alerts from LVC GCN and work with those alerts to search for Electromagnetic Counterparts of Gravitational Wave Events
 
-We'd like to be able to run it in test mode as user XXX (say alenon, annis, brout, marcelle). This entails having the directory structure in the gw account being listed in the maininjector yaml configuration file.
-
-```unix
-% git clone git@github.com:SSantosLab/Main-Injector.git
-% cd Main-Injector
-```
-
-You'll need to run the setup script each time you login
-```
-% source SOURCEME
-```
-
-Then you can run the recycler (this is automatically in test mode)
-```
-% python recycler.py
-```
-
-Example:
-Before running tests:
-
-Check inputs to recycler.yaml, specifically:
-
-real_or_sim: 'sim' in test mode
-
-kasen_fraction: default is 50. This means that if the apparent magnitude will not recover 50% of the Kasen models, the code will say there is no probability of detecting this event
-
-days_since_burst: 0.5 is the default
-
-exposure_length_Rem: defualt [60., 90.]
-
-exposure_filter_Rem: default [ 'i', 'z']
-
-exposure_length_BH : [ 90., ] #sec / exposure_filter_BH : [ 'r', ]
-
-tilings - exposure_tiling_Rem and exposure_tiling_BH defualt [ 0, 1 ]
+## Folder Structure:
 
 ```
-python recycler.py --skymapfilename=OUTPUT/TESTING/S190814bv/bayestar.fits.gz --triggerpath=OUTPUT/TESTING/ --triggerid=S190814bv
-```
---skymapfilename: path to skymap. Code will read if its bayestar or LAL from filename
-
---triggerpath: path to output dir
-
---triggerid: name of event
-
-optional: --hasrem: this will run recycler in "bright"/"has remnant". Omission of this argument will run the code in "dark"/"no remnant" mode
-
-
-## Getting extra package
-
-get pyslalib, python over industrial grade spherical astronomy code slalib
-https://github.com/scottransom/pyslalib
-```
-wget  https://github.com/scottransom/pyslalib/archive/master.zip
-unzip master.zip
-cd pyslalib-master
-make
-python setup.py install --home=$WORK_DIR/python-home-stash/
-python test/test_slalib.py
-PYTHONPATH=$PYTHONPATH:$WORK_DIR/python-home-stash/ ;export PYTHONPATH
+src
+└── main-injector
+    ├── __init__.py
+    ├── configs
+    │   ├── TESTINGrecycler.yaml
+    │   ├── configs.yaml
+    │   ├── resimulator.yaml
+    │   └── strategy.yaml
+    ├── events
+    │   └── checkevent.py
+    ├── gwhelper
+    │   ├── dark_siren_hexes.py
+    │   ├── gw_map_configure.py
+    │   └── gwwide.py
+    ├── hex
+    │   ├── desHexen.py
+    │   ├── hexalate.py
+    │   └── observations.py
+    ├── kasen
+    │   └── kasen_modelspace.py
+    ├── knlc
+    │   ├── README.md
+    │   ├── __init__.py
+    │   ├── data
+    │   │   └── grouped_photometry.csv
+    │   ├── dotunnel.sh
+    │   ├── example.sh
+    │   ├── kn_brightness_estimate.py
+    │   ├── kn_exp_plot.png
+    │   ├── kn_mag_plot.png
+    │   ├── kn_report.txt
+    │   ├── launchjupyter.sh
+    │   └── setup.sh
+    ├── main.py
+    ├── plots
+    │   ├── cumulative_plots.py
+    │   ├── mcplot.py
+    │   └── plotMapAndHex.py
+    ├── sky
+    │   ├── atmosphere.py
+    │   ├── dust.py
+    │   ├── info.py
+    │   ├── seeingModel.py
+    │   ├── simplicity.py
+    │   ├── sky_model.py
+    │   └── telescope.py
+    ├── skymaps
+    │   ├── inside_footprint.py
+    │   ├── mags.py
+    │   ├── mapsAtTimeT.py
+    │   ├── mcbryde.py
+    │   ├── modelRead.py
+    │   └── sourceProb.py
+    ├── test.py
+    ├── trigger
+    │   └── trigger_pages.py
+    └── utils
+        ├── all_maps.py
+        ├── checkevent_config.py
+        ├── cumul.py
+        ├── decam2hp.py
+        ├── des_optimization.py
+        ├── distance.py
+        ├── hp2np.py
+        ├── jsonMaker.py
+        ├── make_recycler_config.py
+        ├── obsSlots.py
+        ├── rotate.py
+        └── send_texts_and_emails.p
 ```

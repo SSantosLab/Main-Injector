@@ -1,0 +1,9 @@
+LICENSE
+README.md
+pyproject.toml
+setup.cfg
+setup.py
+MainInjector.egg-info/PKG-INFO
+MainInjector.egg-info/SOURCES.txt
+MainInjector.egg-info/dependency_links.txt
+MainInjector.egg-info/top_level.txt
