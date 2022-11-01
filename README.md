@@ -75,3 +75,19 @@ src
         ├── rotate.py
         └── send_texts_and_emails.p
 ```
+
+### 1. Setup Main-Injector
+
+To setup Main-Injector, we need to
+    
+1. Manually install pyslalib. Inside pyslalib folder located in main_injector/pyslalib, do 
+    ```bash
+    python setup.py install
+    ```
+
+2. source SOURCEME file
+
+3. Run test
+    ```bash
+    python main_injector/recycler.py --skymapfilename=OUTPUT/TESTING/S190814bv/bayestar.fits.gz --triggerpath=OUTPUT/TESTING/ --triggerid=S190814bv
+    ```

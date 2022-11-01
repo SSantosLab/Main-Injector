@@ -5,7 +5,7 @@ import getopt
 import traceback
 import datetime
 import yaml
-import subprocess
+from subprocess import run
 
 import pytz
 import numpy as np
@@ -20,19 +20,25 @@ from main_injector.trigger import trigger_pages as tp
 
 
 class Event:
-    def __init__(self, skymap_filename: str, master_dir: str, trigger_id: str,
-                 mjd: float, config: str, official, hasrem):
-        '''
+    def __init__(self, 
+                 skymap_filename: str,
+                 master_dir: str,
+                 trigger_id: str,
+                 mjd: float,
+                 config_file: str,
+                 official,
+                 hasrem):
+        """
         Event Base Class.
 
 
         Attributes:
         -----------
-        skymap_filename:
+        skymap_filename: skymap path.
         master_dir:  the directory containing all trigger subdirectories.
         trigger_id: the name of the trigger event that comes from LIGO.
         mjd:        the modified julian date of the event (in FITS header, among other places).
-        config:     the config filename with the parameters that controls the routine.
+        config_file:     the config filename with the parameters that controls the routine.
         official:
         hasrem:
 
@@ -43,7 +49,7 @@ class Event:
 
 
         --------
-        '''
+        """
 
         # set up the working directories
         self.modify_filesystem(
@@ -52,8 +58,8 @@ class Event:
 
         self.trigger_id = trigger_id
         # read config file
-        if config["force_recycler_mjd"]:
-            self.recycler_mjd = config["recycler_mjd"]
+        if config_file["force_recycler_mjd"]:
+            self.recycler_mjd = config_file["recycler_mjd"]
         else:
             self.recycler_mjd = self.getmjd(datetime.datetime.now())
 
@@ -93,8 +99,7 @@ class Event:
         # asdf
         yaml_dir = os.path.join(work_area, 'strategy.yaml')
         
-        subprocess.run([
-            'cp',
+        run(['cp',
             os.path.join(os.environ["DESGW_CONFIG"], 'recycler.yaml'),
             yaml_dir
         ])
@@ -157,6 +162,7 @@ class Event:
             os.mkdir(website)
 
         self.mapspath = os.path.join(work_area, "maps")
+        print(work_area)
         if not os.path.exists(self.mapspath):
             print(self.mapspath)
             os.makedirs(self.mapspath)
@@ -180,63 +186,63 @@ class Event:
         self.work_area = work_area
         self.trigger_id = trigger_id
         self.mjd = mjd
-        self.config = config
+        self.config = config_file
         self.website = website
 
-    def mapMaker(self, trigger_id, skymap, config, hasrem, snarf_mi_maps=False, start_slot=-1, do_nslots=-1,  mi_map_dir="./") -> None:
+    def mapMaker(self, trigger_id, skymap, config_file, hasrem, snarf_mi_maps=False, start_slot=-1, do_nslots=-1,  mi_map_dir="./") -> None:
         """
 
         """
-        #skymap_filename, master_dir, trigger_id, mjd, config, official, hasrem
+        #skymap_filename, master_dir, trigger_id, mjd, config_file, official, hasrem
 
         # debug
-        debug = config["debug"]
+        debug = config_file["debug"]
 
         # camera
-        camera = config["camera"]
+        camera = config_file["camera"]
 
        # resolution
-        resolution = float(config["resolution"])
+        resolution = float(config_file["resolution"])
 
-        overhead = config["overhead"]
-        #nvisits = config["nvisits"]
-        allSky = config['allSky']
+        overhead = config_file["overhead"]
+        #nvisits = config_file["nvisits"]
+        allSky = config_file['allSky']
 
-        area_per_hex = config["area_per_hex"]
-        start_of_season = config["start_of_season"]
-        end_of_season = config["end_of_season"]
-        events_observed = config["events_observed"]
-        skipAll = config["skipAll"]
+        area_per_hex = config_file["area_per_hex"]
+        start_of_season = config_file["start_of_season"]
+        end_of_season = config_file["end_of_season"]
+        events_observed = config_file["events_observed"]
+        skipAll = config_file["skipAll"]
         mjd = self.mjd
         outputDir = self.work_area
         mapDir = self.mapspath
         recycler_mjd = self.recycler_mjd
-        kasen_fraction = config['kasen_fraction']
-        debug = config["debug"]
-        camera = config["camera"]
-        resolution = config["resolution"]
-        do_make_maps = config["do_make_maps"]
-        do_make_hexes = config["do_make_hexes"]
-        do_make_jsons = config["do_make_jsons"]  # set to false by now
-        do_make_gifs = config["do_make_gifs"]
+        kasen_fraction = config_file['kasen_fraction']
+        debug = config_file["debug"]
+        camera = config_file["camera"]
+        resolution = config_file["resolution"]
+        do_make_maps = config_file["do_make_maps"]
+        do_make_hexes = config_file["do_make_hexes"]
+        do_make_jsons = config_file["do_make_jsons"]  # set to false by now
+        do_make_gifs = config_file["do_make_gifs"]
         days_since_burst = 0
-        #days_since_burst = config["days_since_burst"]
+        #days_since_burst = config_file["days_since_burst"]
         '''
     # strategy
-        exposure_length_ns= np.array(config["exposure_length_NS"],dtype='float')
-        filter_list_ns    = config["exposure_filter_NS"]
-        maxHexesPerSlot_ns= np.array(config["maxHexesPerSlot_NS"],dtype='float')
-        exposure_length_bh= np.array(config["exposure_length_BH"],dtype='float')
-        filter_list_bh    = config["exposure_filter_BH"]
-        maxHexesPerSlot_bh= np.array(config["maxHexesPerSlot_BH"],dtype='float')
+        exposure_length_ns= np.array(config_file["exposure_length_NS"],dtype='float')
+        filter_list_ns    = config_file["exposure_filter_NS"]
+        maxHexesPerSlot_ns= np.array(config_file["maxHexesPerSlot_NS"],dtype='float')
+        exposure_length_bh= np.array(config_file["exposure_length_BH"],dtype='float')
+        filter_list_bh    = config_file["exposure_filter_BH"]
+        maxHexesPerSlot_bh= np.array(config_file["maxHexesPerSlot_BH"],dtype='float')
 
     # economics analysis for NS and for BH
-        hoursAvailable_ns = config["time_budget_for_NS"]
-        hoursAvailable_bh = config["time_budget_for_BH"]
-        lostToWeather_ns  = config["hours_lost_to_weather_for_NS"]
-        lostToWeather_bh  = config["hours_lost_to_weather_for_BH"]
-        rate_bh           = config["rate_of_bh_in_O2"];# events/year
-        rate_ns           = config["rate_of_ns_in_O2"];# events/year
+        hoursAvailable_ns = config_file["time_budget_for_NS"]
+        hoursAvailable_bh = config_file["time_budget_for_BH"]
+        lostToWeather_ns  = config_file["hours_lost_to_weather_for_NS"]
+        lostToWeather_bh  = config_file["hours_lost_to_weather_for_BH"]
+        rate_bh           = config_file["rate_of_bh_in_O2"];# events/year
+        rate_ns           = config_file["rate_of_ns_in_O2"];# events/year
         hours_used_by_NS  = 0
         hours_used_by_BH  = 0
 
@@ -247,21 +253,21 @@ class Event:
 
         # same day?
         try:
-            days_since_burst = config["days_since_burst"]
+            days_since_burst = config_file["days_since_burst"]
         except:
             pass
     # strategy
-        exposure_length_rem = config["exposure_length_Rem"]
-        filter_list_rem = config["exposure_filter_Rem"]
-        maxHexesPerSlot_rem = config["maxHexesPerSlot_Rem"]
-        exposure_length_bh = config["exposure_length_BH"]
-        filter_list_bh = config["exposure_filter_BH"]
-        maxHexesPerSlot_bh = config["maxHexesPerSlot_BH"]
+        exposure_length_rem = config_file["exposure_length_Rem"]
+        filter_list_rem = config_file["exposure_filter_Rem"]
+        maxHexesPerSlot_rem = config_file["maxHexesPerSlot_Rem"]
+        exposure_length_bh = config_file["exposure_length_BH"]
+        filter_list_bh = config_file["exposure_filter_BH"]
+        maxHexesPerSlot_bh = config_file["maxHexesPerSlot_BH"]
 
         # ag added
-        exposure_tiling_rem = config["exposure_tiling_Rem"]
-        exposure_tiling_bh = config["exposure_tiling_BH"]
-        max_number_of_hexes_to_do = config["max_number_of_hexes_to_do"]
+        exposure_tiling_rem = config_file["exposure_tiling_Rem"]
+        exposure_tiling_bh = config_file["exposure_tiling_BH"]
+        max_number_of_hexes_to_do = config_file["max_number_of_hexes_to_do"]
         hoursAvailable = 20.
         self.time_budget = hoursAvailable
 
@@ -279,20 +285,20 @@ class Event:
             filter_list = filter_list_rem
             maxHexesPerSlot = maxHexesPerSlot_rem
             tiling_list = exposure_tiling_rem
-            propid = config['propid_Rem']
+            propid = config_file['propid_Rem']
         elif trigger_type == "norem":
             exposure_length = exposure_length_bh
             filter_list = filter_list_bh
             maxHexesPerSlot = maxHexesPerSlot_bh
             tiling_list = exposure_tiling_bh
-            propid = config['propid_BH']
+            propid = config_file['propid_BH']
 
         else:
             raise Exception(
                 "trigger_type={}  ! Can only compute BH or Rem".format(trigger_type))
         exposure_length = np.array(exposure_length)
 
-        gif_resolution = config['gif_resolution']
+        gif_resolution = config_file['gif_resolution']
 
         gw_map_control = gw_map_configure.control(resolution, outputDir, debug,
                                                   allSky=allSky, snarf_mi_maps=snarf_mi_maps, mi_map_dir=mi_map_dir,
@@ -334,7 +340,7 @@ class Event:
             observations.makeGifs(
                 gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results)
 
-        allSky = config['allSky']
+        allSky = config_file['allSky']
 
         try:
             eventtype = self.event_params['boc']
@@ -346,7 +352,7 @@ class Event:
         except:
             probhasns = 0.  # for old maps...
         '''
-        if config['forceProbHasNS']: probhasns = config['probHasNS']
+        if config_file['forceProbHasNS']: probhasns = config_file['probHasNS']
 
         self.probhasns = probhasns
         gethexobstype = None
@@ -359,12 +365,12 @@ class Event:
         if eventtype == 'Burst':
             gethexobstype = 'BH'
             self.distance = 1.
-            self.propid = config['BBH_propid']
+            self.propid = config_file['BBH_propid']
             self.time_budget = hoursAvailable_bh
         elif eventtype == 'CBC':
             #print 'probhasns'*100                                                                                                                                                                                                            
             print('PROB HAS NS',probhasns)
-            if probhasns > config['probHasNS_threshold']:
+            if probhasns > config_file['probHasNS_threshold']:
                 gethexobstype = 'NS'
                 try:
                     self.distance = distance.dist_from_map(self.skymap)
@@ -372,24 +378,24 @@ class Event:
                     print('failed to get distance from map')
                     print('using 1mpc')
                     self.distance = 1.
-                self.propid = config['BNS_propid']
+                self.propid = config_file['BNS_propid']
             else:
                 gethexobstype = 'BH'
                 self.distance = 1.
-                self.propid = config['BBH_propid']
+                self.propid = config_file['BBH_propid']
                 self.time_budget = hoursAvailable_bh
 
         else: #we dont know what we're looking at... do default obs for lightcurve                                                                                                                                                            
             print('WE DONT KNOW WHAT WERE LOOKING AT!'*5)
             gethexobstype = 'BH'
             self.distance = 1.
-            self.propid = config['BBH_propid']
+            self.propid = config_file['BBH_propid']
             self.time_budget = hoursAvailable_bh
 
         
         trigger_type = gethexobstype 
 
-    # configure strategy for the event type
+    # config_fileure strategy for the event type
         if trigger_type == "NS" :
             hoursAvailable       = hoursAvailable_ns - lostToWeather_ns - hours_used_by_NS
             rate                 = rate_ns
@@ -406,7 +412,7 @@ class Event:
             raise Exception(
                 "trigger_type={}  ! Can only compute BH or NS".format(trigger_type))
         
-        allSky = config['allSky']
+        allSky = config_file['allSky']
 
         exposure_length   = np.array(exposure_length)
 
@@ -493,7 +499,7 @@ class Event:
                      exposure_times=exposure_length,
                      exposure_filter=filter_list,
                      hours=self.time_budget,
-                     nvisits=-999,  # config['nvisits'],
+                     nvisits=-999,  # config_file['nvisits'],
                      mapname='NAN',
                      filename=self.skymap,
                      gethexobstype=trigger_type,
@@ -537,11 +543,11 @@ class Event:
         plt.savefig(os.path.join(self.mapspath, name))
         plt.clf()
 
-    def getContours(self, config):
+    def getContours(self, config_file):
         import matplotlib.pyplot as plt
 
         # if exposure_length is None:
-        #    exposure_length = config["exposure_length"]
+        #    exposure_length = config_file["exposure_length"]
         exposure_length = self.exposure_length
         image_dir = self.website_imagespath
         map_dir = self.mapspath
@@ -584,7 +590,7 @@ class Event:
 
         return
 
-    def makeJSON(self, config):
+    def makeJSON(self, config_file):
 
         mapmakerresults = np.load(os.path.join(
             self.work_area, 'mapmaker_results.npz'))
@@ -625,8 +631,8 @@ class Event:
         from time import gmtime, strftime
         timeprocessed = strftime("%H:%M:%S GMT \t %b %d, %Y", gmtime())
 
-        #exptimes = ', '.join(map(str, config['exposure_length']))
-        #expf = ', '.join(map(str, config['exposure_filter']))
+        #exptimes = ', '.join(map(str, config_file['exposure_length']))
+        #expf = ', '.join(map(str, config_file['exposure_filter']))
 
         try:
             boc = self.event_params['boc']
@@ -774,7 +780,7 @@ class Event:
 
     def makeObservingPlots(self):
         try:
-            if not self.config['skipPlots']:
+            if not self.config_file['skipPlots']:
                 # n_plots = observations.makeObservingPlots(
                 #    self.n_slots, self.trigger_id, self.best_slot, self.outputDir, self.mapDir, self.camera, allSky=True )
 
@@ -820,155 +826,3 @@ class Event:
             print(trace)
             self.send_processing_error(e, where, line, trace)
             sys.exit()
-
-
-if __name__ == "__main__":
-
-    try:
-        args = sys.argv[1:]
-        opt, arg = getopt.getopt(
-            args, "tp:tid:mjd:exp:sky",
-            longopts=["triggerpath=", "triggerid=", "mjd=", "exposure_length=", "official", "skymapfilename=", "hasrem"])
-
-    except getopt.GetoptError as err:
-        print(str(err))
-        print("Error : incorrect option or missing argument.")
-        print(__doc__)
-        sys.exit(1)
-
-    # Read in config
-    with open(
-        os.path.join(os.environ["DESGW_CONFIG"], "recycler.yaml"), "r"
-    ) as f:
-        config = yaml.safe_load(f)
-    # Set defaults to config
-    trigger_path = config["trigger_path"]
-
-    real_or_sim = config["real_or_sim"]
-
-    official = False
-
-    if config["skymap_filename"] == 'Default':
-        skymap_filename = None
-    else:
-        skymap_filename = config["skymap_filename"]
-
-    trigger_ids = [config["trigger_id"]]
-
-    force_mjd = config["force_mjd"]
-
-    #exposure_length = config["exposure_length"]
-
-    # Override defaults with command line arguments
-    # THESE NOT GUARANTEED TO WORK EVER SINCE WE SWITCHED TO YAML
-    hasrem = False
-#    norem = False
-
-    dontwrap = False
-    for o, a in opt:
-        print('Option')
-        print(o)
-        print(a)
-        print('-----')
-        if o in ["-tp", "--triggerpath"]:
-            trigger_path = str(a)
-        elif o in ["-tid", "--triggerid"]:
-            trigger_ids = [str(a)]
-            dontwrap = True
-        elif o in ["-mjd", "--mjd"]:
-            mjd = float(a)
-        # elif o in ["-exp","--exposure_length"]:
-        #    exposure_length = float(a)
-        elif o in ["-hours", "--hours_available"]:
-            hours_available = float(a)
-        elif o in ["-sky", "--skymapfilename"]:
-            skymap_filename = str(a)
-        elif o in ['--hasrem']:
-            hasrem = True  # str(a)
-            print("HASREM ", hasrem)
-        elif o in ['--official']:
-            official = True
-#        elif o in ['--hasrem']:
-#            hasrem = str(a)
-        # elif o in ['--norem']:
-        #    hasrem = False
-
-        else:
-            print("Warning: option", o, "with argument", a, "is not recognized")
-
-    # Clear bad triggers, only used for wrapping all triggers...
-    badtriggers = open('badtriggers.txt', 'w')
-    badtriggers.close()
-
-    ####### BIG MONEY NO WHAMMIES ###############################################
-    if config["wrap_all_triggers"]:
-        if not dontwrap:
-            trigger_ids = os.listdir(trigger_path)
-            trigger_ids = trigger_ids[2:]
-    for trigger_id in trigger_ids:
-        if force_mjd:
-            mjd = config["mjd"]
-        else:
-            try:
-                mjd = open(os.path.join(trigger_path, trigger_id,
-                           trigger_id + '_eventMJD.txt'), 'r').read()
-            except:
-                mjd = '99999'
-        if skymap_filename is None:
-            try:
-                # if True:
-                # mapname = open(os.path.join(trigger_path,
-                #                            trigger_id,
-                #                            config['default_map_name']), 'r').read()
-                # skymap_filename = os.path.join(trigger_path,
-                #                               trigger_id, config['default_map_name'])
-                # print os.path.join(trigger_path, trigger_id,'default_skymap.txt')
-                # print os.path.join(trigger_path, trigger_id,'default_skymap.txt').read()
-                skymap_filename = os.path.join(trigger_path, trigger_id,
-                                               open(os.path.join(trigger_path, trigger_id,
-                                                                 'default_skymap.txt'), 'r').read())
-            except:
-                badtriggers = open('badtriggers.txt', 'a')
-                badtriggers.write(trigger_id + '\n')
-                print('Could not find skymap url file')
-
-        if 'bayestar' in skymap_filename:
-            print('bayestar' * 50)
-
-#        try:
-        if 1 == 1:
-            try:
-                mjd = float(mjd)
-            except:
-                badtriggers = open('badtriggers.txt', 'a')
-                badtriggers.write(trigger_id + '\n')
-                print('WARNING: Could not convert mjd to float. Trigger: ' +
-                      trigger_id + ' flagged as bad.')
-# here is where the object is made, and parts of it are filed in
-            master_dir = os.path.join(trigger_path, trigger_id)
-            e = Event(skymap_filename, master_dir, trigger_id,
-                      mjd, config, official, hasrem)
-
-# e has variables and code assocaiated with it. The mapMaker is called "e" or "self"
-
-            e.mapMaker(trigger_id, skymap_filename, config, hasrem)
-            e.getContours(config)
-            #jsonfilelist = e.makeJSON(config)
-            # e.make_cumulative_probs()
-            os.system('cp '+e.event_paramfile+' '+master_dir)
-            # generates the homepage
-            e.updateTriggerIndex(real_or_sim=real_or_sim)
-            # make a blank page with the basic info that is available
-            e.updateWebpage(real_or_sim)
-            # e.makeObservingPlots()
-            # e.getContours(config)
-            # e.send_nonurgent_Email()
-            # e.updateWebpage(real_or_sim)
-
-#        except KeyError:
-#            print("Unexpected error:", sys.exc_info())
-#            badtriggers = open('badtriggers.txt', 'a')
-#            badtriggers.write(trigger_id + '\n')
-    #############################################################################
-
-    print('Done')

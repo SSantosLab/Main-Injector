@@ -1,9 +1,0 @@
-
-# Where this came from?
-gw_helper.setup_tilings(
-            list_of_jsons,
-            ra_shift = [ra_shift], dec_shift = [dec_shift],
-            tilings = tiling,
-            prefix='tiling_{}'.format(tiling),
-            overwrite=False,
-        )
