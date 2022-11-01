@@ -1,2 +1,0 @@
-sendEveryoneEmails = True
-sendEveryoneTexts = True

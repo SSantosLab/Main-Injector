@@ -1,0 +1,13 @@
+Metadata-Version: 2.1
+Name: MainInjector
+Version: 4.0
+Summary: MainInjector tools to Search for GW Counterparts
+Author: SSantosLab
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Fortran :: 77
+Classifier: Programming Language :: C
+Classifier: License :: 
+Classifier: Natural Language :: English
+Classifier: Topic :: Scientific/Engineering :: Astronomy
+Classifier: Topic :: Scientific/Engineering :: Physics
+License-File: LICENSE
