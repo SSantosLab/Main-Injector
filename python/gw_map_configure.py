@@ -89,11 +89,6 @@ class trigger(object):
         #ix = np.invert(ix)
         #ligo[ix] = 0.0
 
-        # GW170814 hack JTA                                                                             
-        ix = (ra > 0) & ( ra < 45) & (dec < 0) & (dec > -40)
-        ix = np.invert(ix)                                                                             
-        ligo[ix] = 0.0
-
         self.ligo_ra = ra
         self.ligo_dec = dec
         self.ligo = ligo
