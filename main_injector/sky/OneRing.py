@@ -15,6 +15,7 @@ import decam2hp
 #   3) consider more sophisticated sorting of hexes
 #       what is in place now is: go to highest hex first, then do nearest neighbors in inner region,
 #       then go to highest probability in outer region, then do nearest neighbors in outer region,
+#   4) can we use galaxy catalog, hexelation, and rank our hexes?
 #
 #   Jim Annis and Nora Sherman, 
 #   Nov 7, 2022
