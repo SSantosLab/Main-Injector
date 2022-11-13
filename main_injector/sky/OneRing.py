@@ -2,6 +2,7 @@ import numpy as np
 import hp2np 
 import hexelate
 import decam2hp
+import jsonMaker
 
 #
 # Code to demonstrate a very simple way to go from Strategy (from the strategy paper)
@@ -26,7 +27,12 @@ import decam2hp
 
 # first pass only!
 def nike { skymap, probArea_outer, probArea_inner, filter, expTime_inner, expTime_outer,
-            hexFile="all-sky-hexCenters-decam.txt"} :
+            hexFile="all-sky-hexCenters-decam.txt", 
+            trigger_id="LIGO/Virgo", 
+            trigger_type="bright", 
+            propid='propid', 
+            jsonFilename="des-gw.json"} :
+
     camera = "decam"
     if (probArea_outer > 1) or ( probArea_inner) : raise Exception("probArea_outer,inner is > 1, impossible")
 
@@ -112,12 +118,8 @@ def nike { skymap, probArea_outer, probArea_inner, filter, expTime_inner, expTim
     # having resorted on optimal slew time, save
     inner_ra = new_inner_ra; inner_dec = new_inner_dec
     outer_ra = new_outer_ra; outer_dec = new_outer_dec
+    ra = np.concatenate(inner_ra,outer_ra)
+    dec = np.concatenate(inner_dec,outer_dec)
+    expTime = np.concatenate( np.ones(ra.size)*expTime_inner , np.ones(ra.size)*expTime_outer)
 
-    # now we have the areas we need to work on, inner and outer
-    # here is out mock JSON writing
-    for i in range(nHexes_inner) :
-        print ("ra,dec: {%.5f},{%.6f} filter: {} expTime: {}".format(
-            inner_ra[i], inner_dec[i], filter, expTime_inner)
-    for i in range(nHexes_outer) :
-        print ("ra,dec: {%.5f},{%.6f} filter: {} expTime: {}".format(
-            outer_ra[i], outer_dec[i], filter, expTime_outer)
+   jsonMaker.writeJson(ra,dec,expTime,filter, trigger_id, trigger_type, propid, skymap, jsonFilename ) 
