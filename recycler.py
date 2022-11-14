@@ -20,7 +20,7 @@ except getopt.GetoptError as err:
 
 # Read in config
 with open(
-    os.path.join(os.environ["DESGW_CONFIG"], "recycler.yaml"), "r"
+    os.path.join(os.environ["ROOT_DIR"], "recycler.yaml"), "r"
 ) as f:
     config = yaml.safe_load(f)
 # Set defaults to config
