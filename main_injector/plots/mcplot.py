@@ -27,10 +27,19 @@ license = """
 
 def plot(x, y, vals, gridsize=160, save=False, file="", vmin="", vmax="", cmap="jet", sum=False):
     ax1 = plt.axes()
-    if vmin > vals.max():
-        vmin = ""
-    if vmax < vals.min():
-        vmax = ""
+
+    if isinstance(vmin, str):
+        pass
+    else:
+        if vmin > vals.max():
+            vmin = ""
+
+    if isinstance(vmax, str):
+        pass
+    else:
+        if vmax < vals.min():
+            vmax = ""
+
     if vmin == "" and vmax == "":
         polycol = ax1.hexbin(x, y, vals, gridsize=gridsize, cmap=cmap)
     elif vmax == "":

@@ -67,7 +67,7 @@ def gwwide(wide_queue, gw_queue, start_time, dt, sort, camera="decam"):
 
     fixed_queue = [fix_obs(gw_obs, wide_queue, start_time, dt, camera)
                    for gw_obs in gw_queue]
-
+    print(fixed_queue)
     if sort:
         fixed_queue = sorted(fixed_queue, key=lambda e: e['lateTime'])
 
@@ -451,7 +451,7 @@ def setting_iso8601(ra, decl, tstring, dt=0.0, camera="decam"):
     """
     t = Time(parse_date(tstring))
     set_mjd = setting_mjd(ra, decl, t.mjd, dt, camera)
-    set_t = Time(set_mjd, scale='tt', format='mjd', out_subfmt='date_hms')
+    set_t = Time(set_mjd, scale='tt', format='mjd', out_subfmt='float')
     set_date = set_t.iso[:10]
     set_time = set_t.iso[11:19]
     set_iso = set_date + 'T' + set_time + 'Z'
@@ -471,7 +471,7 @@ def rising_iso8601(ra, decl, tstring, dt=0.0, camera="decam"):
     """
     t = Time(parse_date(tstring))
     rise_mjd = rising_mjd(ra, decl, t.mjd, dt, camera)
-    rise_t = Time(rise_mjd, scale='tt', format='mjd', out_subfmt='date_hms')
+    rise_t = Time(rise_mjd, scale='tt', format='mjd', out_subfmt='float')
     rise_date = rise_t.iso[:10]
     rise_time = rise_t.iso[11:19]
     rise_iso = rise_date + 'T' + rise_time + 'Z'
@@ -505,6 +505,7 @@ def main():
                         level=log_levels[args.verbose])
 
     # Fix format of start time
+
     st = Time(parse_date(args.start_time), out_subfmt='date_hms').iso
     st_date = st[:10]
     st_time = st[11:19]
