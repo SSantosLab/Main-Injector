@@ -5,8 +5,8 @@ import numpy as np
 from scipy.interpolate import interp1d
 import healpy as hp
 
-from utils import cumul
-from plots.plotMapAndHex import readMaps
+from main_injector.utils import cumul
+from main_injector.plots.plotMapAndHex import readMaps
 
 # ===== The economics analysis
 #

@@ -386,9 +386,9 @@ def splitFootprintAcrossSingularity(ra,dec,alpha,beta) :
     x,y,z = rotate.rotateAboutZaxis(x,y,z, alpha)
     x,y,z = rotate.rotateAboutYaxis(x,y,z, beta)
     if ra.min() < 0 :
-        lon,lat,r = cartesianToSpherical(x,y,z)
+        lon,lat,r = cartesian2spherical(x,y,z)
     else :
-        lon,lat,r = rotate.cartesianToSpherical(x,y,z)
+        lon,lat,r = rotate.cartesian2spherical(x,y,z)
     # return lon, lat
 
     # things off plot need to be gotten onto plot
@@ -452,7 +452,7 @@ def splitFootprintAcrossSingularity(ra,dec,alpha,beta) :
     #return lon_array,lat_array
     return ra_array,dec_array
 
-def cartesianToSpherical (x, y, z) :
+def cartesian2spherical (x, y, z) :
     r = np.sqrt( x**2 + y**2 + z**2)
     npd = np.arccos(z/r)
     ra  = np.arctan2(y,x)

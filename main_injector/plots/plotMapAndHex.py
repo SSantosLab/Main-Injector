@@ -49,7 +49,7 @@ def mapAndHex(figure, simNumber, slot, data_dir, nslots, hexRa, hexDec, camera,
     raMid = -1000
     #raBoxSize = 0.
     #decBoxSize = 16.
-    #mod_ra = -12
+    #mod_ra = -12f
     #mod_dec = 5
     #mod_ra = 0; mod_dec=3; raBoxSize=60; decBoxSize=15
     mod_ra = 0; mod_dec=0; raBoxSize=10; decBoxSize=10
@@ -314,7 +314,9 @@ def plotDesiFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax, camera) :
 
 def plotDesFootprint(alpha, beta, xmin, xmax, ymin, ymax, ax, camera) :
 
-    desRa, desDec = get_footprint()
+    desRa, desDec = get_footprint().iter_segments()
+    desRa = desRa[0]
+    desDec = desDec[0]
     plotFootprint(desRa,desDec, alpha, beta, xmin, xmax, ymin, ymax, ax, camera) 
 
 def plotMoonFootprint(ra, dec, illumination, alpha, beta, xmin, xmax, ymin, ymax, ax, camera) :
@@ -361,7 +363,7 @@ def plotFootprint(ra,dec, alpha, beta, xmin, xmax, ymin, ymax, ax, camera) :
     #import matplotlib.path
     #import matplotlib.patches
     #from equalArea import mcbryde
-    plotPatch (ra, dec,  alpha, beta, xmin, xmax, ymin, ymax, ax, "gold", "gold", 0.066) 
+    plotPatch(ra, dec,  alpha, beta, xmin, xmax, ymin, ymax, ax, "gold", "gold", 0.066) 
     #ra_array, dec_array = splitFootprintAcrossSingularity(ra,dec,alpha,beta) 
     #for i in range(0, len(ra_array)) :
     #    ra = ra_array[i]
@@ -386,9 +388,9 @@ def splitFootprintAcrossSingularity(ra,dec,alpha,beta) :
     x,y,z = rotate.rotateAboutZaxis(x,y,z, alpha)
     x,y,z = rotate.rotateAboutYaxis(x,y,z, beta)
     if ra.min() < 0 :
-        lon,lat,r = cartesianToSpherical(x,y,z)
+        lon,lat,r = cartesian2spherical(x,y,z)
     else :
-        lon,lat,r = rotate.cartesianToSpherical(x,y,z)
+        lon,lat,r = rotate.cartesian2spherical(x,y,z)
     # return lon, lat
 
     # things off plot need to be gotten onto plot
@@ -452,7 +454,7 @@ def splitFootprintAcrossSingularity(ra,dec,alpha,beta) :
     #return lon_array,lat_array
     return ra_array,dec_array
 
-def cartesianToSpherical (x, y, z) :
+def cartesian2spherical (x, y, z) :
     r = np.sqrt( x**2 + y**2 + z**2)
     npd = np.arccos(z/r)
     ra  = np.arctan2(y,x)

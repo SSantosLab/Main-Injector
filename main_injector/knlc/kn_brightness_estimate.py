@@ -29,7 +29,7 @@ class KNCalc():
         self.delta_mjd = round(float(time_delay) / 24.0, 1)
         
         # Set directory for lookup table
-        knlc_dir = os.path.join(os.environ["ROOT_DIR"], "knlc")
+        knlc_dir = os.path.join(os.environ["MAIN_INJECTOR"], "knlc")
             
         # Choose lookup table based on time_delay
         if self.delta_mjd < 2.3:

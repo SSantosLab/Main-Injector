@@ -4,8 +4,8 @@ import warnings
 import numpy as np
 import scipy.stats
 
-from skymaps import mags
-from utils import hp2np
+from main_injector.skymaps import mags
+from main_injector.utils import hp2np
 
 
 license="""

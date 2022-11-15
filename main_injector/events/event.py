@@ -50,7 +50,7 @@ class Event:
 
         --------
         """
-
+        self.config = config_file
         # set up the working directories
         self.modify_filesystem(
             skymap_filename, master_dir, trigger_id, mjd, hasrem)
@@ -100,7 +100,7 @@ class Event:
         yaml_dir = os.path.join(work_area, 'strategy.yaml')
         
         run(['cp',
-            os.path.join(os.environ["DESGW_CONFIG"], 'recycler.yaml'),
+            os.path.join(os.environ["ROOT_DIR"], 'recycler.yaml'),
             yaml_dir
         ])
 
@@ -186,7 +186,6 @@ class Event:
         self.work_area = work_area
         self.trigger_id = trigger_id
         self.mjd = mjd
-        self.config = config_file
         self.website = website
 
     def mapMaker(self, trigger_id, skymap, config_file, hasrem, snarf_mi_maps=False, start_slot=-1, do_nslots=-1,  mi_map_dir="./") -> None:

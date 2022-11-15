@@ -1,5 +1,5 @@
 import numpy as np
-from sky.atmosphere import extinctionModel
+from main_injector.sky.atmosphere import extinctionModel
 
 license = """
    Copyright (C) 2014 James Annis

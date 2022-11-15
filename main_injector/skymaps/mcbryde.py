@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from utils import rotate
+from main_injector.utils import rotate
 from scipy.interpolate import interp1d
 
 license = """

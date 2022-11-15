@@ -133,7 +133,7 @@ def make_maps(gw_map_trigger, gw_map_strategy, gw_map_control, gw_map_results):
 
     print("\t cleaning up old files"),
     if os.path.exists(data_dir+"/json"):
-        shutil.rmtree(data_dir+"json/")
+        shutil.rmtree(data_dir+"/json/")
     files = glob.glob(data_dir+"/*png")
     for f in files:
         os.remove(f)
@@ -765,8 +765,8 @@ def turnObservingRecordIntoJSONs(ra, dec, id, prob, mjd, slotNumbers,
         ix = slotNumbers == slot
         slotMJD = mjd[ix][0]  # just get first mjd in this slot
         tmpname, name = jsonUTCName(slot, slotMJD, trigger_id, mapDirectory)
-        tmpname = mapDirectory + tmpname
-        name = mapDirectory + name
+        tmpname = os.path.join(mapDirectory, tmpname)
+        name = os.path.join(mapDirectory, name)
         jsonMaker.writeJson(ra[ix], dec[ix], id[ix],
                             seqzero, seqnum, seqtot, exposureList=exposure_list,
                             filterList=filter_list, tilingList=tiling_list,
@@ -1047,7 +1047,7 @@ def equalAreaPlot(figure, slot, simNumber, data_dir, title=""):
         readMaps(data_dir, simNumber, slot)
     # x,y are the mcbryde projection of ra, dec
     # hx,hy are the mcbryde projection of ha, dec
-    ra, dec = x, y
+    ra, dec = x, y  # float(x), float(y)  #  <- old
 
     # des footprint
     # plots the DES footprint on the maps
