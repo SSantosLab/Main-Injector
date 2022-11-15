@@ -10,20 +10,24 @@ from utils import obsSlots
 # The expTime is used only in the limiting magnitude calculation, not in what to observe when
 #
 
-def calc(trigger_id:str, ra_dec_file_dir, mjd, expTime, filter, best=False, camera="decam"):
+def calc(ra, dec, prob, expTime, filter, mjd, best=False, camera="decam"):
     """
     Produces information about single nights observing scenarios.
 
     Parameters:
     -----------
-    trigger_id: str
-        the name of the trigger event that comes from LIGO.
-    ra_dec_file_dir: str
-        filename path for ra_de_file.
-    mjd: float
-        modified julian date.
+    ra: np.vector
+        vector of hex ra
+    dec: np.vector
+        vector of hex dec
+    prob: np.vector
+        vector of hex summed prob from LIGO map
+    expTime: np.vector
+        vector of exposure times
     filter: str
         telescope filter.
+    mjd: float
+        modified julian date.
     best: bool
         True/False if use best or not
     camera: str
@@ -34,8 +38,6 @@ def calc(trigger_id:str, ra_dec_file_dir, mjd, expTime, filter, best=False, came
     #filter = np.genfromtxt(trigger_id,unpack=True,dtype="str",usecols=3)
     #filter = "g"
 
-    # get the hexes
-    ra, dec, id, prob, obs_mjd, slot_num, dist = obsSlots.readObservingRecord(trigger_id,ra_dec_file_dir)
     # find the highest prob hex
     best_ix = np.argmax(prob)
 

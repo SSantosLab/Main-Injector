@@ -90,31 +90,6 @@ class Trigger(object):
         except:
             print("!!! ------- no distance information in skymap ------ !!!")
     
-        # JTA Hack
-        # GW190425
-        #print("HACK HACK HACK"
-        #ix = ((ra > 150) | (( ra > -180) & (ra < -120)) ) & (dec > -10) & (dec < 40)
-        #ix = np.invert(ix)
-        #ligo[ix] = 0.0
-        #print("HACK HACK HACK"
-    
-        # GW170217 hack JTA
-        #ix = (ra > 0) & ( ra < 180) & (dec >= -30)
-        #ix = np.invert(ix)
-        #ligo[ix] = 0.0
-        # GW170225 hack JTA
-        #ix = (dec >= 2)
-        #ligo[ix] = 0.0
-        # GW170814 hack JTA
-        #ix = (ra > -10) & ( ra < 60) & (dec < -20)
-        #ix = np.invert(ix)
-        #ligo[ix] = 0.0
-
-        # GW170814 hack JTA                                                                             
-        ix = (ra > 0) & ( ra < 45) & (dec < 0) & (dec > -40)
-        ix = np.invert(ix)                                                                             
-        ligo[ix] = 0.0
-
         self.ligo_ra = ra
         self.ligo_dec = dec
         self.ligo = ligo
