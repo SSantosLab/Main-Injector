@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from astropy.io import fits
-from utils import hp2np
+from main_injector.utils import hp2np
 license="""
    Copyright (C) 2014 James Annis
 
@@ -39,7 +39,7 @@ def dustA(filter) :
         raise Exception ("no such filter {}".format(filter))
     return A
 
-def loadDust(dir = "/home/s1/annis/daedalean/desgw-map/data/", 
+def loadDust(dir = os.environ["DATA_DIR"],
         file = "plank-ebv-HFI_CompMap_ThermaDustModel.fits") :
     print(f"Loading dust map: {os.path.join(dir, file)}")
     hpFile = True

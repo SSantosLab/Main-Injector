@@ -2,8 +2,8 @@
 
 
 if [[ $HOSTNAME =~ "LAPTOP-67HIEHMC" ]] ; then
-    export ROOT_DIR="/home/asantos/phd/Main-Injector/main_injector"
-    export MAIN_INJECTOR="/home/asantos/MI_test"
+    export ROOT_DIR="/home/andsantos/phd/research_projects/Main-Injector/main_injector"
+    export MAIN_INJECTOR="/home/andsantos/MI_test"
     export DATA_DIR="$MAIN_INJECTOR/data"
     export WEB="$MAIN_INJECTOR/DES_GW_website"
     export GCN_DIR="$MAIN_INJECTOR/GCN"
@@ -18,13 +18,13 @@ fi
 
 if [[ $HOSTNAME =~ "asus-vivobook" ]]; then
     export ROOT_DIR="/home/andsantos/phd/research_projects/Main-Injector"
-    export MAIN_INJECTOR="/home/andsantos/MI_test"
-    export DATA_DIR="$MAIN_INJECTOR/data"
+    export MAIN_INJECTOR="/home/andsantos/phd/research_projects/Main-Injector/main_injector"
+    export DATA_DIR="$ROOT_DIR/data"
     export WEB="$MAIN_INJECTOR/DES_GW_website"
     export GCN_DIR="$MAIN_INJECTOR/GCN"
     export PYTHONPATH="$PYTHONPATH:$ROOT_DIR"
     export PYSLALIB="$PYTHONPATH:$ROOT_DIR/main_injector/pyslalib"
-    export DESGW_DATA_DIR="$MAIN_INJECTOR/OUTPUT"
+    export DESGW_DATA_DIR="$ROOT_DIR/data"
     export DESGW_MAP_DIR="$MAIN_INJECTOR/skymaps"
     export DESGW_CATALOGS="$MAIN_INJECTOR/catalogs"
     export DESGW_CONFIG="$MAIN_INJECTOR/configs"
@@ -45,4 +45,5 @@ if [[ $HOSTNAME =~ "des60" ]] ; then
     export PYTHONPATH="$PYTHONPATH:$ROOT_DIR"
 # in the conda environment
     #export PYSLALIB="$PYTHONPATH:$ROOT_DIR/main_injector/pyslalib"
+    export DESGW_CONFIG="$MAIN_INJECTOR"
 fi

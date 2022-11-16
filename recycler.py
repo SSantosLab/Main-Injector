@@ -20,7 +20,7 @@ except getopt.GetoptError as err:
 
 # Read in config
 with open(
-    os.path.join(os.environ["DESGW_CONFIG"], "recycler.yaml"), "r"
+    os.path.join(os.environ["ROOT_DIR"], "recycler.yaml"), "r"
 ) as f:
     config = yaml.safe_load(f)
 # Set defaults to config
@@ -141,17 +141,17 @@ for trigger_id in trigger_ids:
 
         e.mapMaker(trigger_id, skymap_filename, config, hasrem)
         e.getContours(config)
-        #jsonfilelist = e.makeJSON(config)
+        e.makeObservingPlots()
+        # jsonfilelist = e.makeJSON(config)
         # e.make_cumulative_probs()
-        os.system('cp '+e.event_paramfile+' '+master_dir)
+        # os.system('cp '+e.event_paramfile+' '+master_dir)
         # generates the homepage
-        e.updateTriggerIndex(real_or_sim=real_or_sim)
+        # e.updateTriggerIndex(real_or_sim=real_or_sim)
         # make a blank page with the basic info that is available
-        e.updateWebpage(real_or_sim)
-        # e.makeObservingPlots()
-        # e.getContours(config)
-        # e.send_nonurgent_Email()
         # e.updateWebpage(real_or_sim)
+        
+        # e.send_nonurgent_Email()
+        
 
 #        except KeyError:
 #            print("Unexpected error:", sys.exc_info())
