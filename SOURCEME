@@ -29,3 +29,20 @@ if [[ $HOSTNAME =~ "asus-vivobook" ]]; then
     export DESGW_CATALOGS="$MAIN_INJECTOR/catalogs"
     export DESGW_CONFIG="$MAIN_INJECTOR/configs"
 fi
+
+if [[ $HOSTNAME =~ "des60" ]] ; then
+    conda activate des18a
+    export MAIN_INJECTOR="/data/des60.a/data/annis/MainInjectorNov22/Main-Injector"
+    export DATA_DIR="$MAIN_INJECTOR/data"
+    export WEB="$MAIN_INJECTOR/DES_GW_website"
+    export GCN_DIR="$MAIN_INJECTOR/GCN"
+    export DESGW_DATA_DIR="$MAIN_INJECTOR/OUTPUT"
+    export DESGW_MAP_DIR="$MAIN_INJECTOR/skymaps"
+    export DESGW_CATALOGS="$MAIN_INJECTOR/catalogs"
+    export DESGW_CONFIG="$MAIN_INJECTOR/configs"
+# root dir appear to have something to do with python, only
+    export ROOT_DIR="/data/des60.a/data/annis/MainInjectorNov22/Main-Injector/main_injector"
+    export PYTHONPATH="$PYTHONPATH:$ROOT_DIR"
+# in the conda environment
+    #export PYSLALIB="$PYTHONPATH:$ROOT_DIR/main_injector/pyslalib"
+fi
