@@ -27,13 +27,13 @@ import simplicity
 # OneRing.py "it is corrupting us, if it does nothing else!"
 
 # first pass only!
-def nike { skymap, probArea_outer, probArea_inner, filter, expTime_inner, expTime_outer,
+def nike ( skymap, probArea_outer, probArea_inner, filter, expTime_inner, expTime_outer,
             mjd,
             hexFile="all-sky-hexCenters-decam.txt", 
             trigger_id="LIGO/Virgo", 
             trigger_type="bright", 
             propid='propid', 
-            jsonFilename="des-gw.json"} :
+            jsonFilename="des-gw.json") :
 
     camera = "decam"
     if (probArea_outer > 1) or ( probArea_inner) : raise Exception("probArea_outer,inner is > 1, impossible")
@@ -59,7 +59,7 @@ def nike { skymap, probArea_outer, probArea_inner, filter, expTime_inner, expTim
     outer_percentile_index = np.argmax( cumsum >= probArea_outer )
     inner_percentile_index = np.argmax( cumsum >= probArea_inner )
     print("N hexes in inner= {}  and in outer= {}".format(
-        inner_percentile_index, outer_percentile_index )
+        inner_percentile_index, outer_percentile_index ))
 
     # now lets get the list of outer and inner hexes
     inner_ra = []; outer_ra=[]
@@ -82,9 +82,9 @@ def nike { skymap, probArea_outer, probArea_inner, filter, expTime_inner, expTim
 
     # Sort in the Alyssa approved way!
     # done separately in inner and outer areas.
-    new_inner_ra, new_inner_dec, new_inner_prob = 
+    new_inner_ra, new_inner_dec, new_inner_prob = \
         sort_nearest_neighbor (inner_ra, inner_dec, inner_prob) 
-    new_outer_ra, new_outer_dec, new_outer_prob = 
+    new_outer_ra, new_outer_dec, new_outer_prob = \
         sort_nearest_neighbor (outer_ra, outer_dec, outer_prob) 
 
     # having resorted on optimal slew time, combine and prep for JSON writing
