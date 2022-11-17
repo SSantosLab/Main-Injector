@@ -1,6 +1,6 @@
 import numpy as np
-from skymaps import mags
-from utils import obsSlots
+from main_injector.skymaps import mags
+from main_injector.utils import obsSlots
 
 #
 # calc produces information about a single nights observing.

@@ -25,7 +25,7 @@ class Trigger(object):
         Type of LVK alert.
     resolution: float
     days_since_burst: float
-        days after CBC burst
+        days after CBC burst.
     """
     def __init__(self, skymap, trigger_id, trigger_type, resolution, days_since_burst=0.):
         """

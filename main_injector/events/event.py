@@ -17,7 +17,7 @@ from main_injector.utils import obsSlots
 from main_injector.hex import observations
 from main_injector.gwhelper import gw_map_configure
 from main_injector.trigger import trigger_pages as tp
-
+from main_injector.sky import OneRing
 
 class Event:
     def __init__(self, 
@@ -224,6 +224,8 @@ class Event:
         do_make_hexes = config_file["do_make_hexes"]
         do_make_jsons = config_file["do_make_jsons"]  # set to false by now
         do_make_gifs = config_file["do_make_gifs"]
+        do_strategy = config_file["strategy"]  # False/True
+        do_onering = config_file["one_ring"]  # False/True
         days_since_burst = 0
         #days_since_burst = config_file["days_since_burst"]
         '''
@@ -312,9 +314,19 @@ class Event:
 
         gw_map_results = gw_map_configure.results()
 
+
         if not os.path.exists(outputDir):
             os.makedirs(outputDir)
 
+
+        #if Strategy:
+            # run strategy
+        
+        """if True:
+            OneRing.nike(skymap=, probArea_inner=, probArea_outer=,
+                         filter=, expTime_inner=, expTime_outer=,
+                         mjd, hexFile=)"""
+        #    call onering.py
         if do_make_maps:
             # make the computationally expensive maps of everything
             observations.make_maps(
@@ -779,7 +791,7 @@ class Event:
 
     def makeObservingPlots(self):
         try:
-            if not self.config_file['skipPlots']:
+            if not self.config['skipPlots']:
                 # n_plots = observations.makeObservingPlots(
                 #    self.n_slots, self.trigger_id, self.best_slot, self.outputDir, self.mapDir, self.camera, allSky=True )
 
@@ -805,6 +817,7 @@ class Event:
                     split = [i.split('-', 2)[2] for i in files]
                     number = [i.split('.', 1)[0] for i in split]
                     f = np.array(number).astype(np.int)
+                    print(f, type(f))
                     maximum = str(np.max(f))
                     minimum = str(np.min(f))
                     os.system('convert $(for ((a='+minimum+'; a<='+maximum+'; a++)); do printf -- "-delay 50 ' + os.path.join(map_dir,

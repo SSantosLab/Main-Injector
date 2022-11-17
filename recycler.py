@@ -139,10 +139,10 @@ for trigger_id in trigger_ids:
 
 # e has variables and code assocaiated with it. The mapMaker is called "e" or "self"
 
-        e.mapMaker(trigger_id, skymap_filename, config, hasrem)
-        e.getContours(config)
-        e.makeObservingPlots()
-        # jsonfilelist = e.makeJSON(config)
+        e.mapMaker(trigger_id, skymap_filename, config, hasrem) # work end to end
+        e.getContours(config)  # work
+        #e.makeObservingPlots()  # not working
+        # jsonfilelist = e.makeJSON(config)  # note working
         # e.make_cumulative_probs()
         # os.system('cp '+e.event_paramfile+' '+master_dir)
         # generates the homepage

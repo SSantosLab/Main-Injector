@@ -52,7 +52,7 @@ def writeJson(
         tdec = dec[i]
         # comment = "DESGW: LIGO {} event {}: {} of {}, hex {} ".format(
         #    trigger_type, seqid, seqnum, seqtot, id[i], 9)
-        comment = "{} strategy {} on {}: image {} of {}, filter {}, .format(
+        comment = "{} strategy {} on {}: image {} of {}, filter {},".format(
             trigger_id, trigger_type, skymap, j+1, nexp, filter )
         object = trigger_id
 

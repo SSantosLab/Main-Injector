@@ -1,2 +1,0 @@
-[console_scripts]
-main-injector-config = main_injector.cli.make_config:main
