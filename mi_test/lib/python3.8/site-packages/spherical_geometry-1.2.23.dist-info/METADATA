@@ -1,0 +1,22 @@
+Metadata-Version: 2.1
+Name: spherical-geometry
+Version: 1.2.23
+Summary: Python based tools for spherical geometry
+Home-page: https://github.com/spacetelescope/spherical_geometry
+Author: STScI
+Author-email: help@stsci.edu
+License: BSD
+Project-URL: Bug Reports, https://github.com/spacetelescope/spherical_geometry/issues/
+Project-URL: Source, https://github.com/spacetelescope/spherical_geometry/
+Project-URL: Help, https://hsthelp.stsci.edu
+Requires-Dist: astropy (>=5.0.4)
+Requires-Dist: numpy (>=1.18)
+Provides-Extra: docs
+Requires-Dist: sphinx ; extra == 'docs'
+Requires-Dist: sphinx-automodapi ; extra == 'docs'
+Requires-Dist: numpydoc ; extra == 'docs'
+Provides-Extra: test
+Requires-Dist: pytest ; extra == 'test'
+Requires-Dist: pytest-cov ; extra == 'test'
+
+Intersection, union, contains point and other typical ops on spherical polygons

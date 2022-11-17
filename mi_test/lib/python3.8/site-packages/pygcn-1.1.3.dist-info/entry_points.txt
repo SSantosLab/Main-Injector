@@ -1,0 +1,3 @@
+[console_scripts]
+pygcn-listen = gcn.cmdline:listen_main
+pygcn-serve = gcn.cmdline:serve_main
