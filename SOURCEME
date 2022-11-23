@@ -1,31 +1,63 @@
-#!/bin/sh
+#!/bin/bash
 
-export DESGW_DATA_DIR="data/"
-export DESGW_DIR="./python/"
-export PYTHONPATH="./python/:/data/des41.a/data/desgw/osgsetup/eeups/fnaleups/Linux64/lxml/v3.4.4/lib/python/:$PYTHONPATH"
 
-umask 002
+if [[ $HOSTNAME =~ "LAPTOP-67HIEHMC" ]] ; then
+    export ROOT_DIR="/home/andsantos/phd/research_projects/Main-Injector/main_injector"
+    export MAIN_INJECTOR="/home/andsantos/MI_test"
+    export DATA_DIR="$MAIN_INJECTOR/data"
+    export WEB="$MAIN_INJECTOR/DES_GW_website"
+    export GCN_DIR="$MAIN_INJECTOR/GCN"
+    export PYTHONPATH="$PYTHONPATH:$MAIN_INJECTOR"
+    export PYTHONPATH="$PYTHONPATH:$MAIN_INJECTOR/src/main-injector/pyslalib"
+    export DESGW_DATA_DIR="$MAIN_INJECTOR/OUTPUT"
+    export DESGW_MAP_DIR="$MAIN_INJECTOR/skymaps"
+    export DESGW_CATALOGS="$MAIN_INJECTOR/catalogs"
+    export DESGW_CONFIG="$MAIN_INJECTOR/configs"
+    #export DESGW_CATALOGS="/home/s1/annis/daedalean/desgw-map/data/2MASS-J-lt-16-starcounts-hp.fits"
+fi
 
-echo ''
-echo ''
-echo "Setting up Python environment..."
+if [[ $HOSTNAME =~ "asus-vivobook" ]]; then
+    export ROOT_DIR="/home/andsantos/phd/research_projects/Main-Injector"
+    export MAIN_INJECTOR="/home/andsantos/phd/research_projects/Main-Injector/main_injector"
+    export DATA_DIR="$ROOT_DIR/data"
+    export WEB="$MAIN_INJECTOR/DES_GW_website"
+    export GCN_DIR="$MAIN_INJECTOR/GCN"
+    export PYTHONPATH="$PYTHONPATH:$ROOT_DIR"
+    export PYSLALIB="$PYTHONPATH:$ROOT_DIR/main_injector/pyslalib"
+    export DESGW_DATA_DIR="$ROOT_DIR/data"
+    export DESGW_MAP_DIR="$MAIN_INJECTOR/skymaps"
+    export DESGW_CATALOGS="$MAIN_INJECTOR/catalogs"
+    export DESGW_CONFIG="$MAIN_INJECTOR/configs"
+fi
 
-source /cvmfs/des.opensciencegrid.org/eeups/startupcachejob21i.sh
-export EUPS_PATH=${EUPS_PATH}:/data/des41.a/data/desgw/osgsetup/eeups/fnaleups
-setup --nolocks pyslalib
+if [[ $HOSTNAME =~ "des60" ]] ; then
+    conda activate des18a
+    export MAIN_INJECTOR="/data/des60.a/data/annis/MainInjectorNov22/Main-Injector"
+    export DATA_DIR="$MAIN_INJECTOR/data"
+    export WEB="$MAIN_INJECTOR/DES_GW_website"
+    export GCN_DIR="$MAIN_INJECTOR/GCN"
+    export DESGW_DATA_DIR="$MAIN_INJECTOR/OUTPUT"
+    export DESGW_MAP_DIR="$MAIN_INJECTOR/skymaps"
+    export DESGW_CATALOGS="$MAIN_INJECTOR/catalogs"
+    export DESGW_CONFIG="$MAIN_INJECTOR/configs"
+# root dir appear to have something to do with python, only
+    export ROOT_DIR="/data/des60.a/data/annis/MainInjectorNov22/Main-Injector/main_injector"
+    export PYTHONPATH="$PYTHONPATH:$ROOT_DIR"
+# in the conda environment
+    #export PYSLALIB="$PYTHONPATH:$ROOT_DIR/main_injector/pyslalib"
+    export DESGW_CONFIG="$MAIN_INJECTOR"
+fi
 
-export PATH=/cvmfs/des.opensciencegrid.org/fnal/anaconda2/bin:$PATH
-source activate des18a
-
-unsetup numpy
-
-#setup python
-#setup numpy
-#setup scipy
-#setup matplotlib
-#setup astropy
-#setup fitsio
-#setup yaml
-#setup pygcn
-#setup easyaccess
-###s#etup healpy #MUST BE LAST
+if [[ $HOSTNAME =~ "des80" ]] ; then
+    conda activate mi36  # activate conda env 
+    export ROOT_DIR="/data/des80.a/data/asantos/andsantos/NotModularMI/main_injector"
+    export KNLC_ROOT="$ROOT_DIR/python"
+    export DATA_DIR="$ROOT_DIR/data"
+    export WEB="$ROOT_DIR/DES_GW_website"
+    #export GCN_DIR="$ROOT_DIR/GCN"
+    export DESGW_MAP_DIR="$ROOT_DIR/skymaps"
+    #export DESGW_CATALOGS="$MAIN_INJECTOR/catalogs"
+    #export DESGW_CONFIG="$MAIN_INJECTOR/configs"
+    export PYTHONPATH="$PYTHONPATH:$ROOT_DIR/python"
+    #export DESGW_CONFIG="$MAIN_INJECTOR"
+fi

@@ -77,6 +77,7 @@ exposure_length_NS : [ 60., 90. ] #sec
 exposure_filter_NS : [ 'i', 'z' ]
 maxHexesPerSlot_NS : 6
 exposure_tiling_NS : [ 9, 9 ]
+
 # BH strategy
 exposure_length_BH : [ 90., ] #sec
 exposure_filter_BH : [ 'i', ]

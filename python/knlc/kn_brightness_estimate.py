@@ -29,24 +29,23 @@ class KNCalc():
         self.delta_mjd = round(float(time_delay) / 24.0, 1)
         
         # Set directory for lookup table
-        knlc_dir = os.getenv("DESGW_DIR", "./")
-        if knlc_dir != "./" : knlc_dir = knlc_dir + "/knlc/"
+        knlc_dir = os.path.join(os.environ["KNLC_ROOT"], "knlc")
             
         # Choose lookup table based on time_delay
         if self.delta_mjd < 2.3:
-            df = pd.read_csv(knlc_dir+'data/grouped_photometry.csv')
+            df = pd.read_csv(os.path.join(knlc_dir,'data', 'grouped_photometry.csv'))
         elif self.delta_mjd < 4.7:
-            df = pd.read_csv(knlc_dir+'data/grouped_photometry_2.csv')
+            df = pd.read_csv(os.path.join(knlc_dir,'data', 'grouped_photometry_2.csv'))
         elif self.delta_mjd < 7.1:
-            df = pd.read_csv(knlc_dir+'data/grouped_photometry_3.csv')
+            df = pd.read_csv(os.path.join(knlc_dir,'data', 'grouped_photometry_3.csv'))
         elif self.delta_mjd < 9.5:
-            df = pd.read_csv(knlc_dir+'data/grouped_photometry_4.csv')
+            df = pd.read_csv(os.path.join(knlc_dir,'data', 'grouped_photometry_4.csv'))
         elif self.delta_mjd < 11.9:
-            df = pd.read_csv(knlc_dir+'data/grouped_photometry_5.csv')
+            df = pd.read_csv(os.path.join(knlc_dir,'data', 'grouped_photometry_5.csv'))
         elif self.delta_mjd < 14.3:
-            df = pd.read_csv(knlc_dir+'data/grouped_photometry_6.csv')
+            df = pd.read_csv(os.path.join(knlc_dir,'data', 'grouped_photometry_6.csv'))
         elif self.delta_mjd < 16.7:
-            df = pd.read_csv(knlc_dir+'data/grouped_photometry_7.csv')
+            df = pd.read_csv(os.path.join(knlc_dir,'data', 'grouped_photometry_7.csv'))
         df['ZMEAN'] = np.mean(df[['ZMIN', 'ZMAX']].values, axis=1)
 
         # Mean distance calculation 

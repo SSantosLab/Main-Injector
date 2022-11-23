@@ -1,6 +1,12 @@
+
+import os
+
 import numpy as np
 from scipy.interpolate import interp1d
+import healpy as hp
 
+import cumul
+from observations import *
 # ===== The economics analysis
 #
 #   area_left is th enumber of hexes we have left to observe this season
@@ -10,11 +16,8 @@ from scipy.interpolate import interp1d
 #
 def economics (simNumber, best_slot, mapDirectory,
         area_left=200., days_left=60., rate=1/30.,  p_gw = 0.10) :
-    import healpy as hp
-    import cumul
-    import des_optimization
-    import os
-    gw_data_dir = os.environ["DESGW_DATA_DIR"]
+    
+    gw_data_dir = os.environ["DATA_DIR"]
     ra, dec, ligo, maglim, prob, ha, x,y, hx,hy = \
         readMaps(mapDirectory, simNumber, best_slot)
 
@@ -37,18 +40,18 @@ def economics (simNumber, best_slot, mapDirectory,
     else :
         fraction_of_sims_better_than_this_trigger = avge_cumu[ix]
 
-    prob, N_max = des_optimization.evaluate_average_event(
+    prob, N_max = evaluate_average_event(
         area_left, days_left, rate, avge_cumu, avge_cumu_area, area_bar, area_bar_p)
 
     if fraction_of_sims_better_than_this_trigger < 1./N_max :
         area, cum_prob = cumul.area(ra,dec,obsProb, prob, nsides, max_area=max_area)
         if area>area_left:
-            print "\t maxing out area: \t {:.3f} -> ".format( cum_prob),
+            print("\t maxing out area: \t {:.3f} -> ".format( cum_prob))
             cum_prob = cumul.probability_covered(ra,dec,obsProb, area_left, nsides, max_area=max_area)
-            print "{:.3f}".format(cum_prob)
+            print("{:.3f}".format(cum_prob))
             area=area_left
     else :
-        print "\t ignore event"
+        print("\t ignore event")
         area = 0
         prob = 0
 
@@ -62,7 +65,7 @@ def economics (simNumber, best_slot, mapDirectory,
 # 
 #========================================================================
 # for economics analysis
-def time_cost_per_hex (nvisits, overhead, exposure_length) :
+def time_cost_per_hex(nvisits, overhead, exposure_length) :
     tot_exptime = (np.array(overhead)+np.array(exposure_length)).sum
     time_cost_per_hex = nvisits * tot_exptime #sec
     return time_cost_per_hex

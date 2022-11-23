@@ -2,16 +2,31 @@
 Form the classes for handling the many different
 inputs to the map making code.
 """
-import fitsio
+from astropy.io import fits
 import numpy as np
+import os
+
 import hp2np
 import healpy as hp
 import yaml
 
-class trigger(object):
+class Trigger(object):
     """
+    Trigger Class object.
+
+    Attributes:
+    -----------
+    skymap: str
+        filepath name to skymap.
+    trigger_id: str
+        Corresponding trigger_id of an LVK alert.
+    trigger_type
+        Type of LVK alert.
+    resolution: float
+    days_since_burst: float
+        days after CBC burst.
     """
-    def __init__(self, skymap, trigger_id, trigger_type, resolution, days_since_burst=0.) :
+    def __init__(self, skymap, trigger_id, trigger_type, resolution, days_since_burst=0.):
         """
         """
         self.skymap = skymap
@@ -19,7 +34,9 @@ class trigger(object):
         self.trigger_type = trigger_type
         self.days_since_burst = days_since_burst
 
-        hdr = fitsio.read_header(skymap,1)
+        with fits.open(skymap) as hdul:
+            hdr = hdul[1].header
+            
         burst_mjd = np.float(hdr["mjd-obs"])
         try:
             distance = hdr["distmean"]
@@ -40,19 +57,22 @@ class trigger(object):
         else:
             named_trigger = "dark"
 
-        print ""
-        print "=================================================="
-        print "=================  desgw-map ====================="
-        print "=================================================="
-        print "                                        since 2015"
-        print "\ngw_map_trigger: {} map {}, {} at {:.0f} Mpc\n".format(
-            trigger_id, skymap, named_trigger, distance)
-        if trigger_type == "dark" :
-            print('\t strategy=dark,  setting distance, dist_err to 100 Mpc, 30 Mpc')
+        print("")
+        print("==================================================")
+        print("=================  desgw-map =====================")
+        print("==================================================")
+        print("                                        since 2015")
+        print("\ngw_map_trigger: {} map {}, {} at {:.0f} Mpc\n".format(
+            trigger_id, skymap, named_trigger, distance))
+        if trigger_type == "dark":
+            print(
+                'strategy=dark, setting distance, dist_err to 100 Mpc, 30 Mpc'
+            )
+
             self.distance = 100.
             self.diststd = 30.
 
-        ra,dec,ligo=hp2np.hp2np(skymap, degrade=resolution, field=0)
+        ra, dec ,ligo = hp2np.hp2np(skymap, degrade=resolution, field=0)
         ligo_dist, ligo_dist_sig, ligo_dist_norm  = \
             distance*np.ones(ra.size), np.zeros(ra.size), np.zeros(ra.size)
         try :
@@ -67,7 +87,7 @@ class trigger(object):
             ligo_dist_sig  = hp.ud_grade(ligo_dist, resolution)
             ligo_dist_norm = hp.ud_grade(ligo_dist, resolution)
         except:
-            print "\n\t !!!!!!!! ------- no distance information in skymap ------ !!!!!!!!\n"
+            print("!!! ------- no distance information in skymap ------ !!!")
     
         self.ligo_ra = ra
         self.ligo_dec = dec
@@ -78,8 +98,23 @@ class trigger(object):
 
 
 # control the observations
-class strategy(object) :
+class Strategy(object) :
     """
+    Strategy Base class.
+
+    Attributes:
+    -----------
+
+    camera
+    exposure_list
+    filter_list
+    tiling_list
+    maxHexesPerSlot
+    hoursAvailable
+    propid
+    max_number_of_hexes_to_do
+    kasen_fraction
+    use_teff
     """
     def __init__(self, camera, exposure_list, filter_list, tiling_list, maxHexesPerSlot, 
             hoursAvailable, propid, max_number_of_hexes_to_do, kasen_fraction, use_teff):
@@ -96,7 +131,7 @@ class strategy(object) :
         self.kasen_fraction            = kasen_fraction
         self.use_teff                  = use_teff
         if abs(use_teff - 1.0) > 0.01 :
-           print "\t scaling summed exposure time by teff {}".format(use_teff)
+           print("\t scaling summed exposure time by teff {}".format(use_teff))
 
         working_filter            = self.filter_list[0]
         ix                        = self.filter_list == working_filter
@@ -117,12 +152,25 @@ class strategy(object) :
 
 
 
-# control the code technically
+# 
 class control(object):
     """
+    Control Base Class to control the code technically.
+
+    Attributes:
+    -----------
+
+    resolution
+    data_dir
+    debuf
+    allSky
+    centeredSky
+    snarf_mi_maps
+    mi_map_dir
+    gif_resolution
     """
     def __init__(self, resolution, data_dir, debug=False, allSky=False, centeredSky=True,
-            snarf_mi_maps=False, mi_map_dir="/data/des41.a/data/desgw/O3FULL/Main-Injector/OUTPUT/O3REAL/",
+            snarf_mi_maps=False, mi_map_dir=os.environ["DESGW_MAP_DIR"],
             gif_resolution = 1.0 ) :
         """
         """

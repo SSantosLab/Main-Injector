@@ -1,9 +1,12 @@
-import numpy as np
 import os
+import warnings
+
+import numpy as np
 import scipy.stats
+
 import mags
 import hp2np
-import warnings
+
 
 license="""
    Copyright (C) 2014 James Annis
@@ -33,7 +36,7 @@ class map(object):
     def __init__(self, observation, type="bright", apparent_mag_source=21.5) :
         """
         """
-        data_dir = os.environ["DESGW_DATA_DIR"] 
+        data_dir = os.environ["DATA_DIR"] 
 
         self.limitingMag = observation.maglim
         self.limits      = observation.limits
@@ -157,7 +160,7 @@ class map(object):
                 prob = prob/norm 
                 prob_map[pix] = prob
                 ic += 1
-            print "\t probMap: made for source absMag {:.1f}".format(absMag_mean)
+            print("\t probMap: made for source absMag {:.1f}".format(absMag_mean))
 
 # probability of recognition propto star density
         prob_map = prob_map * self.precog
@@ -192,7 +195,7 @@ class map(object):
         import matplotlib.pyplot as plt
         con_levels=10
         if self.zi == "" or self.lastCtype != type:
-            print "\t calculating contours for type = ",type
+            print("\t calculating contours for type = ",type)
             if hourangle == False :
                 xmin = obs.x.min(); xmax = obs.x.max()
                 ymin = obs.y.min(); ymax = obs.y.max()

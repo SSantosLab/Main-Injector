@@ -10,25 +10,45 @@ import obsSlots
 # The expTime is used only in the limiting magnitude calculation, not in what to observe when
 #
 
-def calc(trigger_id, ra_dec_file_dir, mjd, expTime, filter, best=False, camera="decam") :
+def calc(ra, dec, prob, expTime, filter, mjd, best=False, camera="decam"):
+    """
+    Produces information about single nights observing scenarios.
+
+    Parameters:
+    -----------
+    ra: np.vector
+        vector of hex ra
+    dec: np.vector
+        vector of hex dec
+    prob: np.vector
+        vector of hex summed prob from LIGO map
+    expTime: np.vector
+        vector of exposure times
+    filter: str
+        telescope filter.
+    mjd: float
+        modified julian date.
+    best: bool
+        True/False if use best or not
+    camera: str
+        telescope camera name to take in account.
+    """
     # do dark siren stuff
     #ra,dec,prob,filter = np.genfromtxt(trigger_id,unpack=True)
     #filter = np.genfromtxt(trigger_id,unpack=True,dtype="str",usecols=3)
     #filter = "g"
 
-    # get the hexes
-    ra,dec,id,prob,obs_mjd,slotNum,dist = obsSlots.readObservingRecord(trigger_id,ra_dec_file_dir)
     # find the highest prob hex
     best_ix = np.argmax(prob)
 
     # find night statistics
-    night,sunset,sunrise = mags.findNightDuration(mjd, camera)
+    night, sunset, sunrise = mags.findNightDuration(mjd, camera)
     night = np.float(night)*24.
     sunset = np.float(sunset)
     sunrise = np.float(sunrise)
 
     # will work every hour from sunset to sunrise
-    mjd_list = np.arange( sunset, sunrise+1./24., 1./24.)
+    mjd_list = np.arange(sunset, sunrise+1./24., 1./24.)
     
     # calculate the limiting magnitudes
     limit_mag = []
@@ -53,30 +73,30 @@ def calc(trigger_id, ra_dec_file_dir, mjd, expTime, filter, best=False, camera="
     bins = np.arange(21,25.5,0.5)
 
     # now print the answers
-    print "{:15s}  {:10s}".format("MJD".rjust(15),"best".rjust(10)),
-    print " {:10s}".format("moon sep".rjust(10)),
-    print " {:10s}".format("moon phase".rjust(10)),
-    print "      hexes w/ limiting mag in ",
-    print ""
-    print "{:15s}  {:10s}".format("days".rjust(15),"hex".rjust(10)),
-    print " {:10s}".format("degrees".rjust(10)),
-    print "  {:10s}".format("% full ".rjust(10)),
-    for i in range(bins.size-1) : print "{:4.1f}-".format(bins[i]),
-    print "{:4.1f}".format(bins[i]),
-    print ""
+    print("{:15s}  {:10s}".format("MJD".rjust(15),"best".rjust(10)))
+    print(" {:10s}".format("moon sep".rjust(10)))
+    print(" {:10s}".format("moon phase".rjust(10)))
+    print("      hexes w/ limiting mag in "),
+    print("")
+    print("{:15s}  {:10s}".format("days".rjust(15),"hex".rjust(10))),
+    print(" {:10s}".format("degrees".rjust(10)))
+    print("  {:10s}".format("% full ".rjust(10)))
+    for i in range(bins.size-1) : print("{:4.1f}-".format(bins[i]))
+    print("{:4.1f}".format(bins[i]))
+    print("")
     for i in range(0,mjd_list.size) :
-        print "{:15.4f} ".format(mjd_list[i]),
-        print "{:10.2f} ".format(best_limit_mag[i]),
-        print "{:10.2f} ".format(moon_sep[i]),
-        print "{:10.0f}  ".format(moon_phase[i]),
+        print("{:15.4f} ".format(mjd_list[i]))
+        print("{:10.2f} ".format(best_limit_mag[i]))
+        print("{:10.2f} ".format(moon_sep[i]))
+        print("{:10.0f}  ".format(moon_phase[i]))
         counts = np.histogram(limit_mag[i], bins)
         #print "\n counts ", np.shape(counts), counts[0], counts[1]
         for j in range(bins.size-1) : 
             if counts[0][j] != 0 :
-                print "{:3d}  ".format(counts[0][j]),
+                print("{:3d}  ".format(counts[0][j])),
             else :
-                print "     ",
-        print ""
+                print("     "),
+        print("")
     return obs
 
 
