@@ -9,7 +9,7 @@ def run_ap_mag_for_kasen_models (filter, distance, dist_err, days_since_burst,
     report_file = data_dir + "kn_report"
     
     if not fast :
-        knlc_dir = os.path.join(os.environ["MAIN_INJECTOR"], "knlc")
+        knlc_dir = os.path.join(os.environ["KNLC_ROOT"], "knlc")
         code = os.path.join(knlc_dir, "kn_brightness_estimate.py")
 
         if doPlots:

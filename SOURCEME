@@ -49,15 +49,15 @@ if [[ $HOSTNAME =~ "des60" ]] ; then
 fi
 
 if [[ $HOSTNAME =~ "des80" ]] ; then
-    conda activate mi36
-    export ROOT_DIR="/data/des80.a/data/asantos/andsantos/Main-Injector"
-    export MAIN_INJECTOR="$ROOT_DIR/main_injector"
+    conda activate mi36  # activate conda env 
+    export ROOT_DIR="/data/des80.a/data/asantos/andsantos/NotModularMI/main_injector"
+    export KNLC_ROOT="$ROOT_DIR/python"
     export DATA_DIR="$ROOT_DIR/data"
-    export WEB="$ROOT_DIR/DES_GW_Website"
-    export GCN_DIR="$ROOT_DIR/GCN"
+    export WEB="$ROOT_DIR/DES_GW_website"
+    #export GCN_DIR="$ROOT_DIR/GCN"
     export DESGW_MAP_DIR="$ROOT_DIR/skymaps"
-    export DESGW_CATALOGS="$MAIN_INJECTOR/ctalogs"
-    export DESGW_CONFIG="$MAIN_INJECTOR/configs"
-    export PYTHONPATH="$PYTHONPATH:$MAIN_INJECTOR/python"
-    export DESGW_CONFIG="$MAIN_INJECTOR"
+    #export DESGW_CATALOGS="$MAIN_INJECTOR/catalogs"
+    #export DESGW_CONFIG="$MAIN_INJECTOR/configs"
+    export PYTHONPATH="$PYTHONPATH:$ROOT_DIR/python"
+    #export DESGW_CONFIG="$MAIN_INJECTOR"
 fi
