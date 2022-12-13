@@ -5,6 +5,8 @@ import decam2hp
 import jsonMaker
 import simplicity
 from os import getenv
+import pandas as pd
+import sys
 
 
 # Code to demonstrate a very simple way to go from Strategy (from the strategy paper)
@@ -39,7 +41,7 @@ def run_or ( skymap, probArea_outer, probArea_inner, flt, expTime_inner, expTime
             test=False) :
 
     camera = "decam"
-    if (probArea_inner + probArea_outer > 1) : raise Exception("probArea_outer + inner is > 1, impossible")
+    if (probArea_inner > 1) or (probArea_outer > 1) : raise Exception("probArea_outer or inner is > 1, impossible")
 
     # get ligo map
     ra,dec,ligo=hp2np.hp2np(skymap, degrade=resolution, field=0)
@@ -63,8 +65,8 @@ def run_or ( skymap, probArea_outer, probArea_inner, flt, expTime_inner, expTime
     cumsum = np.cumsum(sum_prob_in_hex[index_on_max_prob]) 
     outer_percentile_index = np.argmax( cumsum >= probArea_outer )
     inner_percentile_index = np.argmax( cumsum >= probArea_inner )
-    print("N hexes in inner= {}  and in outer= {}".format(
-        inner_percentile_index, outer_percentile_index ))
+    print("N hexes in inner= {}  and in outer= {}, total number of hexes={}".format(
+        inner_percentile_index, outer_percentile_index, outer_percentile_index ))
 
     # now lets get the list of outer and inner hexes
     inner_ra = []; outer_ra=[]
@@ -85,6 +87,7 @@ def run_or ( skymap, probArea_outer, probArea_inner, flt, expTime_inner, expTime
     outer_ra = np.array(outer_ra); outer_dec = np.array(outer_dec); 
     inner_prob = np.array(inner_prob); outer_prob = np.array(outer_prob); 
 
+
     # Sort in the Alyssa approved way!
     # done separately in inner and outer areas.
     new_inner_ra, new_inner_dec, new_inner_prob = \
@@ -101,6 +104,18 @@ def run_or ( skymap, probArea_outer, probArea_inner, flt, expTime_inner, expTime
     prob = np.concatenate([inner_prob,outer_prob])
 
     expTime = np.concatenate([np.ones(ra.size)*expTime_inner , np.ones(ra.size)*expTime_outer])
+    
+    #### test new nearest_highest:                                     
+#    df = sort_nearest_highest(ra, dec, prob)
+#    print(df)
+    
+    ### I am disturbed
+#    df = sort_nearest_neighbor(ra, dec, prob)
+#    print(df)
+
+    ## test spiral
+    df = sort_spiral(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob)
+    print(df)
 
     # Now we have the hexes:  can we observe them tonight?
     # this prints details to the screen, a prototype for some action on them
@@ -120,18 +135,18 @@ def sort_nearest_neighbor (ra, dec, prob) :
     # Sort in the Alyssa approved way!
     # This particular implementation just chooses nearest neighbor for minimal slew time
     # done separately in inner and outer areas.
-    nHexes_inner = ra.size 
+    nHexes = ra.size 
     new_ra = np.copy(ra)
     new_dec = np.copy(dec)
     new_prob = np.copy(prob)
-    search_index = np.array(range(1,nHexes_inner))
+    search_index = np.array(range(1,nHexes))
     # having put the max probability onto the stack, find the nearest hex to it
-    for i in range(1,nHexes_inner) :
+    for i in range(1,nHexes) :
         distances = np.sqrt( 
             (ra[search_index]-new_ra[i-1])**2 + 
             (dec[search_index]-new_dec[i-1])**2   )
-
-        ix = np.argsort(distances)[0] 
+    
+        ix = np.argsort(distances)[0]
 
         new_ra[i] = ra[search_index][ix]
         new_dec[i] = dec[search_index][ix]
@@ -140,4 +155,121 @@ def sort_nearest_neighbor (ra, dec, prob) :
         search_index = np.delete(search_index, ix)
     return new_ra, new_dec, new_prob
 
+
+def sort_nearest_highest(ra, dec, prob, radThreshold=3.):
+    # Sort by nearest neighbor, find all neighbors within some radius (radThreshold), and sort by probability.
+    
+    order = np.ones(ra.size)*-999
+    df = pd.DataFrame({'ra':ra, 'dec':dec, 'probs':prob, 'order':order})
+
+    i = 0 ## order counter
+    idxmaxprob = df['probs'].idxmax()
+
+    while any(df['order'] == -999):
+        # calculate distance from max prob point, and discretize by threshold radius
+        mydist = np.sqrt((df.iloc[idxmaxprob]['ra'] - df['ra'])**2 + (df.iloc[idxmaxprob]['dec'] - df['dec'])**2)
+        df['distance'] = mydist // radThreshold
+
+        # sort  by  distance with prob breaking ties
+        df.sort_values(['distance', 'probs'], ascending=[True, False])
+        
+        groupdf = df.groupby(['distance']).get_group(0) # get all rows where quantized distance = 0 
+        groupdf = groupdf[groupdf.order == -999] # make sure we are only ordering points that haven't been observed 
+
+        # this is a check to ensure we don't get stuck on banana or lobe
+        # eg everything in the closest radius has already been observed, check for groups of points further away
+        j = 0
+        while len(groupdf) == 0:
+            groupdf = df.groupby(['distance']).get_group(j)
+            groupdf = groupdf[groupdf['order'] == -999]
+            j += 1
+
+        neworder = np.arange(i, i + len(groupdf)) 
+        groupdf['order'] = neworder
+        i += len(groupdf)
+
+        df.loc[groupdf.index.values ,'order'] = groupdf['order']
+        idmaxprob = groupdf['probs'].idxmin() # start next iteration with the last value in group
+
+    df['distance'] = mydist
+    df['ra'] = df['ra'] + 360
+    return df
+
 #main(args)
+
+def sort_spiral(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob, radThreshold=3.):
+    # Use descrete sets of inner and outer hexes, within each of those sets, sort by distance then by prob.
+    ra, dec, prob = inner_ra, inner_dec, inner_prob
+    order = np.ones(ra.size)*-999
+    df = pd.DataFrame({'ra':ra, 'dec':dec, 'probs':prob, 'order':order})
+
+    i = 0 ## order counter                                                                             
+    idxmaxprob = df['probs'].idxmax()
+
+    while any(df['order'] == -999):
+        # calculate distance from max prob point, and discretize by threshold radius                   
+        mydist = np.sqrt((df.iloc[idxmaxprob]['ra'] - df['ra'])**2 + (df.iloc[idxmaxprob]['dec'] - df['dec'])**2)
+        df['distance'] = mydist // radThreshold
+
+        # sort  by  distance with prob breaking ties                                                   
+        df.sort_values(['distance', 'probs'], ascending=[True, False])
+
+        groupdf = df.groupby(['distance']).get_group(0) # get all rows where quantized distance = 0    
+        groupdf = groupdf[groupdf.order == -999] # make sure we are only ordering points that haven't been observed                                                                                          
+
+        # this is a check to ensure we don't get stuck on banana or lobe                               
+        # eg everything in the closest radius has already been observed, check for groups of points further away                                                                                             
+        j = 0
+        while len(groupdf) == 0:
+            groupdf = df.groupby(['distance']).get_group(j)
+            groupdf = groupdf[groupdf['order'] == -999]
+            j += 1
+
+        neworder = np.arange(i, i + len(groupdf))
+        groupdf['order'] = neworder
+        i += len(groupdf)
+
+        df.loc[groupdf.index.values ,'order'] = groupdf['order']
+        idmaxprob = groupdf['probs'].idxmin() # start next iteration with the last value in group       
+    df['distance'] = mydist
+    df['ra'] = df['ra'] + 360
+    innerdf = df
+
+
+
+#### outer
+    ra, dec, prob = outer_ra, outer_dec, outer_prob
+    order = np.ones(ra.size)*-999
+    df = pd.DataFrame({'ra':ra, 'dec':dec, 'probs':prob, 'order':order})
+
+    i = 0 ## order counter                                                                                  
+    idxmaxprob = df['probs'].idxmax()
+
+    while any(df['order'] == -999):
+        # calculate distance from max prob point, and discretize by threshold radius                       
+        mydist = np.sqrt((df.iloc[idxmaxprob]['ra'] - df['ra'])**2 + (df.iloc[idxmaxprob]['dec'] - df['dec'])**2)
+        df['distance'] = mydist // radThreshold
+        # sort  by  distance with prob breaking ties                                                       
+        df.sort_values(['distance', 'probs'], ascending=[True, False])
+        groupdf = df.groupby(['distance']).get_group(0) # get all rows where quantized distance = 0        
+        groupdf = groupdf[groupdf.order == -999] # make sure we are only ordering points that haven't been observed                                                                                                    
+
+        # this is a check to ensure we don't get stuck on banana or lobe                                  
+        # eg everything in the closest radius has already been observed, check for groups of points furthe away                                                                                                       
+        j = 0
+        while len(groupdf) == 0:
+            groupdf = df.groupby(['distance']).get_group(j)
+            groupdf = groupdf[groupdf['order'] == -999]
+            j += 1
+        neworder = np.arange(i, i + len(groupdf))
+        groupdf['order'] = neworder
+        i += len(groupdf)
+        df.loc[groupdf.index.values ,'order'] = groupdf['order']
+        idmaxprob = groupdf['probs'].idxmin() # start next iteration with the last value in group      
+    df['distance'] = mydist
+    df['ra'] = df['ra'] + 360
+
+    # concat inner and outer df, but make sure the inner is first  
+    df = pd.concat([innerdf, df], axis=0)
+
+    return df
