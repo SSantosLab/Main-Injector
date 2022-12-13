@@ -33,7 +33,7 @@ def writeJson(
     ra,
     dec,
     exposureTimeList,
-    filter="r",
+    flt="r",
     trigger_id="LIGO/Virgo",
     trigger_type="bright",
     propid='propid',
@@ -46,14 +46,13 @@ def writeJson(
 
     nHexes = ra.size
     for i in range(0, nHexes):
-        seqnum += 1
         exp = exposureTimeList[i]
         tra = ra[i]
         tdec = dec[i]
         # comment = "DESGW: LIGO {} event {}: {} of {}, hex {} ".format(
         #    trigger_type, seqid, seqnum, seqtot, id[i], 9)
-        comment = "{} strategy {} on {}: image {} of {}, filter {},".format(
-            trigger_id, trigger_type, skymap, j+1, nexp, filter )
+        comment = "{} strategy {} on {}: image {}, filter {},".format(
+            trigger_id, trigger_type, skymap, i+1, flt)
         object = trigger_id
 
         fd.write("{")
@@ -61,15 +60,16 @@ def writeJson(
         fd.write("  \"object\" : \"{}\",\n".format(object))
         fd.write("  \"expTime\" : {:d},\n".format(int(exp)))
         fd.write("  \"wait\" : \"False\",\n")
-        fd.write("  \"filter\" : \"{}\",\n".format(filter))
+        fd.write("  \"filter\" : \"{}\",\n".format(flt))
         fd.write("  \"program\" : \"des gw\",\n")
         fd.write("  \"RA\" : {:.6f},\n".format(tra))
         fd.write("  \"dec\" : {:.5f},\n".format(tdec))
         fd.write("  \"propid\" : \"{}\",\n".format(propid))
-        fd.write("  \"comment\" : \"{}\"\n".format(comment))
+        fd.write("  \"comment\" : \"{}\",\n".format(comment))
+        fd.write("  \"HEX\" : -999 \n")
         # note lack of comma for end
         fd.write("}")
-        if (i == size-1) and (j == nexp-1) and (k == ntiles-1):
+        if (i == nHexes-1):
             pass
         else:
             fd.write(",")

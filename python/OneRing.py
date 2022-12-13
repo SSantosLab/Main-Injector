@@ -4,6 +4,7 @@ import hexalate
 import decam2hp
 import jsonMaker
 import simplicity
+from os import getenv
 
 
 # Code to demonstrate a very simple way to go from Strategy (from the strategy paper)
@@ -27,9 +28,10 @@ import simplicity
 # OneRing.py "it is corrupting us, if it does nothing else!"
 
 # first pass only!
-def run_or ( skymap, probArea_outer, probArea_inner, filter, expTime_inner, expTime_outer,
+def run_or ( skymap, probArea_outer, probArea_inner, flt, expTime_inner, expTime_outer,
             mjd,
-            hexFile="all-sky-hexCenters-decam.txt", 
+            resolution=64,
+             hexFile=getenv('DATA_DIR')+"/all-sky-hexCenters-decam.txt", 
             trigger_id="LIGO/Virgo", 
             trigger_type="bright", 
             propid='propid', 
@@ -37,16 +39,18 @@ def run_or ( skymap, probArea_outer, probArea_inner, filter, expTime_inner, expT
             test=False) :
 
     camera = "decam"
-    if (probArea_outer > 1) or ( probArea_inner) : raise Exception("probArea_outer,inner is > 1, impossible")
+    if (probArea_inner + probArea_outer > 1) : raise Exception("probArea_outer + inner is > 1, impossible")
 
     # get ligo map
     ra,dec,ligo=hp2np.hp2np(skymap, degrade=resolution, field=0)
 
     # imprint decam hexes onto sky map
-    raCenter,decCenter,junk = hexalate.getHexCenters (hexFile)
+    raCenter,decCenter,junk = hexalate.getHexCenters(hexFile)
     nHexes= raCenter.size
+    ix, = np.where(ligo > 10e-6) ## AG: 12-13-22 consider a different mode to the hard cut we are using now.
+    ra, dec, ligo = ra[ix], dec[ix], ligo[ix]
     sum_prob_in_hex = np.zeros(nHexes)
-    for i in nHexes:
+    for i in range(nHexes):
         hexPath = decam2hp.hexPath(raCenter[i], decCenter[i], camera)
         inside_ix = decam2hp.radecInHexPath( hexPath, ra, dec)
         sum_prob_in_hex[i] = ligo[inside_ix].sum()
@@ -92,19 +96,20 @@ def run_or ( skymap, probArea_outer, probArea_inner, filter, expTime_inner, expT
     inner_ra = new_inner_ra; inner_dec = new_inner_dec
     outer_ra = new_outer_ra; outer_dec = new_outer_dec
     inner_prob = new_inner_prob; outer_prob = new_outer_prob
-    ra = np.concatenate(inner_ra,outer_ra)
-    dec = np.concatenate(inner_dec,outer_dec)
-    prob = np.concatenate(inner_prob,outer_prob)
+    ra = np.concatenate([inner_ra,outer_ra])
+    dec = np.concatenate([inner_dec,outer_dec])
+    prob = np.concatenate([inner_prob,outer_prob])
 
-    expTime = np.concatenate( np.ones(ra.size)*expTime_inner , np.ones(ra.size)*expTime_outer)
+    expTime = np.concatenate([np.ones(ra.size)*expTime_inner , np.ones(ra.size)*expTime_outer])
 
     # Now we have the hexes:  can we observe them tonight?
     # this prints details to the screen, a prototype for some action on them
-    obs_object = simplicity.calc(ra, dec, prob, expTime, filter, mjd)
+    #obs_object = [simplicity.calc(ra, dec, prob, exp, flt, mjd) for exp in expTime]
+    #obs_object = simplicity.calc(ra[0:1], dec[0:1], prob[0:1], expTime[0:1], flt, mjd)
 
     # Now we have the hexes we're going to observe tonight!
     # JSON writing
-    jsonMaker.writeJson(ra,dec,expTime,filter, 
+    jsonMaker.writeJson(ra,dec,expTime,flt, 
             trigger_id, trigger_type, propid, skymap, jsonFilename ) 
 
     return
