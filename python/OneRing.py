@@ -27,13 +27,14 @@ import simplicity
 # OneRing.py "it is corrupting us, if it does nothing else!"
 
 # first pass only!
-def nike ( skymap, probArea_outer, probArea_inner, filter, expTime_inner, expTime_outer,
+def run_or ( skymap, probArea_outer, probArea_inner, filter, expTime_inner, expTime_outer,
             mjd,
             hexFile="all-sky-hexCenters-decam.txt", 
             trigger_id="LIGO/Virgo", 
             trigger_type="bright", 
             propid='propid', 
-            jsonFilename="des-gw.json") :
+            jsonFilename="des-gw.json",
+            test=False) :
 
     camera = "decam"
     if (probArea_outer > 1) or ( probArea_inner) : raise Exception("probArea_outer,inner is > 1, impossible")
@@ -106,7 +107,7 @@ def nike ( skymap, probArea_outer, probArea_inner, filter, expTime_inner, expTim
     jsonMaker.writeJson(ra,dec,expTime,filter, 
             trigger_id, trigger_type, propid, skymap, jsonFilename ) 
 
-
+    return
 #
 # one of many possible sorting metrics
 #
@@ -134,3 +135,4 @@ def sort_nearest_neighbor (ra, dec, prob) :
         search_index = np.delete(search_index, ix)
     return new_ra, new_dec, new_prob
 
+#main(args)
