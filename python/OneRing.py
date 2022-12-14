@@ -7,6 +7,7 @@ import simplicity
 from os import getenv
 import pandas as pd
 import sys
+import  matplotlib.pyplot as plt
 
 
 # Code to demonstrate a very simple way to go from Strategy (from the strategy paper)
@@ -38,8 +39,9 @@ def run_or ( skymap, probArea_outer, probArea_inner, flt, expTime_inner, expTime
             trigger_type="bright", 
             propid='propid', 
             jsonFilename="des-gw.json",
-            test=False) :
-
+             test=False,
+             plot_numbers=False) :
+    
     camera = "decam"
     if (probArea_inner > 1) or (probArea_outer > 1) : raise Exception("probArea_outer or inner is > 1, impossible")
 
@@ -52,10 +54,10 @@ def run_or ( skymap, probArea_outer, probArea_inner, flt, expTime_inner, expTime
     ix, = np.where(ligo > 10e-6) ## AG: 12-13-22 consider a different mode to the hard cut we are using now.
     ra, dec, ligo = ra[ix], dec[ix], ligo[ix]
     sum_prob_in_hex = np.zeros(nHexes)
-    for i in range(nHexes):
-        hexPath = decam2hp.hexPath(raCenter[i], decCenter[i], camera)
-        inside_ix = decam2hp.radecInHexPath( hexPath, ra, dec)
-        sum_prob_in_hex[i] = ligo[inside_ix].sum()
+
+    treedata = decam2hp.buildtree(ra,dec,nsides=resolution,recompute=True)
+    tree = treedata[2]
+    sum_prob_in_hex = decam2hp.hexalateMapWithoutOverlap(ra,dec,ligo,tree, raCenter, decCenter, "decam", verbose=False)
 
     # now we have our data!
     # sort on probability so that max is first on new vector
@@ -104,18 +106,30 @@ def run_or ( skymap, probArea_outer, probArea_inner, flt, expTime_inner, expTime
     prob = np.concatenate([inner_prob,outer_prob])
 
     expTime = np.concatenate([np.ones(ra.size)*expTime_inner , np.ones(ra.size)*expTime_outer])
-    
     #### test new nearest_highest:                                     
 #    df = sort_nearest_highest(ra, dec, prob)
+#    print('nearest highest')
 #    print(df)
     
-    ### I am disturbed
+    ### test sort by nearst only
 #    df = sort_nearest_neighbor(ra, dec, prob)
+#    print('nearest neighbor')
 #    print(df)
 
     ## test spiral
-    df = sort_spiral(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob)
+    df = sort_zone(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob, radThreshold=4.)
+
+#    print('spiral')
     print(df)
+    
+    if plot_numbers:
+        plt.clf()
+        mymarker = ['$'+str(int(x))+'$' for x in df['order'].values]
+        myra = df['ra'].values
+        mydec = df['dec'].values
+        for i in range(len(myra)):
+            plt.scatter(myra[i], mydec[i], marker=mymarker[i], s=100)
+            plt.savefig('plotnumbers.jpeg')
 
     # Now we have the hexes:  can we observe them tonight?
     # this prints details to the screen, a prototype for some action on them
@@ -156,15 +170,14 @@ def sort_nearest_neighbor (ra, dec, prob) :
     return new_ra, new_dec, new_prob
 
 
-def sort_nearest_highest(ra, dec, prob, radThreshold=3.):
+def sort_nearest_highest(ra, dec, prob, startorder=0., radThreshold=3.):
     # Sort by nearest neighbor, find all neighbors within some radius (radThreshold), and sort by probability.
     
     order = np.ones(ra.size)*-999
     df = pd.DataFrame({'ra':ra, 'dec':dec, 'probs':prob, 'order':order})
 
-    i = 0 ## order counter
+    i = startorder ## order counter
     idxmaxprob = df['probs'].idxmax()
-
     while any(df['order'] == -999):
         # calculate distance from max prob point, and discretize by threshold radius
         mydist = np.sqrt((df.iloc[idxmaxprob]['ra'] - df['ra'])**2 + (df.iloc[idxmaxprob]['dec'] - df['dec'])**2)
@@ -179,9 +192,11 @@ def sort_nearest_highest(ra, dec, prob, radThreshold=3.):
         # this is a check to ensure we don't get stuck on banana or lobe
         # eg everything in the closest radius has already been observed, check for groups of points further away
         j = 0
-        while len(groupdf) == 0:
-            groupdf = df.groupby(['distance']).get_group(j)
-            groupdf = groupdf[groupdf['order'] == -999]
+        while groupdf.empty:
+            try: # Try b/c disconnected blobs make empty groups
+                groupdf = df.groupby(['distance']).get_group(j)
+                groupdf = groupdf[groupdf['order'] == -999]
+            except(KeyError): pass
             j += 1
 
         neworder = np.arange(i, i + len(groupdf)) 
@@ -192,13 +207,13 @@ def sort_nearest_highest(ra, dec, prob, radThreshold=3.):
         idmaxprob = groupdf['probs'].idxmin() # start next iteration with the last value in group
 
     df['distance'] = mydist
-    df['ra'] = df['ra'] + 360
     return df
 
 #main(args)
 
 def sort_spiral(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob, radThreshold=3.):
     # Use descrete sets of inner and outer hexes, within each of those sets, sort by distance then by prob.
+    # JA: Cartoon code. 
     ra, dec, prob = inner_ra, inner_dec, inner_prob
     order = np.ones(ra.size)*-999
     df = pd.DataFrame({'ra':ra, 'dec':dec, 'probs':prob, 'order':order})
@@ -221,8 +236,10 @@ def sort_spiral(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob
         # eg everything in the closest radius has already been observed, check for groups of points further away                                                                                             
         j = 0
         while len(groupdf) == 0:
-            groupdf = df.groupby(['distance']).get_group(j)
-            groupdf = groupdf[groupdf['order'] == -999]
+            try:
+                groupdf = df.groupby(['distance']).get_group(j)
+                groupdf = groupdf[groupdf['order'] == -999]
+            except(KeyError): pass
             j += 1
 
         neworder = np.arange(i, i + len(groupdf))
@@ -242,7 +259,7 @@ def sort_spiral(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob
     order = np.ones(ra.size)*-999
     df = pd.DataFrame({'ra':ra, 'dec':dec, 'probs':prob, 'order':order})
 
-    i = 0 ## order counter                                                                                  
+    i = len(innerdf) ## order counter                                                                                  
     idxmaxprob = df['probs'].idxmax()
 
     while any(df['order'] == -999):
@@ -258,8 +275,10 @@ def sort_spiral(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob
         # eg everything in the closest radius has already been observed, check for groups of points furthe away                                                                                                       
         j = 0
         while len(groupdf) == 0:
-            groupdf = df.groupby(['distance']).get_group(j)
-            groupdf = groupdf[groupdf['order'] == -999]
+            try:
+                groupdf = df.groupby(['distance']).get_group(j)
+                groupdf = groupdf[groupdf['order'] == -999]
+            except(KeyError): pass
             j += 1
         neworder = np.arange(i, i + len(groupdf))
         groupdf['order'] = neworder
@@ -267,9 +286,18 @@ def sort_spiral(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob
         df.loc[groupdf.index.values ,'order'] = groupdf['order']
         idmaxprob = groupdf['probs'].idxmin() # start next iteration with the last value in group      
     df['distance'] = mydist
-    df['ra'] = df['ra'] + 360
 
     # concat inner and outer df, but make sure the inner is first  
     df = pd.concat([innerdf, df], axis=0)
-
+    
     return df
+
+
+def sort_zone(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob, radThreshold=3.):
+    inner_df = sort_nearest_highest(inner_ra, inner_dec, inner_prob, radThreshold=radThreshold)
+    outer_df = sort_nearest_highest(outer_ra, outer_dec, outer_prob, startorder=len(inner_df), radThreshold=radThreshold)
+    return pd.concat([inner_df, outer_df], axis=0)
+
+    
+
+
