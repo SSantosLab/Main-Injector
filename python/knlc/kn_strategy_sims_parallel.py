@@ -14,6 +14,7 @@ import seaborn as sns
 import pandas as pd
 import numpy as np
 import matplotlib
+import time
 
 import astropy.units as u
 import matplotlib.pyplot as plt
@@ -23,6 +24,7 @@ from scipy.stats import uniform
 from scipy.stats import norm
 from scipy.interpolate import interp1d
 from astropy.cosmology import WMAP9 as cosmo
+from joblib import Parallel, delayed
 
 matplotlib.use("Agg")
 
@@ -1632,6 +1634,12 @@ def get_detection_later(p_, p_later, start_time, delay, start_later):
     start_day = (float(start_time)/24.0)
     return np.interp(start_day+delay_days, [start_day, start_later], [p_, p_later])
 
+def initiate_kcnalc(*args, **kwargs):
+    """Returns kncalc"""
+
+    kn_calc = KNCalc(*args, **kwargs)
+
+    return kn_calc
 
 if __name__ == '__main__':
 
@@ -1642,7 +1650,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--output', default=None,
                       help='Output location for csv file.')
-                      
+    parser.add_argument('--jobs', '-j', default=1,
+                        help='Number of jobs for parallel processing.')         
     args = parser.parse_args()
     area_deg_fix = 40.0
 
@@ -1751,473 +1760,479 @@ for e in event_list:
     warning_area_deep = []
     area_deg_arr = np.zeros((len(time_delays), len(second_loop)))
     area_deg_arr_deep = np.zeros((len(time_delays), len(second_loop)))
-    for j in range(0, len(time_delays)):
 
-        for i in range(0, len(second_loop)):  # time_delays
-            options['distance'] = distances[i]
-            options['time_delay'] = time_delays[j]
-            if map_mode == 1:
-                _map_file = e
-            else:
-                _map_file = ""  # e
-            m_exp = m_exp_run
-            kn_calc = KNCalc(
-                e,
-                float(options['distance']),
-                float(options['distance_err']),
-                float(options['time_delay']),
-                float(loglan),
-                kn_weight_type=w_type,
-                plot=False,
-                use_map=True,
-                area_covered=second_loop[i],
-                reduce_mapresolution=True,
-                set_mjd_correction=mjd_correction,
-                m_exp_kncalc=m_exp,
-                deep_coverage=area_covered_deep[i]
-            )
+    # for j in range(0, len(time_delays)):
 
-            if (kn_calc.sw_mexp == True) and (m_exp_run == True):
-                warning_area_deep.append(area_covered_deep[i])
+    #     for i in range(0, len(second_loop)):  # time_delays
+    #         options['distance'] = distances[i]
+    #         options['time_delay'] = time_delays[j]
+    #         if map_mode == 1:
+    #             _map_file = e
+    #         else:
+    #             _map_file = ""  # e
+    #         m_exp = m_exp_run
+    
+    for job in range(1,7):
+        start = time.time()
+        results = Parallel(n_jobs=job)(delayed(initiate_kcnalc)
+                                        (e,
+                                        float(distances[i]),
+                                        float(options['distance_err']),
+                                        float(time_delays[j]),
+                                        float(loglan),
+                                        kn_weight_type=w_type,
+                                        plot=False,
+                                        use_map=True,
+                                        area_covered=second_loop[i],
+                                        reduce_mapresolution=True,
+                                        set_mjd_correction=mjd_correction,
+                                        m_exp_kncalc=m_exp,
+                                        deep_coverage=area_covered_deep[i])
+        for j in range(0, len(time_delays)) for i in range(0, len(second_loop)))
+        end = start - time.time()
+        print(f'time:  {end:.2f} seconds')
 
-            if kn_calc.Flag == 0:
-                print(' I will pass')
-                continue
-            m_exp = kn_calc.mult_exp
+    #         if (kn_calc.sw_mexp == True) and (m_exp_run == True):
+    #             warning_area_deep.append(area_covered_deep[i])
 
-            if map_mode == 1:
-                area_deg_arr[j][i] = kn_calc.area_deg
-                if m_exp == True:
-                    area_deg_arr_deep[j][i] = kn_calc.area_deg_deep
+    #         if kn_calc.Flag == 0:
+    #             print(' I will pass')
+    #             continue
+    #         m_exp = kn_calc.mult_exp
 
-            else:
-                area_deg_arr[j][i] = area_deg_fix
+    #         if map_mode == 1:
+    #             area_deg_arr[j][i] = kn_calc.area_deg
+    #             if m_exp == True:
+    #                 area_deg_arr_deep[j][i] = kn_calc.area_deg_deep
 
-            if m_exp == False:
-                percentile_dict = calc_mag_fractions(
-                    kn_calc.template_df_full,
-                    use_knmodel_weights=kn_weights,
-                    kn_type=kntype,
-                    kn_weight_type=w_type
-                )
+    #         else:
+    #             area_deg_arr[j][i] = area_deg_fix
 
-                percentile_dict_later = calc_mag_fractions(
-                    kn_calc.template_df_later,
-                    use_knmodel_weights=kn_weights,
-                    kn_type=kntype,
-                    kn_weight_type=w_type
-                )
+    #         if m_exp == False:
+    #             percentile_dict = calc_mag_fractions(
+    #                 kn_calc.template_df_full,
+    #                 use_knmodel_weights=kn_weights,
+    #                 kn_type=kntype,
+    #                 kn_weight_type=w_type
+    #             )
 
-            else:
-                percentile_dict, percentile_dict_deep = calc_mag_fractions(
-                    kn_calc.template_df_full,
-                    use_knmodel_weights=kn_weights,
-                    kn_type=kntype,
-                    kn_weight_type=w_type,
-                    m_exp=m_exp
-                )
+    #             percentile_dict_later = calc_mag_fractions(
+    #                 kn_calc.template_df_later,
+    #                 use_knmodel_weights=kn_weights,
+    #                 kn_type=kntype,
+    #                 kn_weight_type=w_type
+    #             )
 
-                percentile_dict_later, percentile_dict_later_deep = calc_mag_fractions(
-                    kn_calc.template_df_later,
-                    use_knmodel_weights=kn_weights,
-                    kn_type=kntype,
-                    kn_weight_type=w_type,
-                    m_exp=m_exp
-                )
+    #         else:
+    #             percentile_dict, percentile_dict_deep = calc_mag_fractions(
+    #                 kn_calc.template_df_full,
+    #                 use_knmodel_weights=kn_weights,
+    #                 kn_type=kntype,
+    #                 kn_weight_type=w_type,
+    #                 m_exp=m_exp
+    #             )
 
-            cutoffs = mags_of_percentile(float(options['fraction']), percentile_dict)
-            cutoff_dict = {'%s_mag' % k: v for k, v in cutoffs.items()}
-            for band in ['g', 'r', 'i', 'z']:
-                cutoff_dict['%s_magerr' % band] = 0.00
+    #             percentile_dict_later, percentile_dict_later_deep = calc_mag_fractions(
+    #                 kn_calc.template_df_later,
+    #                 use_knmodel_weights=kn_weights,
+    #                 kn_type=kntype,
+    #                 kn_weight_type=w_type,
+    #                 m_exp=m_exp
+    #             )
 
-            plot_title = "%s +/- %s Mpc  -- %.2f Days After Merger" % (
-                options['distance'], options['distance_err'], float(options['time_delay']) / 24.0)
-            # if options['magplot_file']:
-            fractions_maglim = make_plot(
-                percentile_dict,
-                title=plot_title,
-                outfile=options['magplot_file'],
-                fraction=options['fraction'],
-                teff_type=teff_kind
-            )
+    #         cutoffs = mags_of_percentile(float(options['fraction']), percentile_dict)
+    #         cutoff_dict = {'%s_mag' % k: v for k, v in cutoffs.items()}
+    #         for band in ['g', 'r', 'i', 'z']:
+    #             cutoff_dict['%s_magerr' % band] = 0.00
 
-            fractions_maglim_later = make_plot(
-                percentile_dict_later,
-                title=plot_title,
-                outfile=options['magplot_file'],
-                fraction=options['fraction'],
-                teff_type=teff_kind
-            )
+    #         plot_title = "%s +/- %s Mpc  -- %.2f Days After Merger" % (
+    #             options['distance'], options['distance_err'], float(options['time_delay']) / 24.0)
+    #         # if options['magplot_file']:
+    #         fractions_maglim = make_plot(
+    #             percentile_dict,
+    #             title=plot_title,
+    #             outfile=options['magplot_file'],
+    #             fraction=options['fraction'],
+    #             teff_type=teff_kind
+    #         )
 
-            if m_exp == True:
-                fractions_maglim_deep = make_plot(
-                    percentile_dict_deep,
-                    title=plot_title,
-                    outfile=options['magplot_file'],
-                    fraction=options['fraction'],
-                    teff_type=teff_kind
-                )
+    #         fractions_maglim_later = make_plot(
+    #             percentile_dict_later,
+    #             title=plot_title,
+    #             outfile=options['magplot_file'],
+    #             fraction=options['fraction'],
+    #             teff_type=teff_kind
+    #         )
 
-                fractions_maglim_later_deep = make_plot(
-                    percentile_dict_later_deep,
-                    title=plot_title,
-                    outfile=options['magplot_file'],
-                    fraction=options['fraction'],
-                    teff_type=teff_kind
-                )
+    #         if m_exp == True:
+    #             fractions_maglim_deep = make_plot(
+    #                 percentile_dict_deep,
+    #                 title=plot_title,
+    #                 outfile=options['magplot_file'],
+    #                 fraction=options['fraction'],
+    #                 teff_type=teff_kind
+    #             )
 
-            for l in  range(0, len(exposure_times_calc)):
-                expt = exposure_times_calc[l]
+    #             fractions_maglim_later_deep = make_plot(
+    #                 percentile_dict_later_deep,
+    #                 title=plot_title,
+    #                 outfile=options['magplot_file'],
+    #                 fraction=options['fraction'],
+    #                 teff_type=teff_kind
+    #             )
 
-                frac_at_exptg, maglimg = get_percentile_at_exp_time(
-                    expt, band='g', percentile_dict=percentile_dict,
-                    teff_type=teff_kind, return_maglim=True
-                )
+    #         for l in  range(0, len(exposure_times_calc)):
+    #             expt = exposure_times_calc[l]
 
-                frac_at_exptr, maglimr = get_percentile_at_exp_time(
-                    expt, band='r', percentile_dict=percentile_dict, teff_type=teff_kind, return_maglim=True)
-                frac_at_expti, maglimi = get_percentile_at_exp_time(
-                    expt, band='i', percentile_dict=percentile_dict, teff_type=teff_kind, return_maglim=True)
-                frac_at_exptz, maglimz = get_percentile_at_exp_time(
-                    expt, band='z', percentile_dict=percentile_dict, teff_type=teff_kind, return_maglim=True)
+    #             frac_at_exptg, maglimg = get_percentile_at_exp_time(
+    #                 expt, band='g', percentile_dict=percentile_dict,
+    #                 teff_type=teff_kind, return_maglim=True
+    #             )
 
-                frac_at_exptg_l, maglimg_l = get_percentile_at_exp_time(
-                    expt, band='g', percentile_dict=percentile_dict_later, teff_type=teff_kind, return_maglim=True)
-                frac_at_exptr_l, maglimr_l = get_percentile_at_exp_time(
-                    expt, band='r', percentile_dict=percentile_dict_later, teff_type=teff_kind, return_maglim=True)
-                frac_at_expti_l, maglimi_l = get_percentile_at_exp_time(
-                    expt, band='i', percentile_dict=percentile_dict_later, teff_type=teff_kind, return_maglim=True)
-                frac_at_exptz_l, maglimz_l = get_percentile_at_exp_time(
-                    expt, band='z', percentile_dict=percentile_dict_later, teff_type=teff_kind, return_maglim=True)
+    #             frac_at_exptr, maglimr = get_percentile_at_exp_time(
+    #                 expt, band='r', percentile_dict=percentile_dict, teff_type=teff_kind, return_maglim=True)
+    #             frac_at_expti, maglimi = get_percentile_at_exp_time(
+    #                 expt, band='i', percentile_dict=percentile_dict, teff_type=teff_kind, return_maglim=True)
+    #             frac_at_exptz, maglimz = get_percentile_at_exp_time(
+    #                 expt, band='z', percentile_dict=percentile_dict, teff_type=teff_kind, return_maglim=True)
 
-                if m_exp == True:
-                    expt_deep = exposure_times_calc_deep[l]
-                    frac_at_exptg_deep, maglimg_deep = get_percentile_at_exp_time(
-                        expt_deep, band='g', percentile_dict=percentile_dict_deep, teff_type=teff_kind, return_maglim=True)
-                    frac_at_exptr_deep, maglimr_deep = get_percentile_at_exp_time(
-                        expt_deep, band='r', percentile_dict=percentile_dict_deep, teff_type=teff_kind, return_maglim=True)
-                    frac_at_expti_deep, maglimi_deep = get_percentile_at_exp_time(
-                        expt_deep, band='i', percentile_dict=percentile_dict_deep, teff_type=teff_kind, return_maglim=True)
-                    frac_at_exptz_deep, maglimz_deep = get_percentile_at_exp_time(
-                        expt_deep, band='z', percentile_dict=percentile_dict_deep, teff_type=teff_kind, return_maglim=True)
-                    frac_at_exptg_l_deep, maglimg_l_deep = get_percentile_at_exp_time(
-                        expt_deep, band='g', percentile_dict=percentile_dict_later_deep, teff_type=teff_kind, return_maglim=True)
-                    frac_at_exptr_l_deep, maglimr_l_deep = get_percentile_at_exp_time(
-                        expt_deep, band='r', percentile_dict=percentile_dict_later_deep, teff_type=teff_kind, return_maglim=True)
-                    frac_at_expti_l_deep, maglimi_l_deep = get_percentile_at_exp_time(
-                        expt_deep, band='i', percentile_dict=percentile_dict_later_deep, teff_type=teff_kind, return_maglim=True)
-                    frac_at_exptz_l_deep, maglimz_l_deep = get_percentile_at_exp_time(
-                        expt_deep, band='z', percentile_dict=percentile_dict_later_deep, teff_type=teff_kind, return_maglim=True)
+    #             frac_at_exptg_l, maglimg_l = get_percentile_at_exp_time(
+    #                 expt, band='g', percentile_dict=percentile_dict_later, teff_type=teff_kind, return_maglim=True)
+    #             frac_at_exptr_l, maglimr_l = get_percentile_at_exp_time(
+    #                 expt, band='r', percentile_dict=percentile_dict_later, teff_type=teff_kind, return_maglim=True)
+    #             frac_at_expti_l, maglimi_l = get_percentile_at_exp_time(
+    #                 expt, band='i', percentile_dict=percentile_dict_later, teff_type=teff_kind, return_maglim=True)
+    #             frac_at_exptz_l, maglimz_l = get_percentile_at_exp_time(
+    #                 expt, band='z', percentile_dict=percentile_dict_later, teff_type=teff_kind, return_maglim=True)
 
-                maglims_exp[0][l] = round(maglimg, 1)
-                maglims_exp[1][l] = round(maglimr, 1)
-                maglims_exp[2][l] = round(maglimi, 1)
-                maglims_exp[3][l] = round(maglimz, 1)
+    #             if m_exp == True:
+    #                 expt_deep = exposure_times_calc_deep[l]
+    #                 frac_at_exptg_deep, maglimg_deep = get_percentile_at_exp_time(
+    #                     expt_deep, band='g', percentile_dict=percentile_dict_deep, teff_type=teff_kind, return_maglim=True)
+    #                 frac_at_exptr_deep, maglimr_deep = get_percentile_at_exp_time(
+    #                     expt_deep, band='r', percentile_dict=percentile_dict_deep, teff_type=teff_kind, return_maglim=True)
+    #                 frac_at_expti_deep, maglimi_deep = get_percentile_at_exp_time(
+    #                     expt_deep, band='i', percentile_dict=percentile_dict_deep, teff_type=teff_kind, return_maglim=True)
+    #                 frac_at_exptz_deep, maglimz_deep = get_percentile_at_exp_time(
+    #                     expt_deep, band='z', percentile_dict=percentile_dict_deep, teff_type=teff_kind, return_maglim=True)
+    #                 frac_at_exptg_l_deep, maglimg_l_deep = get_percentile_at_exp_time(
+    #                     expt_deep, band='g', percentile_dict=percentile_dict_later_deep, teff_type=teff_kind, return_maglim=True)
+    #                 frac_at_exptr_l_deep, maglimr_l_deep = get_percentile_at_exp_time(
+    #                     expt_deep, band='r', percentile_dict=percentile_dict_later_deep, teff_type=teff_kind, return_maglim=True)
+    #                 frac_at_expti_l_deep, maglimi_l_deep = get_percentile_at_exp_time(
+    #                     expt_deep, band='i', percentile_dict=percentile_dict_later_deep, teff_type=teff_kind, return_maglim=True)
+    #                 frac_at_exptz_l_deep, maglimz_l_deep = get_percentile_at_exp_time(
+    #                     expt_deep, band='z', percentile_dict=percentile_dict_later_deep, teff_type=teff_kind, return_maglim=True)
 
-                maglims_exp_l[0][l] = round(maglimg_l, 1)
-                maglims_exp_l[1][l] = round(maglimr_l, 1)
-                maglims_exp_l[2][l] = round(maglimi_l, 1)
-                maglims_exp_l[3][l] = round(maglimz_l, 1)
+    #             maglims_exp[0][l] = round(maglimg, 1)
+    #             maglims_exp[1][l] = round(maglimr, 1)
+    #             maglims_exp[2][l] = round(maglimi, 1)
+    #             maglims_exp[3][l] = round(maglimz, 1)
 
-                if m_exp == False:
+    #             maglims_exp_l[0][l] = round(maglimg_l, 1)
+    #             maglims_exp_l[1][l] = round(maglimr_l, 1)
+    #             maglims_exp_l[2][l] = round(maglimi_l, 1)
+    #             maglims_exp_l[3][l] = round(maglimz_l, 1)
 
-                    fractions_all[0][l][i][j] = frac_at_exptg
-                    fractions_all[1][l][i][j] = frac_at_exptr
-                    fractions_all[2][l][i][j] = frac_at_expti
-                    fractions_all[3][l][i][j] = frac_at_exptz
+    #             if m_exp == False:
 
-                    fractions_all_later[0][l][i][j] = frac_at_exptg_l
-                    fractions_all_later[1][l][i][j] = frac_at_exptr_l
-                    fractions_all_later[2][l][i][j] = frac_at_expti_l
-                    fractions_all_later[3][l][i][j] = frac_at_exptz_l
-                else:
-                    fractions_all[0][l][i][j] = frac_at_exptg + \
-                        frac_at_exptg_deep
-                    fractions_all[1][l][i][j] = frac_at_exptr + \
-                        frac_at_exptr_deep
-                    fractions_all[2][l][i][j] = frac_at_expti + \
-                        frac_at_expti_deep
-                    fractions_all[3][l][i][j] = frac_at_exptz + \
-                        frac_at_exptz_deep
+    #                 fractions_all[0][l][i][j] = frac_at_exptg
+    #                 fractions_all[1][l][i][j] = frac_at_exptr
+    #                 fractions_all[2][l][i][j] = frac_at_expti
+    #                 fractions_all[3][l][i][j] = frac_at_exptz
 
-                    fractions_all_later[0][l][i][j] = frac_at_exptg_l + \
-                        frac_at_exptg_l_deep
-                    fractions_all_later[1][l][i][j] = frac_at_exptr_l + \
-                        frac_at_exptr_l_deep
-                    fractions_all_later[2][l][i][j] = frac_at_expti_l + \
-                        frac_at_expti_l_deep
-                    fractions_all_later[3][l][i][j] = frac_at_exptz_l + \
-                        frac_at_exptz_l_deep
+    #                 fractions_all_later[0][l][i][j] = frac_at_exptg_l
+    #                 fractions_all_later[1][l][i][j] = frac_at_exptr_l
+    #                 fractions_all_later[2][l][i][j] = frac_at_expti_l
+    #                 fractions_all_later[3][l][i][j] = frac_at_exptz_l
+    #             else:
+    #                 fractions_all[0][l][i][j] = frac_at_exptg + \
+    #                     frac_at_exptg_deep
+    #                 fractions_all[1][l][i][j] = frac_at_exptr + \
+    #                     frac_at_exptr_deep
+    #                 fractions_all[2][l][i][j] = frac_at_expti + \
+    #                     frac_at_expti_deep
+    #                 fractions_all[3][l][i][j] = frac_at_exptz + \
+    #                     frac_at_exptz_deep
 
-    if kn_calc.Flag == 0:
-        print(' I will pass to the next event')
-        continue
+    #                 fractions_all_later[0][l][i][j] = frac_at_exptg_l + \
+    #                     frac_at_exptg_l_deep
+    #                 fractions_all_later[1][l][i][j] = frac_at_exptr_l + \
+    #                     frac_at_exptr_l_deep
+    #                 fractions_all_later[2][l][i][j] = frac_at_expti_l + \
+    #                     frac_at_expti_l_deep
+    #                 fractions_all_later[3][l][i][j] = frac_at_exptz_l + \
+    #                     frac_at_exptz_l_deep
 
-    if map_mode == 1:
-        cadence_matrix = np.zeros((len(filters_comb), len(second_loop), len(
-            exposure_times_calc)*len(exposure_times_calc)))  # ,len(time_delays)*len(time_delays)))
-        cadence_matrix = cadence_matrix.tolist()
-        bands_plot = ['g', 'r', 'i', 'z']
-        for m in range(0, len(cadence_matrix)):
-            for i in range(0, len(cadence_matrix[0])):
-                for k in range(0, len(cadence_matrix[0][0])):
-                    cadence_matrix[m][i][k] = []
-        exp_comblegend = []
-        day_delays_comb = []
-        day_delays_comb_number = []
-        exp_comb_number = []
-        exp_comb_number_deep = []
+    # if kn_calc.Flag == 0:
+    #     print(' I will pass to the next event')
+    #     continue
 
-        for j_1 in range(0, len(day_delays)):
-            for j_2 in range(0, len(day_delays)):
-                if j_1 <= j_2:
-                    day_delays_comb.append(
-                        str(day_delays[j_1])+'+'+str(day_delays[j_2]))
-                    day_delays_comb_number.append(
-                        [day_delays[j_1], day_delays[j_2]])
-        for k_1 in range(0, len(exposure_times_calc)):
-            for k_2 in range(0, len(exposure_times_calc)):
+    # if map_mode == 1:
+    #     cadence_matrix = np.zeros((len(filters_comb), len(second_loop), len(
+    #         exposure_times_calc)*len(exposure_times_calc)))  # ,len(time_delays)*len(time_delays)))
+    #     cadence_matrix = cadence_matrix.tolist()
+    #     bands_plot = ['g', 'r', 'i', 'z']
+    #     for m in range(0, len(cadence_matrix)):
+    #         for i in range(0, len(cadence_matrix[0])):
+    #             for k in range(0, len(cadence_matrix[0][0])):
+    #                 cadence_matrix[m][i][k] = []
+    #     exp_comblegend = []
+    #     day_delays_comb = []
+    #     day_delays_comb_number = []
+    #     exp_comb_number = []
+    #     exp_comb_number_deep = []
 
-                exp_comb_number.append(
-                    [exposure_times_calc[k_1], exposure_times_calc[k_2]])
-                if (m_exp_run == True):  # or (kn_calc.sw_mexp):
-                    exp_comb_number_deep.append(
-                        [exposure_times_calc_deep[k_1], exposure_times_calc_deep[k_2]])  # FIXME 20220322
-                    exp_comblegend.append(str(round(exposure_times_calc[k_1]/60.0, 1))+'D'+str(round(exposure_times_calc_deep[k_1]/60.0, 1))+'+'+str(
-                        round(exposure_times_calc[k_2]/60.0, 1))+'D'+str(round(exposure_times_calc_deep[k_2]/60.0, 1)))
-                else:
-                    exp_comblegend.append(str(round(
-                        exposure_times_calc[k_1]/60.0, 1))+'+'+str(round(exposure_times_calc[k_2]/60.0, 1)))
+    #     for j_1 in range(0, len(day_delays)):
+    #         for j_2 in range(0, len(day_delays)):
+    #             if j_1 <= j_2:
+    #                 day_delays_comb.append(
+    #                     str(day_delays[j_1])+'+'+str(day_delays[j_2]))
+    #                 day_delays_comb_number.append(
+    #                     [day_delays[j_1], day_delays[j_2]])
+    #     for k_1 in range(0, len(exposure_times_calc)):
+    #         for k_2 in range(0, len(exposure_times_calc)):
 
-        m = 0
-        k = 0
-        j = 0
-        telescope_time1_all = []
-        prob1_all = []
-        prob2_all = []
-        telescope_time2_all = []
-        area_deg_all = []
-        area_deg_all_deep = []
-        fov = 3.0
-        for m_1 in range(0, len(bands_plot)):  # in range(0,4)
-            for m_2 in range(0, len(bands_plot)):  # in range(0, 4)
-                for i in range(0, len(second_loop)):  # in range(0, 10) if m_exp_run == True in range(0, 5) otherwise
-                    k = 0
-                    for k_1 in range(0, len(exposure_times_calc)):
-                        for k_2 in range(0, len(exposure_times_calc)):
-                            j = 0
-                            for j_1 in range(0, len(time_delays)):
-                                for j_2 in range(0, len(time_delays)):
-                                    if j_1 <= j_2:
-                                        if (m_exp_run == False) or (area_covered_deep[i] in warning_area_deep):
-                                            if area_covered_deep[i] in warning_area_deep:
-                                                print('area deep warning for ', str(
-                                                    area_covered_deep[i]))
-                                                area_deg_all_deep.append(0.0)
-                                            telescope_time1 = telescope_time(
-                                                exptime=exposure_times_calc[k_1], area_deg=area_deg_arr[j_1][i], field_of_view_area=fov)
-                                            telescope_time2 = telescope_time(
-                                                exptime=exposure_times_calc[k_2], area_deg=area_deg_arr[j_2][i], field_of_view_area=fov)
-                                        else:
-                                            # FIXME is K_1 20220322
-                                            area_deg_all_deep.append(
-                                                area_deg_arr_deep[j_1][i])
-                                            telescope_time1 = telescope_time(exptime=[exposure_times_calc[k_1], exposure_times_calc_deep[k_1]], area_deg=[
-                                                                             area_deg_arr[j_1][i], area_deg_arr_deep[j_1][i]], field_of_view_area=fov, m_exp=m_exp_run)
-                                            telescope_time2 = telescope_time(exptime=[exposure_times_calc[k_2], exposure_times_calc_deep[k_2]], area_deg=[
-                                                                             area_deg_arr[j_2][i], area_deg_arr_deep[j_2][i]], field_of_view_area=fov, m_exp=m_exp_run)
-                                        area_deg_all.append(
-                                            area_deg_arr[j_1][i])
-                                        telescope_time1_all.append(
-                                            telescope_time1)
-                                        telescope_time2_all.append(
-                                            telescope_time2)
-                                        if (telescope_time1 > time_per_night_sec):
-                                            cadence_matrix[m][i][k].append(0)
-                                            prob1_all.append(0)
-                                            prob2_all.append(0)
-                                        elif (telescope_time2 > time_per_night_sec):
-                                            cadence_matrix[m][i][k].append(0)
-                                            prob1_all.append(0)
-                                            prob2_all.append(0)
+    #             exp_comb_number.append(
+    #                 [exposure_times_calc[k_1], exposure_times_calc[k_2]])
+    #             if (m_exp_run == True):  # or (kn_calc.sw_mexp):
+    #                 exp_comb_number_deep.append(
+    #                     [exposure_times_calc_deep[k_1], exposure_times_calc_deep[k_2]])  # FIXME 20220322
+    #                 exp_comblegend.append(str(round(exposure_times_calc[k_1]/60.0, 1))+'D'+str(round(exposure_times_calc_deep[k_1]/60.0, 1))+'+'+str(
+    #                     round(exposure_times_calc[k_2]/60.0, 1))+'D'+str(round(exposure_times_calc_deep[k_2]/60.0, 1)))
+    #             else:
+    #                 exp_comblegend.append(str(round(
+    #                     exposure_times_calc[k_1]/60.0, 1))+'+'+str(round(exposure_times_calc[k_2]/60.0, 1)))
 
-                                        else:
-                                            if j_1 == j_2:
-                                                if (telescope_time1+telescope_time2) > time_per_night_sec:
-                                                    cadence_matrix[m][i][k].append(
-                                                        0)
-                                                    prob1_all.append(0)
-                                                    prob2_all.append(0)
-                                                else:
-                                                    later_second_detection = get_detection_later(
-                                                        fractions_all[m_2][k_2][i][j_2], fractions_all_later[m_2][k_2][i][j_2], time_delays[j_1], telescope_time1, kn_calc.delta_mjd_later)
-                                                    cadence_matrix[m][i][k].append(
-                                                        100*(float(fractions_all[m_1][k_1][i][j_1])/100.0)*(float(later_second_detection)/100.0))
-                                                    prob1_all.append(
-                                                        float(fractions_all[m_1][k_1][i][j_1]))
-                                                    prob2_all.append(
-                                                        later_second_detection)
-                                            else:
-                                                cadence_matrix[m][i][k].append(
-                                                    100*(float(fractions_all[m_1][k_1][i][j_1])/100.0)*(float(fractions_all[m_2][k_2][i][j_2])/100.0))
-                                                prob1_all.append(
-                                                    float(fractions_all[m_1][k_1][i][j_1]))
-                                                prob2_all.append(
-                                                    float(fractions_all[m_2][k_2][i][j_2]))
+    #     m = 0
+    #     k = 0
+    #     j = 0
+    #     telescope_time1_all = []
+    #     prob1_all = []
+    #     prob2_all = []
+    #     telescope_time2_all = []
+    #     area_deg_all = []
+    #     area_deg_all_deep = []
+    #     fov = 3.0
+    #     for m_1 in range(0, len(bands_plot)):  # in range(0,4)
+    #         for m_2 in range(0, len(bands_plot)):  # in range(0, 4)
+    #             for i in range(0, len(second_loop)):  # in range(0, 10) if m_exp_run == True in range(0, 5) otherwise
+    #                 k = 0
+    #                 for k_1 in range(0, len(exposure_times_calc)):
+    #                     for k_2 in range(0, len(exposure_times_calc)):
+    #                         j = 0
+    #                         for j_1 in range(0, len(time_delays)):
+    #                             for j_2 in range(0, len(time_delays)):
+    #                                 if j_1 <= j_2:
+    #                                     if (m_exp_run == False) or (area_covered_deep[i] in warning_area_deep):
+    #                                         if area_covered_deep[i] in warning_area_deep:
+    #                                             print('area deep warning for ', str(
+    #                                                 area_covered_deep[i]))
+    #                                             area_deg_all_deep.append(0.0)
+    #                                         telescope_time1 = telescope_time(
+    #                                             exptime=exposure_times_calc[k_1], area_deg=area_deg_arr[j_1][i], field_of_view_area=fov)
+    #                                         telescope_time2 = telescope_time(
+    #                                             exptime=exposure_times_calc[k_2], area_deg=area_deg_arr[j_2][i], field_of_view_area=fov)
+    #                                     else:
+    #                                         # FIXME is K_1 20220322
+    #                                         area_deg_all_deep.append(
+    #                                             area_deg_arr_deep[j_1][i])
+    #                                         telescope_time1 = telescope_time(exptime=[exposure_times_calc[k_1], exposure_times_calc_deep[k_1]], area_deg=[
+    #                                                                          area_deg_arr[j_1][i], area_deg_arr_deep[j_1][i]], field_of_view_area=fov, m_exp=m_exp_run)
+    #                                         telescope_time2 = telescope_time(exptime=[exposure_times_calc[k_2], exposure_times_calc_deep[k_2]], area_deg=[
+    #                                                                          area_deg_arr[j_2][i], area_deg_arr_deep[j_2][i]], field_of_view_area=fov, m_exp=m_exp_run)
+    #                                     area_deg_all.append(
+    #                                         area_deg_arr[j_1][i])
+    #                                     telescope_time1_all.append(
+    #                                         telescope_time1)
+    #                                     telescope_time2_all.append(
+    #                                         telescope_time2)
+    #                                     if (telescope_time1 > time_per_night_sec):
+    #                                         cadence_matrix[m][i][k].append(0)
+    #                                         prob1_all.append(0)
+    #                                         prob2_all.append(0)
+    #                                     elif (telescope_time2 > time_per_night_sec):
+    #                                         cadence_matrix[m][i][k].append(0)
+    #                                         prob1_all.append(0)
+    #                                         prob2_all.append(0)
 
-                                    j = j+1
-                            k = k+1
-                m = m+1
+    #                                     else:
+    #                                         if j_1 == j_2:
+    #                                             if (telescope_time1+telescope_time2) > time_per_night_sec:
+    #                                                 cadence_matrix[m][i][k].append(
+    #                                                     0)
+    #                                                 prob1_all.append(0)
+    #                                                 prob2_all.append(0)
+    #                                             else:
+    #                                                 later_second_detection = get_detection_later(
+    #                                                     fractions_all[m_2][k_2][i][j_2], fractions_all_later[m_2][k_2][i][j_2], time_delays[j_1], telescope_time1, kn_calc.delta_mjd_later)
+    #                                                 cadence_matrix[m][i][k].append(
+    #                                                     100*(float(fractions_all[m_1][k_1][i][j_1])/100.0)*(float(later_second_detection)/100.0))
+    #                                                 prob1_all.append(
+    #                                                     float(fractions_all[m_1][k_1][i][j_1]))
+    #                                                 prob2_all.append(
+    #                                                     later_second_detection)
+    #                                         else:
+    #                                             cadence_matrix[m][i][k].append(
+    #                                                 100*(float(fractions_all[m_1][k_1][i][j_1])/100.0)*(float(fractions_all[m_2][k_2][i][j_2])/100.0))
+    #                                             prob1_all.append(
+    #                                                 float(fractions_all[m_1][k_1][i][j_1]))
+    #                                             prob2_all.append(
+    #                                                 float(fractions_all[m_2][k_2][i][j_2]))
 
-        for k in range(0, len(filters_comb)):
+    #                                 j = j+1
+    #                         k = k+1
+    #             m = m+1
 
-            fig, ax = plt.subplots(figsize=(10, 15))
+    #     for k in range(0, len(filters_comb)):
 
-            ax = sns.heatmap(cadence_matrix[k][-1], annot=True, xticklabels=day_delays_comb,
-                             yticklabels=exp_comblegend, linewidths=.5, vmin=0, vmax=100, ax=ax)
+    #         fig, ax = plt.subplots(figsize=(10, 15))
 
-            # xticklabels
-            plt.xlabel("Observing night (Days after merger)",
-                       fontsize=14)  # days after merger
+    #         ax = sns.heatmap(cadence_matrix[k][-1], annot=True, xticklabels=day_delays_comb,
+    #                          yticklabels=exp_comblegend, linewidths=.5, vmin=0, vmax=100, ax=ax)
 
-            plt.ylabel("Exposure times", fontsize=9)  # days after merger
-            plt.xticks(fontsize=8)
-            plt.yticks(fontsize=8)
+    #         # xticklabels
+    #         plt.xlabel("Observing night (Days after merger)",
+    #                    fontsize=14)  # days after merger
 
-            plt.savefig(plot_name_+filters_comb[k]+"_cadence.png")
-            plt.close()
+    #         plt.ylabel("Exposure times", fontsize=9)  # days after merger
+    #         plt.xticks(fontsize=8)
+    #         plt.yticks(fontsize=8)
 
-        cadence_matrix = np.array(cadence_matrix)
+    #         plt.savefig(plot_name_+filters_comb[k]+"_cadence.png")
+    #         plt.close()
 
-        best_probs = []
-        prob_labels = []
-        best_filters = []
-        best_exposure01 = []
-        best_exposure02 = []
-        best_time_delays01 = []
-        best_time_delays02 = []
-        best_area = []
+    #     cadence_matrix = np.array(cadence_matrix)
 
-        telescope_btim01 = []
-        telescope_btim02 = []
-        best_areadegree = []
+    #     best_probs = []
+    #     prob_labels = []
+    #     best_filters = []
+    #     best_exposure01 = []
+    #     best_exposure02 = []
+    #     best_time_delays01 = []
+    #     best_time_delays02 = []
+    #     best_area = []
 
-        probs_all = []
-        area_all = []
-        area_all_deep = []
-        filters_all = []
-        exposure01_all = []
-        exposure02_all = []
-        exposure01_all_deep = []
-        exposure02_all_deep = []
-        time_delays01_all = []
-        time_delays02_all = []
+    #     telescope_btim01 = []
+    #     telescope_btim02 = []
+    #     best_areadegree = []
 
-        cadence_full = cadence_matrix.copy()
-        for m in range(0, len(cadence_matrix)):
-            for i in range(0, len(cadence_matrix[m])):
-                for k in range(0, len(cadence_matrix[m][i])):
-                    for j in range(0, len(cadence_matrix[m][i][k])):
-                        probs_all.append(cadence_matrix[m][i][k][j])
-                        area_all.append(second_loop[i])
-                        # area_all_deg.append(areas[i])
-                        if m_exp_run == True:
-                            if area_covered_deep[i] in warning_area_deep:
-                                # area_all_deg_deep.append(0.0)
-                                area_all_deep.append(area_covered_deep[i])
-                                exposure01_all_deep.append(0.0)
-                                exposure02_all_deep.append(0.0)
+    #     probs_all = []
+    #     area_all = []
+    #     area_all_deep = []
+    #     filters_all = []
+    #     exposure01_all = []
+    #     exposure02_all = []
+    #     exposure01_all_deep = []
+    #     exposure02_all_deep = []
+    #     time_delays01_all = []
+    #     time_delays02_all = []
 
-                            else:
-                                # area_all_deg_deep.append(areas_deep[i])
-                                area_all_deep.append(areas_cov_deep[i])
-                                exposure01_all_deep.append(
-                                    exp_comb_number_deep[k][0])
-                                exposure02_all_deep.append(
-                                    exp_comb_number_deep[k][1])
+    #     cadence_full = cadence_matrix.copy()
+    #     for m in range(0, len(cadence_matrix)):
+    #         for i in range(0, len(cadence_matrix[m])):
+    #             for k in range(0, len(cadence_matrix[m][i])):
+    #                 for j in range(0, len(cadence_matrix[m][i][k])):
+    #                     probs_all.append(cadence_matrix[m][i][k][j])
+    #                     area_all.append(second_loop[i])
+    #                     # area_all_deg.append(areas[i])
+    #                     if m_exp_run == True:
+    #                         if area_covered_deep[i] in warning_area_deep:
+    #                             # area_all_deg_deep.append(0.0)
+    #                             area_all_deep.append(area_covered_deep[i])
+    #                             exposure01_all_deep.append(0.0)
+    #                             exposure02_all_deep.append(0.0)
 
-                        exposure01_all.append(exp_comb_number[k][0])
-                        exposure02_all.append(exp_comb_number[k][1])
+    #                         else:
+    #                             # area_all_deg_deep.append(areas_deep[i])
+    #                             area_all_deep.append(areas_cov_deep[i])
+    #                             exposure01_all_deep.append(
+    #                                 exp_comb_number_deep[k][0])
+    #                             exposure02_all_deep.append(
+    #                                 exp_comb_number_deep[k][1])
 
-                        time_delays01_all.append(day_delays_comb_number[j][0])
-                        time_delays02_all.append(day_delays_comb_number[j][1])
-                        filters_all.append(filters_comb[m])
+    #                     exposure01_all.append(exp_comb_number[k][0])
+    #                     exposure02_all.append(exp_comb_number[k][1])
 
-        f = open(plot_name_+"_allconfig.csv", 'w')
-        f.close()
-        f = open(plot_name_+"_allconfig.csv", 'a')
+    #                     time_delays01_all.append(day_delays_comb_number[j][0])
+    #                     time_delays02_all.append(day_delays_comb_number[j][1])
+    #                     filters_all.append(filters_comb[m])
 
-        f.write('# This is the '+kntype +
-                ' component in a '+teff_kind+' night \n')
-        if m_exp_run == False:
-            pd.DataFrame({"Detection Probability": probs_all,
-                          second_loop_legend: area_all,
-                          "Filter_comb": filters_all,
-                          "Exposure01": exposure01_all,
-                          "Exposure02": exposure02_all,
-                          "Observation01": time_delays01_all,
-                          "Observation02": time_delays02_all,
-                          "Telescope_time01": telescope_time1_all,
-                          "Telescope_time02": telescope_time2_all,
-                          "Region_coverage_deg": area_deg_all,
-                          "Deprob1": prob1_all,
-                          "Detprob2": prob2_all}).to_csv(f,  index=False)
-        else:
+    #     f = open(plot_name_+"_allconfig.csv", 'w')
+    #     f.close()
+    #     f = open(plot_name_+"_allconfig.csv", 'a')
 
-            pd.DataFrame({"Detection Probability": probs_all,
-                          second_loop_legend: area_all,
-                          second_loop_legend+"_deep": area_all_deep,
-                          "Filter_comb": filters_all,
-                          "Exposure01": exposure01_all,
-                          "Exposure01_deep": exposure01_all_deep,
-                          "Exposure02": exposure02_all,
-                          "Exposure02_deep": exposure02_all_deep,
-                         "Observation01": time_delays01_all,
-                         "Observation02": time_delays02_all,
-                         "Telescope_time01": telescope_time1_all,
-                         "Telescope_time02": telescope_time2_all,
-                         "Region_coverage_deg": area_deg_all,
-                         "Region_coverage_deg_deep": area_deg_all_deep,
-                         "Deprob1": prob1_all,
-                         "Detprob2": prob2_all}).to_csv(f,  index=False)
+    #     f.write('# This is the '+kntype +
+    #             ' component in a '+teff_kind+' night \n')
+    #     if m_exp_run == False:
+    #         pd.DataFrame({"Detection Probability": probs_all,
+    #                       second_loop_legend: area_all,
+    #                       "Filter_comb": filters_all,
+    #                       "Exposure01": exposure01_all,
+    #                       "Exposure02": exposure02_all,
+    #                       "Observation01": time_delays01_all,
+    #                       "Observation02": time_delays02_all,
+    #                       "Telescope_time01": telescope_time1_all,
+    #                       "Telescope_time02": telescope_time2_all,
+    #                       "Region_coverage_deg": area_deg_all,
+    #                       "Deprob1": prob1_all,
+    #                       "Detprob2": prob2_all}).to_csv(f,  index=False)
+    #     else:
 
-        f.close()
+    #         pd.DataFrame({"Detection Probability": probs_all,
+    #                       second_loop_legend: area_all,
+    #                       second_loop_legend+"_deep": area_all_deep,
+    #                       "Filter_comb": filters_all,
+    #                       "Exposure01": exposure01_all,
+    #                       "Exposure01_deep": exposure01_all_deep,
+    #                       "Exposure02": exposure02_all,
+    #                       "Exposure02_deep": exposure02_all_deep,
+    #                      "Observation01": time_delays01_all,
+    #                      "Observation02": time_delays02_all,
+    #                      "Telescope_time01": telescope_time1_all,
+    #                      "Telescope_time02": telescope_time2_all,
+    #                      "Region_coverage_deg": area_deg_all,
+    #                      "Region_coverage_deg_deep": area_deg_all_deep,
+    #                      "Deprob1": prob1_all,
+    #                      "Detprob2": prob2_all}).to_csv(f,  index=False)
 
-    if map_mode == 0:
-        probability_coverage = 0.90
-        bands_plot = ['g', 'r', 'i', 'z']
-        fractions_all_tp = np.transpose(fractions_all, (0, 1, 3, 2))
-        for m in range(0, len(bands_plot)):
-            for k in range(0, len(exposure_times_calc)):
-                ax1 = sns.heatmap(fractions_all_tp[m][k]*probability_coverage, annot=True,
-                                  xticklabels=second_loop, yticklabels=day_delays, linewidths=.5, vmin=0, vmax=100)
-                # days after merger
-                plt.ylabel("Days after merger", fontsize=14)
-                # days after merger
-                plt.xlabel(second_loop_legend, fontsize=14)
-                plt.xticks(fontsize=10)
-                plt.yticks(fontsize=10)
-                plt.title(teff_kind+" KN type: "+kntype+" " +
-                          str(bands_plot[m])+" exp: "+str(exposure_times_calc[k]), fontsize=10)
-                plt.savefig(
-                    plot_name_+bands_plot[m]+"exp"+str(exposure_times_calc[k])+"_distvsdelay.png")
-                plt.clf()
-                plt.close()
+    #     f.close()
 
-        fractions_dist = np.transpose(fractions_all, (1, 3, 0, 2))
-        for k in range(0, len(exposure_times_calc)):
-            for j in range(0, len(time_delays)):
-                plt.clf()
-                fig = plt.figure()
-                ax = fig.add_subplot(111)
+    # if map_mode == 0:
+    #     probability_coverage = 0.90
+    #     bands_plot = ['g', 'r', 'i', 'z']
+    #     fractions_all_tp = np.transpose(fractions_all, (0, 1, 3, 2))
+    #     for m in range(0, len(bands_plot)):
+    #         for k in range(0, len(exposure_times_calc)):
+    #             ax1 = sns.heatmap(fractions_all_tp[m][k]*probability_coverage, annot=True,
+    #                               xticklabels=second_loop, yticklabels=day_delays, linewidths=.5, vmin=0, vmax=100)
+    #             # days after merger
+    #             plt.ylabel("Days after merger", fontsize=14)
+    #             # days after merger
+    #             plt.xlabel(second_loop_legend, fontsize=14)
+    #             plt.xticks(fontsize=10)
+    #             plt.yticks(fontsize=10)
+    #             plt.title(teff_kind+" KN type: "+kntype+" " +
+    #                       str(bands_plot[m])+" exp: "+str(exposure_times_calc[k]), fontsize=10)
+    #             plt.savefig(
+    #                 plot_name_+bands_plot[m]+"exp"+str(exposure_times_calc[k])+"_distvsdelay.png")
+    #             plt.clf()
+    #             plt.close()
 
-                for m in range(0, len(bands_plot)):
-                    ax.plot(second_loop, fractions_dist[k][j][m]*probability_coverage, color=tableau20[int(
-                        2*m)], label=str(bands_plot[m]), ls='-.', linewidth=1, alpha=0.7)
-                plt.xlabel(second_loop_legend, fontsize=14)
-                plt.ylabel(" Detection Probability", fontsize=14)
-                plt.legend(loc='lower left', fontsize=9)
-                plt.title(teff_kind+" type: "+kntype+" Days:" +
-                          str(day_delays[j])+" exp: "+str(exposure_times_calc[k]), fontsize=10)
-                plt.savefig(
-                    plot_name_+str(time_delays[j])+"exp"+str(exposure_times_calc[k])+"_dist.png")
+    #     fractions_dist = np.transpose(fractions_all, (1, 3, 0, 2))
+    #     for k in range(0, len(exposure_times_calc)):
+    #         for j in range(0, len(time_delays)):
+    #             plt.clf()
+    #             fig = plt.figure()
+    #             ax = fig.add_subplot(111)
+
+    #             for m in range(0, len(bands_plot)):
+    #                 ax.plot(second_loop, fractions_dist[k][j][m]*probability_coverage, color=tableau20[int(
+    #                     2*m)], label=str(bands_plot[m]), ls='-.', linewidth=1, alpha=0.7)
+    #             plt.xlabel(second_loop_legend, fontsize=14)
+    #             plt.ylabel(" Detection Probability", fontsize=14)
+    #             plt.legend(loc='lower left', fontsize=9)
+    #             plt.title(teff_kind+" type: "+kntype+" Days:" +
+    #                       str(day_delays[j])+" exp: "+str(exposure_times_calc[k]), fontsize=10)
+    #             plt.savefig(
+    #                 plot_name_+str(time_delays[j])+"exp"+str(exposure_times_calc[k])+"_dist.png")
