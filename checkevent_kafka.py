@@ -157,7 +157,6 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     print('GOT GCN LIGO EVENT')
     payload = json.loads(payload)
     
-    pprint.pprint(payload)
     if mode == 'test':
         if payload['superevent_id'][0] != 'M':
             return
@@ -197,7 +196,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     DISTANCE_ERR = skymap.meta["DISTSTD"]
 
     
-    pprint(payload)
+    pprint.pprint(payload)
 
     try:
         alerttype = payload['alert_type']
@@ -223,12 +222,6 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
         BNS = -9
         BBH = -9
         NSBH = -9
-
-    # if payload['alert_type'] == 'RETRACTION':
-    #     send_first_trigger_email(trigger_id,
-    #                              'NA',
-    #                              retraction=alerttype)
-    #     return
 
 
     print('Trigger outpath')
