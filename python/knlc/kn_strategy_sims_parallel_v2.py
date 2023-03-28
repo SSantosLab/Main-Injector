@@ -17,7 +17,6 @@ import pandas as pd
 import numpy as np
 import matplotlib
 import time
-
 import astropy.units as u
 import matplotlib.pyplot as plt
 
@@ -152,17 +151,6 @@ def weighted_avg_and_std(values, weights):
     return math.sqrt(variance)
 
 
-def get_distances(eventmap):
-
-    pb, distmu, distsigma, distnorm = hp.read_map(eventmap,
-                                                  field=range(4),
-                                                  dtype=[np.float64,
-                                                         np.float64,
-                                                         np.float64,
-                                                         np.float64])  # clecio
-    return 0
-
-
 class KNCalc(): 
     def __init__(self,
                  skymap_name,
@@ -184,99 +172,97 @@ class KNCalc():
 
         self.event = skymap_name
         self.sw_mexp = False
-        self.distance = distance
+        self.distance = float(distance)
         self.distance_err = distance_err
-
         self.loglan = loglan
         self.vk = vk
         self.logmass = logmass
-
         self.set_mjd_correction = set_mjd_correction
+        self.delta_mjd = round(self.__set_time_delay(time_delay), 1)
+        self.delta_mjd_full = self.__set_time_delay(time_delay)
+        self.delta_mjd_later = round(self.delta_mjd + 0.3, 1)
+        self.delta_mjd_corr = self.__set_delta_mjd_corr()
+        self.df = self.__get_dataframe(self.delta_mjd)
+        self.df_later = self.__get_dataframe(self.delta_mjd_later)
+        self.df_corr = self.__get_df_correction()
 
-        if float(time_delay) > 400.8:
-            MSG = "Currently, only times delays less thant 400.8 hours " +\
-                  "(16.7 days) post merger are supported."
 
-            print(MSG)
-            sys.exit()
+    def __set_delta_mjd_corr(self):
+        """
+        Set delta_mjd_corr and set_mjd_correction attribute.
+        """
 
-        self.delta_mjd = round(float(time_delay) / 24.0, 1)
-        delta_mjd_full = float(time_delay) / 24.0
-
-        delta_mjd_later = round(self.delta_mjd+0.3, 1)
-
-        if (delta_mjd_full != self.delta_mjd) and (self.set_mjd_correction):
-            self.set_mjd_correction = True
-            if delta_mjd_full > self.delta_mjd:
-                delta_mjd_corr = self.delta_mjd+0.1
-                if (delta_mjd_full-self.delta_mjd) >= 0.05:
-                    delta_mjd_later = self.delta_mjd+0.4
+        if (self.delta_mjd_full != self.delta_mjd) and (self.set_mjd_correction):
+            if self.delta_mjd_full > self.delta_mjd:
+                delta_mjd_corr = self.delta_mjd + 0.1
+                if (self.delta_mjd_full - self.delta_mjd) >= 0.05:
+                    self.delta_mjd_later = self.delta_mjd + 0.4
             else:
-                delta_mjd_corr = self.delta_mjd-0.1
+                delta_mjd_corr = self.delta_mjd - 0.1
+
             delta_mjd_corr = round(delta_mjd_corr, 1)
         else:
             self.set_mjd_correction = False
+
+        return delta_mjd_corr
+            
+    def __get_dataframe(self, mjd_case):
 
         # Set directory for lookup table
         knlc_dir = os.getenv("DESGW_DIR", "./")
         if knlc_dir != "./":
             knlc_dir = knlc_dir + "/knlc/"
 
-        # Choose lookup table based on time_delay
-        if delta_mjd_later < 2.3:
-            df_later = pd.read_csv(knlc_dir+'data/grouped_photometry.csv')
-        elif delta_mjd_later < 4.7:
-            df_later = pd.read_csv(knlc_dir+'data/grouped_photometry_2.csv')
-        elif delta_mjd_later < 7.1:
-            df_later = pd.read_csv(knlc_dir+'data/grouped_photometry_3.csv')
-        elif delta_mjd_later < 9.5:
-            df_later = pd.read_csv(knlc_dir+'data/grouped_photometry_4.csv')
-        elif delta_mjd_later < 11.9:
-            df_later = pd.read_csv(knlc_dir+'data/grouped_photometry_5.csv')
-        elif delta_mjd_later < 14.3:
-            df_later = pd.read_csv(knlc_dir+'data/grouped_photometry_6.csv')
-        elif delta_mjd_later < 16.7:
-            df_later = pd.read_csv(knlc_dir+'data/grouped_photometry_7.csv')
-
-        if self.delta_mjd < 2.3:
+        if mjd_case < 2.3:
             df = pd.read_csv(knlc_dir+'data/grouped_photometry.csv')
-        elif self.delta_mjd < 4.7:
+        elif mjd_case < 4.7:
             df = pd.read_csv(knlc_dir+'data/grouped_photometry_2.csv')
-        elif self.delta_mjd < 7.1:
+        elif mjd_case < 7.1:
             df = pd.read_csv(knlc_dir+'data/grouped_photometry_3.csv')
-        elif self.delta_mjd < 9.5:
+        elif mjd_case < 9.5:
             df = pd.read_csv(knlc_dir+'data/grouped_photometry_4.csv')
-        elif self.delta_mjd < 11.9:
+        elif mjd_case < 11.9:
             df = pd.read_csv(knlc_dir+'data/grouped_photometry_5.csv')
-        elif self.delta_mjd < 14.3:
+        elif mjd_case < 14.3:
             df = pd.read_csv(knlc_dir+'data/grouped_photometry_6.csv')
-        elif self.delta_mjd < 16.7:
+        elif mjd_case < 16.7:
             df = pd.read_csv(knlc_dir+'data/grouped_photometry_7.csv')
+            
+        return df
+        
+    
+    def __get_df_correction(self):
 
         if self.set_mjd_correction:
-            if delta_mjd_corr < 2.3:
+            if self.delta_mjd_corr < 2.3:
                 df_corr = pd.read_csv(knlc_dir+'data/grouped_photometry.csv')
-            elif delta_mjd_corr < 4.7:
+            elif self.delta_mjd_corr < 4.7:
                 df_corr = pd.read_csv(knlc_dir+'data/grouped_photometry_2.csv')
-            elif delta_mjd_corr < 7.1:
+            elif self.delta_mjd_corr < 7.1:
                 df_corr = pd.read_csv(knlc_dir+'data/grouped_photometry_3.csv')
-            elif delta_mjd_corr < 9.5:
+            elif self.delta_mjd_corr < 9.5:
                 df_corr = pd.read_csv(knlc_dir+'data/grouped_photometry_4.csv')
-            elif delta_mjd_corr < 11.9:
+            elif self.delta_mjd_corr < 11.9:
                 df_corr = pd.read_csv(knlc_dir+'data/grouped_photometry_5.csv')
-            elif delta_mjd_corr < 14.3:
+            elif self.delta_mjd_corr < 14.3:
                 df_corr = pd.read_csv(knlc_dir+'data/grouped_photometry_6.csv')
-            elif delta_mjd_corr < 16.7:
+            elif self.delta_mjd_corr < 16.7:
                 df_corr = pd.read_csv(knlc_dir+'data/grouped_photometry_7.csv')
+
+        return df_corr
+
 
         df_later['ZMEAN'] = np.mean(df_later[['ZMIN', 'ZMAX']].values, axis=1)
         df['ZMEAN'] = np.mean(df[['ZMIN', 'ZMAX']].values, axis=1)
 
-        mean_z = z_at_value(cosmo.luminosity_distance,
-                            float(self.distance) * u.Mpc)
-        template_df_mean = df[(df['ZMIN'].values < mean_z) &\
-                              (df['ZMAX'].values > mean_z) &\
-                              (df['DELTA_MJD'].values == self.delta_mjd)]
+        mean_z = z_at_value(cosmo.luminosity_distance, self.distance * u.Mpc)
+
+        CUT_ON_ZMIN = df['ZMIN'].values < mean_z
+        CUT_ON_ZMAX = df['ZMAX'].values > mean_z
+        CUT_ON_MJD = df['DELTA_MJD'].values == self.delta_mjd
+
+        CONDITIONS = CUT_ON_ZMAX & CUT_ON_ZMIN & CUT_ON_MJD
+        template_df_mean = df[CONDITIONS]
         template_df_mean = template_df_mean.copy().reset_index(drop=True)
 
         sed_filenames, kn_inds, vks, loglans, logmass_s = open_ascii_cat(
@@ -305,7 +291,7 @@ class KNCalc():
         # Full distance calculation
         template_df_full = df[df['DELTA_MJD'].values ==
                               self.delta_mjd].copy().reset_index(drop=True)
-        template_df_later = df_later[df_later['DELTA_MJD'].values == delta_mjd_later].copy(
+        template_df_later = df_later[df_later['DELTA_MJD'].values == self.delta_mjd_later].copy(
         ).reset_index(drop=True)
 
         if self.set_mjd_correction == True:
@@ -325,7 +311,7 @@ class KNCalc():
             if delta_mjd_corr > self.delta_mjd:
                 print("correcting magnitudes >")
                 template_df_full['MAG_g'] = [
-                    np.interp(delta_mjd_full,
+                    np.interp(self.delta_mjd_full,
                               [self.delta_mjd,delta_mjd_corr],
                               [mag_g[l], mag_g_corr[l]],
                               left=0,
@@ -333,7 +319,7 @@ class KNCalc():
                               period=None) for l in range(0, len(mag_g))
                 ]
                 template_df_full['MAG_r'] = [
-                    np.interp(delta_mjd_full,
+                    np.interp(self.delta_mjd_full,
                               [self.delta_mjd, delta_mjd_corr],
                               [mag_r[l], mag_r_corr[l]],
                               left=0,
@@ -341,7 +327,7 @@ class KNCalc():
                               period=None) for l in range(0, len(mag_r))
                 ]
                 template_df_full['MAG_i'] = [
-                    np.interp(delta_mjd_full,
+                    np.interp(self.delta_mjd_full,
                               [self.delta_mjd, delta_mjd_corr],
                               [mag_i[l], mag_i_corr[l]],
                               left=0,
@@ -349,7 +335,7 @@ class KNCalc():
                               period=None) for l in range(0, len(mag_i))
                 ]
                 template_df_full['MAG_z'] = [
-                    np.interp(delta_mjd_full,
+                    np.interp(self.delta_mjd_full,
                               [self.delta_mjd, delta_mjd_corr],
                               [mag_z[l], mag_z_corr[l]],
                               left=0,
@@ -361,7 +347,7 @@ class KNCalc():
                 print("correcting magnitudes <")
                 print(mag_g[0])
                 template_df_full['MAG_g'] = [
-                    np.interp(delta_mjd_full,
+                    np.interp(self.delta_mjd_full,
                               [delta_mjd_corr, self.delta_mjd],
                               [mag_g_corr[l], mag_g[l]],
                               left=0,
@@ -369,7 +355,7 @@ class KNCalc():
                               period=None) for l in range(0, len(mag_g))
                 ]
                 template_df_full['MAG_r'] = [
-                    np.interp(delta_mjd_full,
+                    np.interp(self.delta_mjd_full,
                               [delta_mjd_corr, self.delta_mjd],
                               [mag_r_corr[l], mag_r[l]],
                               left=0,
@@ -377,7 +363,7 @@ class KNCalc():
                               period=None) for l in range(0, len(mag_r))
                     ]
                 template_df_full['MAG_i'] = [
-                    np.interp(delta_mjd_full,
+                    np.interp(self.delta_mjd_full,
                              [delta_mjd_corr, self.delta_mjd],
                              [mag_i_corr[l], mag_i[l]],
                              left=0,
@@ -385,7 +371,7 @@ class KNCalc():
                              period=None) for l in range(0, len(mag_i))
                 ]
                 template_df_full['MAG_z'] = [
-                    np.interp(delta_mjd_full,
+                    np.interp(self.delta_mjd_full,
                               [delta_mjd_corr, self.delta_mjd],
                               [mag_z_corr[l], mag_z[l]],
                               left=0,
@@ -414,198 +400,210 @@ class KNCalc():
         mass_ = 10 ** logmass_s
         preprocessed_weights = False
 
-        if use_map:
-            map_name = basename(self.event)
-            path2map = dirname(self.event)
 
-            if ".fits.gz" in map_name:
-                map_name = map_name.rstrip(".fits.gz")
-            if ".fits" in map_name:
-                map_name = map_name.rstrip(".fits")
+        def calculate_weights(self):
+            """Calculate kilonova weights for a given model.
+            """
 
-            lowres_path = join(path2map, "lowres")
-            weights_path = join(path2map, "weights")
-            use_map_info = join(lowres_path,f"{map_name}_mapinfo.npy")
+            float_types = [ np.float64, np.float64, np.float64 ]
+            if use_map:
+                map_name = basename(self.event)
+                path2map = dirname(self.event)
 
-            if not os.path.isdir(lowres_path):
-                os.mkdir(lowres_path)
-            
-            if not os.path.isdir(weights_path):
-                os.mkdir(weights_path)
+                if ".fits.gz" in map_name:
+                    map_name = map_name.rstrip(".fits.gz")
+                if ".fits" in map_name:
+                    map_name = map_name.rstrip(".fits")
 
-            if m_exp_kncalc == False:
-                use_map_weights = join(path2map, "weights"),
+                lowres_path = join(path2map, "lowres")
+                weights_path = join(path2map, "weights")
+                use_map_info = join(lowres_path,f"{map_name}_mapinfo.npy")
 
-                use_map_weights_info = join(
-                    path2map,
-                    "weights",
-                    f"{map_name}ac{area_covered}info.npy"
-                )
-
-                try:
-
-                    weights_pre = np.load(use_map_weights)
-                    use_map = ""
-                    print("Using preprocessed weights for ", use_map_weights)
-                    preprocessed_weights = True
-                    area_deg_info, resolution = np.load(use_map_weights_info)
-                    self.Resolution = resolution
-                    self.area_deg = area_deg_info  # num_pix_covered*resolution
-
-                except:
-                    print(f"Failed to load preprocessed weights for {use_map_weights}")
-            else:
-                use_map_weights = join(path2map, "weights", f"{map_name}ac{area_covered}ad{deep_coverage}.npy")
-                use_map_weights_info = join(path2map, "weights", f"{map_name}ac{area_covered}ad{deep_coverage}info.npy")
-
-                try:
-                    weights_pre, weights_pre_deep = np.load(use_map_weights)
-                    area_deg_info, area_deg_deep_info, resolution = np.load(
-                        use_map_weights_info
-                    )
-                    self.area_deg_deep = area_deg_deep_info  # num_pix_covered_deep*resolution
-                    self.Resolution = resolution
-                    self.area_deg = area_deg_info  # num_pix_covered*resolution
-                    use_map = ""
-                    print("Using preprocessed weights for ", use_map_weights)
-                    preprocessed_weights = True
-                except:
-                    print("Failed to load preprocessed weights for ",
-                          use_map_weights)
-
-        if use_map != "":
-            print("Using maps, not the distance")
-            use_map_lowres = basename(self.event)
-            path2map = dirname(self.event)
-            use_map_lowres = join(path2map, "lowres", use_map_lowres)
-            print("Tryng to open low resolution map")
-            try:
-                pb, distmu, distsigma = hp.read_map(use_map_lowres, field=range(
-                    3), dtype=[np.float64, np.float64, np.float64])
-                distmu_hr_average, distmu_std, distsigma_hr_average, distsigma_std = np.load(
-                    use_map_info)
-                reduce_mapresolution = False
-                read_lowres_map = True
-            except:
-                print(
-                    "Failed to open low resolution map, opening high resolution map", skymap_name)
-                pb, distmu, distsigma, distnorm = hp.read_map(skymap_name, field=range(4), dtype=[
-                                                              np.float64, np.float64, np.float64, np.float64])  # clecio dtype='numpy.float64'
-                read_lowres_map = False
-
-            pb_check = pb[np.logical_not(np.isinf(distmu))]
-            distsigma_check = distsigma[np.logical_not(np.isinf(distmu))]
-            distmu_check = distmu[np.logical_not(np.isinf(distmu))]
-
-            pb_check = pb_check[np.logical_not(np.isinf(distsigma_check))]
-            distmu_check = distmu_check[np.logical_not(
-                np.isinf(distsigma_check))]
-            distsigma_check = distsigma_check[np.logical_not(
-                np.isinf(distsigma_check))]
-
-            distmu_check_average = np.average(distmu_check, weights=pb_check)
-            distsigma_check_average = np.average(
-                distsigma_check, weights=pb_check)
-            try:
-                mean_z = z_at_value(cosmo.luminosity_distance, float(
-                    distmu_check_average) * u.Mpc)
-            except:
-                print('Warning: Object too close with distance ',
-                      str(distmu_check_average))
-                self.Flag = 0
-                return
-
-            mean_z68 = z_at_value(cosmo.luminosity_distance, float(
-                distmu_check_average+distsigma_check_average) * u.Mpc)
-            z_max = max(template_df_full['ZMEAN'].values)
-            luminosity_dist_max = max(cosmo.luminosity_distance(
-                np.unique(template_df_full['ZMEAN'].values)))
-
-            print(f"Mean redshift: {mean_z}")
-            print(f"Mean z68: {mean_z68}")
-            print(f"z max: {z_max}")
-            if float(mean_z68) > float(z_max):
-                print('Warning: Object too far away zmax= ',
-                      str(z_max), ' z_event ', str(mean_z))
-                self.Flag = 0
-                return
-
-            if np.isnan(pb).any():
-                print('Warning: prob map contains nan')
-                print('number of nans'+sum(np.isnan(pb))+' from '+len(pb))
-
-            highres_sum = sum(pb)
-            NSIDE = hp.npix2nside(pb.shape[0])
-            resolution = (hp.nside2pixarea(NSIDE, degrees=True))
-
-            if reduce_mapresolution == True:
-
-                flag_inf_mu = False
-                flag_inf_sigma = False
-                if np.isinf(distmu).any():
-                    flag_inf_mu = True
-                    print('Warning: number of infs in distance array ' +
-                          str(sum(np.isinf(distmu)))+' from '+str(len(distmu)))
-                    print('prob of correspondend infs region ', sum(
-                        pb[np.isinf(distmu)]), ' from ', sum(pb[np.logical_not(np.isinf(distmu))]))
-
-                    pb_hr = pb[np.logical_not(np.isinf(distmu))]
-
-                    distsigma_hr = distsigma[np.logical_not(np.isinf(distmu))]
-                    distmu_hr = distmu[np.logical_not(np.isinf(distmu))]
-                    distmu_hr_average = np.average(distmu_hr, weights=pb_hr)
-                    distmu_std = weighted_avg_and_std(distmu_hr, weights=pb_hr)
-                    distmu[np.isinf(distmu)] = 10000  # 10**25
-                else:
-                    distmu_hr_average = np.average(distmu, weights=pb)
-                    distmu_std = weighted_avg_and_std(distmu, weights=pb)
-
-                if np.isinf(distsigma).any():
-                    flag_inf_sigma = True
-                    print('Warning: number of infs in distance sigma array ' +
-                          str(sum(np.isinf(distsigma)))+' from '+str(len(distsigma)))
-                    print('prob of correspondend infs region ', sum(
-                        pb[np.isinf(distsigma)]), ' from ', sum(pb[np.logical_not(np.isinf(distsigma))]))
-                    pb_hr_sigma = pb[np.logical_not(np.isinf(distsigma))]
-                    distsigma_hr = distsigma[np.logical_not(np.isinf(distmu))]
-                    distsigma_hr_average = np.average(
-                        distsigma_hr, weights=pb_hr_sigma)
-                    distsigma_std = weighted_avg_and_std(
-                        distsigma_hr, weights=pb_hr_sigma)
-                    distsigma[np.isinf(distsigma)] = 10000
-
-                else:
-                    distsigma_hr_average = np.average(distsigma, weights=pb)
-                    distsigma_std = weighted_avg_and_std(distsigma, weights=pb)
+                if not os.path.isdir(lowres_path):
+                    os.mkdir(lowres_path)
                 
-                np.save(use_map_info,
-                        [
-                            distmu_hr_average,
-                            distmu_std,
-                            distsigma_hr_average,
-                            distsigma_std
-                        ]
-                )
+                if not os.path.isdir(weights_path):
+                    os.mkdir(weights_path)
+
+                if m_exp_kncalc == False:
+                    use_map_weights = join(path2map, "weights"),
+
+                    use_map_weights_info = join(
+                        path2map,
+                        "weights",
+                        f"{map_name}ac{area_covered}info.npy"
+                    )
+
+                    try:
+
+                        weights_pre = np.load(use_map_weights)
+                        use_map = ""
+                        print("Using preprocessed weights for ", use_map_weights)
+                        preprocessed_weights = True
+                        area_deg_info, resolution = np.load(use_map_weights_info)
+                        self.Resolution = resolution
+                        self.area_deg = area_deg_info  # num_pix_covered*resolution
+
+                    except:
+                        print(f"Failed to load preprocessed weights for {use_map_weights}")
+                else:
+                    use_map_weights = join(path2map, "weights", f"{map_name}ac{area_covered}ad{deep_coverage}.npy")
+                    use_map_weights_info = join(path2map, "weights", f"{map_name}ac{area_covered}ad{deep_coverage}info.npy")
+
+                    try:
+                        weights_pre, weights_pre_deep = np.load(use_map_weights)
+                        area_deg_info, area_deg_deep_info, resolution = np.load(
+                            use_map_weights_info
+                        )
+                        self.area_deg_deep = area_deg_deep_info  # num_pix_covered_deep*resolution
+                        self.Resolution = resolution
+                        self.area_deg = area_deg_info  # num_pix_covered*resolution
+                        use_map = ""
+                        print("Using preprocessed weights for ", use_map_weights)
+                        preprocessed_weights = True
+                    except:
+                        print("Failed to load preprocessed weights for ",
+                            use_map_weights)
+
+                print("Using maps, not the distance")
+                use_map_lowres = basename(self.event)
+                path2map = dirname(self.event)
+                use_map_lowres = join(path2map, "lowres", use_map_lowres)
+                print("Tryng to open low resolution map")
+                try:
+                    
+                    pb, distmu, distsigma = hp.read_map(use_map_lowres,
+                                                        field=range(3),
+                                                        dtype=float_types)
+
+                    distmu_hr_average, distmu_std, distsigma_hr_average, distsigma_std = np.load(use_map_info)
+                    reduce_mapresolution = False
+                    read_lowres_map = True
+                except:
+                    print(
+                        "Failed to open low resolution map, opening high resolution map", skymap_name)
+                    pb, distmu, distsigma, distnorm = hp.read_map(skymap_name,
+                                                                  field=range(4),
+                                                                  dtype=float_types)  # clecio dtype='numpy.float64'
+                    read_lowres_map = False
+
+                pb_check = pb[np.logical_not(np.isinf(distmu))]
+                distsigma_check = distsigma[np.logical_not(np.isinf(distmu))]
+                distmu_check = distmu[np.logical_not(np.isinf(distmu))]
+
+                pb_check = pb_check[np.logical_not(np.isinf(distsigma_check))]
+                distmu_check = distmu_check[np.logical_not(np.isinf(distsigma_check))]
+                distsigma_check = distsigma_check[np.logical_not(np.isinf(distsigma_check))]
+
+                distmu_check_average = np.average(distmu_check, weights=pb_check)
+                distsigma_check_average = np.average(
+                    distsigma_check, weights=pb_check)
+                try:
+                    mean_z = z_at_value(cosmo.luminosity_distance,
+                                        distmu_check_average * u.Mpc)
+                except:
+                    print('Warning: Object too close with distance ',
+                        str(distmu_check_average))
+                    self.Flag = 0
+                    return
+
+                mean_z68 = z_at_value(cosmo.luminosity_distance, 
+                                      distmu_check_average+distsigma_check_average * u.Mpc)
+
+                z_max = max(template_df_full['ZMEAN'].values)
+                luminosity_dist_max = max(cosmo.luminosity_distance(np.unique(template_df_full['ZMEAN'].values)))
+
+                print(f"Mean redshift: {mean_z}")
+                print(f"Mean z68: {mean_z68}")
+                print(f"z max: {z_max}")
+
+                if float(mean_z68) > float(z_max):
+                    print('Warning: Object too far away zmax= ',
+                        str(z_max), ' z_event ', str(mean_z))
+                    self.Flag = 0
+                    return
+
+                if np.isnan(pb).any():
+                    print('Warning: prob map contains nan')
+                    print('number of nans'+sum(np.isnan(pb))+' from '+len(pb))
 
                 highres_sum = sum(pb)
                 NSIDE = hp.npix2nside(pb.shape[0])
-                res_high = (hp.nside2pixarea(NSIDE, degrees=True))
+                resolution = (hp.nside2pixarea(NSIDE, degrees=True))
 
-                target_res = 2.0
-                final_nside_exp = math.ceil(
-                    math.log((NSIDE*math.sqrt(res_high))/target_res, 2))  # int(NSIDE/8.0)
-                final_nside = 2**final_nside_exp
-                final_nside = int(final_nside)
+            if reduce_mapresolution == True:
 
-                res_low = hp.nside2pixarea(final_nside, degrees=True)
-                res_final = hp.nside2pixarea(final_nside, degrees=True)
-                pb = hp.ud_grade(pb, final_nside, power=-2)
-                lowres_sum = sum(pb)
-                distsigma = hp.ud_grade(distsigma, final_nside)
-                distmu = hp.ud_grade(distmu, final_nside)  # power=-2
-                print('saving low resolution map')
-                hp.write_map(use_map_lowres, m=[pb, distmu, distsigma], nest=False, dtype=None, fits_IDL=True,
-                             coord=None, partial=False, column_names=None, column_units=None, extra_header=(), overwrite=False)
+                ### INSERT MULTIPROCESS HERE FOR LOWRES MAP and .NPY FILES
+                # self.__reduce_map_resolution():    
+                    flag_inf_mu = False
+                    flag_inf_sigma = False
+                    if np.isinf(distmu).any():
+                        flag_inf_mu = True
+                        print('Warning: number of infs in distance array ' +
+                            str(sum(np.isinf(distmu)))+' from '+str(len(distmu)))
+                        print('prob of correspondend infs region ', sum(
+                            pb[np.isinf(distmu)]), ' from ', sum(pb[np.logical_not(np.isinf(distmu))]))
+
+                        pb_hr = pb[np.logical_not(np.isinf(distmu))]
+
+                        distsigma_hr = distsigma[np.logical_not(np.isinf(distmu))]
+                        distmu_hr = distmu[np.logical_not(np.isinf(distmu))]
+                        distmu_hr_average = np.average(distmu_hr, weights=pb_hr)
+                        distmu_std = weighted_avg_and_std(distmu_hr, weights=pb_hr)
+                        distmu[np.isinf(distmu)] = 10000  # 10**25
+                    else:
+                        distmu_hr_average = np.average(distmu, weights=pb)
+                        distmu_std = weighted_avg_and_std(distmu, weights=pb)
+
+                    if np.isinf(distsigma).any():
+                        flag_inf_sigma = True
+                        print('Warning: number of infs in distance sigma array ' +
+                            str(sum(np.isinf(distsigma)))+' from '+str(len(distsigma)))
+                        print('prob of correspondend infs region ', sum(
+                            pb[np.isinf(distsigma)]), ' from ', sum(pb[np.logical_not(np.isinf(distsigma))]))
+                        pb_hr_sigma = pb[np.logical_not(np.isinf(distsigma))]
+                        distsigma_hr = distsigma[np.logical_not(np.isinf(distmu))]
+                        distsigma_hr_average = np.average(
+                            distsigma_hr, weights=pb_hr_sigma)
+                        distsigma_std = weighted_avg_and_std(
+                            distsigma_hr, weights=pb_hr_sigma)
+                        distsigma[np.isinf(distsigma)] = 10000
+
+                    else:
+                        distsigma_hr_average = np.average(distsigma, weights=pb)
+                        distsigma_std = weighted_avg_and_std(distsigma, weights=pb)
+                    
+                    np.save(use_map_info,
+                            [
+                                distmu_hr_average,
+                                distmu_std,
+                                distsigma_hr_average,
+                                distsigma_std
+                            ]
+                    )
+
+                    highres_sum = sum(pb)
+                    NSIDE = hp.npix2nside(pb.shape[0])
+                    res_high = (hp.nside2pixarea(NSIDE, degrees=True))
+
+                    target_res = 2.0
+                    final_nside_exp = math.ceil(
+                        math.log((NSIDE*math.sqrt(res_high))/target_res, 2))  # int(NSIDE/8.0)
+                    final_nside = 2**final_nside_exp
+                    final_nside = int(final_nside)
+
+                    res_low = hp.nside2pixarea(final_nside, degrees=True)
+                    res_final = hp.nside2pixarea(final_nside, degrees=True)
+                    pb = hp.ud_grade(pb, final_nside, power=-2)
+                    lowres_sum = sum(pb)
+                    distsigma = hp.ud_grade(distsigma, final_nside)
+                    distmu = hp.ud_grade(distmu, final_nside)  # power=-2
+                    print('saving low resolution map')
+                    
+
+                    ## THIS IS SLOW, FIND WAY TO SALVE MULTIPLE MAPS AT SAME TIME
+                    hp.write_map(use_map_lowres, m=[pb, distmu, distsigma], nest=False, dtype=None, fits_IDL=True,
+                                coord=None, partial=False, column_names=None, column_units=None, extra_header=(), overwrite=False)
 
                 if flag_inf_mu == True:
                     print('prob of reduced correspondend region due to infs ', sum(
@@ -639,7 +637,8 @@ class KNCalc():
                 print("average distance sigma in high and low res map with its standard deviation",
                       distsigma_hr_average, "+-", distsigma_std, "and ", distsigma_lowres_average)
                 resolution = res_low
-            if read_lowres_map == True:
+
+            if read_lowres_map:
                 print('prob of reduced correspondend region due to infs ', sum(
                     pb[np.abs(distmu) > (distmu_hr_average+(3*distmu_std))]), ' from ', sum(pb))
                 pb = pb[np.abs(distmu) < (distmu_hr_average+(3*distmu_std))]
@@ -867,6 +866,22 @@ class KNCalc():
         self.Flag = 1
         self.mult_exp = m_exp_kncalc
         return
+
+    def __set_time_delay(self, time_delay):
+        """
+        Check if time_delay is enough for a follow-up.
+        """
+
+        MSG = "Currently, only times delays less thant 400.8 hours " +\
+                "(16.7 days) post merger are supported."
+        
+        if float(time_delay) > 400.8:
+            print(MSG)
+            sys.exit()
+
+        return float(time_delay) / 24.0
+
+    def __save_low_resolution_map(self):
 
 
 def telescope_time(exptime, area_deg, field_of_view_area=3.0, m_exp=False):
@@ -1131,38 +1146,33 @@ def calc_mag_fractions(data,
 def get_model_weights(kn_weight_type="uniform", kn_type='red', info_file="knsed_info.txt", kn_weight_sigma=1.0):
 
     sed_filenames, kn_inds, vks, loglans, logmass_s = open_ascii_cat(
-        info_file, unpack=True)  # usecols=(0,1)
+                                                        info_file,
+                                                        unpack=True
+                                                    )
     loglans = np.array(loglans).astype('float')
     kn_inds = np.array(kn_inds).astype('float')
-
     vks = np.array(vks).astype('float')
     logmass_s = np.array(logmass_s).astype('float')
 
     # https://science.sciencemag.org/content/358/6370/1583
     mass_red = 0.035
-
     loglan_red = -2.0
-
     vk_red = 0.15
-
     mass_blue = 0.025
-
     loglan_blue = -5.0
-
     vk_blue = 0.25
 
     weights_dict = {}  # template_df_full
-
     mass_ = 10 ** logmass_s
 
     if kn_weight_type == "gaussian":
         print("gaussian prior")
-        mass_blue_err = 0.001*10
-        loglan_blue_err = 1.0*10
-        vk_blue_err = 0.01*10
-        mass_red_err = 0.015*10
-        loglan_red_err = 0.5*10
-        vk_red_err = 0.03*10
+        mass_blue_err = 0.001 * 10
+        loglan_blue_err = 1.0 * 10
+        vk_blue_err = 0.01 * 10
+        mass_red_err = 0.015 * 10
+        loglan_red_err = 0.5 * 10
+        vk_red_err = 0.03 * 10
 
         weights_loglan_red = [norm.pdf(x, loc=float(
             loglan_red), scale=kn_weight_sigma*float(loglan_red_err)) for x in loglans]
@@ -1205,6 +1215,7 @@ def get_model_weights(kn_weight_type="uniform", kn_type='red', info_file="knsed_
             mass_blue), scale=kn_weight_sigma*float(mass_blue_err)) for x in np.unique(mass_)]
         weights_dict['WEIGHT_mass_blue'] = weights_mass_blue / \
             np.sum(weights_mass_blue_norm)
+
     if kn_weight_type == "gaussian_narrow":
         print("gaussian prior narrow")
         mass_blue_err = 0.001
@@ -1572,8 +1583,14 @@ def get_exptime(m0, mag):
 
 
 def get_m0(band, teff=1.0):
-    out_dict = {'g': 23.4+(1.25*log10(teff)), 'r': 23.1+(1.25*log10(teff)), 'i': 22.5+(
-        1.25*log10(teff)), 'z': 21.8+(1.25*log10(teff)), 'Y': 20.3+(1.25*log10(teff))}
+    out_dict = {
+        'g': 23.4+(1.25*log10(teff)),
+        'r': 23.1+(1.25*log10(teff)),
+        'i': 22.5+(1.25*log10(teff)),
+        'z': 21.8+(1.25*log10(teff)),
+        'Y': 20.3+(1.25*log10(teff))
+    }
+
     return out_dict[band]
 
 
@@ -1670,7 +1687,7 @@ def some_more_kncalc(kn_calc: KNCalc,
         area_deg_arr_deep = np.zeros((len(time_delays), len(second_loop)))
 
         current_kn_calc 
-        if (kn_calc.sw_mexp == True) and (m_exp_run == True):
+        if (kn_calc.sw_mexp == True) and (MULTI_EXPOSURE_RUN):
             warning_area_deep.append(area_covered_deep[i])
 
         if kn_calc.Flag == 0:
@@ -1731,6 +1748,7 @@ def make_strategy_kncalc(kncalc: KNCalc) -> None:
 
 if __name__ == '__main__':
 
+    start = time.time()
     parser = ArgumentParser(__doc__)
 
     parser.add_argument('--input',
@@ -1739,7 +1757,8 @@ if __name__ == '__main__':
     parser.add_argument('--output', default=None,
                       help='Output location for csv file.')
     parser.add_argument('--jobs', '-j', default=1,
-                        help='Number of jobs for parallel processing.')         
+                        help='Number of jobs for parallel processing.')
+                              
     args = parser.parse_args()
     area_deg_fix = 40.0
 
@@ -1769,11 +1788,12 @@ if __name__ == '__main__':
         event_list = glob.glob(join(event_path, '*.fits.gz'))
         map_mode = 1  # 1 for map 0 for dist
         area_covered_deep = [0.8, 0.7, 0.5, 0.3, 0.7,
-                            0.5, 0.3, 0.5, 0.4, 0.3]  # [0.8,0.7]#
-        m_exp_run = True  # FIXME just to call attention to this variable.
-        m_exp = m_exp_run
+                             0.5, 0.3, 0.5, 0.4, 0.3]  # [0.8,0.7]#
+        
+        MULTI_EXPOSURE_RUN = True
+        m_exp = MULTI_EXPOSURE_RUN
 
-        if m_exp_run == True:
+        if MULTI_EXPOSURE_RUN:
             area_covered = [0.9, 0.9, 0.9, 0.9, 0.8, 0.8, 0.8, 0.7, 0.7, 0.7]
         else:
             area_covered = [0.9, 0.85, 0.8, 0.75, 0.7]
@@ -1789,7 +1809,7 @@ if __name__ == '__main__':
             event_list = [""]
             second_loop_legend = "Distance (MPC)"
             m_exp = False
-            m_exp_run = False
+            MULTI_EXPOSURE_RUN = False
 
         if m_exp == False:
             area_covered_deep = [0.0 for i in range(0, len(second_loop))]
@@ -1798,8 +1818,8 @@ if __name__ == '__main__':
         plot_td_name = 'detection_time_delay_loglan5.png'
         time_delays = [12.0, 24.0, 36.0, 48.0, 60.0, 72.0, 84.0, 96.0]
 
-        filters_comb = ['gg', 'gr', 'gi', 'gz', 'rg', 'rr', 'ri',
-                        'rz', 'ig', 'ir', 'ii', 'iz', 'zg', 'zr', 'zi', 'zz']
+        filters_comb = ['gg', 'gr', 'gi', 'gz', 'rg', 'rr', 'ri', 'rz',
+                        'ig', 'ir', 'ii', 'iz', 'zg', 'zr', 'zi', 'zz']
 
         if m_exp == False:
             exposure_times_calc = [60.0, 90.0, 120.0,
@@ -1850,7 +1870,7 @@ if __name__ == '__main__':
         area_deg_arr_deep = np.zeros((len(time_delays), len(second_loop)))
         jobs = int(args.jobs)
         
-        start = time.time()
+        print(len(time_delays) * len(second_loop))
         results = Parallel(n_jobs=jobs)(delayed(initiate_kcnalc)
                                         (e,
                                         float(distances[i]),
@@ -1866,169 +1886,26 @@ if __name__ == '__main__':
                                         m_exp_kncalc=m_exp,
                                         deep_coverage=area_covered_deep[i])
         for j in range(0, len(time_delays)) for i in range(0, len(second_loop)))
-        end = time.time() - start
+        
 
-        main()
 
-        # if m_exp == False:
-        #     percentile_dict = calc_mag_fractions(
-        #         kn_calc.template_df_full,
-        #         use_knmodel_weights=kn_weights,
-        #         kn_type=kntype,
-        #         kn_weight_type=w_type
-        #     )
+        # for j in range(0, len(time_delays)):
+        #     for i in range(0, len(second_loop)):
+        #         if (kn_calc.sw_mexp == True) and (MULTI_EXPOSURE_RUN):
+        #             warning_area_deep.append(area_covered_deep[i])
 
-        #     percentile_dict_later = calc_mag_fractions(
-        #         kn_calc.template_df_later,
-        #         use_knmodel_weights=kn_weights,
-        #         kn_type=kntype,
-        #         kn_weight_type=w_type
-        #     )
+        #         if map_mode == 1:
+        #             area_deg_arr[j][i] = kn_calc.area_deg
+        #         if m_exp == True:
+        #             area_deg_arr_deep[j][i] = kn_calc.area_deg_deep
 
-        # else:
-        #     percentile_dict, percentile_dict_deep = calc_mag_fractions(
-        #         kn_calc.template_df_full,
-        #         use_knmodel_weights=kn_weights,
-        #         kn_type=kntype,
-        #         kn_weight_type=w_type,
-        #         m_exp=m_exp
-        #     )
+        #         pprint.pprint(area_deg_arr)
 
-        #     percentile_dict_later, percentile_dict_later_deep = calc_mag_fractions(
-        #         kn_calc.template_df_later,
-        #         use_knmodel_weights=kn_weights,
-        #         kn_type=kntype,
-        #         kn_weight_type=w_type,
-        #         m_exp=m_exp
-        #     )
-
-    #         cutoffs = mags_of_percentile(float(options['fraction']), percentile_dict)
-    #         cutoff_dict = {'%s_mag' % k: v for k, v in cutoffs.items()}
-    #         for band in ['g', 'r', 'i', 'z']:
-    #             cutoff_dict['%s_magerr' % band] = 0.00
-
-    #         plot_title = "%s +/- %s Mpc  -- %.2f Days After Merger" % (
-    #             options['distance'], options['distance_err'], float(options['time_delay']) / 24.0)
-    #         # if options['magplot_file']:
-    #         fractions_maglim = make_plot(
-    #             percentile_dict,
-    #             title=plot_title,
-    #             outfile=options['magplot_file'],
-    #             fraction=options['fraction'],
-    #             teff_type=teff_kind
-    #         )
-
-    #         fractions_maglim_later = make_plot(
-    #             percentile_dict_later,
-    #             title=plot_title,
-    #             outfile=options['magplot_file'],
-    #             fraction=options['fraction'],
-    #             teff_type=teff_kind
-    #         )
-
-    #         if m_exp == True:
-    #             fractions_maglim_deep = make_plot(
-    #                 percentile_dict_deep,
-    #                 title=plot_title,
-    #                 outfile=options['magplot_file'],
-    #                 fraction=options['fraction'],
-    #                 teff_type=teff_kind
-    #             )
-
-    #             fractions_maglim_later_deep = make_plot(
-    #                 percentile_dict_later_deep,
-    #                 title=plot_title,
-    #                 outfile=options['magplot_file'],
-    #                 fraction=options['fraction'],
-    #                 teff_type=teff_kind
-    #             )
-
-    #         for l in  range(0, len(exposure_times_calc)):
-    #             expt = exposure_times_calc[l]
-
-    #             frac_at_exptg, maglimg = get_percentile_at_exp_time(
-    #                 expt, band='g', percentile_dict=percentile_dict,
-    #                 teff_type=teff_kind, return_maglim=True
-    #             )
-
-    #             frac_at_exptr, maglimr = get_percentile_at_exp_time(
-    #                 expt, band='r', percentile_dict=percentile_dict, teff_type=teff_kind, return_maglim=True)
-    #             frac_at_expti, maglimi = get_percentile_at_exp_time(
-    #                 expt, band='i', percentile_dict=percentile_dict, teff_type=teff_kind, return_maglim=True)
-    #             frac_at_exptz, maglimz = get_percentile_at_exp_time(
-    #                 expt, band='z', percentile_dict=percentile_dict, teff_type=teff_kind, return_maglim=True)
-
-    #             frac_at_exptg_l, maglimg_l = get_percentile_at_exp_time(
-    #                 expt, band='g', percentile_dict=percentile_dict_later, teff_type=teff_kind, return_maglim=True)
-    #             frac_at_exptr_l, maglimr_l = get_percentile_at_exp_time(
-    #                 expt, band='r', percentile_dict=percentile_dict_later, teff_type=teff_kind, return_maglim=True)
-    #             frac_at_expti_l, maglimi_l = get_percentile_at_exp_time(
-    #                 expt, band='i', percentile_dict=percentile_dict_later, teff_type=teff_kind, return_maglim=True)
-    #             frac_at_exptz_l, maglimz_l = get_percentile_at_exp_time(
-    #                 expt, band='z', percentile_dict=percentile_dict_later, teff_type=teff_kind, return_maglim=True)
-
-    #             if m_exp == True:
-    #                 expt_deep = exposure_times_calc_deep[l]
-    #                 frac_at_exptg_deep, maglimg_deep = get_percentile_at_exp_time(
-    #                     expt_deep, band='g', percentile_dict=percentile_dict_deep, teff_type=teff_kind, return_maglim=True)
-    #                 frac_at_exptr_deep, maglimr_deep = get_percentile_at_exp_time(
-    #                     expt_deep, band='r', percentile_dict=percentile_dict_deep, teff_type=teff_kind, return_maglim=True)
-    #                 frac_at_expti_deep, maglimi_deep = get_percentile_at_exp_time(
-    #                     expt_deep, band='i', percentile_dict=percentile_dict_deep, teff_type=teff_kind, return_maglim=True)
-    #                 frac_at_exptz_deep, maglimz_deep = get_percentile_at_exp_time(
-    #                     expt_deep, band='z', percentile_dict=percentile_dict_deep, teff_type=teff_kind, return_maglim=True)
-    #                 frac_at_exptg_l_deep, maglimg_l_deep = get_percentile_at_exp_time(
-    #                     expt_deep, band='g', percentile_dict=percentile_dict_later_deep, teff_type=teff_kind, return_maglim=True)
-    #                 frac_at_exptr_l_deep, maglimr_l_deep = get_percentile_at_exp_time(
-    #                     expt_deep, band='r', percentile_dict=percentile_dict_later_deep, teff_type=teff_kind, return_maglim=True)
-    #                 frac_at_expti_l_deep, maglimi_l_deep = get_percentile_at_exp_time(
-    #                     expt_deep, band='i', percentile_dict=percentile_dict_later_deep, teff_type=teff_kind, return_maglim=True)
-    #                 frac_at_exptz_l_deep, maglimz_l_deep = get_percentile_at_exp_time(
-    #                     expt_deep, band='z', percentile_dict=percentile_dict_later_deep, teff_type=teff_kind, return_maglim=True)
-
-    #             maglims_exp[0][l] = round(maglimg, 1)
-    #             maglims_exp[1][l] = round(maglimr, 1)
-    #             maglims_exp[2][l] = round(maglimi, 1)
-    #             maglims_exp[3][l] = round(maglimz, 1)
-
-    #             maglims_exp_l[0][l] = round(maglimg_l, 1)
-    #             maglims_exp_l[1][l] = round(maglimr_l, 1)
-    #             maglims_exp_l[2][l] = round(maglimi_l, 1)
-    #             maglims_exp_l[3][l] = round(maglimz_l, 1)
-
-    #             if m_exp == False:
-
-    #                 fractions_all[0][l][i][j] = frac_at_exptg
-    #                 fractions_all[1][l][i][j] = frac_at_exptr
-    #                 fractions_all[2][l][i][j] = frac_at_expti
-    #                 fractions_all[3][l][i][j] = frac_at_exptz
-
-    #                 fractions_all_later[0][l][i][j] = frac_at_exptg_l
-    #                 fractions_all_later[1][l][i][j] = frac_at_exptr_l
-    #                 fractions_all_later[2][l][i][j] = frac_at_expti_l
-    #                 fractions_all_later[3][l][i][j] = frac_at_exptz_l
-    #             else:
-    #                 fractions_all[0][l][i][j] = frac_at_exptg + \
-    #                     frac_at_exptg_deep
-    #                 fractions_all[1][l][i][j] = frac_at_exptr + \
-    #                     frac_at_exptr_deep
-    #                 fractions_all[2][l][i][j] = frac_at_expti + \
-    #                     frac_at_expti_deep
-    #                 fractions_all[3][l][i][j] = frac_at_exptz + \
-    #                     frac_at_exptz_deep
-
-    #                 fractions_all_later[0][l][i][j] = frac_at_exptg_l + \
-    #                     frac_at_exptg_l_deep
-    #                 fractions_all_later[1][l][i][j] = frac_at_exptr_l + \
-    #                     frac_at_exptr_l_deep
-    #                 fractions_all_later[2][l][i][j] = frac_at_expti_l + \
-    #                     frac_at_expti_l_deep
-    #                 fractions_all_later[3][l][i][j] = frac_at_exptz_l + \
-    #                     frac_at_exptz_l_deep
-
-    # if kn_calc.Flag == 0:
-    #     print(' I will pass to the next event')
-    #     continue
+    end = time.time() - start
+    print(f'code take {end:.2f} seconds to finish!')
+    #                 if kn_calc.Flag == 0:
+    #                     print(' I will pass to the next event')
+    #                     continue
 
     # if map_mode == 1:
     #     cadence_matrix = np.zeros((len(filters_comb), len(second_loop), len(
@@ -2057,7 +1934,7 @@ if __name__ == '__main__':
 
     #             exp_comb_number.append(
     #                 [exposure_times_calc[k_1], exposure_times_calc[k_2]])
-    #             if (m_exp_run == True):
+    #             if (m_exp_run == True):  # or (kn_calc.sw_mexp):
     #                 exp_comb_number_deep.append(
     #                     [exposure_times_calc_deep[k_1], exposure_times_calc_deep[k_2]])  # FIXME 20220322
     #                 exp_comblegend.append(str(round(exposure_times_calc[k_1]/60.0, 1))+'D'+str(round(exposure_times_calc_deep[k_1]/60.0, 1))+'+'+str(
@@ -2259,3 +2136,43 @@ if __name__ == '__main__':
     #                      "Detprob2": prob2_all}).to_csv(f,  index=False)
 
     #     f.close()
+
+    # if map_mode == 0:
+    #     probability_coverage = 0.90
+    #     bands_plot = ['g', 'r', 'i', 'z']
+    #     fractions_all_tp = np.transpose(fractions_all, (0, 1, 3, 2))
+    #     for m in range(0, len(bands_plot)):
+    #         for k in range(0, len(exposure_times_calc)):
+    #             ax1 = sns.heatmap(fractions_all_tp[m][k]*probability_coverage, annot=True,
+    #                               xticklabels=second_loop, yticklabels=day_delays, linewidths=.5, vmin=0, vmax=100)
+    #             # days after merger
+    #             plt.ylabel("Days after merger", fontsize=14)
+    #             # days after merger
+    #             plt.xlabel(second_loop_legend, fontsize=14)
+    #             plt.xticks(fontsize=10)
+    #             plt.yticks(fontsize=10)
+    #             plt.title(teff_kind+" KN type: "+kntype+" " +
+    #                       str(bands_plot[m])+" exp: "+str(exposure_times_calc[k]), fontsize=10)
+    #             plt.savefig(
+    #                 plot_name_+bands_plot[m]+"exp"+str(exposure_times_calc[k])+"_distvsdelay.png")
+    #             plt.clf()
+    #             plt.close()
+
+    #     fractions_dist = np.transpose(fractions_all, (1, 3, 0, 2))
+    #     for k in range(0, len(exposure_times_calc)):
+    #         for j in range(0, len(time_delays)):
+    #             plt.clf()
+    #             fig = plt.figure()
+    #             ax = fig.add_subplot(111)
+
+    #             for m in range(0, len(bands_plot)):
+    #                 ax.plot(second_loop, fractions_dist[k][j][m]*probability_coverage, color=tableau20[int(
+    #                     2*m)], label=str(bands_plot[m]), ls='-.', linewidth=1, alpha=0.7)
+    #             plt.xlabel(second_loop_legend, fontsize=14)
+    #             plt.ylabel(" Detection Probability", fontsize=14)
+    #             plt.legend(loc='lower left', fontsize=9)
+    #             plt.title(teff_kind+" type: "+kntype+" Days:" +
+    #                       str(day_delays[j])+" exp: "+str(exposure_times_calc[k]), fontsize=10)
+    #             plt.savefig(
+    #                 plot_name_+str(time_delays[j])+"exp"+str(exposure_times_calc[k])+"_dist.png")
+    #                 plot_name_+str(time_delays[j])+"exp"+str(exposure_times_calc[k])+"_dist.png")

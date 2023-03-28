@@ -5,6 +5,8 @@ import sys
 import math
 import glob
 import os.path
+import timeit
+import time
 
 from math import log10
 from argparse import ArgumentParser
@@ -410,6 +412,8 @@ class KNCalc():
         mass_ = 10 ** logmass_s
         preprocessed_weights = False
 
+
+        def calculate_weights(self):
         if use_map:
             map_name = basename(self.event)
             path2map = dirname(self.event)
@@ -600,8 +604,9 @@ class KNCalc():
                 distsigma = hp.ud_grade(distsigma, final_nside)
                 distmu = hp.ud_grade(distmu, final_nside)  # power=-2
                 print('saving low resolution map')
+                
                 hp.write_map(use_map_lowres, m=[pb, distmu, distsigma], nest=False, dtype=None, fits_IDL=True,
-                             coord=None, partial=False, column_names=None, column_units=None, extra_header=(), overwrite=False)
+                            coord=None, partial=False, column_names=None, column_units=None, extra_header=(), overwrite=False)
 
                 if flag_inf_mu == True:
                     print('prob of reduced correspondend region due to infs ', sum(
@@ -1063,10 +1068,14 @@ def calc_mag_fractions(data,
     mags_range = np.arange(14, 28, 0.2)
     prob_at_maglim = {}
     prob_at_maglim_deep = {}
-    for band in ['g', 'r', 'i', 'z']:
+    for band in 'griz':
         prob_at_maglim['prob_'+band] = []
-        data_test = {'MAG_'+band: np.array(data['MAG_'+band].values).astype(
-            'float'), 'ids_': data['SIM_TEMPLATE_INDEX'].values, 'weights_z': data['WEIGHT']}
+        data_test = {
+            'MAG_'+band: np.array(data['MAG_'+band].values).astype('float'),
+            'ids_': data['SIM_TEMPLATE_INDEX'].values,
+            'weights_z': data['WEIGHT']
+        }
+
         if m_exp == True:
             prob_at_maglim_deep['prob_'+band] = []
             data_test_deep = {'MAG_'+band: np.array(data['MAG_'+band].values).astype(
@@ -1635,6 +1644,7 @@ def get_detection_later(p_, p_later, start_time, delay, start_later):
 
 if __name__ == '__main__':
 
+    start = time.time()
     parser = ArgumentParser(__doc__)
 
     parser.add_argument('--input',
@@ -2221,3 +2231,6 @@ for e in event_list:
                           str(day_delays[j])+" exp: "+str(exposure_times_calc[k]), fontsize=10)
                 plt.savefig(
                     plot_name_+str(time_delays[j])+"exp"+str(exposure_times_calc[k])+"_dist.png")
+
+end = time.time() - start
+print(f'code take {end:.2f} seconds to finish!')
