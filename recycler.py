@@ -3,7 +3,6 @@ import sys
 import getopt
 import os
 import yaml
-
 import event
 
 import OneRing

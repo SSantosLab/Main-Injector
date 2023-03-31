@@ -1,33 +1,13 @@
 #!/bin/bash
 
-
-if [[ $HOSTNAME =~ "LAPTOP-67HIEHMC" ]] ; then
-    export ROOT_DIR="/home/andsantos/phd/research_projects/Main-Injector/main_injector"
-    export MAIN_INJECTOR="/home/andsantos/MI_test"
-    export DATA_DIR="$MAIN_INJECTOR/data"
-    export WEB="$MAIN_INJECTOR/DES_GW_website"
-    export GCN_DIR="$MAIN_INJECTOR/GCN"
-    export PYTHONPATH="$PYTHONPATH:$MAIN_INJECTOR"
-    export PYTHONPATH="$PYTHONPATH:$MAIN_INJECTOR/src/main-injector/pyslalib"
-    export DESGW_DATA_DIR="$MAIN_INJECTOR/OUTPUT"
-    export DESGW_MAP_DIR="$MAIN_INJECTOR/skymaps"
-    export DESGW_CATALOGS="$MAIN_INJECTOR/catalogs"
-    export DESGW_CONFIG="$MAIN_INJECTOR/configs"
-    #export DESGW_CATALOGS="/home/s1/annis/daedalean/desgw-map/data/2MASS-J-lt-16-starcounts-hp.fits"
-fi
-
-if [[ $HOSTNAME =~ "asus-vivobook" ]]; then
-    export ROOT_DIR="/home/andsantos/phd/research_projects/Main-Injector"
-    export MAIN_INJECTOR="/home/andsantos/phd/research_projects/Main-Injector/main_injector"
+if [[ $HOSTNAME =~ "asantos" ]]; then
+    export ROOT_DIR="/home/data/phd/research_projects/Main-Injector"
+    export KNLC_ROOT="$ROOT_DIR/python"
     export DATA_DIR="$ROOT_DIR/data"
-    export WEB="$MAIN_INJECTOR/DES_GW_website"
-    export GCN_DIR="$MAIN_INJECTOR/GCN"
-    export PYTHONPATH="$PYTHONPATH:$ROOT_DIR"
-    export PYSLALIB="$PYTHONPATH:$ROOT_DIR/main_injector/pyslalib"
-    export DESGW_DATA_DIR="$ROOT_DIR/data"
+    export WEB="$ROOT_DIR/DES_GW_website"
     export DESGW_MAP_DIR="$MAIN_INJECTOR/skymaps"
-    export DESGW_CATALOGS="$MAIN_INJECTOR/catalogs"
-    export DESGW_CONFIG="$MAIN_INJECTOR/configs"
+    export PYTHONPATH="$ROOT_DIR/python:$PYTHONPATH"
+
 fi
 
 if [[ $HOSTNAME =~ "des60" ]] ; then

@@ -196,7 +196,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
                                      'bayestar_moc.fits',)
         
         skymap.write(OUTPUT_SKYMAP, overwrite=True)
-        flatten_skymap(OUTPUT_SKYMAP, f'{OUTPUT_TRIGGER}/bayestar.fits')
+        flatten_skymap(OUTPUT_SKYMAP, f'{OUTPUT_TRIGGER}/bayestar.fits.gz')
         
     DISTANCE = skymap.meta["DISTMEAN"]
     DISTANCE_SIGMA = skymap.meta["DISTSTD"]

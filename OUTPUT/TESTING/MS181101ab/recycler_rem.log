@@ -1,6 +1,13 @@
 Traceback (most recent call last):
-  File "/home/data/phd/research_projects/Main-Injector/recycler.py", line 7, in <module>
+  File "/home/data/phd/research_projects/Main-Injector/recycler.py", line 6, in <module>
     import event
-  File "/home/data/phd/research_projects/Main-Injector/event.py", line 16, in <module>
-    import distance
-ModuleNotFoundError: No module named 'distance'
+  File "/home/data/phd/research_projects/Main-Injector/event.py", line 17, in <module>
+    import obsSlots
+  File "/home/data/phd/research_projects/Main-Injector/python/obsSlots.py", line 51, in <module>
+    import observations as obs
+  File "/home/data/phd/research_projects/Main-Injector/python/observations.py", line 15, in <module>
+    import hp2np, decam2hp, jsonMaker, obsSlots
+  File "/home/data/phd/research_projects/Main-Injector/python/hp2np.py", line 63
+    print(f'Saving a copy of {basename(skymap)}'
+         ^
+SyntaxError: '(' was never closed
