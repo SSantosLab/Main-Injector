@@ -286,7 +286,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     # Keep this
     np.savez(event_paramfile,
              MJD=event_params['MJD'],
-             ETA=event_params['ETA'],
+             #ETA=event_params['ETA'],
              FAR=event_params['FAR'],
              ChirpMass=event_params['ChirpMass'],
              MaxDistance=event_params['MaxDistance'],
@@ -296,7 +296,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
              nHexes=event_params['nHexes'],
              CentralFreq=event_params['CentralFreq'],
              time_processed=event_params['time_processed'],
-             boc=event_params['boc'],
+             #boc=event_params['boc'],
              mapname='bayestar.fits.gz',
              hasremnant=event_params['hasremnant'],
              massgap=event_params['massgap'],
