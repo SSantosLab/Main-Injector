@@ -60,7 +60,7 @@ def flatten(skymap: str, nside: int = 512, backup : bool = False) -> None:
      run(command, shell=True)
 
      if backup:
-         print(f'Saving a copy of {basename(skymap)}'
+         print(f'Saving a copy of {basename(skymap)}')
          shutil.copy(skymap, f'{filename}_moc.fits.gz')
 
      shutil.move(out, skymap)

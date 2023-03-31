@@ -5,9 +5,6 @@ Traceback (most recent call last):
     import obsSlots
   File "/home/data/phd/research_projects/Main-Injector/python/obsSlots.py", line 51, in <module>
     import observations as obs
-  File "/home/data/phd/research_projects/Main-Injector/python/observations.py", line 15, in <module>
-    import hp2np, decam2hp, jsonMaker, obsSlots
-  File "/home/data/phd/research_projects/Main-Injector/python/hp2np.py", line 63
-    print(f'Saving a copy of {basename(skymap)}'
-         ^
-SyntaxError: '(' was never closed
+  File "/home/data/phd/research_projects/Main-Injector/python/observations.py", line 27, in <module>
+    from pyslalib import slalib
+ModuleNotFoundError: No module named 'pyslalib'

@@ -92,20 +92,21 @@ def run_or ( skymap, probArea_outer, probArea_inner, flt, expTime_inner, expTime
 
     # Sort in the Alyssa approved way!
     # done separately in inner and outer areas.
-    new_inner_ra, new_inner_dec, new_inner_prob = \
-        sort_nearest_neighbor (inner_ra, inner_dec, inner_prob) 
-    new_outer_ra, new_outer_dec, new_outer_prob = \
-        sort_nearest_neighbor (outer_ra, outer_dec, outer_prob) 
+    # Nora, Elise, Andre (hereafter NEA) update sorting to *only* use sort_zone (the bestest sorting function in OneRing as of 31.03.2023)
+   # new_inner_ra, new_inner_dec, new_inner_prob = \
+   #     sort_nearest_neighbor (inner_ra, inner_dec, inner_prob) 
+   # new_outer_ra, new_outer_dec, new_outer_prob = \
+   #     sort_nearest_neighbor (outer_ra, outer_dec, outer_prob) 
 
     # having resorted on optimal slew time, combine and prep for JSON writing
-    inner_ra = new_inner_ra; inner_dec = new_inner_dec
-    outer_ra = new_outer_ra; outer_dec = new_outer_dec
-    inner_prob = new_inner_prob; outer_prob = new_outer_prob
-    ra = np.concatenate([inner_ra,outer_ra])
-    dec = np.concatenate([inner_dec,outer_dec])
-    prob = np.concatenate([inner_prob,outer_prob])
+    #inner_ra = new_inner_ra; inner_dec = new_inner_dec
+    #outer_ra = new_outer_ra; outer_dec = new_outer_dec
+    #inner_prob = new_inner_prob; outer_prob = new_outer_prob
+    #ra = np.concatenate([inner_ra,outer_ra])
+    #dec = np.concatenate([inner_dec,outer_dec])
+    #prob = np.concatenate([inner_prob,outer_prob])
 
-    expTime = np.concatenate([np.ones(ra.size)*expTime_inner , np.ones(ra.size)*expTime_outer])
+    #expTime = np.concatenate([np.ones(ra.size)*expTime_inner , np.ones(ra.size)*expTime_outer])
     #### test new nearest_highest:                                     
 #    df = sort_nearest_highest(ra, dec, prob)
 #    print('nearest highest')
@@ -119,8 +120,13 @@ def run_or ( skymap, probArea_outer, probArea_inner, flt, expTime_inner, expTime
     ## test spiral
     df = sort_zone(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob, radThreshold=4.)
 
+    #NEA 31.03.2023
+    ra = df['ra'].values
+    dec = df['dec'].values
+    prob = df['probs'].values
+    expTime = np.concatenate([np.ones(ra.size)*expTime_inner , np.ones(ra.size)*expTime_outer])
 #    print('spiral')
-    print(df)
+   # print(df)
     
     if plot_numbers:
         plt.clf()
@@ -294,8 +300,15 @@ def sort_spiral(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob
 
 
 def sort_zone(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob, radThreshold=3.):
-    inner_df = sort_nearest_highest(inner_ra, inner_dec, inner_prob, radThreshold=radThreshold)
-    outer_df = sort_nearest_highest(outer_ra, outer_dec, outer_prob, startorder=len(inner_df), radThreshold=radThreshold)
+    
+    if len(inner_ra) == 0:
+        inner_df = pd.DataFrame()
+    else:
+        inner_df = sort_nearest_highest(inner_ra, inner_dec, inner_prob, radThreshold=radThreshold)
+    if len(outer_ra) == 0:
+        outer_df = pd.DataFrame()
+    else:
+        outer_df = sort_nearest_highest(outer_ra, outer_dec, outer_prob, startorder=len(inner_df), radThreshold=radThreshold)
     return pd.concat([inner_df, outer_df], axis=0)
 
     
