@@ -13,7 +13,6 @@ import os
 import healpy as hp
 
 import hp2np, decam2hp, jsonMaker, obsSlots
-import gwwide
 import kasen_modelspace
 import mags
 import mapsAtTimeT
@@ -777,7 +776,6 @@ def turnObservingRecordIntoJSONs(ra, dec, id, prob, mjd, slotNumbers,
                             filterList=filter_list, tilingList=tiling_list,
                             trigger_id=trigger_id, trigger_type=trigger_type,
                             propid=propid, skymap=skymap, jsonFilename=tmpname)
-        desJson(tmpname, name, mapDirectory, slotMJD)
         seqzero += ra[ix].size
 #        list_of_jsons.append(mapDirectory+name) #ag commented out 8.10.20
         list_of_jsons.append(name)
@@ -785,24 +783,6 @@ def turnObservingRecordIntoJSONs(ra, dec, id, prob, mjd, slotNumbers,
     return list_of_jsons
 
 # verbose can be 0, 1=info, 2=debug
-
-
-def desJson(tmpname, name, data_dir, start_time, verbose=1):
-
-    warnings.filterwarnings("ignore")
-
-    fd = open(tmpname, "r")
-    gw_queue = json.load(fd)
-    fd.close()
-    # seconds to leave before hitting the Blanco limits
-    time_buffer = 300.
-    fixed_queue = gwwide.gwwide(
-        [], gw_queue, start_time, time_buffer, sort=True)
-    fd = open(name, "w")
-    print("make ericJson {}".format(name))
-    json.dump(fixed_queue, fd, indent=4)
-    fd.close()
-    os.remove(tmpname)
 
 
 def jsonUTCName(slot, mjd, simNumber, mapDirectory):
@@ -872,7 +852,6 @@ def jsonFromRaDecFile(radecfile, nslots, slotZero, hexesPerSlot, simNumber,
                                 (hexesPerSlot*(slot-slotZero)),
                                 seqtot, trigger_id, trigger_type,
                                 jsonFilename=tmpname, propid=propid)
-            desJson(tmpname, name, data_dir)
             counter = 0
             slot += 1
             slotRa = np.array([])
@@ -884,7 +863,6 @@ def jsonFromRaDecFile(radecfile, nslots, slotZero, hexesPerSlot, simNumber,
                             simNumber, seqzero+(hexesPerSlot*(slot-slotZero)),
                             seqtot, trigger_id, trigger_type,
                             jsonFilename=tmpname, propid=propid)
-        desJson(tmpname, name, data_dir)
 
 # ==================================
 # plotting

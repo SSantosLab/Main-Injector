@@ -25,17 +25,12 @@ def postToSLACK(subject,text,official=False,atchannel=False):
     requests.post("https://maker.ifttt.com/trigger/desgwtrigger/with/key/dmCI74bFTHzz2uCOIevguh", data=post)
 
 def send(subject,text,official=False,atchannel=False):
-    #import MIalerts as config
-    #del config
-    #import MIalerts as config
-    #asdf
-    if not official:
-        return
 
     msg = MIMEText(text)
     
     try:
-        people = np.genfromtxt('/home/s1/desgw/PHONE_AND_EMAIL_LIST.TXT', dtype=[('name','S50'),('email','S50'),('phone','S50')], delimiter=",",skip_header=1)
+        # people = np.genfromtxt('/home/s1/desgw/PHONE_AND_EMAIL_LIST.TXT', dtype=[('name','S50'),('email','S50'),('phone','S50')], delimiter=",",skip_header=1)
+        people = 'physics.programming@gmail.com'
     except:
         report = {}
         report["value1"] = '@channel WARNING, THE PHONE AND EMAIL LIST CRASHED... probably a formatting issue \n'
