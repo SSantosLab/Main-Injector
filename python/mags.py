@@ -3,7 +3,6 @@ import os
 import sys
 import numpy as np
 import healpy as hp
-from pyslalib import slalib
 
 import hp2np
 import atmosphere

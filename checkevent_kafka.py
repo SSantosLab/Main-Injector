@@ -313,7 +313,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
 
     args_rem = ['python',
                 'recycler.py', 
-                f'--skymapfilename={OUTPUT_TRIGGER}/bayestar.fitz.gz',
+                f'--skymapfilename={OUTPUT_TRIGGER}/bayestar.fits.gz',
                 f'--triggerpath={OUTPUT_PATH}',
                 f'--triggerid={trigger_id}',
                 f'--mjd='+str(trigger_mjd),
@@ -322,7 +322,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     
     args_norem = ['python',
                 'recycler.py', 
-                f'--skymapfilename={OUTPUT_TRIGGER}/bayestar.fitz.gz',
+                f'--skymapfilename={OUTPUT_TRIGGER}/bayestar.fits.gz',
                 f'--triggerpath={OUTPUT_PATH}',
                 f'--triggerid={trigger_id}',
                 f'--mjd='+str(trigger_mjd),

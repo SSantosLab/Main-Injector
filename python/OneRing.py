@@ -3,7 +3,6 @@ import hp2np
 import hexalate
 import decam2hp
 import jsonMaker
-import simplicity
 from os import getenv
 import pandas as pd
 import sys

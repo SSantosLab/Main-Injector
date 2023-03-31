@@ -66,7 +66,6 @@ def flatten(skymap: str, nside: int = 512, backup : bool = False) -> None:
      shutil.move(out, skymap)
 
 def hp2np (hp_map_file, nan=True, degrade=False, fluxConservation=True, field=0):
-    flatten(hp_map_file, nside=512, backup=True)
     hm = hp.read_map(hp_map_file, field=field)
     ra,dec,vals = map2np(hm, resolution=degrade, fluxConservation=fluxConservation)
     return ra,dec,vals

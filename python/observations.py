@@ -4,8 +4,6 @@ import shutil
 import warnings
 import matplotlib
 import os
-import json
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,7 +22,6 @@ import mcplot
 import plotMapAndHex
 
 #sys.path.append(os.environ["PYSLALIB"])
-from pyslalib import slalib
 # matplotlib.use("TkAgg") important for off line image generation
 matplotlib.use("Agg")
 #

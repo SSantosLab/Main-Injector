@@ -1,10 +1,3 @@
-Traceback (most recent call last):
-  File "/home/data/phd/research_projects/Main-Injector/recycler.py", line 6, in <module>
-    import event
-  File "/home/data/phd/research_projects/Main-Injector/event.py", line 17, in <module>
-    import obsSlots
-  File "/home/data/phd/research_projects/Main-Injector/python/obsSlots.py", line 51, in <module>
-    import observations as obs
-  File "/home/data/phd/research_projects/Main-Injector/python/observations.py", line 27, in <module>
-    from pyslalib import slalib
-ModuleNotFoundError: No module named 'pyslalib'
+option --norem not recognized
+Error : incorrect option or missing argument.
+None

@@ -72,10 +72,10 @@ for o, a in opt:
         print("HASREM ", hasrem)
     elif o in ['--official']:
         official = True
-#        elif o in ['--hasrem']:
-#            hasrem = str(a)
-    # elif o in ['--norem']:
-    #    hasrem = False
+    elif o in ['--hasrem']:
+        hasrem = str(a)
+    elif o in ['--norem']:
+       hasrem = False
 
     else:
         print("Warning: option", o, "with argument", a, "is not recognized")
@@ -87,72 +87,72 @@ badtriggers.close()
 OneRing.run_or(skymap_filename, 0.9, 0.1, 'i', 90, 90, 59908.71218799986, resolution=resolution)
 sys.exit("This has been a test")
 ####### BIG MONEY NO WHAMMIES ###############################################
-if config["wrap_all_triggers"]:
-    if not dontwrap:
-        trigger_ids = os.listdir(trigger_path)
-        trigger_ids = trigger_ids[2:]
-for trigger_id in trigger_ids:
-    if force_mjd:
-        mjd = config["mjd"]
-    else:
-        try:
-            mjd = open(os.path.join(trigger_path, trigger_id,
-                        trigger_id + '_eventMJD.txt'), 'r').read()
-        except:
-            mjd = '99999'
-    if skymap_filename is None:
-        try:
-            # if True:
-            # mapname = open(os.path.join(trigger_path,
-            #                            trigger_id,
-            #                            config['default_map_name']), 'r').read()
-            # skymap_filename = os.path.join(trigger_path,
-            #                               trigger_id, config['default_map_name'])
-            # print os.path.join(trigger_path, trigger_id,'default_skymap.txt')
-            # print os.path.join(trigger_path, trigger_id,'default_skymap.txt').read()
-            skymap_filename = os.path.join(trigger_path, trigger_id,
-                                            open(os.path.join(trigger_path, trigger_id,
-                                                                'default_skymap.txt'), 'r').read())
-        except:
-            badtriggers = open('badtriggers.txt', 'a')
-            badtriggers.write(trigger_id + '\n')
-            print('Could not find skymap url file')
+# if config["wrap_all_triggers"]:
+#     if not dontwrap:
+#         trigger_ids = os.listdir(trigger_path)
+#         trigger_ids = trigger_ids[2:]
+# for trigger_id in trigger_ids:
+#     if force_mjd:
+#         mjd = config["mjd"]
+#     else:
+#         try:
+#             mjd = open(os.path.join(trigger_path, trigger_id,
+#                         trigger_id + '_eventMJD.txt'), 'r').read()
+#         except:
+#             mjd = '99999'
+#     if skymap_filename is None:
+#         try:
+#             # if True:
+#             # mapname = open(os.path.join(trigger_path,
+#             #                            trigger_id,
+#             #                            config['default_map_name']), 'r').read()
+#             # skymap_filename = os.path.join(trigger_path,
+#             #                               trigger_id, config['default_map_name'])
+#             # print os.path.join(trigger_path, trigger_id,'default_skymap.txt')
+#             # print os.path.join(trigger_path, trigger_id,'default_skymap.txt').read()
+#             skymap_filename = os.path.join(trigger_path, trigger_id,
+#                                             open(os.path.join(trigger_path, trigger_id,
+#                                                                 'default_skymap.txt'), 'r').read())
+#         except:
+#             badtriggers = open('badtriggers.txt', 'a')
+#             badtriggers.write(trigger_id + '\n')
+#             print('Could not find skymap url file')
 
-    if 'bayestar' in skymap_filename:
-        print('bayestar' * 50)
+#     if 'bayestar' in skymap_filename:
+#         print('bayestar' * 50)
 
-#        try:
-    if 1 == 1:
-        try:
-            mjd = float(mjd)
-        except:
-            badtriggers = open('badtriggers.txt', 'a')
-            badtriggers.write(trigger_id + '\n')
-            print('WARNING: Could not convert mjd to float. Trigger: ' +
-                    trigger_id + ' flagged as bad.')
-# here is where the object is made, and parts of it are filed in
-        master_dir = os.path.join(trigger_path, trigger_id)
+# #        try:
+#     if 1 == 1:
+#         try:
+#             mjd = float(mjd)
+#         except:
+#             badtriggers = open('badtriggers.txt', 'a')
+#             badtriggers.write(trigger_id + '\n')
+#             print('WARNING: Could not convert mjd to float. Trigger: ' +
+#                     trigger_id + ' flagged as bad.')
+# # here is where the object is made, and parts of it are filed in
+#         master_dir = os.path.join(trigger_path, trigger_id)
         
-        e = event.Event(skymap_filename,
-                        master_dir,
-                        trigger_id,
-                        mjd,
-                        config,
-                        official,
-                        hasrem)
+#         e = event.Event(skymap_filename,
+#                         master_dir,
+#                         trigger_id,
+#                         mjd,
+#                         config,
+#                         official,
+#                         hasrem)
 
-# e has variables and code assocaiated with it. The mapMaker is called "e" or "self"
+# # e has variables and code assocaiated with it. The mapMaker is called "e" or "self"
 
-        e.mapMaker(trigger_id, skymap_filename, config, hasrem) # work end to end
-        # e.getContours(config)  # work
-        #e.makeObservingPlots()  # not working
-        # jsonfilelist = e.makeJSON(config)  # note working
-        # e.make_cumulative_probs()
-        # os.system('cp '+e.event_paramfile+' '+master_dir)
-        # generates the homepage
-        # e.updateTriggerIndex(real_or_sim=real_or_sim)
-        # make a blank page with the basic info that is available
-        # e.updateWebpage(real_or_sim)
+#         e.mapMaker(trigger_id, skymap_filename, config, hasrem) # work end to end
+#         # e.getContours(config)  # work
+#         #e.makeObservingPlots()  # not working
+#         # jsonfilelist = e.makeJSON(config)  # note working
+#         # e.make_cumulative_probs()
+#         # os.system('cp '+e.event_paramfile+' '+master_dir)
+#         # generates the homepage
+#         # e.updateTriggerIndex(real_or_sim=real_or_sim)
+#         # make a blank page with the basic info that is available
+#         # e.updateWebpage(real_or_sim)
         
         # e.send_nonurgent_Email()
         
