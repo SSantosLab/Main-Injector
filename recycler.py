@@ -6,6 +6,8 @@ import yaml
 
 import event
 
+import OneRing
+
 try:
     args = sys.argv[1:]
     opt, arg = getopt.getopt(
@@ -38,6 +40,7 @@ else:
 trigger_ids = [config["trigger_id"]]
 
 force_mjd = config["force_mjd"]
+resolution = config["resolution"]
 
 #exposure_length = config["exposure_length"]
 
@@ -82,6 +85,8 @@ for o, a in opt:
 badtriggers = open('badtriggers.txt', 'w')
 badtriggers.close()
 
+OneRing.run_or(skymap_filename, 0.9, 0.1, 'i', 90, 90, 59908.71218799986, resolution=resolution)
+sys.exit("This has been a test")
 ####### BIG MONEY NO WHAMMIES ###############################################
 if config["wrap_all_triggers"]:
     if not dontwrap:

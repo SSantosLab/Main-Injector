@@ -48,16 +48,12 @@ if [[ $HOSTNAME =~ "des60" ]] ; then
     export DESGW_CONFIG="$MAIN_INJECTOR"
 fi
 
-if [[ $HOSTNAME =~ "des80" ]] ; then
-    conda activate mi36  # activate conda env 
-    export ROOT_DIR="/data/des80.a/data/asantos/andsantos/NotModularMI/main_injector"
+if [[ $HOSTNAME =~ "des"* ]] ; then
+    conda activate /data/des80.a/data/asantos/andsantos/miniconda3/envs/mi36 
+    export ROOT_DIR="./" # 12-13-22 note to change to more permanent dir  after testing
     export KNLC_ROOT="$ROOT_DIR/python"
     export DATA_DIR="$ROOT_DIR/data"
     export WEB="$ROOT_DIR/DES_GW_website"
-    #export GCN_DIR="$ROOT_DIR/GCN"
     export DESGW_MAP_DIR="$ROOT_DIR/skymaps"
-    #export DESGW_CATALOGS="$MAIN_INJECTOR/catalogs"
-    #export DESGW_CONFIG="$MAIN_INJECTOR/configs"
-    export PYTHONPATH="$PYTHONPATH:$ROOT_DIR/python"
-    #export DESGW_CONFIG="$MAIN_INJECTOR"
+    export PYTHONPATH="$ROOT_DIR/python:$PYTHONPATH"
 fi
