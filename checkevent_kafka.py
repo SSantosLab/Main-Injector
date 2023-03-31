@@ -16,7 +16,7 @@ from astropy.io import fits
 from ligo.skymap.io.fits import read_sky_map, write_sky_map
 from ligo.skymap.bayestar import rasterize
 
-import logging
+import logging as log
 import subprocess
 import os
 import sys
@@ -28,6 +28,9 @@ import astropy_healpix as ah
 import pprint
 import send_texts_and_emails
 import json
+
+FORMAT = '%(asctime)s %(message)s'
+log.basicConfig(format=FORMAT)
 
 def send_first_trigger_email(trigger_id: int,
                              far: float,
@@ -104,10 +107,10 @@ def send_first_trigger_email(trigger_id: int,
     subject = plus+' Trigger '+trigger_id + \
         ' FAR: '+str(far)+' Map: '+mapname+' NOREPLY'
 
-    send_texts_and_emails.postToSLACK(
-        subject, text, official=official, atchannel=True)
+    # send_texts_and_emails.postToSLACK(
+    #     subject, text, official=official, atchannel=True)
 
-    print_('Trigger email sent...')
+    log.info('Trigger email sent...')
 
 def sendFailedEmail(trigger_id: int, message: str = 'FAILED') -> None:
     """
@@ -154,7 +157,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     Parsers gcn kafka notice
     """
 
-    print('GOT GCN LIGO EVENT')
+    log.info('GOT GCN LIGO EVENT')
     payload = json.loads(payload)
     
     if mode == 'test':
@@ -170,7 +173,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
         OUTPUT_PATH = "OUTPUT/04REAL"
 
     if payload['alert_type'] == 'RETRACTION':
-        print(payload['superevent_id'], 'was retracted')
+        log.info(payload['superevent_id'], 'was retracted')
         return
 
     if payload['event']['group'] != 'CBC':
@@ -178,7 +181,10 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
 
 
     trigger_id = payload['superevent_id']
-    os.makedirs(os.path.join(OUTPUT_PATH, trigger_id))
+    OUTPUT_TRIGGER = os.path.join(OUTPUT_PATH, trigger_id)
+
+    if not os.path.exists(OUTPUT_TRIGGER):
+        os.makedirs(OUTPUT_TRIGGER)
 
     skymap_str = payload.get('event', {}).pop('skymap')
 
@@ -187,13 +193,13 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
         skymap = Table.read(BytesIO(skymap_bytes))
         OUTPUT_SKYMAP = os.path.join(OUTPUT_PATH,
                                      trigger_id,
-                                     'bayestar_moc.fits')
+                                     'bayestar_moc.fits',)
         
-        skymap.write(OUTPUT_SKYMAP)
-        flatten_skymap(OUTPUT_SKYMAP, f'{OUTPUT_PATH}/{trigger_id}/bayestar.fits.gz')
+        skymap.write(OUTPUT_SKYMAP, overwrite=True)
+        flatten_skymap(OUTPUT_SKYMAP, f'{OUTPUT_TRIGGER}/bayestar.fits')
         
     DISTANCE = skymap.meta["DISTMEAN"]
-    DISTANCE_ERR = skymap.meta["DISTSTD"]
+    DISTANCE_SIGMA = skymap.meta["DISTSTD"]
 
     
     pprint.pprint(payload)
@@ -224,15 +230,9 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
         NSBH = -9
 
 
-    print('Trigger outpath')
-    outfolder = os.path.join(os.path.abspath(OUTPUT_PATH), trigger_id)
-    print(outfolder)
-    
-    if not os.path.exists(outfolder):
-        os.makedirs(outfolder)
-    os.chmod(outfolder, 777)
+    log.info(f'Trigger outpath: {OUTPUT_TRIGGER}')
 
-    event_paramfile = os.path.join(outfolder, f"{trigger_id}_params.npz")
+    event_paramfile = os.path.join(OUTPUT_TRIGGER, f"{trigger_id}_params.npz")
     event_params = {}
 
     
@@ -249,8 +249,8 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     event_params['NSBH'] = NSBH
 
     try:
-        event_params['FAR'] = str(
-            round(1./float(payload['event']['FAR'])/60./60./24./365., 2))+' Years'
+        FAR = payload['event']['FAR']
+        event_params['FAR'] = f'{round(1./float(FAR)/60./60./24./365., 2)} Years'
     except:
         event_params['FAR'] = '-999.'
 
@@ -258,45 +258,48 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
         event_params['probhasns'] = payload['classfication']['BNS']
     except:
         event_params['probhasns'] = '0.'
+    try:
+        event_params['CentralFreq'] = payload['event']['central_frequency']
+    except:
+        event_params['CentralFreq'] = '-999.'
+    try:
+        event_params['boc'] = payload['event']['group']
+    except:
+        event_params['boc'] = 'Not Available'
+    try:
+        event_params['DISTMEAN'] = DISTANCE
+    except:
+        event_params['DISTMEAN'] = '60.0 Mpc'
+    try:
+        event_params['DISTSIGMA'] = DISTANCE_SIGMA
+    except:
+        event_params['DISTSIGMA'] = '0'
 
-    event_params['time_processed'] = '-999'
+    event_params['ETA'] = '-999.'  # WHAT ETA Means?
     event_params['ChirpMass'] = '-999.'
-    event_params['CentralFreq'] = '-999.'
+    event_params['time_processed'] = '-999'
     event_params['integrated_prob'] = '-9.999'
     event_params['M1'] = '-999'
     event_params['M2'] = '-999'
     event_params['nHexes'] = '-999'
 
-    # try:
-    #     send_first_trigger_email(trigger_id,
-    #                              event_params['FAR'],
-    #                              mapname=trigger_id,
-    #                              retraction=alerttype,
-    #                              event_params=event_params)
-    # except:
-    #     send_first_trigger_email(trigger_id,
-    #                              event_params['FAR'],
-    #                              retraction=alerttype)
+    log.info(f"Trigger ID: {trigger_id}")
+    log.info('saving event paramfile:', event_paramfile)
 
-    print(f"Trigger ID: {trigger_id}")
-
-    # Read sky map
-    print('saving event paramfile', event_paramfile)
-
-    # Keep this
     np.savez(event_paramfile,
              MJD=event_params['MJD'],
-             #ETA=event_params['ETA'],
+             ETA=event_params['ETA'],
              FAR=event_params['FAR'],
              ChirpMass=event_params['ChirpMass'],
-             MaxDistance=event_params['MaxDistance'],
+             DSSTMEAN=event_params['DISTMEAN'],
+             DISTSIGMA=event_params['DISTSIGMA'],
              integrated_prob=event_params['integrated_prob'],
              M1=event_params['M1'],
              M2=event_params['M2'],
              nHexes=event_params['nHexes'],
              CentralFreq=event_params['CentralFreq'],
              time_processed=event_params['time_processed'],
-             #boc=event_params['boc'],
+             boc=event_params['boc'],
              mapname='bayestar.fits.gz',
              hasremnant=event_params['hasremnant'],
              massgap=event_params['massgap'],
@@ -310,7 +313,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
 
     args_rem = ['python',
                 'recycler.py', 
-                f'--skymapfilename={OUTPUT_PATH}/{trigger_id}/bayestar.fitz.gz',
+                f'--skymapfilename={OUTPUT_TRIGGER}/bayestar.fitz.gz',
                 f'--triggerpath={OUTPUT_PATH}',
                 f'--triggerid={trigger_id}',
                 f'--mjd='+str(trigger_mjd),
@@ -319,7 +322,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     
     args_norem = ['python',
                 'recycler.py', 
-                f'--skymapfilename={OUTPUT_PATH}/{trigger_id}/bayestar.fitz.gz',
+                f'--skymapfilename={OUTPUT_TRIGGER}/bayestar.fitz.gz',
                 f'--triggerpath={OUTPUT_PATH}',
                 f'--triggerid={trigger_id}',
                 f'--mjd='+str(trigger_mjd),
@@ -327,53 +330,58 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
                 '--norem']
 
     try:
-        os.mkdir(os.path.join(OUTPUT_PATH, trigger_id, 'hasrem/', 'bayestar'))
+        os.mkdir(os.path.join(OUTPUT_TRIGGER, 'hasrem', 'bayestar'))
     except:
-        print('path exists')
+        pass
     try:
-        os.mkdir(os.path.join(OUTPUT_PATH, trigger_id, 'norem', 'bayestar'))
+        os.mkdir(os.path.join(OUTPUT_TRIGGER, 'norem', 'bayestar'))
     except:
-        print('path exists')
+        pass
 
-    hasrem = subprocess.Popen(args_rem, stdout=PIPE, stderr=STDOUT, text=True)
-    norem = subprocess.Popen(args_norem, stdout=PIPE, stderr=STDOUT, text=True)
+    hasrem_log = open(f'{OUTPUT_TRIGGER}/recycler_rem.log', 'w')
+    norem_log = open(f'{OUTPUT_TRIGGER}/recycler_norem.log', 'w')
 
-    hasrem_output = os.path.join(OUTPUT_PATH,trigger_id,'hasrem')
-    norem_output = os.path.join(OUTPUT_PATH,trigger_id,'norem')
+    hasrem = subprocess.Popen(args_rem,
+                              stdout=hasrem_log,
+                              stderr=hasrem_log,
+                              text=True)
     
-    with open(f'{hasrem_output}/hasrem.log') as f:
-        f.write(hasrem.stdout)
-    
-    with open(f'{norem_output}/norem.log') as f:
-        f.write(norem.stdout)
+    norem = subprocess.Popen(args_norem,
+                             stdout=norem_log,
+                             stderr=norem_log,
+                             text=True)
 
+    hasrem_log.close()
+    norem_log.close()
     # Need to send an email here saying analysis code was fired
-
+    log.info('fired off job!')
+    log.info(f'See log here: {OUTPUT_TRIGGER}')
 
 def imAliveEmail():
+    pass
 
-    import smtplib
-    from email.mime.text import MIMEText
+    # import smtplib
+    # from email.mime.text import MIMEText
 
-    text = 'MainInjector Is Alive'
-    msg = MIMEText(text)
+    # text = 'MainInjector Is Alive'
+    # msg = MIMEText(text)
 
-    me = 'imAlive-desGW@fnal.gov'
-    if config.sendEveryoneEmails:
-        you = config.allemails
-    else:
-        you = ['djbrout@gmail.com']
+    # me = 'imAlive-desGW@fnal.gov'
+    # if config.sendEveryoneEmails:
+    #     you = config.allemails
+    # else:
+    #     you = ['djbrout@gmail.com']
 
-    for y in you:
-        msg['Subject'] = 'MainInjector is Alive'
-        msg['From'] = me
-        msg['To'] = y
+    # for y in you:
+    #     msg['Subject'] = 'MainInjector is Alive'
+    #     msg['From'] = me
+    #     msg['To'] = y
 
-        s = smtplib.SMTP('localhost')
-        s.sendmail(me, y, msg.as_string())
-        s.quit()
-    print('Im alive email sent...')
-    Timer(43200, imAliveEmail).start()
+    #     s = smtplib.SMTP('localhost')
+    #     s.sendmail(me, y, msg.as_string())
+    #     s.quit()
+    # print('Im alive email sent...')
+    # Timer(43200, imAliveEmail).start()
 
 def kinit():
     os.system(
@@ -384,16 +392,27 @@ def kinit():
 
 if __name__ == "__main__":
 
+
     parser = ArgumentParser()
     parser.add_argument('--mode',
                         '-m',
                         default='test')
+    parser.add_argument('--offline',
+                        action='store_true',
+                        help='Activates offline testing.')
     
     args = parser.parse_args()
 
     mode = args.mode
+    offline = args.offline
 
-    if mode == 'test':
+    if offline:
+        with open('MS181101ab-preliminary.json') as f:
+            record = f.read()
+
+        process_kafka_gcn(record)
+
+    if mode == 'test' and not offline:
         consumer = Consumer(client_id='44cs6etajmhmbvc2k8opnlj0e7',
                             client_secret='1e7rbf0ore0lfn8446c6f0cmblq51n4povhuq1t3nrbcqiunq4sq')
         consumer.subscribe(['igwn.gwalert'])
