@@ -33,10 +33,8 @@ FORMAT = '%(asctime)s %(message)s'
 log.basicConfig(format=FORMAT)
 
 def send_first_trigger_email(trigger_id: int,
-                             far: float,
-                             mapname: str = 'NA',
-                             retraction: Union[str, int] = 0,
-                             event_params: Optional[float] = None,
+                             event_params: dict,
+                             retraction: bool = False,
                              mode: str = 'test') -> None:
     """
     Send an email / SLACK message with trigger alert from LVK.
@@ -50,7 +48,7 @@ def send_first_trigger_email(trigger_id: int,
         Distance to a event from Earth.
     mapname: str (Default: 'NA')
         Map name of the event.
-    retraction: int (Default: 0)
+    retraction: bool (Default: False)
         A Retraction content to know if an alert is a real
         astrophysical event or not.
     event_params: float (Optional, Default: None)
@@ -62,55 +60,54 @@ def send_first_trigger_email(trigger_id: int,
     """
 
     plus = ''
+    far = event_params['FAR']
     if mode == 'observation':
         plus = 'REAL'
+        official=True
+
     if mode == 'test':
         plus = 'FAKE'
-
-    if retraction == False:
-        print(f"AG TEST: print retraction: {str(retraction)}")
+        official=False
     
-    # if retraction == 'Retraction':
-    #     subject = f"Rectraction for {str(trigger_id)}"
-    #     text = ''
-    #     send_texts_and_emails.postToSLACK(
-    #         subject, text, official=official, atchannel=False)
-    #     print("Retraction notice sent, exiting")
-    #     sys.exit()
+    if retraction:
+        subject = f"Rectraction for {str(trigger_id)}"
+        text = ''
+        # send_texts_and_emails.postToSLACK(
+        #     subject, text, official=official, atchannel=False)
+        send_texts_and_emails.send(subject, text, official=official)
+        print("Retraction notice sent, exiting")
+        sys.exit()
+
+    classification_types = [event_params['BBH'],
+                            event_params['BNS'],
+                            event_params['NSBH'],
+                            event_params['terrestrial']]
+    
+    classfication = max(classification_types)
 
     if event_params is None:
         text = f"""\
             Trigger: {trigger_id}
             Alert Type: {retraction}
             FAR: {str(far)}
-            Map: {mapname}
-            URL: https://gracedb.ligo.org/superevents/{trigger_id}
-            view analysis has begun, please hold tight for a DESGW webpage
-            which will be located here shortly:
-            http://des-ops.fnal.gov:8080/desgw/Triggers/{trigger_id}/{trigger_id}_trigger.html
-            DO NOT REPLY TO THIS THREAD, NOT ALL USERS WILL SEE YOUR RESPONSE.
             """
     else:
         text = f"""\
             Trigger {trigger_id}
-            HasRemnant: {str(event_params['hasremnant'])}
-            Alert Type: '{str(retraction)}
-            FAR: {str(far)}
-            Map: {mapname}
-            URL: https://gracedb.ligo.org/superevents/{trigger_id}
-            view Analysis has begun, please hold tight for a DESGW webpage
-            which will be located here shortly:
-            http://des-ops.fnal.gov:8080/desgw/Triggers/trigger_id/{trigger_id}_trigger.html
-            DO NOT REPLY TO THIS THREAD, NOT ALL USERS WILL SEE YOUR RESPONSE.
+            HasRemnant: {event_params['hasremnant']}
+            Alert Type: '{retraction}
+            FAR: {far}
+            URL: {event_params['url']}
+            Classification: {classfication}
             """
 
-    subject = plus+' Trigger '+trigger_id + \
-        ' FAR: '+str(far)+' Map: '+mapname+' NOREPLY'
+    subject = f'{plus} Trigger {trigger_id} FAR: {far}. '
 
     # send_texts_and_emails.postToSLACK(
     #     subject, text, official=official, atchannel=True)
 
     log.info('Trigger email sent...')
+    send_texts_and_emails.send(subject=subject,text=text,official=official)
 
 def sendFailedEmail(trigger_id: int, message: str = 'FAILED') -> None:
     """
@@ -159,7 +156,8 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
 
     log.info('GOT GCN LIGO EVENT')
     payload = json.loads(payload)
-    
+    trigger_id = payload['superevent_id']
+
     if mode == 'test':
         if payload['superevent_id'][0] != 'M':
             return
@@ -172,15 +170,12 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     
         OUTPUT_PATH = "OUTPUT/04REAL"
 
-    if payload['alert_type'] == 'RETRACTION':
-        log.info(payload['superevent_id'], 'was retracted')
-        return
 
     if payload['event']['group'] != 'CBC':
         return
 
 
-    trigger_id = payload['superevent_id']
+    
     OUTPUT_TRIGGER = os.path.join(OUTPUT_PATH, trigger_id)
 
     if not os.path.exists(OUTPUT_TRIGGER):
@@ -247,7 +242,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     event_params['BBH'] = BBH
     event_params['BNS'] = BNS
     event_params['NSBH'] = NSBH
-
+    event_params['url'] = payload['urls']['gracedb']
     try:
         FAR = payload['event']['FAR']
         event_params['FAR'] = f'{round(1./float(FAR)/60./60./24./365., 2)} Years'
@@ -283,6 +278,20 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     event_params['M2'] = '-999'
     event_params['nHexes'] = '-999'
 
+    send_first_trigger_email(trigger_id=trigger_id,
+                             event_params=event_params,
+                             retraction=False,
+                             mode=mode)
+
+    
+    if payload['alert_type'] == 'RETRACTION':
+        log.info(payload['superevent_id'], 'was retracted')
+        send_first_trigger_email(trigger_id=trigger_id,
+                                 event_params=event_params,
+                                 retraction=True,
+                                 mode=mode)
+        return    
+    
     log.info(f"Trigger ID: {trigger_id}")
     log.info('saving event paramfile:', event_paramfile)
 
