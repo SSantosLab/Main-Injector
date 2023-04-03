@@ -78,12 +78,14 @@ def send_first_trigger_email(trigger_id: int,
         print("Retraction notice sent, exiting")
         sys.exit()
 
-    classification_types = [event_params['BBH'],
-                            event_params['BNS'],
-                            event_params['NSBH'],
-                            event_params['terrestrial']]
-    
-    classfication = max(classification_types)
+    classfication_scores = [
+        ('BBH', event_params['BBH']),
+        ('BNS', event_params['BNS']),
+        ('NSBH', event_params['NSBH']),
+        ('terrestrial', event_params['terrestrial'])
+    ]
+
+    max_prob = np.argmax(np.array([p[1] for p in test_list]))
 
     if event_params is None:
         text = f"""\
@@ -98,7 +100,7 @@ def send_first_trigger_email(trigger_id: int,
             Alert Type: '{retraction}
             FAR: {far}
             URL: {event_params['url']}
-            Classification: {classfication}
+            Classification: {classification_scores[max_prob][0]}
             """
 
     subject = f'{plus} Trigger {trigger_id} FAR: {far}. '
@@ -140,7 +142,7 @@ def sendFailedEmail(trigger_id: int, message: str = 'FAILED') -> None:
     send_texts_and_emails.send(subject, text, atchannel=True)
 
 
-def flatten_skymap(input: str, output: str, nside: int = 512) -> None:
+def flatten_skymap(input: str, output: str, nside: int = 512, overwrite: bool = True) -> None:
     """Flattens skymap"""
 
     hdu = fits.open(input)
@@ -195,10 +197,11 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
         skymap = Table.read(BytesIO(skymap_bytes))
         OUTPUT_SKYMAP = os.path.join(OUTPUT_PATH,
                                      trigger_id,
-                                     'bayestar_moc.fits',)
+                                     'bayestar_moc.fits.gz',)
         
-        skymap.write(OUTPUT_SKYMAP, overwrite=True)
-        flatten_skymap(OUTPUT_SKYMAP, f'{OUTPUT_TRIGGER}/bayestar.fits.gz')
+        if not os.path.isfile(OUTPUT_SKYMAP):
+            skymap.write(OUTPUT_SKYMAP, overwrite=True)
+            flatten_skymap(OUTPUT_SKYMAP, f'{OUTPUT_TRIGGER}/bayestar.fits.gz')
         
     DISTANCE = skymap.meta["DISTMEAN"]
     DISTANCE_SIGMA = skymap.meta["DISTSTD"]
