@@ -170,6 +170,13 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     
         OUTPUT_PATH = "OUTPUT/04REAL"
 
+    if payload['alert_type'] == 'RETRACTION':
+        log.info(payload['superevent_id'], 'was retracted')
+        send_first_trigger_email(trigger_id=trigger_id,
+                                 event_params=event_params,
+                                 retraction=True,
+                                 mode=mode)
+        return    
 
     if payload['event']['group'] != 'CBC':
         return
@@ -204,21 +211,21 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     except:
         alerttype = 'N/A'
     try:
-        hasremnant = payload['properties']['HasRemnant']
+        hasremnant = payload['event']['properties']['HasRemnant']
     except:
         hasremnant = -9
     try:
-        terrestrial = payload['classification']['Terrestrial']
+        terrestrial = payload['event']['classification']['Terrestrial']
     except:
         terrestrial = -9
     try:
-        massgap = payload['properties']['HasMassGap']
+        massgap = payload['event']['properties']['HasMassGap']
     except:
         massgap = -9
     try:
-        BNS = payload['classification']['BNS']
-        BBH = payload['classification']['BBH']
-        NSBH =payload['classification']['NSBH']
+        BNS = payload['event']['classification']['BNS']
+        BBH = payload['event']['classification']['BBH']
+        NSBH =payload['event']['classification']['NSBH']
     except:
         BNS = -9
         BBH = -9
@@ -250,7 +257,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
         event_params['FAR'] = '-999.'
 
     try:
-        event_params['probhasns'] = payload['classfication']['BNS']
+        event_params['probhasns'] = payload['event']['classfication']['BNS']
     except:
         event_params['probhasns'] = '0.'
     try:
@@ -284,13 +291,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
                              mode=mode)
 
     
-    if payload['alert_type'] == 'RETRACTION':
-        log.info(payload['superevent_id'], 'was retracted')
-        send_first_trigger_email(trigger_id=trigger_id,
-                                 event_params=event_params,
-                                 retraction=True,
-                                 mode=mode)
-        return    
+
     
     log.info(f"Trigger ID: {trigger_id}")
     log.info('saving event paramfile:', event_paramfile)
