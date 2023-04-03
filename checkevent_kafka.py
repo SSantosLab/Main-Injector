@@ -216,9 +216,9 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     except:
         massgap = -9
     try:
-        BNS = payload['classfication']['BNS']
-        BBH = payload['classfication']['BBH']
-        NSBH =payload['classfication']['NSBH']
+        BNS = payload['classification']['BNS']
+        BBH = payload['classification']['BBH']
+        NSBH =payload['classification']['NSBH']
     except:
         BNS = -9
         BBH = -9
