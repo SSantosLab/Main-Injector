@@ -34,6 +34,7 @@ log.basicConfig(format=FORMAT)
 
 def send_first_trigger_email(trigger_id: int,
                              event_params: dict,
+                             external_coinc: dict = {},
                              retraction: bool = False,
                              mode: str = 'test') -> None:
     """
@@ -85,23 +86,40 @@ def send_first_trigger_email(trigger_id: int,
         ('terrestrial', event_params['terrestrial'])
     ]
 
-    max_prob = np.argmax(np.array([p[1] for p in test_list]))
+    max_prob = np.argmax(np.array([p[1] for p in classfication_scores]))
+    EVENT_KIND = classfication_scores[max_prob][0]
+    EVENT_PROB = classfication_scores[max_prob][1]
 
     if event_params is None:
         text = f"""\
             Trigger: {trigger_id}
-            Alert Type: {retraction}
+            Alert Type: {event_params['alerttype']}
             FAR: {str(far)}
             """
     else:
         text = f"""\
             Trigger {trigger_id}
             HasRemnant: {event_params['hasremnant']}
-            Alert Type: '{retraction}
+            Alert Type: {event_params['alerttype']}
             FAR: {far}
             URL: {event_params['url']}
-            Classification: {classification_scores[max_prob][0]}
+            Classification: {EVENT_KIND}: {EVENT_PROB}
+            MJD: {event_params['MJD']}
+            Group: {event_params['boc']}
+            DISTMEAN: {event_params['DISTMEAN']:.2f} Mpc
+            DISTSIGMA: {event_params['DISTSIGMA']:.2} Mpc
             """
+    
+    if external_coinc:
+        text += f"""\
+            This alert have external coincidence!
+            """
+        msg = ''
+        for key in external_coinc.keys():
+            msg = f'{key}: {external_coinc[key]}\n'
+
+        text += msg
+
 
     subject = f'{plus} Trigger {trigger_id} FAR: {far}. '
 
@@ -192,6 +210,23 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
 
     skymap_str = payload.get('event', {}).pop('skymap')
 
+    if payload.get('external_coinc') is not None:
+        combined_skymap = payload.get('external_coinc', {}).pop('combined_skymap')
+        external_coinc = payload.get('external_coinc', {})
+
+        skymap_bytes = b64decode(combined_skymap)
+        skymap = Table.read(BytesIO(skymap_bytes))
+        OUTPUT_SKYMAP = os.path.join(OUTPUT_PATH,
+                                     trigger_id,
+                                     'bayestar_combined_moc.fits.gz',)
+        
+        if not os.path.isfile(OUTPUT_SKYMAP):
+            skymap.write(OUTPUT_SKYMAP, overwrite=True)
+            flatten_skymap(OUTPUT_SKYMAP, f'{OUTPUT_TRIGGER}/bayestar_combined.fits.gz')
+    else:
+        external_coinc = {}
+        
+
     if skymap_str:
         skymap_bytes = b64decode(skymap_str)
         skymap = Table.read(BytesIO(skymap_bytes))
@@ -254,7 +289,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     event_params['NSBH'] = NSBH
     event_params['url'] = payload['urls']['gracedb']
     try:
-        FAR = payload['event']['FAR']
+        FAR = payload['event']['far']
         event_params['FAR'] = f'{round(1./float(FAR)/60./60./24./365., 2)} Years'
     except:
         event_params['FAR'] = '-999.'
@@ -290,6 +325,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
 
     send_first_trigger_email(trigger_id=trigger_id,
                              event_params=event_params,
+                             external_coinc=external_coinc,
                              retraction=False,
                              mode=mode)
 
