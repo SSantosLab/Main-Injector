@@ -60,8 +60,7 @@ def send_first_trigger_email(trigger_id: int,
     None
     """
 
-    plus = ''
-    far = event_params['FAR']
+    
     if mode == 'observation':
         plus = 'REAL'
         official=True
@@ -76,9 +75,12 @@ def send_first_trigger_email(trigger_id: int,
         # send_texts_and_emails.postToSLACK(
         #     subject, text, official=official, atchannel=False)
         send_texts_and_emails.send(subject, text, official=official)
-        print("Retraction notice sent, exiting")
-        sys.exit()
+        print("Retraction notice sent, returning to listening")
+        return
 
+
+    plus = ''
+    far = event_params['FAR']
     classfication_scores = [
         ('BBH', event_params['BBH']),
         ('BNS', event_params['BNS']),
@@ -90,25 +92,18 @@ def send_first_trigger_email(trigger_id: int,
     EVENT_KIND = classfication_scores[max_prob][0]
     EVENT_PROB = classfication_scores[max_prob][1]
 
-    if event_params is None:
-        text = f"""\
-            Trigger: {trigger_id}
-            Alert Type: {event_params['alerttype']}
-            FAR: {str(far)}
-            """
-    else:
-        text = f"""\
-            Trigger {trigger_id}
-            HasRemnant: {event_params['hasremnant']}
-            Alert Type: {event_params['alerttype']}
-            FAR: {far}
-            URL: {event_params['url']}
-            Classification: {EVENT_KIND}: {EVENT_PROB}
-            MJD: {event_params['MJD']}
-            Group: {event_params['boc']}
-            DISTMEAN: {event_params['DISTMEAN']:.2f} Mpc
-            DISTSIGMA: {event_params['DISTSIGMA']:.2} Mpc
-            """
+    text = f"""\
+        Trigger {trigger_id}
+        HasRemnant: {event_params['hasremnant']}
+        Alert Type: {event_params['alerttype']}
+        FAR: {far}
+        URL: {event_params['url']}
+        Classification: {EVENT_KIND}: {EVENT_PROB}
+        MJD: {event_params['MJD']}
+        Group: {event_params['boc']}
+        DISTMEAN: {event_params['DISTMEAN']:.2f} Mpc
+        DISTSIGMA: {event_params['DISTSIGMA']:.2} Mpc
+        """
     
     if external_coinc:
         text += f"""\
@@ -191,6 +186,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
         OUTPUT_PATH = "OUTPUT/04REAL"
 
     if payload['alert_type'] == 'RETRACTION':
+        event_params = None
         log.info(payload['superevent_id'], 'was retracted')
         send_first_trigger_email(trigger_id=trigger_id,
                                  event_params=event_params,

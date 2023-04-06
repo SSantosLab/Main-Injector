@@ -1,1 +1,159 @@
 OUTPUT/TESTING/MS23*
+Traceback (most recent call last):
+  File "/home/data/phd/research_projects/Main-Injector/checkevent_kafka.py", line 8, in <module>
+    from gcn_kafka import Consumer
+ModuleNotFoundError: No module named 'gcn_kafka'
+%4|1680731590.651|SESSTMOUT|rdkafka#consumer-1| [thrd:main]: Consumer group session timed out (in join-state steady) after 45086 ms without a successful response from the group coordinator (broker 3, last error was Success): revoking assignment and rejoining group
+%5|1680731594.168|REQTMOUT|rdkafka#consumer-1| [thrd:GroupCoordinator]: GroupCoordinator/3: Timed out HeartbeatRequest in flight (after 45907ms, timeout #0)
+%4|1680731594.168|REQTMOUT|rdkafka#consumer-1| [thrd:GroupCoordinator]: GroupCoordinator/3: Timed out 1 in-flight, 0 retry-queued, 0 out-queue, 0 partially-sent requests
+%3|1680731594.168|FAIL|rdkafka#consumer-1| [thrd:GroupCoordinator]: GroupCoordinator: kafka3.gcn.nasa.gov:9092: 1 request(s) timed out: disconnect (after 2282681ms in state UP)
+%3|1680731594.544|FAIL|rdkafka#consumer-1| [thrd:GroupCoordinator]: GroupCoordinator: kafka3.gcn.nasa.gov:9092: SASL authentication error: {"status":"invalid_token"} (after 223ms in state AUTH_REQ)
+%3|1680731595.193|FAIL|rdkafka#consumer-1| [thrd:GroupCoordinator]: GroupCoordinator: kafka3.gcn.nasa.gov:9092: SASL authentication error: {"status":"invalid_token"} (after 225ms in state AUTH_REQ, 1 identical error(s) suppressed)
+%5|1680731606.437|REQTMOUT|rdkafka#consumer-1| [thrd:sasl_ssl://kafka2.gcn.nasa.gov:9092/2]: sasl_ssl://kafka2.gcn.nasa.gov:9092/2: Timed out FetchRequest in flight (after 60676ms, timeout #0)
+%4|1680731606.437|REQTMOUT|rdkafka#consumer-1| [thrd:sasl_ssl://kafka2.gcn.nasa.gov:9092/2]: sasl_ssl://kafka2.gcn.nasa.gov:9092/2: Timed out 1 in-flight, 0 retry-queued, 0 out-queue, 0 partially-sent requests
+%3|1680731606.437|FAIL|rdkafka#consumer-1| [thrd:sasl_ssl://kafka2.gcn.nasa.gov:9092/2]: sasl_ssl://kafka2.gcn.nasa.gov:9092/2: 1 request(s) timed out: disconnect (after 2288724ms in state UP)
+%3|1680731607.011|FAIL|rdkafka#consumer-1| [thrd:sasl_ssl://kafka2.gcn.nasa.gov:9092/2]: sasl_ssl://kafka2.gcn.nasa.gov:9092/2: SASL authentication error: {"status":"invalid_token"} (after 381ms in state AUTH_REQ)
+%4|1680731607.011|METADATA|rdkafka#consumer-1| [thrd:main]: sasl_ssl://kafka2.gcn.nasa.gov:9092/2: Metadata request failed: broker down: Local: Authentication failure (0ms): Permanent
+%4|1680731607.011|METADATA|rdkafka#consumer-1| [thrd:main]: sasl_ssl://kafka2.gcn.nasa.gov:9092/2: Metadata request failed: broker down: Local: Authentication failure (0ms): Permanent
+%4|1680731607.012|METADATA|rdkafka#consumer-1| [thrd:main]: sasl_ssl://kafka2.gcn.nasa.gov:9092/2: Metadata request failed: broker down: Local: Authentication failure (0ms): Permanent
+%4|1680731607.012|METADATA|rdkafka#consumer-1| [thrd:main]: sasl_ssl://kafka2.gcn.nasa.gov:9092/2: Metadata request failed: broker down: Local: Authentication failure (0ms): Permanent
+%4|1680731607.012|METADATA|rdkafka#consumer-1| [thrd:main]: sasl_ssl://kafka2.gcn.nasa.gov:9092/2: Metadata request failed: broker down: Local: Authentication failure (0ms): Permanent
+%3|1680731607.742|FAIL|rdkafka#consumer-1| [thrd:sasl_ssl://kafka2.gcn.nasa.gov:9092/2]: sasl_ssl://kafka2.gcn.nasa.gov:9092/2: SASL authentication error: {"status":"invalid_token"} (after 342ms in state AUTH_REQ, 1 identical error(s) suppressed)
+%5|1680731667.368|REQTMOUT|rdkafka#consumer-1| [thrd:sasl_ssl://kafka.gcn.nasa.gov:9092/bootstrap]: sasl_ssl://kafka.gcn.nasa.gov:9092/bootstrap: Timed out MetadataRequest in flight (after 60930ms, timeout #0)
+%5|1680731667.368|REQTMOUT|rdkafka#consumer-1| [thrd:sasl_ssl://kafka.gcn.nasa.gov:9092/bootstrap]: sasl_ssl://kafka.gcn.nasa.gov:9092/bootstrap: Timed out FindCoordinatorRequest in flight (after 60930ms, timeout #1)
+%5|1680731667.368|REQTMOUT|rdkafka#consumer-1| [thrd:sasl_ssl://kafka.gcn.nasa.gov:9092/bootstrap]: sasl_ssl://kafka.gcn.nasa.gov:9092/bootstrap: Timed out MetadataRequest in flight (after 60356ms, timeout #2)
+%5|1680731667.368|REQTMOUT|rdkafka#consumer-1| [thrd:sasl_ssl://kafka.gcn.nasa.gov:9092/bootstrap]: sasl_ssl://kafka.gcn.nasa.gov:9092/bootstrap: Timed out MetadataRequest in flight (after 60216ms, timeout #3)
+%4|1680731667.368|REQTMOUT|rdkafka#consumer-1| [thrd:sasl_ssl://kafka.gcn.nasa.gov:9092/bootstrap]: sasl_ssl://kafka.gcn.nasa.gov:9092/bootstrap: Timed out 4 in-flight, 0 retry-queued, 0 out-queue, 0 partially-sent requests
+%3|1680731667.368|FAIL|rdkafka#consumer-1| [thrd:sasl_ssl://kafka.gcn.nasa.gov:9092/bootstrap]: sasl_ssl://kafka.gcn.nasa.gov:9092/bootstrap: 4 request(s) timed out: disconnect (after 2358669ms in state UP)
+{'alert_type': 'PRELIMINARY',
+ 'event': {'central_frequency': None,
+           'classification': {'BBH': 0.0,
+                              'BNS': 0.9999998902204602,
+                              'NSBH': 0.0,
+                              'Terrestrial': 1.097795397871851e-07},
+           'duration': None,
+           'far': 5.176954877338635e-16,
+           'group': 'CBC',
+           'instruments': ['H1', 'L1', 'V1'],
+           'pipeline': 'gstlal',
+           'properties': {'HasMassGap': 0.0, 'HasNS': 1.0, 'HasRemnant': 1.0},
+           'search': 'MDC',
+           'significant': True,
+           'time': '2023-04-05T20:48:44.229Z'},
+ 'external_coinc': None,
+ 'superevent_id': 'MS230405u',
+ 'time_created': '2023-04-05T20:49:45Z',
+ 'urls': {'gracedb': 'https://gracedb.ligo.org/superevents/MS230405u/view/'}}
+Preparing email
+Send email success: andsouzasanttos@gmail.com
+{'alert_type': 'PRELIMINARY',
+ 'event': {'central_frequency': None,
+           'classification': {'BBH': 0.0,
+                              'BNS': 0.9999998902204602,
+                              'NSBH': 0.0,
+                              'Terrestrial': 1.097795397871851e-07},
+           'duration': None,
+           'far': 5.176954877338635e-16,
+           'group': 'CBC',
+           'instruments': ['H1', 'L1', 'V1'],
+           'pipeline': 'gstlal',
+           'properties': {'HasMassGap': 0.0, 'HasNS': 1.0, 'HasRemnant': 1.0},
+           'search': 'MDC',
+           'significant': True,
+           'time': '2023-04-05T20:48:44.229Z'},
+ 'external_coinc': None,
+ 'superevent_id': 'MS230405u',
+ 'time_created': '2023-04-05T20:54:20Z',
+ 'urls': {'gracedb': 'https://gracedb.ligo.org/superevents/MS230405u/view/'}}
+Preparing email
+Send email success: andsouzasanttos@gmail.com
+{'alert_type': 'INITIAL',
+ 'event': {'central_frequency': None,
+           'classification': {'BBH': 0.0,
+                              'BNS': 0.9999998902204602,
+                              'NSBH': 0.0,
+                              'Terrestrial': 1.097795397871851e-07},
+           'duration': None,
+           'far': 5.176954877338635e-16,
+           'group': 'CBC',
+           'instruments': ['H1', 'L1', 'V1'],
+           'pipeline': 'gstlal',
+           'properties': {'HasMassGap': 0.0, 'HasNS': 1.0, 'HasRemnant': 1.0},
+           'search': 'MDC',
+           'significant': True,
+           'time': '2023-04-05T20:48:44.229Z'},
+ 'external_coinc': None,
+ 'superevent_id': 'MS230405u',
+ 'time_created': '2023-04-05T20:59:39Z',
+ 'urls': {'gracedb': 'https://gracedb.ligo.org/superevents/MS230405u/view/'}}
+Preparing email
+Send email success: andsouzasanttos@gmail.com
+{'alert_type': 'PRELIMINARY',
+ 'event': {'central_frequency': None,
+           'classification': {'BBH': 0.0,
+                              'BNS': 0.9999932144566,
+                              'NSBH': 0.0,
+                              'Terrestrial': 6.785543399964733e-06},
+           'duration': None,
+           'far': 9.110699364861297e-14,
+           'group': 'CBC',
+           'instruments': ['H1', 'L1'],
+           'pipeline': 'gstlal',
+           'properties': {'HasMassGap': 0.0, 'HasNS': 1.0, 'HasRemnant': 1.0},
+           'search': 'MDC',
+           'significant': True,
+           'time': '2023-04-05T21:43:15.080Z'},
+ 'external_coinc': None,
+ 'superevent_id': 'MS230405v',
+ 'time_created': '2023-04-05T21:49:44Z',
+ 'urls': {'gracedb': 'https://gracedb.ligo.org/superevents/MS230405v/view/'}}
+Preparing email
+Send email success: andsouzasanttos@gmail.com
+{'alert_type': 'PRELIMINARY',
+ 'event': {'central_frequency': None,
+           'classification': {'BBH': 0.0,
+                              'BNS': 0.9999974007299516,
+                              'NSBH': 0.0,
+                              'Terrestrial': 2.599270048450021e-06},
+           'duration': None,
+           'far': 9.110699364861297e-14,
+           'group': 'CBC',
+           'instruments': ['H1', 'L1'],
+           'pipeline': 'gstlal',
+           'properties': {'HasMassGap': 0.0, 'HasNS': 1.0, 'HasRemnant': 1.0},
+           'search': 'MDC',
+           'significant': True,
+           'time': '2023-04-05T22:46:55.466Z'},
+ 'external_coinc': None,
+ 'superevent_id': 'MS230405w',
+ 'time_created': '2023-04-05T22:49:44Z',
+ 'urls': {'gracedb': 'https://gracedb.ligo.org/superevents/MS230405w/view/'}}
+Preparing email
+Send email success: andsouzasanttos@gmail.com
+{'alert_type': 'PRELIMINARY',
+ 'event': {'central_frequency': None,
+           'classification': {'BBH': 0.0,
+                              'BNS': 0.9999974007299516,
+                              'NSBH': 0.0,
+                              'Terrestrial': 2.599270048450021e-06},
+           'duration': None,
+           'far': 9.110699364861297e-14,
+           'group': 'CBC',
+           'instruments': ['H1', 'L1'],
+           'pipeline': 'gstlal',
+           'properties': {'HasMassGap': 0.0, 'HasNS': 1.0, 'HasRemnant': 1.0},
+           'search': 'MDC',
+           'significant': True,
+           'time': '2023-04-05T22:46:55.466Z'},
+ 'external_coinc': None,
+ 'superevent_id': 'MS230405w',
+ 'time_created': '2023-04-05T22:54:19Z',
+ 'urls': {'gracedb': 'https://gracedb.ligo.org/superevents/MS230405w/view/'}}
+Preparing email
+Send email success: andsouzasanttos@gmail.com
+Traceback (most recent call last):
+  File "/home/data/phd/research_projects/Main-Injector/checkevent_kafka.py", line 472, in <module>
+    process_kafka_gcn(value)
+  File "/home/data/phd/research_projects/Main-Injector/checkevent_kafka.py", line 196, in process_kafka_gcn
+    event_params=event_params,
+UnboundLocalError: local variable 'event_params' referenced before assignment
