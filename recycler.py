@@ -11,7 +11,7 @@ try:
     args = sys.argv[1:]
     opt, arg = getopt.getopt(
         args, "tp:tid:mjd:exp:sky",
-        longopts=["triggerpath=", "triggerid=", "mjd=", "exposure_length=", "official", "skymapfilename=", "hasrem"])
+        longopts=["triggerpath=", "triggerid=", "mjd=", "exposure_length=", "official", "skymapfilename=", "hasrem", "norem"])
 
 except getopt.GetoptError as err:
     print(str(err))
@@ -154,7 +154,7 @@ sys.exit("This has been a test")
 #         # make a blank page with the basic info that is available
 #         # e.updateWebpage(real_or_sim)
         
-        # e.send_nonurgent_Email()
+#         e.send_nonurgent_Email()
         
 
 #        except KeyError:

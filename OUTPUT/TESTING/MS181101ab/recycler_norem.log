@@ -1,6 +1,26 @@
-Traceback (most recent call last):
-  File "/home/data/phd/research_projects/Main-Injector/recycler.py", line 6, in <module>
-    import event
-  File "/home/data/phd/research_projects/Main-Injector/event.py", line 16, in <module>
-    import distance
-ModuleNotFoundError: No module named 'distance'
+Option
+--skymapfilename
+OUTPUT/TESTING/MS181101ab/bayestar.fits.gz
+-----
+Option
+--triggerpath
+OUTPUT/TESTING
+-----
+Option
+--triggerid
+MS181101ab
+-----
+Option
+--mjd
+58423.9325
+-----
+Option
+--official
+
+-----
+Option
+--norem
+
+-----
+N hexes in inner= 0  and in outer= 17, total number of hexes=17
+This has been a test

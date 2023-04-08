@@ -33,37 +33,38 @@ license="""
 #   fluxConservation = True => sums maps when changing resolution
 #
 def flatten(skymap: str, nside: int = 512, backup : bool = False) -> None:
-     """
-     Flatten an multi-order skymap given and skymap filepath name and nside.
-     The output is an flatten skymap with the same name as the input.
-     If backup=True, savy a copy of the moc skymap (default is False).
+    """
+    Flatten an multi-order skymap given and skymap filepath name and nside.
+    The output is an flatten skymap with the same name as the input.
+    If backup=True, savy a copy of the moc skymap (default is False).
+    Arguments:
+    ----------
+        skymap: str
+            multi-order skymap fullpath name.
+        nside : int
+          nside for flattened skymap None.
+        backup: bool (default: False)
+           if set to True, save a copy of the moc skymap.
+    Returns:
+    --------
+        None.
+    """
 
-     Arguments:
-     ----------
-         skymap: str
-             multi-order skymap fullpath name.
-         nside : int
-           nside for flattened skymap None.
-         backup: bool (default: False)
-            if set to True, save a copy of the moc skymap.
+    filename = basename(skymap)
+    filename = skymap.split('.')[0]
+    out = f'{skymap}_flatten.fits.gz'
+    command = f'ligo-skymap-flatten '
+    command +=f'--nside {nside} {skymap} {out}'
+    run(command, shell=True)
 
-     Returns:
-     --------
-         None.
-     """
+    backup_skymap(skymap, backup, filename, out)
 
-     filename = basename(skymap)
-     filename = skymap.split('.')[0]
-     out = f'{skymap}_flatten.fits.gz'
-     command = f'ligo-skymap-flatten '
-     command +=f'--nside {nside} {skymap} {out}'
-     run(command, shell=True)
+def backup_skymap(skymap, backup, filename, out):
+    if backup:
+        print(f'Saving a copy of {basename(skymap)}')
+        shutil.copy(skymap, f'{filename}_moc.fits.gz')
 
-     if backup:
-         print(f'Saving a copy of {basename(skymap)}')
-         shutil.copy(skymap, f'{filename}_moc.fits.gz')
-
-     shutil.move(out, skymap)
+    shutil.move(out, skymap)
 
 def hp2np (hp_map_file, nan=True, degrade=False, fluxConservation=True, field=0):
     hm = hp.read_map(hp_map_file, field=field)
