@@ -5,6 +5,7 @@ import sys
 import math
 import glob
 import os.path
+import time
 
 from math import log10
 from argparse import ArgumentParser
@@ -168,7 +169,7 @@ class KNCalc():
                  loglan=None,
                  vk=None,
                  logmass=None,
-                 info_file="knsed_info.txt",
+                 info_file=os.path.join(os.getenv("DESGW_DIR"), "knlc", "knsed_info.txt"),
                  kn_weight_type="gaussian",
                  plot=False,
                  use_map=None,
@@ -1030,7 +1031,9 @@ def print_dict(d, title='', outfile=None):
 def calc_mag_fractions(data,
                        use_knmodel_weights=False,
                        kn_type='red',
-                       info_file="knsed_info.txt",
+                       info_file=os.path.join(os.getenv("DESGW_DIR"),
+                                              "knlc",
+                                              "knsed_info.txt"),
                        kn_weight_type="uniform",
                        kn_weight_sigma=1.0,
                        model_weights_path='',
@@ -1124,7 +1127,7 @@ def calc_mag_fractions(data,
     return percentile_dict
 
 
-def get_model_weights(kn_weight_type="uniform", kn_type='red', info_file="knsed_info.txt", kn_weight_sigma=1.0):
+def get_model_weights(kn_weight_type="uniform", kn_type='red', info_file=os.path.join(os.getenv("DESGW_DIR"), "knlc", "knsed_info.txt"), kn_weight_sigma=1.0):
 
     sed_filenames, kn_inds, vks, loglans, logmass_s = open_ascii_cat(
         info_file, unpack=True)  # usecols=(0,1)
@@ -1634,7 +1637,7 @@ def get_detection_later(p_, p_later, start_time, delay, start_later):
 
 
 if __name__ == '__main__':
-
+    start = time.time()
     parser = ArgumentParser(__doc__)
 
     parser.add_argument('--input',
@@ -2068,23 +2071,23 @@ if __name__ == '__main__':
                                 k = k+1
                     m = m+1
 
-            for k in range(0, len(filters_comb)):
+            # for k in range(0, len(filters_comb)):
 
-                fig, ax = plt.subplots(figsize=(10, 15))
+            #     fig, ax = plt.subplots(figsize=(10, 15))
 
-                ax = sns.heatmap(cadence_matrix[k][-1], annot=True, xticklabels=day_delays_comb,
-                                yticklabels=exp_comblegend, linewidths=.5, vmin=0, vmax=100, ax=ax)
+            #     ax = sns.heatmap(cadence_matrix[k][-1], annot=True, xticklabels=day_delays_comb,
+            #                     yticklabels=exp_comblegend, linewidths=.5, vmin=0, vmax=100, ax=ax)
 
-                # xticklabels
-                plt.xlabel("Observing night (Days after merger)",
-                        fontsize=14)  # days after merger
+            #     # xticklabels
+            #     plt.xlabel("Observing night (Days after merger)",
+            #             fontsize=14)  # days after merger
 
-                plt.ylabel("Exposure times", fontsize=9)  # days after merger
-                plt.xticks(fontsize=8)
-                plt.yticks(fontsize=8)
+            #     plt.ylabel("Exposure times", fontsize=9)  # days after merger
+            #     plt.xticks(fontsize=8)
+            #     plt.yticks(fontsize=8)
 
-                plt.savefig(plot_name_+filters_comb[k]+"_cadence.png")
-                plt.close()
+            #     plt.savefig(plot_name_+filters_comb[k]+"_cadence.png")
+            #     plt.close()
 
             cadence_matrix = np.array(cadence_matrix)
 
@@ -2220,3 +2223,5 @@ if __name__ == '__main__':
                             str(day_delays[j])+" exp: "+str(exposure_times_calc[k]), fontsize=10)
                     plt.savefig(
                         plot_name_+str(time_delays[j])+"exp"+str(exposure_times_calc[k])+"_dist.png")
+    end = time.time() - start
+    run(f'This process finished in {end:.2f} seconds! >> runtime_strategy.log', shell=True)

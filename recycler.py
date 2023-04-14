@@ -4,7 +4,7 @@ import getopt
 import os
 import yaml
 import event
-
+from subprocess import run
 import OneRing
 
 try:
@@ -84,6 +84,13 @@ for o, a in opt:
 badtriggers = open('badtriggers.txt', 'w')
 badtriggers.close()
 
+print(f'Running strategy for {trigger_ids[0]}')
+run([f'python',
+     f'python/knlc/kn_strategy_sims_MI.py',
+     f'--input',
+     f'{trigger_path}{trigger_ids[0]}',
+     f'--output',
+     f'{trigger_path}{trigger_ids[0]}'])
 OneRing.run_or(skymap_filename, 0.9, 0.1, 'i', 90, 90, 59908.71218799986, resolution=resolution)
 sys.exit("This has been a test")
 ####### BIG MONEY NO WHAMMIES ###############################################

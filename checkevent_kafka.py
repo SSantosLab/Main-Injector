@@ -155,7 +155,10 @@ def sendFailedEmail(trigger_id: int, message: str = 'FAILED') -> None:
     send_texts_and_emails.send(subject, text, atchannel=True)
 
 
-def flatten_skymap(input: str, output: str, nside: int = 512, overwrite: bool = True) -> None:
+def flatten_skymap(input: str, 
+                   output: str, 
+                   nside: int = 512, 
+                   overwrite: bool = True) -> None:
     """Flattens skymap"""
 
     hdu = fits.open(input)
@@ -200,9 +203,17 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
 
     
     OUTPUT_TRIGGER = os.path.join(OUTPUT_PATH, trigger_id)
+    OUTPUT_MOC = os.path.join(OUTPUT_TRIGGER, 'moc')
+    OUTPUT_COMBINED = os.path.join(OUTPUT_TRIGGER, 'combined_skymap')
 
     if not os.path.exists(OUTPUT_TRIGGER):
         os.makedirs(OUTPUT_TRIGGER)
+
+    if not os.path.exists(OUTPUT_MOC):
+        os.makedirs(OUTPUT_MOC)
+
+    if not os.path.exists(OUTPUT_COMBINED):
+        os.makedirs(OUTPUT_COMBINED)
 
     skymap_str = payload.get('event', {}).pop('skymap')
 
@@ -212,13 +223,13 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
 
         skymap_bytes = b64decode(combined_skymap)
         skymap = Table.read(BytesIO(skymap_bytes))
-        OUTPUT_SKYMAP = os.path.join(OUTPUT_PATH,
-                                     trigger_id,
+        OUTPUT_COMBINED_SKYMAP = os.path.join(OUTPUT_COMBINED,
                                      'bayestar_combined_moc.fits.gz',)
         
         if not os.path.isfile(OUTPUT_SKYMAP):
             skymap.write(OUTPUT_SKYMAP, overwrite=True)
-            flatten_skymap(OUTPUT_SKYMAP, f'{OUTPUT_TRIGGER}/bayestar_combined.fits.gz')
+            flatten_skymap(OUTPUT_COMBINED_SKYMAP,
+                           f'{OUTPUT_COMBINED}/bayestar_combined.fits.gz')
     else:
         external_coinc = {}
         
@@ -226,8 +237,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     if skymap_str:
         skymap_bytes = b64decode(skymap_str)
         skymap = Table.read(BytesIO(skymap_bytes))
-        OUTPUT_SKYMAP = os.path.join(OUTPUT_PATH,
-                                     trigger_id,
+        OUTPUT_SKYMAP = os.path.join(OUTPUT_MOC,
                                      'bayestar_moc.fits.gz',)
         
         if not os.path.isfile(OUTPUT_SKYMAP):
