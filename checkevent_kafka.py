@@ -226,8 +226,8 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
         OUTPUT_COMBINED_SKYMAP = os.path.join(OUTPUT_COMBINED,
                                      'bayestar_combined_moc.fits.gz',)
         
-        if not os.path.isfile(OUTPUT_SKYMAP):
-            skymap.write(OUTPUT_SKYMAP, overwrite=True)
+        if not os.path.isfile(OUTPUT_COMBINED_SKYMAP):
+            skymap.write(OUTPUT_COMBINED_SKYMAP, overwrite=True)
             flatten_skymap(OUTPUT_COMBINED_SKYMAP,
                            f'{OUTPUT_COMBINED}/bayestar_combined.fits.gz')
     else:

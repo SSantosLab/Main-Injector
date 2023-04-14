@@ -85,12 +85,24 @@ badtriggers = open('badtriggers.txt', 'w')
 badtriggers.close()
 
 print(f'Running strategy for {trigger_ids[0]}')
-run([f'python',
-     f'python/knlc/kn_strategy_sims_MI.py',
-     f'--input',
-     f'{trigger_path}{trigger_ids[0]}',
-     f'--output',
-     f'{trigger_path}{trigger_ids[0]}'])
+
+trigger_path = trigger_path.rstrip("/")
+trigger_id = trigger_ids[0]
+cmd = 'python ' +\
+      'python/knlc/kn_strategy_sims_MI.py '+\
+      '--input '+\
+      f'{trigger_path}/{trigger_id} '+\
+      '--output '+\
+      f'{trigger_path}/{trigger_id}'
+
+strategy_log = open(f'{trigger_path}/{trigger_ids[0]}/strategy.log', 'w')
+run(cmd,
+    shell=True,
+    stdout=strategy_log,
+    stderr=strategy_log,
+    text=True)
+strategy_log.close()
+
 OneRing.run_or(skymap_filename, 0.9, 0.1, 'i', 90, 90, 59908.71218799986, resolution=resolution)
 sys.exit("This has been a test")
 ####### BIG MONEY NO WHAMMIES ###############################################

@@ -23,5 +23,7 @@ Option
 
 -----
 HASREM  True
+Running strategy for MS181101ab
+python python/knlc/kn_strategy_sims_MI.py --input OUTPUT/TESTING/MS181101ab --output OUTPUT/TESTING/MS181101ab
 N hexes in inner= 0  and in outer= 17, total number of hexes=17
 This has been a test

@@ -7,6 +7,7 @@ import glob
 import os.path
 import time
 
+from subprocess import run
 from math import log10
 from argparse import ArgumentParser
 from os.path import join, basename, dirname
@@ -1742,7 +1743,7 @@ if __name__ == '__main__':
             plot_name_ = basename(e)
             plot_name_ = plot_name_.rstrip(".fits.gz")
             plot_name_ = plot_name_.rstrip(".fits")
-            plot_name_ = out_dir+plot_name_+sufix
+            plot_name_ = out_dir+'/'+plot_name_+sufix
         else:
             plot_name_ = out_dir+"GW_sim"+sufix
 
@@ -2071,6 +2072,7 @@ if __name__ == '__main__':
                                 k = k+1
                     m = m+1
 
+            # NO MORE PLOTTING!
             # for k in range(0, len(filters_comb)):
 
             #     fig, ax = plt.subplots(figsize=(10, 15))
@@ -2223,5 +2225,7 @@ if __name__ == '__main__':
                             str(day_delays[j])+" exp: "+str(exposure_times_calc[k]), fontsize=10)
                     plt.savefig(
                         plot_name_+str(time_delays[j])+"exp"+str(exposure_times_calc[k])+"_dist.png")
+
     end = time.time() - start
-    run(f'This process finished in {end:.2f} seconds! >> runtime_strategy.log', shell=True)
+    with open(f'{out_dir}/strategy.log', 'w') as f:
+        f.write(f'This process finished in {end:.2f} seconds!')

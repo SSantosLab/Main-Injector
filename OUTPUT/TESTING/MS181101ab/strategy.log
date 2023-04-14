@@ -1,0 +1,25 @@
+ ============================== 
+ ==============================
+
+starting the run for file OUTPUT/TESTING/MS181101ab/bayestar.fits.gz
+ ============================== 
+ ==============================
+
+Failed to load preprocessed weights for  OUTPUT/TESTING/MS181101ab/weights/bayestarac0.9ad0.8.npy
+Using maps, not the distance
+Tryng to open low resolution map
+Failed to open low resolution map, opening high resolution map OUTPUT/TESTING/MS181101ab/bayestar.fits.gz
+Mean redshift: 3.493326178708707e-07 redshift
+Mean z68: 0.008254749859172553 redshift
+z max: 0.1770419873115
+Warning: number of infs in distance sigma array 49412 from 3145728
+prob of correspondend infs region  2.7800402638338392e-05  from  0.9999721995972308
+Traceback (most recent call last):
+  File "/data/des80.a/data/asantos/andsantos/Main-Injector/python/knlc/kn_strategy_sims_MI.py", line 1767, in <module>
+    kn_calc = KNCalc(
+  File "/data/des80.a/data/asantos/andsantos/Main-Injector/python/knlc/kn_strategy_sims_MI.py", line 569, in __init__
+    distsigma_hr_average = np.average(
+  File "<__array_function__ internals>", line 200, in average
+  File "/data/des80.a/data/asantos/andsantos/miniconda3/envs/mi37/lib/python3.9/site-packages/numpy/lib/function_base.py", line 532, in average
+    raise TypeError(
+TypeError: Axis must be specified when shapes of a and weights differ.

@@ -1,0 +1,28 @@
+Option
+--skymapfilename
+OUTPUT/TESTING/MS230414p/bayestar.fits.gz
+-----
+Option
+--triggerpath
+OUTPUT/TESTING
+-----
+Option
+--triggerid
+MS230414p
+-----
+Option
+--mjd
+60048.6572
+-----
+Option
+--official
+
+-----
+Option
+--norem
+
+-----
+Running strategy for MS230414p
+python python/knlc/kn_strategy_sims_MI.py --input OUTPUT/TESTING/MS230414p --output OUTPUT/TESTING/MS230414p
+N hexes in inner= 7  and in outer= 213, total number of hexes=213
+This has been a test

@@ -1,0 +1,542 @@
+setting the output map dtype to [dtype('float64'), dtype('float64'), dtype('float64')]
+ ============================== 
+ ==============================
+
+starting the run for file OUTPUT/TESTING/MS230414r/bayestar.fits.gz
+ ============================== 
+ ==============================
+
+Failed to load preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.8.npy
+Using maps, not the distance
+Tryng to open low resolution map
+Failed to open low resolution map, opening high resolution map OUTPUT/TESTING/MS230414r/bayestar.fits.gz
+Mean redshift: 0.019959876445096048 redshift
+Mean z68: 0.02528195260960641 redshift
+z max: 0.1770419873115
+Warning: number of infs in distance array 643584 from 3145728
+prob of correspondend infs region  0.00017211395663328967  from  0.9998278860429581
+saving low resolution map
+prob of reduced correspondend region due to infs  0.0006747819171847144  from  0.9999999999999978
+Reducing map resolution 
+Previous resolution and new resolution (deg)  0.013113963206424481   3.357174580844667
+Sums - high res map prob sum  0.9999999999992762  low res map pb sum  0.9999999999999978
+average distance in high and low res map with its standard deviation 87.66515827750177 +- 27.10738507161196 and  87.90219128191133
+average distance sigma in high and low res map with its standard deviation 23.820822263940045 +- 4.667884703412783 and  23.847207788755874
+Total event area (deg)=1121.2963100021188 
+number of deep coverage pixels and total covered are pixels=124 181
+the distance average=79.92525622999395
+the distance sigma=21.961411254714772
+the prob volume covered (except deep region if any)=0.09364650325439974
+the weights sum=30.80969957069751
+Getting the weights sum of Deep region with 124 voxels
+the weights sum of Deep area=275.67234993795125
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Failed to load preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.7.npy
+Using maps, not the distance
+Tryng to open low resolution map
+Mean redshift: 0.020406699612929326 redshift
+Mean z68: 0.025738783981717136 redshift
+z max: 0.1770419873115
+prob of reduced correspondend region due to infs  0.0006747819171847144  from  0.9999999999999978
+prob of reduced correspondend region due to sigma infs  0.0026731574422220435  from  0.9993252180828144
+Total event area (deg)=1121.2963100021188 
+number of deep coverage pixels and total covered are pixels=93 181
+the distance average=80.93729060456744
+the distance sigma=22.01737959744289
+the prob volume covered (except deep region if any)=0.18773853946769037
+the weights sum=61.765979484870115
+Getting the weights sum of Deep region with 93 voxels
+the weights sum of Deep area=244.71607002377866
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Failed to load preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.5.npy
+Using maps, not the distance
+Tryng to open low resolution map
+Mean redshift: 0.020406699612929326 redshift
+Mean z68: 0.025738783981717136 redshift
+z max: 0.1770419873115
+prob of reduced correspondend region due to infs  0.0006747819171847144  from  0.9999999999999978
+prob of reduced correspondend region due to sigma infs  0.0026731574422220435  from  0.9993252180828144
+Total event area (deg)=1121.2963100021188 
+number of deep coverage pixels and total covered are pixels=53 181
+the distance average=84.41054022967312
+the distance sigma=22.76001169050567
+the prob volume covered (except deep region if any)=0.38918160978267363
+the weights sum=128.04074961849966
+Getting the weights sum of Deep region with 53 voxels
+the weights sum of Deep area=178.44129989014914
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Failed to load preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.3.npy
+Using maps, not the distance
+Tryng to open low resolution map
+Mean redshift: 0.020406699612929326 redshift
+Mean z68: 0.025738783981717136 redshift
+z max: 0.1770419873115
+prob of reduced correspondend region due to infs  0.0006747819171847144  from  0.9999999999999978
+prob of reduced correspondend region due to sigma infs  0.0026731574422220435  from  0.9993252180828144
+Total event area (deg)=1121.2963100021188 
+number of deep coverage pixels and total covered are pixels=26 181
+the distance average=87.03362073580794
+the distance sigma=23.42939620725027
+the prob volume covered (except deep region if any)=0.6101051979765483
+the weights sum=200.72461013428443
+Getting the weights sum of Deep region with 26 voxels
+the weights sum of Deep area=105.75743937436434
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Failed to load preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.7.npy
+Using maps, not the distance
+Tryng to open low resolution map
+Mean redshift: 0.020406699612929326 redshift
+Mean z68: 0.025738783981717136 redshift
+z max: 0.1770419873115
+prob of reduced correspondend region due to infs  0.0006747819171847144  from  0.9999999999999978
+prob of reduced correspondend region due to sigma infs  0.0026731574422220435  from  0.9993252180828144
+Total event area (deg)=1121.2963100021188 
+number of deep coverage pixels and total covered are pixels=93 125
+the distance average=82.02792084670847
+the distance sigma=22.04755830930898
+the prob volume covered (except deep region if any)=0.09654596754798471
+the weights sum=31.763623323286968
+Getting the weights sum of Deep region with 93 voxels
+the weights sum of Deep area=244.71607002377866
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Failed to load preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.5.npy
+Using maps, not the distance
+Tryng to open low resolution map
+Mean redshift: 0.020406699612929326 redshift
+Mean z68: 0.025738783981717136 redshift
+z max: 0.1770419873115
+prob of reduced correspondend region due to infs  0.0006747819171847144  from  0.9999999999999978
+prob of reduced correspondend region due to sigma infs  0.0026731574422220435  from  0.9993252180828144
+Total event area (deg)=1121.2963100021188 
+number of deep coverage pixels and total covered are pixels=53 125
+the distance average=85.9249741125656
+the distance sigma=23.014920248083243
+the prob volume covered (except deep region if any)=0.297989037862968
+the weights sum=98.03839345691647
+Getting the weights sum of Deep region with 53 voxels
+the weights sum of Deep area=178.44129989014914
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Failed to load preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.3.npy
+Using maps, not the distance
+Tryng to open low resolution map
+Mean redshift: 0.020406699612929326 redshift
+Mean z68: 0.025738783981717136 redshift
+z max: 0.1770419873115
+prob of reduced correspondend region due to infs  0.0006747819171847144  from  0.9999999999999978
+prob of reduced correspondend region due to sigma infs  0.0026731574422220435  from  0.9993252180828144
+Total event area (deg)=1121.2963100021188 
+number of deep coverage pixels and total covered are pixels=26 125
+the distance average=88.4395386408071
+the distance sigma=23.710412489025973
+the prob volume covered (except deep region if any)=0.5189126260568427
+the weights sum=170.7222539727012
+Getting the weights sum of Deep region with 26 voxels
+the weights sum of Deep area=105.75743937436434
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Failed to load preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.5.npy
+Using maps, not the distance
+Tryng to open low resolution map
+Mean redshift: 0.020406699612929326 redshift
+Mean z68: 0.025738783981717136 redshift
+z max: 0.1770419873115
+prob of reduced correspondend region due to infs  0.0006747819171847144  from  0.9999999999999978
+prob of reduced correspondend region due to sigma infs  0.0026731574422220435  from  0.9993252180828144
+Total event area (deg)=1121.2963100021188 
+number of deep coverage pixels and total covered are pixels=53 94
+the distance average=87.76221956742098
+the distance sigma=23.487398830408228
+the prob volume covered (except deep region if any)=0.20478099393548443
+the weights sum=67.3729470047744
+Getting the weights sum of Deep region with 53 voxels
+the weights sum of Deep area=178.44129989014914
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Failed to load preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.4.npy
+Using maps, not the distance
+Tryng to open low resolution map
+Mean redshift: 0.020406699612929326 redshift
+Mean z68: 0.025738783981717136 redshift
+z max: 0.1770419873115
+prob of reduced correspondend region due to infs  0.0006747819171847144  from  0.9999999999999978
+prob of reduced correspondend region due to sigma infs  0.0026731574422220435  from  0.9993252180828144
+Total event area (deg)=1121.2963100021188 
+number of deep coverage pixels and total covered are pixels=38 94
+the distance average=89.05298569151714
+the distance sigma=23.916458321687237
+the prob volume covered (except deep region if any)=0.31630572229529397
+the weights sum=104.06458263515171
+Getting the weights sum of Deep region with 38 voxels
+the weights sum of Deep area=141.7496642597718
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Failed to load preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.3.npy
+Using maps, not the distance
+Tryng to open low resolution map
+Mean redshift: 0.020406699612929326 redshift
+Mean z68: 0.025738783981717136 redshift
+z max: 0.1770419873115
+prob of reduced correspondend region due to infs  0.0006747819171847144  from  0.9999999999999978
+prob of reduced correspondend region due to sigma infs  0.0026731574422220435  from  0.9993252180828144
+Total event area (deg)=1121.2963100021188 
+number of deep coverage pixels and total covered are pixels=26 94
+the distance average=89.94819157443573
+the distance sigma=24.110094575464196
+the prob volume covered (except deep region if any)=0.42570458212935913
+the weights sum=140.05680752055915
+Getting the weights sum of Deep region with 26 voxels
+the weights sum of Deep area=105.75743937436434
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.8.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.7.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.7.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.4.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.8.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.7.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.7.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.4.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.8.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.7.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.7.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.4.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.8.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.7.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.7.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.4.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.8.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.7.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.7.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.4.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.8.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.7.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.7.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.4.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.7ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.8.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.7.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.5.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.9ad0.3.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  OUTPUT/TESTING/MS230414r/weights/bayestarac0.8ad0.7.npy
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+===== Using KN model priors gaussian_narrow , considering gw170817 with blue component
+loading KN model weights ...
+Using preprocessed weights for  

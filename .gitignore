@@ -1,2 +1,2 @@
-OUTPUT/TESTING/MS23*
+OUTPUT/TESTING/MS*/*.csv
 20230405_checkevent_kafka.log
