@@ -15,7 +15,7 @@ z max: 0.1770419873115
 Warning: number of infs in distance sigma array 49412 from 3145728
 prob of correspondend infs region  2.7800402638338392e-05  from  0.9999721995972308
 Traceback (most recent call last):
-  File "/data/des80.a/data/asantos/andsantos/Main-Injector/python/knlc/kn_strategy_sims_MI.py", line 1767, in <module>
+  File "/data/des80.a/data/asantos/andsantos/Main-Injector/python/knlc/kn_strategy_sims_MI.py", line 1768, in <module>
     kn_calc = KNCalc(
   File "/data/des80.a/data/asantos/andsantos/Main-Injector/python/knlc/kn_strategy_sims_MI.py", line 569, in __init__
     distsigma_hr_average = np.average(

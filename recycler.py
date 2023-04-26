@@ -6,6 +6,8 @@ import yaml
 import event
 from subprocess import run
 import OneRing
+import pandas as pd
+import datetime
 
 try:
     args = sys.argv[1:]
@@ -95,7 +97,9 @@ cmd = 'python ' +\
       '--output '+\
       f'{trigger_path}/{trigger_id}'
 
+
 strategy_log = open(f'{trigger_path}/{trigger_ids[0]}/strategy.log', 'w')
+
 run(cmd,
     shell=True,
     stdout=strategy_log,
@@ -103,8 +107,26 @@ run(cmd,
     text=True)
 strategy_log.close()
 
-OneRing.run_or(skymap_filename, 0.9, 0.1, 'i', 90, 90, 59908.71218799986, resolution=resolution)
-sys.exit("This has been a test")
+df = pd.read_csv(f'{trigger_path}/{trigger_ids[0]}/bayestar_moony_blue__allconfig.csv', header=1) # FIXME LATER
+df.sort_values(by='Detection Probability', ascending=False, inplace=True)
+optimal_strategy = df.iloc[0]
+outer, inner, filt, exposure_outer, exposure_inner = optimal_strategy[1:6]
+
+current_time = datetime.datetime.now().strftime('%Y%m%d%H%M')
+OneRing.run_or(
+    skymap_filename,
+    outer,
+    inner,
+    filt[0],
+    exposure_inner,
+    exposure_outer,
+    mjd,
+    resolution=resolution,
+    jsonFilename=f"des-gw_{current_time}.json"
+)
+
+sys.exit("WE ARE IN THE ENDGAME NOW!")
+
 ####### BIG MONEY NO WHAMMIES ###############################################
 # if config["wrap_all_triggers"]:
 #     if not dontwrap:

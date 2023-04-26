@@ -1205,6 +1205,7 @@ def get_model_weights(kn_weight_type="uniform", kn_type='red', info_file=os.path
             mass_blue), scale=kn_weight_sigma*float(mass_blue_err)) for x in np.unique(mass_)]
         weights_dict['WEIGHT_mass_blue'] = weights_mass_blue / \
             np.sum(weights_mass_blue_norm)
+        
     if kn_weight_type == "gaussian_narrow":
         print("gaussian prior narrow")
         mass_blue_err = 0.001

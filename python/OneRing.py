@@ -30,16 +30,23 @@ import  matplotlib.pyplot as plt
 # OneRing.py "it is corrupting us, if it does nothing else!"
 
 # first pass only!
-def run_or ( skymap, probArea_outer, probArea_inner, flt, expTime_inner, expTime_outer,
-            mjd,
-            resolution=64,
-             hexFile=getenv('DATA_DIR')+"/all-sky-hexCenters-decam.txt", 
-            trigger_id="LIGO/Virgo", 
-            trigger_type="bright", 
-            propid='propid', 
-            jsonFilename="des-gw.json",
-             test=False,
-             plot_numbers=False) :
+def run_or(
+    skymap,
+    probArea_outer,
+    probArea_inner,
+    flt,
+    expTime_inner,
+    expTime_outer,
+    mjd,
+    resolution=64,
+    hexFile=getenv('DATA_DIR')+"/all-sky-hexCenters-decam.txt", 
+    trigger_id="LIGO/Virgo", 
+    trigger_type="bright", 
+    propid='propid', 
+    jsonFilename="des-gw.json",
+    test=False,
+    plot_numbers=False
+):
     
     camera = "decam"
     if (probArea_inner > 1) or (probArea_outer > 1) : raise Exception("probArea_outer or inner is > 1, impossible")

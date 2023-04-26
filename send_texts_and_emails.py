@@ -9,6 +9,9 @@ from email.mime.multipart import MIMEMultipart
 FORMAT = '%(asctime)s %(message)s'
 log.basicConfig(format=FORMAT)
 
+def send_text(*args, **kwargs) -> None:
+    pass
+
 def postImagetoSLACK(impath,official=False):
     if not official:
         return
@@ -61,31 +64,56 @@ def send(
     
 
     try: 
-        people = np.genfromtxt('PHONE_AND_EMAIL_LIST.txt')
+        people = np.genfromtxt('PHONE_AND_EMAIL_LIST.TXT',
+                                dtype=[('name','S50'),('email','S50'),('phone','S50')],
+                                delimiter=",",
+                                skip_header=1)
+        emails=[]
+
+        for email in people['email']:
+            email = email.decode('utf-8')
+            emails.append(email.replace('\t','').replace(' ',''))
+
+        with smtplib.SMTP(smtpserver) as server:
+            server.starttls()
+            server.login(gmail_login, gmail_password)
+
+            msg['Subject'] = subject
+            msg['To'] = email
+            payload = MIMEText(text)
+            msg.attach(payload)
+
+            server.sendmail(from_addr, emails, msg.as_string())
+            print('Send email success: {0}'.format(emails))            
+
     except:
         people = {
-            'names': ['Andre Santos'],
-            'emails': ['andsouzasanttos@gmail.com']
+            'names': ['Andre Santos', 'Nora Sherman'],
+            'emails': ['andsouzasanttos@gmail.com',
+                       'norafs@umich.edu']
 
         }
     
-    with smtplib.SMTP(smtpserver) as server:
-        server.starttls()
-        server.login(gmail_login, gmail_password)
+        with smtplib.SMTP(smtpserver) as server:
+            server.starttls()
+            server.login(gmail_login, gmail_password)
 
-        for y in people.get('emails'):
-            try:
-                msg['Subject'] = subject
-                msg['To'] = y
-                payload = MIMEText(text)
-                msg.attach(payload)
-            except:
-                log.info('Could not sent email to', y)
+            for y in people.get('emails'):
+                try:
+                    msg['Subject'] = subject + f'(SENT With emergency email list)'
+                    msg['To'] = y
+                    payload = MIMEText(text)
+                    msg.attach(payload)
+                except:
+                    log.info('Could not sent email to', y)
 
-        resp = server.sendmail(from_addr, y, msg.as_string())
-        print('Send email success: {0}'.format(y))
+            resp = server.sendmail(from_addr, y, msg.as_string())
+            print('Send email success: {0}'.format(y))
 
-
+    for phone in people['phone']:
+        if not phone == 'none':
+            #if not p[0] == '#':
+            you.append(phone.replace('\t','').replace(' ',''))
     # msg = MIMEText(text)
     
 
