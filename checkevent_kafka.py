@@ -71,8 +71,8 @@ def send_first_trigger_email(trigger_id: int,
     if retraction:
         subject = f"Rectraction for {str(trigger_id)}"
         text = ''
-        # send_texts_and_emails.postToSLACK(
-        #     subject, text, official=official, atchannel=False)
+        send_texts_and_emails.postToSLACK(
+            subject, text, official=official, atchannel=False)
         send_texts_and_emails.send(subject, text, official=official)
         print("Retraction notice sent, returning to listening")
         return

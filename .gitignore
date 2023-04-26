@@ -5,3 +5,4 @@ PHONE_AND_EMAIL_LIST.TXT
 *.pyc
 python/*.pyc
 __pycache__
+DESGW_O4_People.TXT
