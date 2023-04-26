@@ -2,6 +2,7 @@ import smtplib
 import requests
 import logging as log
 import numpy as np
+import re
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -49,7 +50,6 @@ def send(
         'smtpserver': '%s:%s' % ('smtp.gmail.com', 587),
         'gmail_login': 'step.daily.report@gmail.com',
         'gmail_password': 'uxiywgbflgpqysah',
-        'subject': 'STEP Report'
     }
 
     from_addr = email_args['from_addr']
@@ -64,7 +64,8 @@ def send(
     
 
     try: 
-        people = np.genfromtxt('PHONE_AND_EMAIL_LIST.TXT',
+        people = np.genfromtxt('DESGW_O4_People.TXT',
+                                # dtype=[('name', str), ('email', str), ('phone', str)],
                                 dtype=[('name','S50'),('email','S50'),('phone','S50')],
                                 delimiter=",",
                                 skip_header=1)
@@ -78,13 +79,14 @@ def send(
             server.starttls()
             server.login(gmail_login, gmail_password)
 
-            msg['Subject'] = subject
-            msg['To'] = email
-            payload = MIMEText(text)
-            msg.attach(payload)
+            for email in emails:
+                msg['Subject'] = subject
+                msg['To'] = email
+                payload = MIMEText(text)
+                msg.attach(payload)
 
-            server.sendmail(from_addr, emails, msg.as_string())
-            print('Send email success: {0}'.format(emails))            
+                server.sendmail(from_addr, email, msg.as_string())
+                print('Send email success: {0}'.format(email))            
 
     except:
         people = {
@@ -110,11 +112,31 @@ def send(
             resp = server.sendmail(from_addr, y, msg.as_string())
             print('Send email success: {0}'.format(y))
 
+    phone_numbers = []
     for phone in people['phone']:
-        if not phone == 'none':
-            #if not p[0] == '#':
-            you.append(phone.replace('\t','').replace(' ',''))
-    # msg = MIMEText(text)
+            phone = phone.decode('utf-8')
+            phone = phone.replace('\t','').replace(' ','')
+            if phone != 'None':
+                phone_numbers.append(phone)
+
+    print(phone_numbers)
+    with smtplib.SMTP(smtpserver) as server:
+        server.starttls()
+        server.login(gmail_login, gmail_password)
+
+        for phone in phone_numbers:
+            print(phone)
+            try:
+                msg['Subject'] = subject
+                msg['To'] = phone
+                payload = MIMEText(text)
+                msg.attach(payload)
+            except:
+                log.info('Could not sent email to', phone)
+
+            resp = server.sendmail(from_addr, phone, msg.as_string())
+            print('Send email success: {0}'.format(phone))
+    msg = MIMEText(text)
     
 
     # try:

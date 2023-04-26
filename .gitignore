@@ -4,3 +4,4 @@ PHONE_AND_EMAIL_LIST.TXT
 20230414_mock_run.log
 *.pyc
 python/*.pyc
+__pycache__
