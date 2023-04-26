@@ -74,7 +74,7 @@ def run_or(
     outer_percentile_index = np.argmax( cumsum >= probArea_outer )
     inner_percentile_index = np.argmax( cumsum >= probArea_inner )
     print("N hexes in inner= {}  and in outer= {}, total number of hexes={}".format(
-        inner_percentile_index, outer_percentile_index, outer_percentile_index ))
+        inner_percentile_index, outer_percentile_index, inner_percentile_index + outer_percentile_index ))
 
     # now lets get the list of outer and inner hexes
     inner_ra = []; outer_ra=[]

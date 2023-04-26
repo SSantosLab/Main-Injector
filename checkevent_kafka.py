@@ -481,13 +481,16 @@ if __name__ == "__main__":
                 value = message.value()
                 process_kafka_gcn(value)
 
-    if mode == 'observation':
-        consumer = Consumer(client_id='44cs6etajmhmbvc2k8opnlj0e7',
-                            client_secret='1e7rbf0ore0lfn8446c6f0cmblq51n4povhuq1t3nrbcqiunq4sq')
-        consumer.subscribe(['igwn.gwalert'])
+    try:
+        if mode == 'observation':
+            consumer = Consumer(client_id='44cs6etajmhmbvc2k8opnlj0e7',
+                                client_secret='1e7rbf0ore0lfn8446c6f0cmblq51n4povhuq1t3nrbcqiunq4sq')
+            consumer.subscribe(['igwn.gwalert'])
 
-        while True:
-            for message in consumer.consume(timeout=1):
-                value = message.value()
-                process_kafka_gcn(value)
+            while True:
+                for message in consumer.consume(timeout=1):
+                    value = message.value()
+                    process_kafka_gcn(value,mode=mode)
+    except:
+        send_texts_and_emails.send_emergencial_email()
 

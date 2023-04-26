@@ -59,58 +59,35 @@ def send(
 
     print('Preparing email')
 
-    msg = MIMEMultipart('alternative')
-    msg['From'] = from_addr
-    
+    people = np.genfromtxt('DESGW_O4_People.TXT',
+                            # dtype=[('name', str), ('email', str), ('phone', str)],
+                            dtype=[('name','S50'),('email','S50'),('phone','S50')],
+                            delimiter=",",
+                            skip_header=1)
+    emails=[]
 
-    try: 
-        people = np.genfromtxt('DESGW_O4_People.TXT',
-                                # dtype=[('name', str), ('email', str), ('phone', str)],
-                                dtype=[('name','S50'),('email','S50'),('phone','S50')],
-                                delimiter=",",
-                                skip_header=1)
-        emails=[]
+    for email in people['email']:
+        email = email.decode('utf-8')
+        emails.append(email.replace('\t','').replace(' ',''))
 
-        for email in people['email']:
-            email = email.decode('utf-8')
-            emails.append(email.replace('\t','').replace(' ',''))
+    for email in emails:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = "THIS IS A TEST CASE, IGNORE THIS ALERT"#subject
+        msg['From'] = from_addr
+        msg['To'] = email
+        payload = MIMEText(text)
+        msg.attach(payload)
 
         with smtplib.SMTP(smtpserver) as server:
             server.starttls()
             server.login(gmail_login, gmail_password)
+            resp = server.sendmail(from_addr=from_addr,
+                                    to_addrs=[email],
+                                    msg=msg.as_string())
+            
+            print('Send email success: {0}'.format(email))      
 
-            for email in emails:
-                msg['Subject'] = subject
-                msg['To'] = email
-                payload = MIMEText(text)
-                msg.attach(payload)
-
-                server.sendmail(from_addr, email, msg.as_string())
-                print('Send email success: {0}'.format(email))            
-
-    except:
-        people = {
-            'names': ['Andre Santos', 'Nora Sherman'],
-            'emails': ['andsouzasanttos@gmail.com',
-                       'norafs@umich.edu']
-
-        }
     
-        with smtplib.SMTP(smtpserver) as server:
-            server.starttls()
-            server.login(gmail_login, gmail_password)
-
-            for y in people.get('emails'):
-                try:
-                    msg['Subject'] = subject + f'(SENT With emergency email list)'
-                    msg['To'] = y
-                    payload = MIMEText(text)
-                    msg.attach(payload)
-                except:
-                    log.info('Could not sent email to', y)
-
-            resp = server.sendmail(from_addr, y, msg.as_string())
-            print('Send email success: {0}'.format(y))
 
     phone_numbers = []
     for phone in people['phone']:
@@ -119,24 +96,52 @@ def send(
             if phone != 'None':
                 phone_numbers.append(phone)
 
-    print(phone_numbers)
-    with smtplib.SMTP(smtpserver) as server:
-        server.starttls()
-        server.login(gmail_login, gmail_password)
+    for phone in phone_numbers:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['To'] = phone
+        payload = MIMEText(text)
+        msg.attach(payload)
 
-        for phone in phone_numbers:
-            print(phone)
-            try:
-                msg['Subject'] = subject
-                msg['To'] = phone
-                payload = MIMEText(text)
-                msg.attach(payload)
-            except:
-                log.info('Could not sent email to', phone)
-
+        with smtplib.SMTP(smtpserver) as server:
+            server.starttls()
+            server.login(gmail_login, gmail_password)
             resp = server.sendmail(from_addr, phone, msg.as_string())
             print('Send email success: {0}'.format(phone))
-    msg = MIMEText(text)
+    
+def send_emergencial_email():
+    email_args = {
+        'from_addr': 'DESGW Team (TEST CASE)',
+        'smtpserver': '%s:%s' % ('smtp.gmail.com', 587),
+        'gmail_login': 'step.daily.report@gmail.com',
+        'gmail_password': 'uxiywgbflgpqysah',
+    }
+
+    from_addr = email_args['from_addr']
+    smtpserver = email_args['smtpserver']
+    gmail_login = email_args['gmail_login']
+    gmail_password = email_args['gmail_password']
+
+    emergency_list = {
+        'names': ['Andre Santos', 'Nora Sherman', 'Jim Annis'],
+        'emails': ['andsouzasanttos@gmail.com',
+                    'norafs@umich.edu',
+                    'annis@fnal.gov']
+    }
+
+    for email in emergency_list['emails']:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = 'CHECKEVENT_KAFKA BROKE! RUN ALARMS!!'
+        msg['From'] = from_addr
+        msg['To'] = email
+        payload = MIMEText('Check checkevent_kafka.py inside des machines.')
+        msg.attach(payload)
+
+        with smtplib.SMTP(smtpserver) as server:
+            server.starttls()
+            server.login(gmail_login, gmail_password)
+            resp = server.sendmail(from_addr,[email],msg=msg.as_string())
+            print('Send email success: {0}'.format(email)) 
     
 
     # try:

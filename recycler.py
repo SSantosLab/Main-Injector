@@ -3,11 +3,14 @@ import sys
 import getopt
 import os
 import yaml
-import event
 from subprocess import run
 import OneRing
 import pandas as pd
 import datetime
+import logging as log
+
+FORMAT = '%(asctime)s %(levelname)-8s %(message)s'
+log.basicConfig(format=FORMAT, level=log.INFO)
 
 try:
     args = sys.argv[1:]
@@ -105,6 +108,7 @@ run(cmd,
     stdout=strategy_log,
     stderr=strategy_log,
     text=True)
+
 strategy_log.close()
 
 df = pd.read_csv(f'{trigger_path}/{trigger_ids[0]}/bayestar_moony_blue__allconfig.csv', header=1) # FIXME LATER
@@ -125,7 +129,7 @@ OneRing.run_or(
     jsonFilename=f"des-gw_{current_time}.json"
 )
 
-sys.exit("WE ARE IN THE ENDGAME NOW!")
+log.info(" Json file done. WE ARE IN THE ENDGAME NOW!")
 
 ####### BIG MONEY NO WHAMMIES ###############################################
 # if config["wrap_all_triggers"]:
