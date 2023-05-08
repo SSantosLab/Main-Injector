@@ -24,7 +24,7 @@ Option
 -----
 Running strategy for MS181101ab
 Traceback (most recent call last):
-  File "/data/des80.a/data/asantos/andsantos/Main-Injector/recycler.py", line 110, in <module>
+  File "/data/des80.a/data/asantos/andsantos/Main-Injector/recycler.py", line 114, in <module>
     df = pd.read_csv(f'{trigger_path}/{trigger_ids[0]}/bayestar_moony_blue__allconfig.csv', header=1) # FIXME LATER
   File "/data/des80.a/data/asantos/andsantos/miniconda3/envs/mi37/lib/python3.9/site-packages/pandas/util/_decorators.py", line 211, in wrapper
     return func(*args, **kwargs)

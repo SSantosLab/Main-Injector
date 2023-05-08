@@ -3,11 +3,12 @@ import sys
 import getopt
 import os
 import yaml
-from subprocess import run
+from subprocess import run, Popen
 import OneRing
 import pandas as pd
 import datetime
 import logging as log
+import multiprocessing
 
 FORMAT = '%(asctime)s %(levelname)-8s %(message)s'
 log.basicConfig(format=FORMAT, level=log.INFO)
@@ -16,7 +17,14 @@ try:
     args = sys.argv[1:]
     opt, arg = getopt.getopt(
         args, "tp:tid:mjd:exp:sky",
-        longopts=["triggerpath=", "triggerid=", "mjd=", "exposure_length=", "official", "skymapfilename=", "hasrem", "norem"])
+        longopts=["triggerpath=",
+                  "triggerid=",
+                  "mjd=",
+                  "exposure_length=",
+                  "official",
+                  "skymapfilename=",
+                  "hasrem",
+                  "norem"])
 
 except getopt.GetoptError as err:
     print(str(err))
@@ -89,46 +97,70 @@ for o, a in opt:
 badtriggers = open('badtriggers.txt', 'w')
 badtriggers.close()
 
-print(f'Running strategy for {trigger_ids[0]}')
-
 trigger_path = trigger_path.rstrip("/")
 trigger_id = trigger_ids[0]
-cmd = 'python ' +\
-      'python/knlc/kn_strategy_sims_MI.py '+\
-      '--input '+\
-      f'{trigger_path}/{trigger_id} '+\
-      '--output '+\
-      f'{trigger_path}/{trigger_id}'
+print(f'Running strategy for {trigger_ids[0]}')
+
+def run_strategy_and_onering(skymap_filename,
+                             mjd,
+                             trigger_path,
+                             trigger_id,
+                             sky_condition: str = 'moony'):
 
 
-strategy_log = open(f'{trigger_path}/{trigger_ids[0]}/strategy.log', 'w')
+    cmd = 'python ' +\
+          'python/knlc/kn_strategy_sims_MI.py '+\
+          f'--input {trigger_path}/{trigger_id} '+\
+          f'--output {trigger_path}/{trigger_id} '+\
+          f'--teff-type {sky_condition}'
+    
+    path = os.path.join(f'{trigger_path}/{trigger_ids[0]}')
+    log = os.path.join(path,f'{sky_condition}_strategy.log')
+    strategy_log = open(log, 'w')
 
-run(cmd,
-    shell=True,
-    stdout=strategy_log,
-    stderr=strategy_log,
-    text=True)
+    run(cmd,
+        shell=True,
+        stdout=strategy_log,
+        stderr=strategy_log,
+        text=True)
+    strategy_log.close()
 
-strategy_log.close()
+    strategy = os.path.join(path,
+                            f'bayestar_{sky_condition}_blue__allconfig.csv')
+    
+    df = pd.read_csv(strategy, header=1)
+    df.sort_values(by='Detection Probability', ascending=False, inplace=True)
+    optimal_strategy = df.iloc[0]
+    outer, inner, filt, exposure_outer, exposure_inner = optimal_strategy[1:6]
+    current_time = datetime.datetime.now().strftime('%Y%m%d%H%M')
+    OneRing.run_or(
+        skymap_filename,
+        outer,
+        inner,
+        filt[0],
+        exposure_inner,
+        exposure_outer,
+        mjd,
+        resolution=resolution,
+        jsonFilename=f"des-gw_{current_time}_{sky_condition}.json"
+    )
 
-df = pd.read_csv(f'{trigger_path}/{trigger_ids[0]}/bayestar_moony_blue__allconfig.csv', header=1) # FIXME LATER
-df.sort_values(by='Detection Probability', ascending=False, inplace=True)
-optimal_strategy = df.iloc[0]
-outer, inner, filt, exposure_outer, exposure_inner = optimal_strategy[1:6]
+moony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
+                                        args=(skymap_filename,
+                                              mjd,
+                                              trigger_path,
+                                              trigger_id,
+                                              'moony',))
 
-current_time = datetime.datetime.now().strftime('%Y%m%d%H%M')
-OneRing.run_or(
-    skymap_filename,
-    outer,
-    inner,
-    filt[0],
-    exposure_inner,
-    exposure_outer,
-    mjd,
-    resolution=resolution,
-    jsonFilename=f"des-gw_{current_time}.json"
-)
+notmoony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
+                                            args=(skymap_filename,
+                                                  mjd,
+                                                  trigger_path,
+                                                  trigger_id,
+                                                  'notmoony',))
 
+moony_strategy.start()
+notmoony_strategy.start()
 log.info(" Json file done. WE ARE IN THE ENDGAME NOW!")
 
 ####### BIG MONEY NO WHAMMIES ###############################################

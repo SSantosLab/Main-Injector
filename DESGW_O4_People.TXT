@@ -6,8 +6,8 @@ Mandeep Gill,		msgill@slac.stanford.edu,		None
 Ken Herner,		kherner@fnal.gov,		None
 Isaac McMahon,		imcmahon@umich.edu,		None
 Thomas Ruch,		trruch@umich.edu,		None
-ora Sherman,		norafs@umich.edu,		8155282667@mms.att.net
-ndre Santos,		andsouzasanttos@gmail.com,		None
+Nora Sherman,		norafs@umich.edu,		8155282667@mms.att.net
+Andre Santos,		andsouzasanttos@gmail.com,		None
 Marcelle Soares-Santos,		mssantos@umich.edu,		None
 Douglas,		dtucker@fnal.gov,		None
 Matt Wiesner,		mwiesner@ben.edu,		None

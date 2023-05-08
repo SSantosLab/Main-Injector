@@ -6,3 +6,4 @@ PHONE_AND_EMAIL_LIST.TXT
 python/*.pyc
 __pycache__
 DESGW_O4_People.TXT
+test*.json

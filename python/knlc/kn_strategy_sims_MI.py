@@ -1649,11 +1649,14 @@ if __name__ == '__main__':
 
     parser.add_argument('--output', default=None,
                       help='Output location for csv file.')
+
+    parser.add_argument('--teff-type', default='moony',
+                        help='Sky Condition for time effective. moony/notmoony')
                       
     args = parser.parse_args()
     area_deg_fix = 40.0
     if 1 == 1:
-        teff_kind = 'moony'  # 'notmoony'
+        teff_kind = args.teff_type  # 'notmoony'
         options = {
             'distance': 150,
             'distance_err': 50,

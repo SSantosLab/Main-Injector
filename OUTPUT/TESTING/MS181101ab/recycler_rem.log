@@ -1,3 +1,8 @@
+2023-04-28 13:53:45,649 INFO     NSIDE = 512
+2023-04-28 13:53:45,650 INFO     ORDERING = NESTED in fits file
+2023-04-28 13:53:45,650 INFO     INDXSCHM = IMPLICIT
+2023-04-28 13:53:46,484 INFO     Ordering converted to RING
+2023-04-28 13:53:48,825 INFO      Json file done. WE ARE IN THE ENDGAME NOW!
 Option
 --skymapfilename
 OUTPUT/TESTING/MS181101ab/bayestar.fits.gz
@@ -24,21 +29,5 @@ Option
 -----
 HASREM  True
 Running strategy for MS181101ab
-Traceback (most recent call last):
-  File "/data/des80.a/data/asantos/andsantos/Main-Injector/recycler.py", line 110, in <module>
-    df = pd.read_csv(f'{trigger_path}/{trigger_ids[0]}/bayestar_moony_blue__allconfig.csv', header=1) # FIXME LATER
-  File "/data/des80.a/data/asantos/andsantos/miniconda3/envs/mi37/lib/python3.9/site-packages/pandas/util/_decorators.py", line 211, in wrapper
-    return func(*args, **kwargs)
-  File "/data/des80.a/data/asantos/andsantos/miniconda3/envs/mi37/lib/python3.9/site-packages/pandas/util/_decorators.py", line 331, in wrapper
-    return func(*args, **kwargs)
-  File "/data/des80.a/data/asantos/andsantos/miniconda3/envs/mi37/lib/python3.9/site-packages/pandas/io/parsers/readers.py", line 950, in read_csv
-    return _read(filepath_or_buffer, kwds)
-  File "/data/des80.a/data/asantos/andsantos/miniconda3/envs/mi37/lib/python3.9/site-packages/pandas/io/parsers/readers.py", line 605, in _read
-    parser = TextFileReader(filepath_or_buffer, **kwds)
-  File "/data/des80.a/data/asantos/andsantos/miniconda3/envs/mi37/lib/python3.9/site-packages/pandas/io/parsers/readers.py", line 1442, in __init__
-    self._engine = self._make_engine(f, self.engine)
-  File "/data/des80.a/data/asantos/andsantos/miniconda3/envs/mi37/lib/python3.9/site-packages/pandas/io/parsers/readers.py", line 1735, in _make_engine
-    self.handles = get_handle(
-  File "/data/des80.a/data/asantos/andsantos/miniconda3/envs/mi37/lib/python3.9/site-packages/pandas/io/common.py", line 856, in get_handle
-    handle = open(
-FileNotFoundError: [Errno 2] No such file or directory: 'OUTPUT/TESTING/MS181101ab/bayestar_moony_blue__allconfig.csv'
+N hexes in inner= 9  and in outer= 17, total number of hexes=26
+Done

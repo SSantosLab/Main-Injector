@@ -66,9 +66,17 @@ def send(
                             skip_header=1)
     emails=[]
 
-    for email in people['email']:
-        email = email.decode('utf-8')
-        emails.append(email.replace('\t','').replace(' ',''))
+    test_emails = ['andsouzasanttos@gmail.com',
+                   'annis@fnal.gov',
+                   'norafs@umich.edu']
+    
+    if not official:
+        emails = test_emails
+    
+    else:
+        for email in people['email']:
+            email = email.decode('utf-8')
+            emails.append(email.replace('\t','').replace(' ',''))
 
     for email in emails:
         msg = MIMEMultipart('alternative')

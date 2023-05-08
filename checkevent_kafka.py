@@ -104,17 +104,6 @@ def send_first_trigger_email(trigger_id: int,
         DISTSIGMA: {event_params['DISTSIGMA']:.2} Mpc
         """
     
-    # if external_coinc:
-    #     text += f"""\
-    #         This alert have external coincidence!
-    #         """
-    #     msg = ''
-    #     for key in external_coinc.keys():
-    #         msg = f'{key}: {external_coinc[key]}\n'
-
-    #     text += msg
-
-
     subject = f'{plus} Trigger {trigger_id} FAR: {far}. '
 
     send_texts_and_emails.postToSLACK(
@@ -123,6 +112,9 @@ def send_first_trigger_email(trigger_id: int,
         official=official,
         atchannel=True
     )
+
+    if not official:
+        subject = f'FAKE TEST! YOU CAN IGNORE THIS ALERT, NO ACTION IS NEEDED!'
 
     log.info('Trigger email sent...')
     send_texts_and_emails.send(subject=subject,text=text,official=official)
@@ -220,25 +212,6 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
 
     skymap_str = payload.get('event', {}).pop('skymap')
 
-    # if payload.get('external_coinc') is not None:
-
-    #     try:
-    #         combined_skymap = payload.get('external_coinc', {}).pop('combined_skymap')
-    #         # external_coinc = payload.get('external_coinc', {})
-
-    #         skymap_bytes = b64decode(combined_skymap)
-    #         skymap = Table.read(BytesIO(skymap_bytes))
-    #         OUTPUT_COMBINED_SKYMAP = os.path.join(OUTPUT_COMBINED,
-    #                                  'bayestar_combined_moc.fits.gz',)
-        
-    #         if not os.path.isfile(OUTPUT_COMBINED_SKYMAP):
-    #             skymap.write(OUTPUT_COMBINED_SKYMAP, overwrite=True)
-    #             flatten_skymap(OUTPUT_COMBINED_SKYMAP,
-    #                        f'{OUTPUT_COMBINED}/bayestar_combined.fits.gz')
-    #     except:
-    #         external_coinc = {}
-        
-
     if skymap_str:
         skymap_bytes = b64decode(skymap_str)
         skymap = Table.read(BytesIO(skymap_bytes))
@@ -252,7 +225,6 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     DISTANCE = skymap.meta["DISTMEAN"]
     DISTANCE_SIGMA = skymap.meta["DISTSTD"]
 
-    
     pprint.pprint(payload)
 
     try:
@@ -280,13 +252,10 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
         BBH = -9
         NSBH = -9
 
-
     log.info(f'Trigger outpath: {OUTPUT_TRIGGER}')
 
     event_paramfile = os.path.join(OUTPUT_TRIGGER, f"{trigger_id}_params.npz")
     event_params = {}
-
-    
     nt = Time(payload['event']['time'])
     trigger_mjd = round(nt.mjd, 4)
 
@@ -338,9 +307,6 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
                              event_params=event_params,
                              retraction=False,
                              mode=mode)
-
-    
-
     
     log.info(f"Trigger ID: {trigger_id}")
     log.info('saving event paramfile:', event_paramfile)
@@ -368,7 +334,6 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
              BNS=event_params['BNS'],
              NSBH=event_params['NSBH']
              )
-
 
     args_rem = ['python',
                 'recycler.py', 
@@ -448,10 +413,7 @@ def kinit():
     )
     Timer(43000, kinit).start()
 
-
 if __name__ == "__main__":
-
-
     parser = ArgumentParser()
     parser.add_argument('--mode',
                         '-m',
