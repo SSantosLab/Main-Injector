@@ -22,7 +22,7 @@ def postImagetoSLACK(impath,official=False):
     r = requests.post('https://maker.ifttt.com/trigger/desgwtrigger/with/key/dmCI74bFTHzz2uCOIevguh',data=post)
 
 def postToSLACK(subject,text,official=False,atchannel=False):
-    print(official)
+
     if not official:
         return
     if atchannel:
@@ -60,7 +60,6 @@ def send(
     print('Preparing email')
 
     people = np.genfromtxt('DESGW_O4_People.TXT',
-                            # dtype=[('name', str), ('email', str), ('phone', str)],
                             dtype=[('name','S50'),('email','S50'),('phone','S50')],
                             delimiter=",",
                             skip_header=1)

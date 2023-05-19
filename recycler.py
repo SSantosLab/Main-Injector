@@ -107,7 +107,6 @@ def run_strategy_and_onering(skymap_filename,
                              trigger_id,
                              sky_condition: str = 'moony'):
 
-
     cmd = 'python ' +\
           'python/knlc/kn_strategy_sims_MI.py '+\
           f'--input {trigger_path}/{trigger_id} '+\
@@ -115,7 +114,7 @@ def run_strategy_and_onering(skymap_filename,
           f'--teff-type {sky_condition}'
     
     path = os.path.join(f'{trigger_path}/{trigger_ids[0]}')
-    log = os.path.join(path,f'{sky_condition}_strategy.log')
+    log = os.path.join(path, f'{sky_condition}_strategy.log')
     strategy_log = open(log, 'w')
 
     run(cmd,
@@ -123,13 +122,13 @@ def run_strategy_and_onering(skymap_filename,
         stdout=strategy_log,
         stderr=strategy_log,
         text=True)
+    
     strategy_log.close()
-
     strategy = os.path.join(path,
                             f'bayestar_{sky_condition}_blue__allconfig.csv')
     
     df = pd.read_csv(strategy, header=1)
-    df.sort_values(by='Detection Probability', ascending=False, inplace=True)
+    df.sort_values(by='Deprob1', ascending=False, inplace=True)
     optimal_strategy = df.iloc[0]
     outer, inner, filt, exposure_outer, exposure_inner = optimal_strategy[1:6]
     current_time = datetime.datetime.now().strftime('%Y%m%d%H%M')
@@ -161,8 +160,6 @@ notmoony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
 
 moony_strategy.start()
 notmoony_strategy.start()
-log.info(" Json file done. WE ARE IN THE ENDGAME NOW!")
-
 ####### BIG MONEY NO WHAMMIES ###############################################
 # if config["wrap_all_triggers"]:
 #     if not dontwrap:
@@ -239,5 +236,3 @@ log.info(" Json file done. WE ARE IN THE ENDGAME NOW!")
 #            badtriggers = open('badtriggers.txt', 'a')
 #            badtriggers.write(trigger_id + '\n')
 #############################################################################
-
-print('Done')

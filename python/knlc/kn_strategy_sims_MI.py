@@ -1652,6 +1652,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--teff-type', default='moony',
                         help='Sky Condition for time effective. moony/notmoony')
+     
+    parser.add_argument('--kn-type', default='blue')
+                      
                       
     args = parser.parse_args()
     area_deg_fix = 40.0
@@ -1670,7 +1673,7 @@ if __name__ == '__main__':
 
         distances = [50, 75, 150, 200, 250, 300]
         loglan = -1.0
-        kntype = 'blue'  # 'blue'
+        kntype = args.kn_type  # 'blue'
         kn_weights = True
         w_type = "gaussian_narrow"  # 'gaussian'#
 
@@ -1689,6 +1692,7 @@ if __name__ == '__main__':
         if m_exp_run == True:
             area_covered = [0.9, 0.9, 0.9, 0.9, 0.8, 0.8, 0.8, 0.7, 0.7, 0.7] # Substitutir por um array apenas com 0.9
             area_covered = [0.9, 0.9, 0.9]
+            area_covered = [0.7, 0.7, 0.7]
         else:
             area_covered = [0.9, 0.85, 0.8, 0.75, 0.7]
 

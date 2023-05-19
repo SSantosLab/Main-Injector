@@ -16,6 +16,7 @@ from astropy.io import fits
 from ligo.skymap.io.fits import read_sky_map, write_sky_map
 from ligo.skymap.bayestar import rasterize
 
+import traceback
 import logging as log
 import subprocess
 import os
@@ -113,11 +114,11 @@ def send_first_trigger_email(trigger_id: int,
         atchannel=True
     )
 
-    if not official:
-        subject = f'FAKE TEST! YOU CAN IGNORE THIS ALERT, NO ACTION IS NEEDED!'
+    # if not official:
+    #     subject = f'FAKE TEST! YOU CAN IGNORE THIS ALERT, NO ACTION IS NEEDED!'
 
-    log.info('Trigger email sent...')
-    send_texts_and_emails.send(subject=subject,text=text,official=official)
+    # log.info('Trigger email sent...')
+    # send_texts_and_emails.send(subject=subject,text=text,official=official)
 
 def sendFailedEmail(trigger_id: int, message: str = 'FAILED') -> None:
     """
@@ -215,13 +216,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     if skymap_str:
         skymap_bytes = b64decode(skymap_str)
         skymap = Table.read(BytesIO(skymap_bytes))
-        OUTPUT_SKYMAP = os.path.join(OUTPUT_MOC,
-                                     'bayestar_moc.fits.gz',)
-        
-        if not os.path.isfile(OUTPUT_SKYMAP):
-            skymap.write(OUTPUT_SKYMAP, overwrite=True)
-            flatten_skymap(OUTPUT_SKYMAP, f'{OUTPUT_TRIGGER}/bayestar.fits.gz')
-        
+      
     DISTANCE = skymap.meta["DISTMEAN"]
     DISTANCE_SIGMA = skymap.meta["DISTSTD"]
 
@@ -253,6 +248,17 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
         NSBH = -9
 
     log.info(f'Trigger outpath: {OUTPUT_TRIGGER}')
+
+    OUTPUT_SKYMAP = os.path.join(OUTPUT_MOC,
+                                 f'bayestar_moc_{alerttype}.fits.gz',)
+        
+    if not os.path.isfile(OUTPUT_SKYMAP):
+        skymap.write(OUTPUT_SKYMAP, overwrite=True)
+    
+    flatten_skymap(OUTPUT_SKYMAP,
+                   os.path.join(f'{OUTPUT_TRIGGER}',
+                                    f'bayestar_{alerttype}.fits.gz'),
+                   overwrite=True)
 
     event_paramfile = os.path.join(OUTPUT_TRIGGER, f"{trigger_id}_params.npz")
     event_params = {}
@@ -337,7 +343,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
 
     args_rem = ['python',
                 'recycler.py', 
-                f'--skymapfilename={OUTPUT_TRIGGER}/bayestar.fits.gz',
+                f'--skymapfilename={OUTPUT_TRIGGER}/bayestar_{alerttype}.fits.gz',
                 f'--triggerpath={OUTPUT_PATH}',
                 f'--triggerid={trigger_id}',
                 f'--mjd='+str(trigger_mjd),
@@ -346,7 +352,7 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     
     args_norem = ['python',
                 'recycler.py', 
-                f'--skymapfilename={OUTPUT_TRIGGER}/bayestar.fits.gz',
+                f'--skymapfilename={OUTPUT_TRIGGER}/bayestar_{alerttype}.fits.gz',
                 f'--triggerpath={OUTPUT_PATH}',
                 f'--triggerid={trigger_id}',
                 f'--mjd='+str(trigger_mjd),
@@ -365,15 +371,15 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     hasrem_log = open(f'{OUTPUT_TRIGGER}/recycler_rem.log', 'w')
     norem_log = open(f'{OUTPUT_TRIGGER}/recycler_norem.log', 'w')
 
-    hasrem = subprocess.Popen(args_rem,
-                              stdout=hasrem_log,
-                              stderr=hasrem_log,
-                              text=True)
+    hasrem = subprocess.Popen(args_rem),
+                            #   stdout=hasrem_log,
+                            #   stderr=hasrem_log,
+                            #   text=True)
     
-    norem = subprocess.Popen(args_norem,
-                             stdout=norem_log,
-                             stderr=norem_log,
-                             text=True)
+    norem = subprocess.Popen(args_norem),
+                            #  stdout=norem_log,
+                            #  stderr=norem_log,
+                            #  text=True)
 
     hasrem_log.close()
     norem_log.close()
@@ -431,7 +437,7 @@ if __name__ == "__main__":
         with open('MS181101ab-preliminary.json') as f:
             record = f.read()
 
-        process_kafka_gcn(record)
+        process_kafka_gcn(record, mode='test')
 
     if mode == 'test' and not offline:
         consumer = Consumer(client_id='44cs6etajmhmbvc2k8opnlj0e7',
@@ -453,6 +459,8 @@ if __name__ == "__main__":
                 for message in consumer.consume(timeout=1):
                     value = message.value()
                     process_kafka_gcn(value,mode=mode)
-    except:
+
+    except Exception as e:
+        log.error(traceback.format_exc())
         send_texts_and_emails.send_emergencial_email()
 
