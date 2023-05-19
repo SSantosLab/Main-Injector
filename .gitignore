@@ -1,4 +1,5 @@
 OUTPUT/TESTING/MS*/*
+OUTPUT/04REAL/*/*.csv
 20230405_checkevent_kafka.log
 PHONE_AND_EMAIL_LIST.TXT
 20230414_mock_run.log
