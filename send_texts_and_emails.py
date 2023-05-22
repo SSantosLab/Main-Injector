@@ -79,7 +79,7 @@ def send(
 
     for email in emails:
         msg = MIMEMultipart('alternative')
-        msg['Subject'] = "THIS IS A TEST CASE, IGNORE THIS ALERT"#subject
+        msg['Subject'] = subject
         msg['From'] = from_addr
         msg['To'] = email
         payload = MIMEText(text)
