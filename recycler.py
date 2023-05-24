@@ -131,13 +131,13 @@ def run_strategy_and_onering(skymap_filename,
         'python/knlc/kn_strategy_sims_MI.py '+\
         f'--input {trigger_path}/{trigger_id} '+\
         f'--output {trigger_path}/{trigger_id} '+\
-        f'--teff-type {sky_condition}' +\
-        f'--kn-type {kn_type}' + \
+        f'--teff-type {sky_condition} ' +\
+        f'--kn-type {kn_type} ' + \
         f'--time {current_time}'
     
     path = os.path.join(f'{trigger_path}/{trigger_ids[0]}')
-    log = os.path.join(path, f'{sky_condition}_{kn_type}_strategy.log')
-    strategy_log = open(log, 'w')
+    output_log = os.path.join(path, f'{sky_condition}_{kn_type}_strategy.log')
+    strategy_log = open(output_log, 'w')
 
     run(cmd,
         shell=True,
@@ -146,7 +146,7 @@ def run_strategy_and_onering(skymap_filename,
         text=True)
     
     log.info(f'Strategy for {trigger_id} done!')
-    log.info(f'See log report in {log}')
+    log.info(f'See log report in {output_log}')
     strategy_file = f'bayestar_{sky_condition}_{kn_type}_{current_time}' +\
                     '_allconfig.csv'
     
