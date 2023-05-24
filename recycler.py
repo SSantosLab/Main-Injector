@@ -5,13 +5,14 @@ import os
 import yaml
 from subprocess import run, Popen
 import OneRing
+import send_texts_and_emails as send
 import pandas as pd
 import datetime
 import logging as log
 import multiprocessing
 
 FORMAT = '%(asctime)s %(levelname)-8s %(message)s'
-log.basicConfig(format=FORMAT, level=log.INFO)
+log.basicConfig(format=FORMAT)
 
 try:
     args = sys.argv[1:]
@@ -89,6 +90,8 @@ for o, a in opt:
         hasrem = str(a)
     elif o in ['--norem']:
        hasrem = False
+    elif o in ['--event']:
+        event = str(a)
 
     else:
         print("Warning: option", o, "with argument", a, "is not recognized")
@@ -99,22 +102,40 @@ badtriggers.close()
 
 trigger_path = trigger_path.rstrip("/")
 trigger_id = trigger_ids[0]
-print(f'Running strategy for {trigger_ids[0]}')
+log.info(f'Running strategy for {trigger_ids[0]}')
 
 def run_strategy_and_onering(skymap_filename,
                              mjd,
                              trigger_path,
                              trigger_id,
-                             sky_condition: str = 'moony'):
+                             sky_condition: str = 'moony',
+                             event: str = 'BNS'):
 
+    if event == 'BNS':
+        kn_type = 'blue'
+    elif event == 'NSBH':
+        kn_type = 'red'
+    else:
+        kn_type = None
+
+    if kn_type is None:
+        MSG = 'The current event is either BBH or Terrestrial.' +\
+              'We don\'t have a strategy for those kind of events.' +\
+              'Hence, not running strategy.'
+        log.info(MSG)
+        return
+    
+    current_time = datetime.datetime.now().strftime('%Y%m%d%H%M')
     cmd = 'python ' +\
-          'python/knlc/kn_strategy_sims_MI.py '+\
-          f'--input {trigger_path}/{trigger_id} '+\
-          f'--output {trigger_path}/{trigger_id} '+\
-          f'--teff-type {sky_condition}'
+        'python/knlc/kn_strategy_sims_MI.py '+\
+        f'--input {trigger_path}/{trigger_id} '+\
+        f'--output {trigger_path}/{trigger_id} '+\
+        f'--teff-type {sky_condition}' +\
+        f'--kn-type {kn_type}' + \
+        f'--time {current_time}'
     
     path = os.path.join(f'{trigger_path}/{trigger_ids[0]}')
-    log = os.path.join(path, f'{sky_condition}_strategy.log')
+    log = os.path.join(path, f'{sky_condition}_{kn_type}_strategy.log')
     strategy_log = open(log, 'w')
 
     run(cmd,
@@ -123,15 +144,23 @@ def run_strategy_and_onering(skymap_filename,
         stderr=strategy_log,
         text=True)
     
+    log.info(f'Strategy for {trigger_id} done!')
+    log.info(f'See log report in {log}')
+    strategy_file = f'bayestar_{sky_condition}_{kn_type}_{current_time}' +\
+                    '_allconfig.csv'
+    
     strategy_log.close()
-    strategy = os.path.join(path,
-                            f'bayestar_{sky_condition}_blue__allconfig.csv')
+    strategy = os.path.join(path, strategy_file)
     
     df = pd.read_csv(strategy, header=1)
     df.sort_values(by='Deprob1', ascending=False, inplace=True)
     optimal_strategy = df.iloc[0]
     outer, inner, filt, exposure_outer, exposure_inner = optimal_strategy[1:6]
-    current_time = datetime.datetime.now().strftime('%Y%m%d%H%M')
+    json_output = os.path.join(os.path.abspath(__file__),
+                               {trigger_path}/{trigger_id},
+                               f"des-gw_{current_time}_{sky_condition}.json"
+                               )
+    
     OneRing.run_or(
         skymap_filename,
         outer,
@@ -141,22 +170,34 @@ def run_strategy_and_onering(skymap_filename,
         exposure_outer,
         mjd,
         resolution=resolution,
-        jsonFilename=f"des-gw_{current_time}_{sky_condition}.json"
+        jsonFilename=json_output
     )
+    subject = f'Strategy for event {event}'
+    text = f"""\
+        Outer region coverage: {outer}
+        Inner region coverage: {inner}
+        Filter Combination: {filt}
+        Exposure for Outer Region: {exposure_outer}
+        Exposure for Inner Region: {exposure_inner}
+        Json file path: {json_output}
+        """
+    send.postToSLACK(subject=subject, text=text, official=True, atchannel=True)
 
 moony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
                                         args=(skymap_filename,
-                                              mjd,
-                                              trigger_path,
-                                              trigger_id,
-                                              'moony',))
+                                            mjd,
+                                            trigger_path,
+                                            trigger_id,
+                                            'moony',
+                                            event,))
 
 notmoony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
                                             args=(skymap_filename,
-                                                  mjd,
-                                                  trigger_path,
-                                                  trigger_id,
-                                                  'notmoony',))
+                                                mjd,
+                                                trigger_path,
+                                                trigger_id,
+                                                'notmoony',
+                                                event,))
 
 moony_strategy.start()
 notmoony_strategy.start()

@@ -1,5 +1,5 @@
 OUTPUT/TESTING/MS*/*
-OUTPUT/04REAL/*/*.csv
+OUTPUT/04REAL/*
 20230405_checkevent_kafka.log
 PHONE_AND_EMAIL_LIST.TXT
 20230414_mock_run.log
@@ -8,3 +8,4 @@ python/*.pyc
 __pycache__
 DESGW_O4_People.TXT
 test*.json
+des-gw*.json

@@ -1,12 +1,10 @@
-# A module to print brightness estimates
-
 import os
 import sys
 import math
 import glob
 import os.path
 import time
-
+import datetime
 from subprocess import run
 from math import log10
 from argparse import ArgumentParser
@@ -16,10 +14,8 @@ import seaborn as sns
 import pandas as pd
 import numpy as np
 import matplotlib
-
 import astropy.units as u
 import matplotlib.pyplot as plt
-
 from astropy.cosmology import z_at_value
 from scipy.stats import uniform
 from scipy.stats import norm
@@ -1654,6 +1650,8 @@ if __name__ == '__main__':
                         help='Sky Condition for time effective. moony/notmoony')
      
     parser.add_argument('--kn-type', default='blue')
+    parser.add_argument('--time', default=datetime.datetime.now(),
+                        help='Time that strategy code ran.')
                       
                       
     args = parser.parse_args()
@@ -1679,6 +1677,7 @@ if __name__ == '__main__':
 
         event_path = args.input
         out_dir = args.output
+        time = args.time
         sufix = '_'+teff_kind+'_'+kntype+'_'
 
         event_list = glob.glob(join(event_path, '*.fits.gz'))
@@ -1755,7 +1754,10 @@ for e in event_list:
     else:
         plot_name_ = out_dir+"GW_sim"+sufix
 
-    if os.path.isfile(plot_name_+"_allconfig.csv"):
+    strategy_file = f'bayestar_{teff_kind}_{kntype}_{time}' +\
+                    '_allconfig.csv'
+    strategy_file = join(out_dir, strategy_file)
+    if os.path.isfile(strategy_file):
         print('This event event strategy already exists. Skipping')
         continue
 
@@ -2155,9 +2157,10 @@ for e in event_list:
                         time_delays02_all.append(day_delays_comb_number[j][1])
                         filters_all.append(filters_comb[m])
 
-        f = open(plot_name_+"_allconfig.csv", 'w')
+        
+        f = open(strategy_file, 'w')
         f.close()
-        f = open(plot_name_+"_allconfig.csv", 'a')
+        f = open(strategy_file, 'a')
 
         f.write('# This is the '+kntype +
                 ' component in a '+teff_kind+' night \n')

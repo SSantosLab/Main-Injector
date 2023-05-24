@@ -30,8 +30,42 @@ import pprint
 import send_texts_and_emails
 import json
 
-FORMAT = '%(asctime)s %(message)s'
+FORMAT = '%(asctime)s %(levelname)-8s %(message)s'
 log.basicConfig(format=FORMAT)
+
+
+def most_probable_event(event_params: dict):
+    """
+    Given the event_params of a LVK alert, returns
+    the most probable source of the GW signal.
+    
+    Parameters:
+    -----------
+    
+    payload: dict
+        LVK alert data as python dictionary
+        
+    Returns:
+    --------
+
+    event: Tuple[str, float]
+
+        Returns a tuple containing the most probable source for the GW signal,
+        and their probability. The source can be 'BNS', 'NSBH' or 'BBH'.
+    """
+
+    classfication_scores = [
+        ('BBH', event_params['BBH']),
+        ('BNS', event_params['BNS']),
+        ('NSBH', event_params['NSBH']),
+        ('terrestrial', event_params['terrestrial'])
+    ]
+
+    max_prob = np.argmax(np.array([p[1] for p in classfication_scores]))
+    EVENT_KIND = classfication_scores[max_prob][0]
+    EVENT_PROB = classfication_scores[max_prob][1]
+
+    return EVENT_KIND, EVENT_PROB
 
 def send_first_trigger_email(trigger_id: int,
                              event_params: dict,
@@ -81,16 +115,7 @@ def send_first_trigger_email(trigger_id: int,
 
     plus = ''
     far = event_params['FAR']
-    classfication_scores = [
-        ('BBH', event_params['BBH']),
-        ('BNS', event_params['BNS']),
-        ('NSBH', event_params['NSBH']),
-        ('terrestrial', event_params['terrestrial'])
-    ]
-
-    max_prob = np.argmax(np.array([p[1] for p in classfication_scores]))
-    EVENT_KIND = classfication_scores[max_prob][0]
-    EVENT_PROB = classfication_scores[max_prob][1]
+    EVENT_KIND, EVENT_PROB = most_probable_event(event_params)
 
     text = f"""\
         Trigger {trigger_id}
@@ -117,8 +142,8 @@ def send_first_trigger_email(trigger_id: int,
     # if not official:
     #     subject = f'FAKE TEST! YOU CAN IGNORE THIS ALERT, NO ACTION IS NEEDED!'
 
-    # log.info('Trigger email sent...')
-    # send_texts_and_emails.send(subject=subject,text=text,official=official)
+    log.info('Trigger email sent...')
+    send_texts_and_emails.send(subject=subject,text=text,official=official)
 
 def sendFailedEmail(trigger_id: int, message: str = 'FAILED') -> None:
     """
@@ -276,7 +301,8 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     event_params['url'] = payload['urls']['gracedb']
     try:
         FAR = payload['event']['far']
-        event_params['FAR'] = f'{round(1./float(FAR)/60./60./24./365., 2)} Years'
+        FAR = round(1./float(FAR)/60./60./24./365., 2)
+        event_params['FAR'] = f'{FAR} Years'
     except:
         event_params['FAR'] = '-999.'
 
@@ -309,6 +335,13 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     event_params['M2'] = '-999'
     event_params['nHexes'] = '-999'
 
+    EVENT_KIND, _ = most_probable_event(event_params)
+    if FAR < 1000.0:
+        if EVENT_KIND == 'BBH':
+            log.info('Got BBH event with FAR less than 1000 years')
+            log.info('Back to Listening..')
+            return
+        
     send_first_trigger_email(trigger_id=trigger_id,
                              event_params=event_params,
                              retraction=False,
@@ -342,11 +375,12 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
              )
 
     args_rem = ['python',
-                'recycler.py', 
+                'recycler.py',
                 f'--skymapfilename={OUTPUT_TRIGGER}/bayestar_{alerttype}.fits.gz',
                 f'--triggerpath={OUTPUT_PATH}',
                 f'--triggerid={trigger_id}',
-                f'--mjd='+str(trigger_mjd),
+                f'--mjd={trigger_mjd}',
+                f'--event={EVENT_KIND}',
                 '--official',
                 '--hasrem']
     
@@ -355,7 +389,8 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
                 f'--skymapfilename={OUTPUT_TRIGGER}/bayestar_{alerttype}.fits.gz',
                 f'--triggerpath={OUTPUT_PATH}',
                 f'--triggerid={trigger_id}',
-                f'--mjd='+str(trigger_mjd),
+                f'--mjd={trigger_mjd}',
+                f'--event={EVENT_KIND}',
                 '--official',
                 '--norem']
 
@@ -368,24 +403,11 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
     except:
         pass
 
-    hasrem_log = open(f'{OUTPUT_TRIGGER}/recycler_rem.log', 'w')
-    norem_log = open(f'{OUTPUT_TRIGGER}/recycler_norem.log', 'w')
+    subprocess.Popen(args_rem),
+    subprocess.Popen(args_norem),
 
-    hasrem = subprocess.Popen(args_rem),
-                            #   stdout=hasrem_log,
-                            #   stderr=hasrem_log,
-                            #   text=True)
-    
-    norem = subprocess.Popen(args_norem),
-                            #  stdout=norem_log,
-                            #  stderr=norem_log,
-                            #  text=True)
-
-    hasrem_log.close()
-    norem_log.close()
     # Need to send an email here saying analysis code was fired
-    log.info('fired off job!')
-    log.info(f'See log here: {OUTPUT_TRIGGER}')
+    log.info('fired off recycler!')
 
 def imAliveEmail():
     pass
