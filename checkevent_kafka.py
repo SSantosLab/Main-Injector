@@ -130,7 +130,7 @@ def send_first_trigger_email(trigger_id: int,
         DISTSIGMA: {event_params['DISTSIGMA']:.2} Mpc
         """
     
-    subject = f'{plus} Trigger {trigger_id} FAR: {far}. '
+    subject = f'{plus} Trigger {trigger_id} MJD: {MJD} Classification: {EVENT_KIND} ({EVENT_PROB}) FAR: {far} Alert Type {event_params["alerttype"]}. '
 
     send_texts_and_emails.postToSLACK(
         subject,
