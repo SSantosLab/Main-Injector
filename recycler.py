@@ -21,6 +21,7 @@ try:
         longopts=["triggerpath=",
                   "triggerid=",
                   "mjd=",
+                  "event=",
                   "exposure_length=",
                   "official",
                   "skymapfilename=",
@@ -181,7 +182,7 @@ def run_strategy_and_onering(skymap_filename,
         Exposure for Inner Region: {exposure_inner}
         Json file path: {json_output}
         """
-    send.postToSLACK(subject=subject, text=text, official=True, atchannel=True)
+    #send.postToSLACK(subject=subject, text=text, official=True, atchannel=True)
 
 moony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
                                         args=(skymap_filename,
