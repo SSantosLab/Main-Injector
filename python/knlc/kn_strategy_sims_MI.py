@@ -3,7 +3,7 @@ import sys
 import math
 import glob
 import os.path
-import time
+import time as time_mod
 import datetime
 from subprocess import run
 from math import log10
@@ -1637,7 +1637,7 @@ def get_detection_later(p_, p_later, start_time, delay, start_later):
 
 
 if __name__ == '__main__':
-    start = time.time()
+    start = time_mod.time()
     parser = ArgumentParser(__doc__)
 
     parser.add_argument('--input',
@@ -2237,6 +2237,6 @@ for e in event_list:
                 plt.savefig(
                     plot_name_+str(time_delays[j])+"exp"+str(exposure_times_calc[k])+"_dist.png")
 
-end = time.time() - start
+end = time_mod.time() - start
 with open(f'{out_dir}/strategy_runtime.log', 'w') as f:
     f.write(f'This process finished in {end:.2f} seconds!')

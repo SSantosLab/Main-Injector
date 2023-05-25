@@ -126,13 +126,14 @@ def run_strategy_and_onering(skymap_filename,
         log.info(MSG)
         return
     
-    current_time = datetime.datetime.now().strftime('%Y%m%d%H%M')
+    mjd = str(mjd).replace('.','')
+    current_time = mjd #datetime.datetime.now().strftime('%Y%m%d%H%M')
     cmd = 'python ' +\
         'python/knlc/kn_strategy_sims_MI.py '+\
-        f'--input {trigger_path}/{trigger_id} '+\
-        f'--output {trigger_path}/{trigger_id} '+\
+        f'--input {trigger_path}'+'/'+f'{trigger_id} '+\
+        f'--output {trigger_path}'+'/'+f'{trigger_id} '+\
         f'--teff-type {sky_condition} ' +\
-        f'--kn-type {kn_type} ' + \
+        f'--kn-type {kn_type} ' +\
         f'--time {current_time}'
     
     path = os.path.join(f'{trigger_path}/{trigger_ids[0]}')
@@ -157,8 +158,9 @@ def run_strategy_and_onering(skymap_filename,
     df.sort_values(by='Deprob1', ascending=False, inplace=True)
     optimal_strategy = df.iloc[0]
     outer, inner, filt, exposure_outer, exposure_inner = optimal_strategy[1:6]
-    json_output = os.path.join(os.path.abspath(__file__),
-                               {trigger_path}/{trigger_id},
+    json_output = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
+                               trigger_path,
+			                   trigger_id,
                                f"des-gw_{current_time}_{sky_condition}.json"
                                )
     
@@ -182,7 +184,7 @@ def run_strategy_and_onering(skymap_filename,
         Exposure for Inner Region: {exposure_inner}
         Json file path: {json_output}
         """
-    #send.postToSLACK(subject=subject, text=text, official=True, atchannel=True)
+    send.postToSLACK(subject=subject, text=text, official=True, atchannel=True)
 
 moony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
                                         args=(skymap_filename,
