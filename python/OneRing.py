@@ -45,7 +45,9 @@ def run_or(
     propid='propid', 
     jsonFilename="des-gw.json",
     test=False,
-    plot_numbers=False
+    plot_numbers=False,
+    max_hex_count=None,
+    max_hex_time=None
 ):
     
     camera = "decam"
@@ -147,6 +149,20 @@ def run_or(
     # this prints details to the screen, a prototype for some action on them
     #obs_object = [simplicity.calc(ra, dec, prob, exp, flt, mjd) for exp in expTime]
     #obs_object = simplicity.calc(ra[0:1], dec[0:1], prob[0:1], expTime[0:1], flt, mjd)
+
+
+
+    if max_hex_count:
+        num_hexes_allowed = int(max_hex_count)
+        ra = ra[:num_hexes_allowed]
+        dec = dec[:num_hexes_allowed]
+        expTime = expTime[:num_hexes_allowed]
+
+    if max_hex_time:
+        num_hexes_allowed = int(max_hex_time // expTime_inner)
+        ra = ra[:num_hexes_allowed]
+        dec = dec[:num_hexes_allowed]
+        expTime = expTime[:num_hexes_allowed]
 
     # Now we have the hexes we're going to observe tonight!
     # JSON writing

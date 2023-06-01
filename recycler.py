@@ -26,7 +26,9 @@ try:
                   "official",
                   "skymapfilename=",
                   "hasrem",
-                  "norem"])
+                  "norem",
+                  "max_hex_count=",
+                  "max_hex_time="])
 
 except getopt.GetoptError as err:
     print(str(err))
@@ -63,6 +65,9 @@ resolution = config["resolution"]
 hasrem = False
 #    norem = False
 
+max_hex_time = None
+max_hex_count = None
+
 dontwrap = False
 for o, a in opt:
     print('Option')
@@ -93,7 +98,11 @@ for o, a in opt:
        hasrem = False
     elif o in ['--event']:
         event = str(a)
-
+    elif o in ['--max_hex_time']:
+        max_hex_time = float(a)
+    elif o in ['--max_hex_count']:
+        max_hex_count = float(a)
+        
     else:
         print("Warning: option", o, "with argument", a, "is not recognized")
 
@@ -173,7 +182,9 @@ def run_strategy_and_onering(skymap_filename,
         exposure_outer,
         mjd,
         resolution=resolution,
-        jsonFilename=json_output
+        jsonFilename=json_output,
+        max_hex_count=max_hex_count,
+        max_hex_time=max_hex_time
     )
     subject = f'Strategy for event {event}'
     text = f"""\
@@ -184,7 +195,7 @@ def run_strategy_and_onering(skymap_filename,
         Exposure for Inner Region: {exposure_inner}
         Json file path: {json_output}
         """
-    send.postToSLACK(subject=subject, text=text, official=True, atchannel=True)
+    send.postToSLACK(subject=subject, text=text, official=official, atchannel=True)
 
 moony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
                                         args=(skymap_filename,
