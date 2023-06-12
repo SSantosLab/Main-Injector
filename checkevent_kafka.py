@@ -341,7 +341,10 @@ def process_kafka_gcn(payload: dict, mode: str = 'test') -> None:
             log.info('Got BBH event with FAR less than 1000 years')
             log.info('Back to Listening..')
             return
-        
+    
+    if EVENT_KIND == 'terrestrial':
+        return
+    
     send_first_trigger_email(trigger_id=trigger_id,
                              event_params=event_params,
                              retraction=False,
