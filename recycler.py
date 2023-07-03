@@ -1,220 +1,166 @@
-
-import sys
-import getopt
 import os
-import yaml
-from subprocess import run, Popen
 import OneRing
-import send_texts_and_emails as send
 import pandas as pd
-import datetime
-import logging as log
 import multiprocessing
+from subprocess import run
+from argparse import ArgumentParser
+from astropy.io import fits
+from handlers.slack import SlackBot
 
-FORMAT = '%(asctime)s %(levelname)-8s %(message)s'
-log.basicConfig(format=FORMAT)
+parser = ArgumentParser()
+parser.add_argument('--trigger-id',
+                    type=str,
+                    help='Superevent ID. example: S230615az')
+parser.add_argument('--skymap',
+                    type=str,
+                    help='Path to superevent\'s skymap.')
+parser.add_argument('--event',
+                    type=str,
+                    help='Source of GW Sginal. Can be BNS, NSBH or BBH.')
+parser.add_argument('--max-hex-count',
+                    type=float,
+                    default=None,
+                    nargs='?',
+                    help='Limit the number of hexes in json file. Default is None')
+parser.add_argument('--max-hex-time',
+                    type=float,
+                    default=None,
+                    nargs='?',
+                    help='Limit the number of hexes in json file based on time in seconds. Default is None.')
 
-try:
-    args = sys.argv[1:]
-    opt, arg = getopt.getopt(
-        args, "tp:tid:mjd:exp:sky",
-        longopts=["triggerpath=",
-                  "triggerid=",
-                  "mjd=",
-                  "event=",
-                  "exposure_length=",
-                  "official",
-                  "skymapfilename=",
-                  "hasrem",
-                  "norem",
-                  "max_hex_count=",
-                  "max_hex_time="])
+parser.add_argument('--official',
+                    action='store_true',
+                    default=False,
+                    help='If official, starts recycler for an official event.')
 
-except getopt.GetoptError as err:
-    print(str(err))
-    print("Error : incorrect option or missing argument.")
-    print(__doc__)
-    sys.exit(1)
+args = parser.parse_args()
 
-# Read in config
-with open(
-    os.path.join(os.environ["ROOT_DIR"], "recycler.yaml"), "r"
-) as f:
-    config = yaml.safe_load(f)
-# Set defaults to config
-trigger_path = config["trigger_path"]
+print('Settings for Recycler:')
 
-real_or_sim = config["real_or_sim"]
+arguments = vars(args)
+for key,value in arguments.items():
+    print('---------------')
+    print(f'{key}: {value}')
+    print()
+    print('---------------')
 
-official = False
+trigger_id = args.trigger_id
+skymap = args.skymap
+event = args.event
+max_hex_time = args.max_hex_time
+max_hex_count = args.max_hex_count
+official = args.official
 
-if config["skymap_filename"] == 'Default':
-    skymap_filename = None
-else:
-    skymap_filename = config["skymap_filename"]
+with fits.open(skymap) as f:
+    header = f[1].header
 
-trigger_ids = [config["trigger_id"]]
-
-force_mjd = config["force_mjd"]
-resolution = config["resolution"]
-
-#exposure_length = config["exposure_length"]
-
-# Override defaults with command line arguments
-# THESE NOT GUARANTEED TO WORK EVER SINCE WE SWITCHED TO YAML
-hasrem = False
-#    norem = False
-
-max_hex_time = None
-max_hex_count = None
-
-dontwrap = False
-for o, a in opt:
-    print('Option')
-    print(o)
-    print(a)
-    print('-----')
-    if o in ["-tp", "--triggerpath"]:
-        trigger_path = str(a)
-    elif o in ["-tid", "--triggerid"]:
-        trigger_ids = [str(a)]
-        dontwrap = True
-    elif o in ["-mjd", "--mjd"]:
-        mjd = float(a)
-    # elif o in ["-exp","--exposure_length"]:
-    #    exposure_length = float(a)
-    elif o in ["-hours", "--hours_available"]:
-        hours_available = float(a)
-    elif o in ["-sky", "--skymapfilename"]:
-        skymap_filename = str(a)
-    elif o in ['--hasrem']:
-        hasrem = True  # str(a)
-        print("HASREM ", hasrem)
-    elif o in ['--official']:
-        official = True
-    elif o in ['--hasrem']:
-        hasrem = str(a)
-    elif o in ['--norem']:
-       hasrem = False
-    elif o in ['--event']:
-        event = str(a)
-    elif o in ['--max_hex_time']:
-        max_hex_time = float(a)
-    elif o in ['--max_hex_count']:
-        max_hex_count = float(a)
-        
-    else:
-        print("Warning: option", o, "with argument", a, "is not recognized")
-
-# Clear bad triggers, only used for wrapping all triggers...
-badtriggers = open('badtriggers.txt', 'w')
-badtriggers.close()
-
-trigger_path = trigger_path.rstrip("/")
-trigger_id = trigger_ids[0]
-log.info(f'Running strategy for {trigger_ids[0]}')
+mjd = header['MJD-OBS']
 
 def run_strategy_and_onering(skymap_filename,
-                             mjd,
-                             trigger_path,
                              trigger_id,
+                             mjd,
                              sky_condition: str = 'moony',
                              event: str = 'BNS'):
+    if event != 'BBH':
+        if event == 'BNS':
+            kn_type = 'blue'
 
-    if event == 'BNS':
-        kn_type = 'blue'
-    elif event == 'NSBH':
-        kn_type = 'red'
+        if event == 'NSBH':
+            kn_type = 'red'
+            
+        mjd = str(mjd).replace('.','')
+        current_time = mjd
+
+        input_dir = os.path.dirname(skymap)
+        output_dir = input_dir
+        cmd = 'python ' +\
+            'python/knlc/kn_strategy_sims_MI.py '+\
+            f'--input-skymap {skymap} '+\
+            f'--output {output_dir} '+\
+            f'--teff-type {sky_condition} ' +\
+            f'--kn-type {kn_type} ' +\
+            f'--time {current_time}'
+            
+        output_log = os.path.join(output_dir,
+                                f'{sky_condition}_{kn_type}_strategy.log')
+        strategy_log = open(output_log, 'w')
+
+        print('strategy started!')
+        run(cmd,
+            shell=True,
+            stdout=strategy_log,
+            stderr=strategy_log,
+            text=True)
+            
+        strategy_file = f'bayestar_{sky_condition}_{kn_type}_{current_time}' +\
+                        '_allconfig.csv'
+            
+        strategy_log.close()
+        strategy = os.path.join(output_dir, strategy_file)
+            
+        df = pd.read_csv(strategy, header=1)
+        df.sort_values(by='Detprob1', ascending=False, inplace=True)
+        optimal_strategy = df.iloc[0]
+        outer, inner, filt, exposure_outer, exposure_inner = optimal_strategy[1:6]
+        json_output = os.path.join(output_dir, 
+                                f"des-gw_{current_time}_{sky_condition}.json")
+        
+        df.assign(json_output=json_output)
+        filt = filt[0]
+
     else:
-        kn_type = None
-
-    if kn_type is None:
-        MSG = 'The current event is either BBH or Terrestrial.' +\
-              'We don\'t have a strategy for those kind of events.' +\
-              'Hence, not running strategy.'
-        log.info(MSG)
-        return
-    
-    mjd = str(mjd).replace('.','')
-    current_time = mjd #datetime.datetime.now().strftime('%Y%m%d%H%M')
-    cmd = 'python ' +\
-        'python/knlc/kn_strategy_sims_MI.py '+\
-        f'--input {trigger_path}'+'/'+f'{trigger_id} '+\
-        f'--output {trigger_path}'+'/'+f'{trigger_id} '+\
-        f'--teff-type {sky_condition} ' +\
-        f'--kn-type {kn_type} ' +\
-        f'--time {current_time}'
-    
-    path = os.path.join(f'{trigger_path}/{trigger_ids[0]}')
-    output_log = os.path.join(path, f'{sky_condition}_{kn_type}_strategy.log')
-    strategy_log = open(output_log, 'w')
-
-    run(cmd,
-        shell=True,
-        stdout=strategy_log,
-        stderr=strategy_log,
-        text=True)
-    
-    log.info(f'Strategy for {trigger_id} done!')
-    log.info(f'See log report in {output_log}')
-    strategy_file = f'bayestar_{sky_condition}_{kn_type}_{current_time}' +\
-                    '_allconfig.csv'
-    
-    strategy_log.close()
-    strategy = os.path.join(path, strategy_file)
-    
-    df = pd.read_csv(strategy, header=1)
-    df.sort_values(by='Deprob1', ascending=False, inplace=True)
-    optimal_strategy = df.iloc[0]
-    outer, inner, filt, exposure_outer, exposure_inner = optimal_strategy[1:6]
-    json_output = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
-                               trigger_path,
-			                   trigger_id,
-                               f"des-gw_{current_time}_{sky_condition}.json"
-                               )
+        # Default Strategy for BBHs
+        outer, inner, filt = 0.9, 0.5, 'i'
+        exposure_inner, exposure_outer = 90, 90
     
     OneRing.run_or(
-        skymap_filename,
+        skymap,
         outer,
         inner,
-        filt[0],
+        filt,
         exposure_inner,
         exposure_outer,
         mjd,
-        resolution=resolution,
+        resolution=64,
         jsonFilename=json_output,
         max_hex_count=max_hex_count,
         max_hex_time=max_hex_time
     )
+
     subject = f'Strategy for event {event}'
-    text = f"""\
-        Outer region coverage: {outer}
-        Inner region coverage: {inner}
-        Filter Combination: {filt}
-        Exposure for Outer Region: {exposure_outer}
-        Exposure for Inner Region: {exposure_inner}
-        Json file path: {json_output}
-        """
-    send.postToSLACK(subject=subject, text=text, official=official, atchannel=True)
+    text = f'Outer region coverage: {outer}\n' +\
+        f'Inner region coverage: {inner}\n' +\
+        f'Filter: {filt}\n' +\
+        f'Exposure for Outer Region: {exposure_outer}\n' +\
+        f'Exposure for Inner Region: {exposure_inner}\n' +\
+        f'Json file path: {json_output}\n'
+    
+    if official:
+        mode = 'observation'
+    else:
+        mode = 'test'
+    slack_bot = SlackBot(mode=mode)
 
-moony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
-                                        args=(skymap_filename,
-                                            mjd,
-                                            trigger_path,
-                                            trigger_id,
-                                            'moony',
-                                            event,))
+    slack_bot.post_message(subject=subject,
+                           text=text)
 
-notmoony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
-                                            args=(skymap_filename,
-                                                mjd,
-                                                trigger_path,
-                                                trigger_id,
-                                                'notmoony',
-                                                event,))
+# moony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
+#                                         args=(skymap,
+#                                             trigger_id,
+#                                             mjd,
+#                                             'moony',
+#                                             event,))
 
-moony_strategy.start()
-notmoony_strategy.start()
+# notmoony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
+#                                             args=(skymap,
+#                                                 trigger_id,
+#                                                 mjd,
+#                                                 'notmoony',
+#                                                 event,))
+
+# moony_strategy.start()
+# notmoony_strategy.start()
+
 ####### BIG MONEY NO WHAMMIES ###############################################
 # if config["wrap_all_triggers"]:
 #     if not dontwrap:
