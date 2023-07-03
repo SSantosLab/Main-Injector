@@ -13,7 +13,7 @@ class EmailBot():
         ROOT = os.path.abspath(__file__)
         ROOT = os.path.dirname(ROOT)
         ROOT = os.path.dirname(ROOT)
-
+        self.ROOT = ROOT
         self.CONFIG = os.path.join(ROOT, 'configs','communications.yaml')
         with open(self.CONFIG) as f:
             email_config = yaml.load(f, Loader=SafeLoader)
@@ -41,7 +41,7 @@ class EmailBot():
 
         print('Preparing email')
 
-        people = np.genfromtxt('../DESGW_O4_People.TXT',
+        people = np.genfromtxt(f"{os.path.join(self.ROOT,'DESGW_O4_People.TXT')}",
                                 dtype=[('name','S50'),('email','S50'),('phone','S50')],
                                 delimiter=",",
                                 skip_header=1)
@@ -49,7 +49,7 @@ class EmailBot():
 
         test_emails = [
             'andsouzasanttos@gmail.com',
-            # 'norafs@umich.edu'
+            'norafs@umich.edu'
         ]
         
         if self.mode =='test':

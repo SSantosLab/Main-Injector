@@ -35,7 +35,7 @@ class GWStreamer():
         self.OUTPUT_TRIGGER = None
         self.SKYMAP_OUTPUT = None
         self._ROOT = root
-        # self.email_bot = EmailBot(mode=mode)
+        self.email_bot = EmailBot(mode=mode)
         self.slack_bot = SlackBot(mode=mode)
 
     def _get_max_prob(self, record: dict) -> tuple:
@@ -108,9 +108,7 @@ class GWStreamer():
             f"DISTMEAN: {record['event']['distmean']:.2f} Mpc\n"+\
             f"DISTSIGMA: {record['event']['distsigma']:.2} Mpc\n"+\
             f"Has Mass Gap: {record['event']['properties']['HasMassGap']}\n"+\
-            f"URL: https://gracedb.ligo.org/apiweb/superevents/S230627c/files/bayestar.png"
-            # f"URL: {record['urls']['gracedb']}\n"
-            # f"URL: https://gracedb.ligo.org/apiweb/superevents/{trigger_id}/files/bayestar.png"
+            f"URL: https://gracedb.ligo.org/apiweb/superevents/{trigger_id}/files/bayestar.png"
         
         source, prob_source = self._get_max_prob(record)
 
@@ -293,18 +291,12 @@ class GWStreamer():
                                              record=record,
                                              retraction=False)
 
-        # self.email_bot = EmailBot(mode=self.mode)
-        # self.email_bot.send_email(subject=subject,text=text)
+        self.email_bot = EmailBot(mode=self.mode)
+        self.email_bot.send_email(subject=subject,text=text)
         self.slack_bot = SlackBot(mode=self.mode)
         self.slack_bot.post_message(subject=subject,text=text)
 
-        # OUTPUT_IMAGE = OUTPUT_FLATTEN.replace('bayestar.fits.gz', 'bayestar.png')
-        # make_image = f'ligo-skymap-plot {OUTPUT_FLATTEN} --annotate '+\
-        #             f'--contour 50 90 -o {OUTPUT_IMAGE}'
-        
-        # subprocess.run(make_image,shell=True)
-        # self.slack_bot.post_image(os.path.join(self.OUTPUT_TRIGGER, 'bayestar.png'))
-        
+        OUTPUT_IMAGE = OUTPUT_FLATTEN.replace('bayestar.fits.gz', 'bayestar.png')
         recycler = os.environ["ROOT_DIR"]
         recycler = 'python ' +\
                     f'{recycler}/recycler.py ' +\

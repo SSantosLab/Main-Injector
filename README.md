@@ -32,12 +32,7 @@ The current workflow of Main-Injector is:
         python listener.py --mode test
         ```
     
-    2. From gwstreamer.py
-    ```bash
-        cd handler; python gwstreamer.py
-    ```
-
-    3. From recyler.py
+    2. From recyler.py
     ```bash
     python recycler.py --triger-id MS181101ab --skymap OUTPUT/TESTING/MS181101ab/PRELIMINARY_0/bayestar.fits.gz --event BNS --official
     ```
