@@ -194,16 +194,19 @@ class GWStreamer():
         alert_type = record['alert_type']
         trigger_id = record['superevent_id']
 
-        if record['superevent_id'][0] != 'M':
-            return
-
         if self.mode == 'observation':
             if record['superevent_id'][0] != 'S':
                 return
+            
+            self.OUTPUT_PATH = os.path.join(self._ROOT,
+                                            "OUTPUT/O4REAL")
                 
         if (self.mode == 'test') or (self.mode == 'mock'):
             if record['superevent_id'][0] != 'M':
                 return
+            
+            self.OUTPUT_PATH = os.path.join(self._ROOT,
+                                "OUTPUT/TESTING")
 
         if record['alert_type'] == 'RETRACTION':
             subject, text = self._format_message(trigger_id=trigger_id,
@@ -212,15 +215,6 @@ class GWStreamer():
             
             self.slack_bot.post_message(subject, text)
             return None
-
-        
-            
-            self.OUTPUT_PATH = os.path.join(self._ROOT,
-                                            "OUTPUT/TESTING")
-
-            
-            self.OUTPUT_PATH = os.path.join(self._ROOT,
-                                            "OUTPUT/O4REAL")
 
         if record['event']['group'] != 'CBC':
             return
