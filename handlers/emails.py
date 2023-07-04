@@ -13,6 +13,7 @@ class EmailBot():
         ROOT = os.path.abspath(__file__)
         ROOT = os.path.dirname(ROOT)
         ROOT = os.path.dirname(ROOT)
+
         self.ROOT = ROOT
         self.CONFIG = os.path.join(ROOT, 'configs','communications.yaml')
         with open(self.CONFIG) as f:
@@ -52,52 +53,54 @@ class EmailBot():
             'norafs@umich.edu'
         ]
         
-        if self.mode =='test':
-            emails = test_emails
+        if not emergency:
 
-        else:
-            for email in people['email']:
-                email = email.decode('utf-8')
-                emails.append(email.replace('\t','').replace(' ',''))
+            if self.mode =='test':
+                emails = test_emails
+                subject = 'OFFLINE TESTING ' + subject
+            else:
+                for email in people['email']:
+                    email = email.decode('utf-8')
+                    emails.append(email.replace('\t','').replace(' ',''))
 
-        for email in emails:
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = subject
-            msg['From'] = from_addr
-            msg['To'] = email
-            payload = MIMEText(text)
-            msg.attach(payload)
+            for email in emails:
+                msg = MIMEMultipart('alternative')
+                msg['Subject'] = subject
+                msg['From'] = from_addr
+                msg['To'] = email
+                payload = MIMEText(text)
+                msg.attach(payload)
 
-            with smtplib.SMTP(smtpserver) as server:
-                server.starttls()
-                server.login(gmail_login, gmail_password)
-                resp = server.sendmail(from_addr=from_addr,
-                                        to_addrs=[email],
-                                        msg=msg.as_string())
-                
-                print('Send email success: {0}'.format(email))      
+                with smtplib.SMTP(smtpserver) as server:
+                    server.starttls()
+                    server.login(gmail_login, gmail_password)
+                    resp = server.sendmail(from_addr=from_addr,
+                                            to_addrs=[email],
+                                            msg=msg.as_string())
+                    
+                    print('Send email success: {0}'.format(email))      
 
-        
+            
 
-        phone_numbers = []
-        for phone in people['phone']:
-                phone = phone.decode('utf-8')
-                phone = phone.replace('\t','').replace(' ','')
-                if phone != 'None':
-                    phone_numbers.append(phone)
+            phone_numbers = []
+            for phone in people['phone']:
+                    phone = phone.decode('utf-8')
+                    phone = phone.replace('\t','').replace(' ','')
+                    if phone != 'None':
+                        phone_numbers.append(phone)
 
-        for phone in phone_numbers:
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = subject
-            msg['To'] = phone
-            payload = MIMEText(text)
-            msg.attach(payload)
+            for phone in phone_numbers:
+                msg = MIMEMultipart('alternative')
+                msg['Subject'] = subject
+                msg['To'] = phone
+                payload = MIMEText(text)
+                msg.attach(payload)
 
-            with smtplib.SMTP(smtpserver) as server:
-                server.starttls()
-                server.login(gmail_login, gmail_password)
-                resp = server.sendmail(from_addr, phone, msg.as_string())
-                print('Send email success: {0}'.format(phone))
+                with smtplib.SMTP(smtpserver) as server:
+                    server.starttls()
+                    server.login(gmail_login, gmail_password)
+                    resp = server.sendmail(from_addr, phone, msg.as_string())
+                    print('Send email success: {0}'.format(phone))
 
         if emergency:
         

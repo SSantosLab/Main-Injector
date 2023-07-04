@@ -47,12 +47,12 @@ if __name__ == "__main__":
             consumer.subscribe(['igwn.gwalert'])
 
             while True:
-                for message in consumer.consume(timeout=1):
-                    gcn_alert = message.value()
+                for message in consumer.consume(timeout=10):
+                    gcn_alert = json.loads(message.value())
                     gw_streamer.handle(gcn_alert)
 
         except Exception as e:
             print(e)
-            # EmailBot.send_email(subject='Listener went down, see traceback',
-            #                     text=traceback.format_exc(),
-            #                     emergency=True)
+            email_bot.send_email(subject='Listener went down, see traceback',
+                                text=traceback.format_exc(),
+                                emergency=True)

@@ -139,27 +139,28 @@ def run_strategy_and_onering(skymap_filename,
         mode = 'observation'
     else:
         mode = 'test'
+
     slack_bot = SlackBot(mode=mode)
 
     slack_bot.post_message(subject=subject,
                            text=text)
 
-# moony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
-#                                         args=(skymap,
-#                                             trigger_id,
-#                                             mjd,
-#                                             'moony',
-#                                             event,))
+moony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
+                                        args=(skymap,
+                                            trigger_id,
+                                            mjd,
+                                            'moony',
+                                            event,))
 
-# notmoony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
-#                                             args=(skymap,
-#                                                 trigger_id,
-#                                                 mjd,
-#                                                 'notmoony',
-#                                                 event,))
+notmoony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
+                                            args=(skymap,
+                                                trigger_id,
+                                                mjd,
+                                                'notmoony',
+                                                event,))
 
-# moony_strategy.start()
-# notmoony_strategy.start()
+moony_strategy.start()
+notmoony_strategy.start()
 
 ####### BIG MONEY NO WHAMMIES ###############################################
 # if config["wrap_all_triggers"]:
