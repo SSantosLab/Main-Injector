@@ -108,7 +108,8 @@ class GWStreamer():
             f"DISTMEAN: {record['event']['distmean']:.2f} Mpc\n"+\
             f"DISTSIGMA: {record['event']['distsigma']:.2} Mpc\n"+\
             f"Has Mass Gap: {record['event']['properties']['HasMassGap']}\n"+\
-            f"URL: https://gracedb.ligo.org/apiweb/superevents/{trigger_id}/files/bayestar.png"
+            f"GraceDB Link: {record['urls']['gracedb']}\n"+\
+            f"Skymap Link: https://gracedb.ligo.org/apiweb/superevents/{trigger_id}/files/bayestar.png"
         
         source, prob_source = self._get_max_prob(record)
 
