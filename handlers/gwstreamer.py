@@ -148,6 +148,37 @@ class GWStreamer():
         
         return
     
+    def make_trigger_data(self, record: dict) -> dict:
+        """parses the record, returning a dict with
+        the appropriate format for the website."""
+
+        columns = ["trigger_label",
+                   "type",
+                   "ligo_prob",
+                   "far",
+                   "distance",
+                   "mjd",
+                   "event_datetime",
+                   "mock",
+                   "image_urgl"]
+        
+        trigger_id = record['superevent_id']
+        alert_type, prob = self._get_max_prob(record)
+        far = record['event']['far']
+        distance = record['event']['distmean']
+        mjd = record['event']
+        event_datetime = record['event']['time']
+        mock = False
+        image_url = (f'https://des-ops.fnal.gov:8082/desgw/Triggers/'
+                     f'{trigger_id}/bayestar/{trigger_id}_animate.gif')
+        
+        values = [trigger_id,alert_type,prob,distance,mjd,
+                  event_datetime,mock,image_url]
+        
+        trigger_data = {key: value for key, value in zip(columns,values)}
+
+        return trigger_data
+
     def process_external_coinc(self,
                                trigger_id: str,
                                alert_type: str,
@@ -253,6 +284,7 @@ class GWStreamer():
                                         alert_type=alert_type,
                                         external_coinc=external_coinc)
             record['external_coinc'].pop('combined_skymap')
+
         with open(f'{self.OUTPUT_TRIGGER}/{trigger_id}.json', 'w') as jsonfile:
             json.dump(record, jsonfile)
 
@@ -297,12 +329,11 @@ class GWStreamer():
         self.slack_bot = SlackBot(mode=self.mode)
         self.slack_bot.post_message(subject=subject,text=text)
 
-        OUTPUT_IMAGE = OUTPUT_FLATTEN.replace('bayestar.fits.gz', 'bayestar.png')
         recycler = os.environ["ROOT_DIR"]
-        recycler = 'python ' +\
-                    f'{recycler}/recycler.py ' +\
-                    f'--trigger-id {trigger_id} ' +\
-                    f'--skymap {self.OUTPUT_TRIGGER}/bayestar.fits.gz ' +\
-                    f'--event {source} ' +\
-                    '--official'
+        recycler = (f'python {os.path.join(recycler,"recycler.py")} '
+                    f'--trigger-id {trigger_id} '
+                    f'--skymap {self.OUTPUT_TRIGGER}/bayestar.fits.gz '
+                    f'--event {source} '
+                    '--official')
+        
         subprocess.Popen(recycler,shell=True)

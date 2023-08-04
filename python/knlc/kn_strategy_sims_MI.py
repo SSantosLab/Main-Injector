@@ -15,6 +15,7 @@ import numpy as np
 import matplotlib
 import astropy.units as u
 import matplotlib.pyplot as plt
+import astropy_healpix as ah
 from astropy.cosmology import z_at_value
 from scipy.stats import uniform
 from scipy.stats import norm
@@ -22,6 +23,10 @@ from scipy.interpolate import interp1d
 from astropy.cosmology import WMAP9 as cosmo
 from ligo.skymap.postprocess import find_greedy_credible_levels
 from astropy.io import fits
+from loguru import logger
+from typing import List
+from astropy.table import QTable
+
 matplotlib.use("Agg")
 
 np.set_printoptions(threshold=sys.maxsize)
@@ -76,63 +81,6 @@ def open_ascii_cat(file_name, **kwargs):
                                  usecols=cols, unpack=unpack)
     return data
 
-
-tableau20 = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),
-             (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),
-             (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),
-             (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),
-             (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)]
-
-
-markers20 = ["*", "D", ".", "v", "^", "<", ">", "1",
-             "2", "3", "4", "8", "s", "p", "P", ",", "o"]
-
-
-for i in range(len(tableau20)):
-    r, g, b = tableau20[i]
-    tableau20[i] = (r / 255., g / 255., b / 255.)
-
-
-def plt_style():
-    plt.rcParams.update({
-                        'lines.linewidth': 1.0,
-                        'lines.linestyle': '-',
-                        'lines.color': 'black',
-                        'font.family': 'serif',
-                        'font.weight': 'normal',
-                        'font.size': 13.0,
-                        'text.color': 'black',
-                        'text.usetex': False,
-                        'axes.edgecolor': 'black',
-                        'axes.linewidth': 1.0,
-                        'axes.grid': False,
-                        'axes.titlesize': 'x-large',
-                        'axes.labelsize': 'x-large',
-                        'axes.labelweight': 'normal',
-                        'axes.labelcolor': 'black',
-                        'axes.formatter.limits': [-4, 4],
-                        'xtick.major.size': 7,
-                        'xtick.minor.size': 4,
-                        'xtick.major.pad': 8,
-                        'xtick.minor.pad': 8,
-                        'xtick.labelsize': 'medium',
-                        'xtick.minor.width': 1.0,
-                        'xtick.major.width': 1.0,
-                        'ytick.major.size': 7,
-                        'ytick.minor.size': 4,
-                        'ytick.major.pad': 8,
-                        'ytick.minor.pad': 8,
-                        'ytick.labelsize': 'medium',
-                        'ytick.minor.width': 1.0,
-                        'ytick.major.width': 1.0,
-                        'legend.numpoints': 1,
-                        'legend.shadow': False,
-                        'legend.frameon': False})
-
-
-# Handle command-line arguments
-
-
 def weighted_avg_and_std(values, weights):
     """
     Return the weighted average and standard deviation.
@@ -178,13 +126,11 @@ class KNCalc():
 
         self.event = skymap_name
         self.sw_mexp = False
-        self.distance = distance
+        self.distance = float(distance)
         self.distance_err = distance_err
-
         self.loglan = loglan
         self.vk = vk
         self.logmass = logmass
-
         self.set_mjd_correction = set_mjd_correction
 
         if float(time_delay) > 400.8:
@@ -201,12 +147,15 @@ class KNCalc():
 
         if (delta_mjd_full != self.delta_mjd) and (self.set_mjd_correction):
             self.set_mjd_correction = True
+
             if delta_mjd_full > self.delta_mjd:
                 delta_mjd_corr = self.delta_mjd+0.1
+            
                 if (delta_mjd_full-self.delta_mjd) >= 0.05:
                     delta_mjd_later = self.delta_mjd+0.4
             else:
                 delta_mjd_corr = self.delta_mjd-0.1
+
             delta_mjd_corr = round(delta_mjd_corr, 1)
         else:
             self.set_mjd_correction = False
@@ -266,17 +215,16 @@ class KNCalc():
         df_later['ZMEAN'] = np.mean(df_later[['ZMIN', 'ZMAX']].values, axis=1)
         df['ZMEAN'] = np.mean(df[['ZMIN', 'ZMAX']].values, axis=1)
 
-        mean_z = z_at_value(cosmo.luminosity_distance,
-                            float(self.distance) * u.Mpc)
-        template_df_mean = df[(df['ZMIN'].values < mean_z) &\
-                              (df['ZMAX'].values > mean_z) &\
-                              (df['DELTA_MJD'].values == self.delta_mjd)]
-        template_df_mean = template_df_mean.copy().reset_index(drop=True)
+        mean_z = z_at_value(cosmo.luminosity_distance, self.distance * u.Mpc)
+        
+        template_df_mean = (df[(df['ZMIN'].values < mean_z) &\
+                               (df['ZMAX'].values > mean_z) &\
+                               (df['DELTA_MJD'].values == self.delta_mjd)]
+                              .copy()
+                              .reset_index(drop=True))
 
-        sed_filenames, kn_inds, vks, loglans, logmass_s = open_ascii_cat(
-                                                                    info_file,
-                                                                    unpack=True
-                                                                )
+        _, kn_inds, vks, loglans, logmass_s = open_ascii_cat(info_file,
+                                                             unpack=True)
         loglans = np.array(loglans).astype('float')
         kn_inds = np.array(kn_inds).astype('float')
         vks = np.array(vks).astype('float')
@@ -286,26 +234,31 @@ class KNCalc():
             checkzmax = df['ZMAX'].values > mean_z
 
             if not all(checkzmax):
-                print(f"Object is too far away. mean_z is {mean_z}. Exiting.")
+                logger.warning(f"Object is too far away. mean_z is {mean_z}. Exiting.")
                 self.Flag = 0
                 return
             else:
-                print("Something wrong with knlc photometry template library. Exiting")
+                logger.error("Something wrong with knlc photometry template library. Exiting")
                 sys.exit()
 
         template_df_mean['WEIGHT'] = 1.0 / template_df_mean.shape[0]
         self.template_df_mean = template_df_mean
 
         # Full distance calculation
-        template_df_full = df[df['DELTA_MJD'].values ==
-                              self.delta_mjd].copy().reset_index(drop=True)
-        template_df_later = df_later[df_later['DELTA_MJD'].values == delta_mjd_later].copy(
-        ).reset_index(drop=True)
+        template_df_full = (df[df['DELTA_MJD'].values == self.delta_mjd]
+                            .copy()
+                            .reset_index(drop=True))
+        
+        template_df_later = (df_later[df_later['DELTA_MJD'].values == delta_mjd_later]
+                             .copy()
+                             .reset_index(drop=True))
 
         if self.set_mjd_correction == True:
 
-            template_df_corr = df_corr[df_corr['DELTA_MJD'].values == float(
-                delta_mjd_corr)].copy().reset_index(drop=True)
+            template_df_corr = (df_corr[df_corr['DELTA_MJD'].values == float(delta_mjd_corr)]
+                                .copy()
+                                .reset_index(drop=True))
+            
             mag_g = template_df_full['MAG_g'].values
             mag_r = template_df_full['MAG_r'].values
             mag_i = template_df_full['MAG_i'].values
@@ -430,33 +383,31 @@ class KNCalc():
             if m_exp_kncalc == False:
                 use_map_weights = join(path2map, "weights"),
 
-                use_map_weights_info = join(
-                    path2map,
-                    "weights",
-                    f"{map_name}ac{area_covered}info.npy"
-                )
+                use_map_weights_info = join(path2map,
+                                            "weights",
+                                            f"{map_name}ac{area_covered}info.npy")
 
                 try:
 
                     weights_pre = np.load(use_map_weights)
                     use_map = ""
-                    print("Using preprocessed weights for ", use_map_weights)
+                    logger.info(f"Using preprocessed weights for {use_map_weights}")
                     preprocessed_weights = True
                     area_deg_info, resolution = np.load(use_map_weights_info)
                     self.Resolution = resolution
                     self.area_deg = area_deg_info  # num_pix_covered*resolution
 
                 except:
-                    print(f"Failed to load preprocessed weights for {use_map_weights}")
+                    logger.info(f"Failed to load preprocessed weights for {use_map_weights}")
             else:
-                use_map_weights = join(path2map, "weights", f"{map_name}ac{area_covered}ad{deep_coverage}.npy")
-                use_map_weights_info = join(path2map, "weights", f"{map_name}ac{area_covered}ad{deep_coverage}info.npy")
+                map_weights_name = f"{map_name}ac{area_covered}ad{deep_coverage}.npy"
+                use_map_weights = join(path2map, "weights", map_weights_name)
+                map_weights_info_name = f"{map_name}ac{area_covered}ad{deep_coverage}info.npy"
+                use_map_weights_info = join(path2map, "weights", map_weights_info_name)
 
                 try:
                     weights_pre, weights_pre_deep = np.load(use_map_weights)
-                    area_deg_info, area_deg_deep_info, resolution = np.load(
-                        use_map_weights_info
-                    )
+                    area_deg_info, area_deg_deep_info, resolution = np.load(use_map_weights_info)
                     self.area_deg_deep = area_deg_deep_info  # num_pix_covered_deep*resolution
                     self.Resolution = resolution
                     self.area_deg = area_deg_info  # num_pix_covered*resolution
@@ -474,28 +425,33 @@ class KNCalc():
             use_map_lowres = join(path2map, "lowres", use_map_lowres)
             print("Tryng to open low resolution map")
             try:
-                pb, distmu, distsigma = hp.read_map(use_map_lowres,
+                pb, distmu, distsigma, header = hp.read_map(use_map_lowres,
                                                     field=range(3),
                                                     dtype=[np.float64,
                                                            np.float64,
-                                                           np.float64])
+                                                           np.float64],
+                                                    h=True)
                 
-                # EXTENSION
-                with fits.open(use_map_lowres) as f:
-                    header = f[1].header
+                header = dict(header)
                 skymap_distmean = header['DISTMEAN']
                 #----------
                 distmu_hr_average, distmu_std, distsigma_hr_average, distsigma_std = np.load(
                     use_map_info)
                 reduce_mapresolution = False
                 read_lowres_map = True
+
             except:
-                print(
-                    "Failed to open low resolution map, opening high resolution map", skymap_name)
-                pb, distmu, distsigma, distnorm = hp.read_map(skymap_name, field=range(4), dtype=[
-                                                              np.float64, np.float64, np.float64, np.float64])  # clecio dtype='numpy.float64'
-                with fits.open(skymap_name) as f:
-                    header = f[1].header
+                MSG = (f'Failed to open low resolution map'
+                       f'Opening high resolution map {skymap_name}')
+                logger.info(MSG)
+                pb, distmu, distsigma, header = hp.read_map(skymap_name,
+                                                              field=range(3),
+                                                              dtype=[np.float64,
+                                                                     np.float64,
+                                                                     np.float64,
+                                                                     np.float64],
+                                                              h=True)
+                header = dict(header)
                 skymap_distmean = header['DISTMEAN']
                 read_lowres_map = False
 
@@ -525,8 +481,7 @@ class KNCalc():
             try:
                 mean_z = z_at_value(cosmo.luminosity_distance, float(distmu_check_average) * u.Mpc)
             except:
-                print('Warning: Object too close with distance ',
-                      str(distmu_check_average))
+                logger.warning(f'Object too close with distance {distmu_check_average}')
                 self.Flag = 0
                 return
 
@@ -793,15 +748,20 @@ class KNCalc():
                 print('number of nans'+sum(np.isnan(pb_full)) +
                       ' from '+len(pb_full))
 
+            lum_dist = cosmo.luminosity_distance(template_df_full['ZMEAN'].values)
+            unique_lum_dist = cosmo.luminosity_distance(np.unique(template_df_full['ZMEAN'].values))
+            
             for k in range(0, len(pb_covered)):
-                weights_pix = [norm.pdf(x.value, loc=float(distmu_covered[k]), scale=float(
-                    distsigma_covered[k])) for x in cosmo.luminosity_distance(template_df_full['ZMEAN'].values)]
-                weights_pix_norm = [norm.pdf(x.value, loc=float(distmu_covered[k]), scale=float(
-                    distsigma_covered[k])) for x in cosmo.luminosity_distance(np.unique(template_df_full['ZMEAN'].values))]
+                weights_pix = [norm.pdf(lum_dist,
+                                        loc=float(distmu_covered[k]),
+                                        scale=float(distsigma_covered[k]))]
+                
+                weights_pix_norm = [norm.pdf(unique_lum_dist,
+                                             loc=float(distmu_covered[k]),
+                                             scale=float(distsigma_covered[k]))]
 
 
-                pb_vol_covered = (
-                    pb_covered[k] * distmu_covered[k])/pb_vol_norm
+                pb_vol_covered = (pb_covered[k] * distmu_covered[k])/pb_vol_norm
                 if np.sum(weights_pix_norm) == 0.0:
                     print("the weights pix sum is 0, skipping pixel")
                     continue
@@ -814,24 +774,26 @@ class KNCalc():
 
             print("the weights sum="+str(np.sum(weights_pix_area)))
             template_df_full['WEIGHT'] = weights_pix_area
+            
             if m_exp_kncalc == True:
                 print("Getting the weights sum of Deep region with " +
                       str(len(pb_covered_deep))+" voxels")
                 for k in range(0, len(pb_covered_deep)):
-                    weights_pix_deep = [norm.pdf(x.value, loc=float(distmu_covered_deep[k]), scale=float(
-                        distsigma_covered_deep[k])) for x in cosmo.luminosity_distance(template_df_full['ZMEAN'].values)]
-                    weights_pix_norm_deep = [norm.pdf(x.value, loc=float(distmu_covered_deep[k]), scale=float(
-                        distsigma_covered_deep[k])) for x in cosmo.luminosity_distance(np.unique(template_df_full['ZMEAN'].values))]
+                    weights_pix_deep = [norm.pdf(lum_dist,
+                                                 loc=float(distmu_covered_deep[k]),
+                                                 scale=float(distsigma_covered_deep[k]))]
+                    
+                    weights_pix_norm_deep = [norm.pdf(unique_lum_dist,
+                                                      loc=float(distmu_covered_deep[k]),
+                                                      scale=float(distsigma_covered_deep[k]))]
 
-                    pb_vol_covered_deep = (
-                        pb_covered_deep[k] * distmu_covered_deep[k])/pb_vol_norm
+                    pb_vol_covered_deep = (pb_covered_deep[k] * distmu_covered_deep[k])/pb_vol_norm
                     if np.sum(weights_pix_norm) == 0.0:
                         print("the weights pix sum is 0, skipping pixel")
                         continue
-                    weights_pix_deep = (
-                        weights_pix_deep / np.sum(weights_pix_norm_deep))
-                    weights_pix_deep = weights_pix_deep * \
-                        float(pb_vol_covered_deep)
+                    weights_pix_deep = (weights_pix_deep / np.sum(weights_pix_norm_deep))
+                    weights_pix_deep = weights_pix_deep * float(pb_vol_covered_deep)
+
                     if k == 0:
                         weights_pix_area_deep = weights_pix_deep
                     else:
@@ -885,7 +847,7 @@ class KNCalc():
         self.mult_exp = m_exp_kncalc
         return
 
-
+# Telescope Dependent functions
 def telescope_time(exptime, area_deg, field_of_view_area=3.0, m_exp=False):
     if m_exp == False:
         num_exposures = area_deg/field_of_view_area
@@ -900,29 +862,22 @@ def telescope_time(exptime, area_deg, field_of_view_area=3.0, m_exp=False):
 
 # Functions to calculate metrics of interest
 def weighted_average(quantity, weights):
-    print('weighted_average')
-    print(quantity.shape)
-    print(weights.shape)
     a = np.dot(quantity, weights) / np.sum(weights)
     return a
 
+def weighted_average_multi(quantity: np.array,
+                           weights: List[np.array, np.array, np.array, np.array]):
 
-def weighted_average_multi(quantity, weights):
+    # Combine the weights element-wise using multiplication
+    out_average = np.ones_like(weights[0])
+    for weight in weights:
+        out_average *= weight
+    out_average /= np.sum(out_average)
 
-    for i in range(0, len(weights)):
-        if i == 0:
-            out_average = weights[i].copy()
-        else:
-            out_average = np.array(out_average) * weights[i]
-    out_average = out_average/sum(out_average)
-
-    print('combined weights')
-    print(len(weights))
-    # print(out_average)
     return weighted_average(quantity, out_average)
 
 
-def get_all_mags(data, use_knmodel_weights=False, kn_type='red'):
+def get_all_mags(data: dict, use_knmodel_weights:bool = False, kn_type: str = 'red'):
     if use_knmodel_weights == True:
         g_m = weighted_average_multi(data['MAG_g'].values,
                                      [
@@ -1027,27 +982,6 @@ def gw170817(data):
 
     return blue_mags, red_mags
 
-
-def print_dict(d, title='', outfile=None):
-
-    outdata = [title + '\n--------------------------------------------------------------\n',
-               "\tg\t\tr\t\ti\t\tz\n",
-               "--------------\t--------------\t--------------\t--------------\t\n",
-               "%.2f +/- %.2f\t%.2f +/- %.2f\t%.2f +/- %.2f\t%.2f +/- %.2f\n\n" % (d['g_mag'], d['g_magerr'],
-                                                                                   d['r_mag'], d['r_magerr'],
-                                                                                   d['i_mag'], d['i_magerr'],
-                                                                                   d['z_mag'], d['z_magerr'])]
-    if outfile:
-        stream = open(outfile + '.txt', 'a+')
-        stream.writelines(outdata)
-        stream.close()
-    else:
-        for row in outdata:
-            print(row[:-1])
-
-    return
-
-
 def calc_mag_fractions(data,
                        use_knmodel_weights=False,
                        kn_type='red',
@@ -1060,50 +994,73 @@ def calc_mag_fractions(data,
                        m_exp=False):
 
     if use_knmodel_weights == True:
-        print('===== Using KN model priors '+kn_weight_type +
-              ' , considering gw170817 with '+kn_type+' component')
+        MSG = (f'===== Using KN model priors {kn_weight_type}, '
+               f'considering gw170817 with {kn_type} component')
+        logger.info(MSG)
 
     percentile_levels = np.linspace(0.0, 100.0, 101)
     percentile_dict = {}
     percentile_dict_deep = {}
     prob_dict = {}
 
+    model_weights_filename = (f'{model_weights_path}kn_weights_type'
+                              f'{kn_type}prior{kn_weight_type}.npy')
+    
+    model_weights_ids = (f'{model_weights_path}kn)weights_ids_type'
+                         f'{kn_type}prior{kn_weight_type}.npy')
     try:
-        model_weights = np.load(
-            model_weights_path+'kn_weights_type'+kn_type+'prior'+kn_weight_type+'.npy')
-        ids_total = np.load(
-            model_weights_path+'kn_weights_ids_type'+kn_type+'prior'+kn_weight_type+'.npy')
-        print('loading KN model weights ...')
+        model_weights = np.load(model_weights_filename)
+        ids_total = np.load(model_weights_ids)
+
+        logger.info('loading KN model weights ...')
     except:
-        print('Warning: Building model weights from scratch. This is a slow process.')
-        model_weights, ids_total = get_model_weights(
-            kn_weight_type=kn_weight_type, kn_type=kn_type, info_file=info_file, kn_weight_sigma=kn_weight_sigma)
-        np.save(model_weights_path+'kn_weights_type'+kn_type +
-                'prior'+kn_weight_type+'.npy', model_weights)
-        np.save(model_weights_path+'kn_weights_ids_type' +
-                kn_type+'prior'+kn_weight_type+'.npy', ids_total)
+        logger.warning('Building model weights from scratch')
+
+        model_weights, ids_total = get_model_weights(kn_weight_type=kn_weight_type,
+                                                     kn_type=kn_type,
+                                                     info_file=info_file,
+                                                     kn_weight_sigma=kn_weight_sigma)
+        
+        np.save(model_weights_filename, model_weights)
+        np.save(model_weights_ids, ids_total)
 
     mags_range = np.arange(14, 28, 0.2)
     prob_at_maglim = {}
     prob_at_maglim_deep = {}
-    for band in ['g', 'r', 'i', 'z']:
+    for band in 'griz':
+
         prob_at_maglim['prob_'+band] = []
-        data_test = {'MAG_'+band: np.array(data['MAG_'+band].values).astype(
-            'float'), 'ids_': data['SIM_TEMPLATE_INDEX'].values, 'weights_z': data['WEIGHT']}
-        if m_exp == True:
+        data_test = {
+            'MAG_'+band: np.array(data['MAG_'+band].values).astype('float'),
+            'ids_': data['SIM_TEMPLATE_INDEX'].values,
+            'weights_z': data['WEIGHT']
+        }
+
+        if m_exp:
             prob_at_maglim_deep['prob_'+band] = []
-            data_test_deep = {'MAG_'+band: np.array(data['MAG_'+band].values).astype(
-                'float'), 'ids_': data['SIM_TEMPLATE_INDEX'].values, 'weights_z': data['WEIGHT_deep']}
+            
+            data_test_deep = {
+                'MAG_'+band: np.array(data['MAG_'+band].values).astype('float'),
+                'ids_': data['SIM_TEMPLATE_INDEX'].values,
+                'weights_z': data['WEIGHT_deep']
+            }
+
         for j in range(0, len(mags_range)):
             # all_objs=data.copy()
             mask_det = (data_test['MAG_'+band] < mags_range[j])
             # print(mask_det)
-            detected_objs = {'MAG_'+band: data_test['MAG_'+band][mask_det],
-                             'ids_': data_test['ids_'][mask_det], 'weights_z': data_test['weights_z'][mask_det]}
+            detected_objs = {
+                'MAG_'+band: data_test['MAG_'+band][mask_det],
+                'ids_': data_test['ids_'][mask_det],
+                'weights_z': data_test['weights_z'][mask_det]
+            }
 
-            if m_exp == True:
-                detected_objs_deep = {'MAG_'+band: data_test_deep['MAG_'+band][mask_det],
-                                      'ids_': data_test_deep['ids_'][mask_det], 'weights_z': data_test_deep['weights_z'][mask_det]}
+            if m_exp:
+                detected_objs_deep = {
+                    'MAG_'+band: data_test_deep['MAG_'+band][mask_det],
+                    'ids_': data_test_deep['ids_'][mask_det],
+                    'weights_z': data_test_deep['weights_z'][mask_det]
+                }
 
                 if len(detected_objs_deep['MAG_'+band]) > 0:
                     prob_at_maglim_unweighted_deep = calc_prob_redshift(
@@ -1131,47 +1088,65 @@ def calc_mag_fractions(data,
                                band].append(float(sum(prob_at_maglim_weighted)))
             else:
                 prob_at_maglim['prob_'+band].append(0.0)
-        prob_at_maglim['prob_' +
-                       band] = np.array(prob_at_maglim['prob_'+band])*100.0
+        
+        prob_at_maglim[f'prob_{band}'] = np.array(prob_at_maglim[f'prob_{band}'])*100.0
         if m_exp == True:
-            prob_at_maglim_deep['prob_' +
-                                band] = np.array(prob_at_maglim_deep['prob_'+band])*100.0
-        percentile_dict['%s_cutoff' % band] = np.interp(
-            percentile_levels, prob_at_maglim['prob_'+band], mags_range, left=0, right=100, period=None)
+            prob_at_maglim_deep[f'prob_{band}'] = np.array(prob_at_maglim_deep[f'prob_{band}'])*100.0
+        percentile_dict[f'{band}_cutoff'] = np.interp(
+            percentile_levels, prob_at_maglim[f'prob_{band}'], mags_range, left=0, right=100, period=None)
         if m_exp == True:
-            percentile_dict_deep['%s_cutoff' % band] = np.interp(
-                percentile_levels, prob_at_maglim_deep['prob_'+band], mags_range, left=0, right=100, period=None)
+            percentile_dict_deep[f'{band}_cutoff'] = np.interp(
+                percentile_levels, prob_at_maglim_deep[f'prob_{band}'], mags_range, left=0, right=100, period=None)
 
     if m_exp == True:
         return percentile_dict, percentile_dict_deep
+    
     return percentile_dict
 
 
-def get_model_weights(kn_weight_type="uniform", kn_type='red', info_file=os.path.join(os.getenv("DESGW_DIR"), "knlc", "knsed_info.txt"), kn_weight_sigma=1.0):
 
-    sed_filenames, kn_inds, vks, loglans, logmass_s = open_ascii_cat(
-        info_file, unpack=True)  # usecols=(0,1)
+def compute_weight(data:np.array,
+                   loc:float,
+                   err:float,
+                   kn_weight_sigma:float):
+    pdf_values = norm.pdf(data, loc=loc, scale=kn_weight_sigma * err)
+    unique_data = np.unique(data)
+    pdf_norm_values = norm.pdf(unique_data, loc=loc, scale=kn_weight_sigma * err)
+    weights = pdf_values / np.sum(pdf_norm_values)
+    return weights
+
+def compute_uniform_pdf_weight(data:np.array,
+                               loc:float,
+                               err:float):
+    
+    pdf_values = uniform.pdf(data, loc=loc, scale=err)
+    unique_data = np.unique(data)
+    pdf_norm_values = uniform.pdf(unique_data, loc=loc, scale=err)
+    weights = pdf_values / np.sum(pdf_norm_values)
+    return weights
+
+def get_model_weights(kn_weight_type="uniform",
+                      kn_type='red',
+                      info_file=os.path.join(os.getenv("DESGW_DIR"),
+                                             "knlc",
+                                             "knsed_info.txt"),
+                      kn_weight_sigma=1.0):
+
+    seds, kn_inds, vks, loglans, logmass_s = open_ascii_cat(info_file,
+                                                            unpack=True)
     loglans = np.array(loglans).astype('float')
     kn_inds = np.array(kn_inds).astype('float')
-
     vks = np.array(vks).astype('float')
     logmass_s = np.array(logmass_s).astype('float')
 
     # https://science.sciencemag.org/content/358/6370/1583
     mass_red = 0.035
-
     loglan_red = -2.0
-
     vk_red = 0.15
-
     mass_blue = 0.025
-
     loglan_blue = -5.0
-
     vk_blue = 0.25
-
     weights_dict = {}  # template_df_full
-
     mass_ = 10 ** logmass_s
 
     if kn_weight_type == "gaussian":
@@ -1183,48 +1158,38 @@ def get_model_weights(kn_weight_type="uniform", kn_type='red', info_file=os.path
         loglan_red_err = 0.5*10
         vk_red_err = 0.03*10
 
-        weights_loglan_red = [norm.pdf(x, loc=float(
-            loglan_red), scale=kn_weight_sigma*float(loglan_red_err)) for x in loglans]
-        weights_loglan_red_norm = [norm.pdf(x, loc=float(
-            loglan_red), scale=kn_weight_sigma*float(loglan_red_err)) for x in np.unique(loglans)]
-        weights_dict['WEIGHT_loglan_red'] = weights_loglan_red / \
-            np.sum(weights_loglan_red_norm)
-
-        weights_vks_red = [norm.pdf(x, loc=float(
-            vk_red), scale=kn_weight_sigma*float(vk_red_err)) for x in vks]
-        weights_vks_red_norm = [norm.pdf(x, loc=float(
-            vk_red), scale=kn_weight_sigma*float(vk_red_err)) for x in np.unique(vks)]
-        weights_dict['WEIGHT_vk_red'] = weights_vks_red / \
-            np.sum(weights_vks_red_norm)
-
-        weights_mass_red = [norm.pdf(x, loc=float(
-            mass_red), scale=kn_weight_sigma*float(mass_red_err)) for x in mass_]
-        weights_mass_red_norm = [norm.pdf(x, loc=float(
-            mass_red), scale=kn_weight_sigma*float(mass_red_err)) for x in np.unique(mass_)]
-        weights_dict['WEIGHT_mass_red'] = weights_mass_red / \
-            np.sum(weights_mass_red_norm)
-
-        weights_loglan_blue = [norm.pdf(x, loc=float(
-            loglan_blue), scale=kn_weight_sigma*float(loglan_blue_err)) for x in loglans]
-        weights_loglan_blue_norm = [norm.pdf(x, loc=float(
-            loglan_blue), scale=kn_weight_sigma*float(loglan_blue_err)) for x in np.unique(loglans)]
-        weights_dict['WEIGHT_loglan_blue'] = weights_loglan_blue / \
-            np.sum(weights_loglan_blue_norm)
-
-        weights_vks_blue = [norm.pdf(x, loc=float(
-            vk_blue), scale=kn_weight_sigma*float(vk_blue_err)) for x in vks]
-        weights_vks_blue_norm = [norm.pdf(x, loc=float(
-            vk_blue), scale=kn_weight_sigma*float(vk_blue_err)) for x in np.unique(vks)]
-        weights_dict['WEIGHT_vk_blue'] = weights_vks_blue / \
-            np.sum(weights_vks_blue_norm)
-
-        weights_mass_blue = [norm.pdf(x, loc=float(
-            mass_blue), scale=kn_weight_sigma*float(mass_blue_err)) for x in mass_]
-        weights_mass_blue_norm = [norm.pdf(x, loc=float(
-            mass_blue), scale=kn_weight_sigma*float(mass_blue_err)) for x in np.unique(mass_)]
-        weights_dict['WEIGHT_mass_blue'] = weights_mass_blue / \
-            np.sum(weights_mass_blue_norm)
+        # Calculate weights for red data
+        weights_dict['WEIGHT_loglan_red'] = compute_weight(loglans,
+                                                           loglan_red,
+                                                           loglan_red_err,
+                                                           kn_weight_sigma)
+        weights_dict['WEIGHT_vk_red'] = compute_weight(vks,
+                                                       vk_red,
+                                                       vk_red_err,
+                                                       kn_weight_sigma)
         
+        weights_dict['WEIGHT_mass_red'] = compute_weight(mass_,
+                                                         mass_red,
+                                                         mass_red_err,
+                                                         kn_weight_sigma)
+
+        # Calculate weights for blue data
+        weights_dict['WEIGHT_loglan_blue'] = compute_weight(loglans,
+                                                            loglan_blue,
+                                                            loglan_blue_err,
+                                                            kn_weight_sigma)
+        
+        weights_dict['WEIGHT_vk_blue'] = compute_weight(vks,
+                                                        vk_blue,
+                                                        vk_blue_err,
+                                                        kn_weight_sigma)
+        
+        weights_dict['WEIGHT_mass_blue'] = compute_weight(mass_,
+                                                          mass_blue,
+                                                          mass_blue_err,
+                                                          kn_weight_sigma)
+        
+
     if kn_weight_type == "gaussian_narrow":
         print("gaussian prior narrow")
         mass_blue_err = 0.001
@@ -1234,47 +1199,35 @@ def get_model_weights(kn_weight_type="uniform", kn_type='red', info_file=os.path
         loglan_red_err = 0.5
         vk_red_err = 0.03
 
-        weights_loglan_red = [norm.pdf(x, loc=float(
-            loglan_red), scale=kn_weight_sigma*float(loglan_red_err)) for x in loglans]
-        weights_loglan_red_norm = [norm.pdf(x, loc=float(
-            loglan_red), scale=kn_weight_sigma*float(loglan_red_err)) for x in np.unique(loglans)]
-        weights_dict['WEIGHT_loglan_red'] = weights_loglan_red / \
-            np.sum(weights_loglan_red_norm)
+        weights_dict['WEIGHT_loglan_red'] = compute_weight(loglans,
+                                                           loglan_red,
+                                                           loglan_red_err,
+                                                           kn_weight_sigma)
+        weights_dict['WEIGHT_vk_red'] = compute_weight(vks,
+                                                       vk_red,
+                                                       vk_red_err,
+                                                       kn_weight_sigma)
+        
+        weights_dict['WEIGHT_mass_red'] = compute_weight(mass_,
+                                                         mass_red,
+                                                         mass_red_err,
+                                                         kn_weight_sigma)
 
-        weights_vks_red = [norm.pdf(x, loc=float(
-            vk_red), scale=kn_weight_sigma*float(vk_red_err)) for x in vks]
-        weights_vks_red_norm = [norm.pdf(x, loc=float(
-            vk_red), scale=kn_weight_sigma*float(vk_red_err)) for x in np.unique(vks)]
-        weights_dict['WEIGHT_vk_red'] = weights_vks_red / \
-            np.sum(weights_vks_red_norm)
-
-        weights_mass_red = [norm.pdf(x, loc=float(
-            mass_red), scale=kn_weight_sigma*float(mass_red_err)) for x in mass_]
-        weights_mass_red_norm = [norm.pdf(x, loc=float(
-            mass_red), scale=kn_weight_sigma*float(mass_red_err)) for x in np.unique(mass_)]
-        weights_dict['WEIGHT_mass_red'] = weights_mass_red / \
-            np.sum(weights_mass_red_norm)
-
-        weights_loglan_blue = [norm.pdf(x, loc=float(
-            loglan_blue), scale=kn_weight_sigma*float(loglan_blue_err)) for x in loglans]
-        weights_loglan_blue_norm = [norm.pdf(x, loc=float(
-            loglan_blue), scale=kn_weight_sigma*float(loglan_blue_err)) for x in np.unique(loglans)]
-        weights_dict['WEIGHT_loglan_blue'] = weights_loglan_blue / \
-            np.sum(weights_loglan_blue_norm)
-
-        weights_vks_blue = [norm.pdf(x, loc=float(
-            vk_blue), scale=kn_weight_sigma*float(vk_blue_err)) for x in vks]
-        weights_vks_blue_norm = [norm.pdf(x, loc=float(
-            vk_blue), scale=kn_weight_sigma*float(vk_blue_err)) for x in np.unique(vks)]
-        weights_dict['WEIGHT_vk_blue'] = weights_vks_blue / \
-            np.sum(weights_vks_blue_norm)
-
-        weights_mass_blue = [norm.pdf(x, loc=float(
-            mass_blue), scale=kn_weight_sigma*float(mass_blue_err)) for x in mass_]
-        weights_mass_blue_norm = [norm.pdf(x, loc=float(
-            mass_blue), scale=kn_weight_sigma*float(mass_blue_err)) for x in np.unique(mass_)]
-        weights_dict['WEIGHT_mass_blue'] = weights_mass_blue / \
-            np.sum(weights_mass_blue_norm)
+        # Calculate weights for blue data
+        weights_dict['WEIGHT_loglan_blue'] = compute_weight(loglans,
+                                                            loglan_blue,
+                                                            loglan_blue_err,
+                                                            kn_weight_sigma)
+        
+        weights_dict['WEIGHT_vk_blue'] = compute_weight(vks,
+                                                        vk_blue,
+                                                        vk_blue_err,
+                                                        kn_weight_sigma)
+        
+        weights_dict['WEIGHT_mass_blue'] = compute_weight(mass_,
+                                                          mass_blue,
+                                                          mass_blue_err,
+                                                          kn_weight_sigma)
 
     if kn_weight_type == "uniform":
         epsilon = 0.00000001
@@ -1286,64 +1239,46 @@ def get_model_weights(kn_weight_type="uniform", kn_type='red', info_file=os.path
         vk_red_err = 0.03*10
 
         print("uniform prior")
-        weights_loglan_red = [uniform.pdf(x, loc=float(
-            loglan_red)-float(loglan_red_err), scale=2*float(loglan_red_err+epsilon)) for x in loglans]
-        weights_loglan_red_norm = [uniform.pdf(x, loc=float(loglan_red)-float(
-            loglan_red_err), scale=2*float(loglan_red_err+epsilon)) for x in np.unique(loglans)]
-        weights_dict['WEIGHT_loglan_red'] = weights_loglan_red / \
-            np.sum(weights_loglan_red_norm)
 
-        vk_red_err_ext = 0.05000001
-        weights_vks_red = [uniform.pdf(x, loc=float(
-            vk_red)-float(vk_red_err_ext), scale=2*float(vk_red_err_ext)) for x in vks]
-        weights_vks_red_norm = [uniform.pdf(x, loc=float(
-            vk_red)-float(vk_red_err_ext), scale=2*float(vk_red_err_ext)) for x in np.unique(vks)]
-        weights_dict['WEIGHT_vk_red'] = weights_vks_red / \
-            np.sum(weights_vks_red_norm)
+        weights_dict['WEIGHT_loglan_red'] = compute_uniform_pdf_weight(loglans,
+                                                        loglan_red - loglan_red_err,
+                                                        2 * (loglan_red_err+epsilon))
+        
+        vk_red_err_ext=0.05000001
+        weights_dict['WEIGHT_vk_red'] = compute_uniform_pdf_weight(vks,
+                                                                   vk_red - vk_red_err_ext,
+                                                                   2 * vk_red_err_ext)
+        
+        weights_dict['WEIGHT_mass_red'] = compute_uniform_pdf_weight(mass_,
+                                                                     mass_red - mass_red_err,
+                                                                     2 * (mass_red_err+epsilon))
 
-        weights_mass_red = [uniform.pdf(x, loc=float(
-            mass_red)-float(mass_red_err), scale=2*float(mass_red_err+epsilon)) for x in mass_]
-        weights_mass_red_norm = [uniform.pdf(x, loc=float(
-            mass_red)-float(mass_red_err), scale=2*float(mass_red_err+epsilon)) for x in np.unique(mass_)]
-        weights_dict['WEIGHT_mass_red'] = weights_mass_red / \
-            np.sum(weights_mass_red_norm)
-
-        weights_loglan_blue = [uniform.pdf(x, loc=float(
-            loglan_blue)-float(loglan_blue_err), scale=2*float(loglan_blue_err+epsilon)) for x in loglans]
-        weights_loglan_blue_norm = sum([uniform.pdf(x, loc=float(loglan_blue)-float(
-            loglan_blue_err), scale=2*float(loglan_blue_err+epsilon)) for x in np.unique(loglans)])
-        weights_dict['WEIGHT_loglan_blue'] = weights_loglan_blue / \
-            weights_loglan_blue_norm
-
+        weights_dict['WEIGHT_loglan_blue'] = compute_uniform_pdf_weight(loglans,
+                                                                        loglan_blue - loglan_blue_err,
+                                                                        2 * (loglan_blue_err + epsilon))
+        
         vk_blue_err_ext = 0.1000001
-        weights_vks_blue = [uniform.pdf(x, loc=float(
-            vk_blue)-float(vk_blue_err_ext), scale=2*float(vk_blue_err_ext)) for x in vks]
-        weights_vks_blue_norm = sum([uniform.pdf(x, loc=float(
-            vk_blue)-float(vk_blue_err_ext), scale=2*float(vk_blue_err_ext)) for x in np.unique(vks)])
-        weights_dict['WEIGHT_vk_blue'] = weights_vks_blue / \
-            np.sum(weights_vks_blue_norm)  # np.sum(weights_vks_blue)
-
-        weights_mass_blue = [uniform.pdf(x, loc=float(
-            mass_blue)-float(mass_blue_err), scale=2*float(mass_blue_err+epsilon)) for x in mass_]
-        weights_mass_blue_norm = [uniform.pdf(x, loc=float(mass_blue)-float(
-            mass_blue_err), scale=2*float(mass_blue_err+epsilon)) for x in np.unique(mass_)]
-        weights_dict['WEIGHT_mass_blue'] = weights_mass_blue / \
-            np.sum(weights_mass_blue_norm)
-
+        weights_dict['WEIGHT_vk_blue'] = compute_uniform_pdf_weight(vks,
+                                                                    vk_blue - vk_blue_err_ext,
+                                                                    2 * (vk_blue_err_ext))
+        
+        weights_dict['WEIGHT_mass_blue'] = compute_uniform_pdf_weight(mass_,
+                                                                      mass_blue - mass_blue_err,
+                                                                      2 * (mass_blue_err+epsilon))
+        
         if np.isnan(weights_dict['WEIGHT_vk_blue']).any():
-            print('WEIGHT_vk_blue NAN')
+            logger.warning('WEIGHT_vk_blue NAN')
         if np.isnan(weights_dict['WEIGHT_mass_blue']).any():
-            print('WEIGHT_mass_blue NAN')
+            logger.warning('WEIGHT_mass_blue NAN')
         if np.isnan(weights_dict['WEIGHT_loglan_blue']).any():
-            print('WEIGHT_loglan_blue NAN')
+            logger.warning('WEIGHT_loglan_blue NAN')
 
         if np.isnan(weights_dict['WEIGHT_vk_red']).any():
-            print('WEIGHT_vk_red NAN')
-            # print(vks)
+            logger.warning('WEIGHT_vk_red NAN')
         if np.isnan(weights_dict['WEIGHT_mass_red']).any():
-            print('WEIGHT_mass_red NAN')
+            logger.warning('WEIGHT_mass_red NAN')
         if np.isnan(weights_dict['WEIGHT_loglan_red']).any():
-            print('WEIGHT_loglan_red NAN')
+            logger.warning('WEIGHT_loglan_red NAN')
 
     if kn_type == 'red':
         model_weights = np.array(weights_dict['WEIGHT_vk_red'])*np.array(
@@ -1360,8 +1295,11 @@ def get_model_weights(kn_weight_type="uniform", kn_type='red', info_file=os.path
     return model_weights, kn_inds
 
 
-def calc_prob_redshift(data, band, quiet=True):
+def calc_prob_redshift(data: pd.DataFrame,
+                       band: str,
+                       quiet=True):
 
+    # data_out = pd.DataFrame(data=[data[data['ids_'].values == np.unique(data['ids_'].values)]])
     data_out = pd.DataFrame(data=[get_weighted_redshift_prob_dict(
         data[data['ids_'].values == y], band=band, quiet=quiet) for y in np.unique(data['ids_'].values)])
     data_out['_ids'] = np.unique(data['ids_'].values)
@@ -1374,9 +1312,14 @@ def calc_prob_redshift(data, band, quiet=True):
     return data_out
 
 
-def get_weighted_redshift_prob_dict(data_obj, band, quiet=True):
+def get_weighted_redshift_prob_dict(data_obj: pd.DataFrame,
+                                    band: str,
+                                    quiet:bool = True):
 
-    out_dict = {'prob_'+band: sum(data_obj['weights_z'].values)}
+    out_dict = {
+        'prob_'+band: np.sum(data_obj['weights_z'].values)
+    }
+
     if quiet == False:
         print('prob sum in z is='+str(sum(data_obj['weights_z'].values)))
     return out_dict
@@ -1423,7 +1366,9 @@ def mags_of_percentile(cutoff, percentile_dict):
         cutoff *= 100
 
     index = int(round(cutoff))
-    return {band: percentile_dict['%s_cutoff' % band][index] for band in ['g', 'r', 'i', 'z']}
+    return {
+        band: percentile_dict[f'{band}_cutoff'][index] for band in 'griz'
+    }
 
 
 def make_output_csv(cutoffs, percentile_dict, outfile=None, return_df=False, write_answer=False, flt='', fraction=90.0, datadir='./'):
@@ -1592,8 +1537,14 @@ def get_exptime(m0, mag):
 
 
 def get_m0(band, teff=1.0):
-    out_dict = {'g': 23.4+(1.25*log10(teff)), 'r': 23.1+(1.25*log10(teff)), 'i': 22.5+(
-        1.25*log10(teff)), 'z': 21.8+(1.25*log10(teff)), 'Y': 20.3+(1.25*log10(teff))}
+    out_dict = {
+        'g': 23.4+(1.25*log10(teff)),
+        'r': 23.1+(1.25*log10(teff)),
+        'i': 22.5+(1.25*log10(teff)),
+        'z': 21.8+(1.25*log10(teff)),
+        'Y': 20.3+(1.25*log10(teff))
+    }
+    
     return out_dict[band]
 
 
@@ -1747,7 +1698,8 @@ if __name__ == '__main__':
 
         plot_dist_name = 'detection_distance_loglan5.png'
         plot_td_name = 'detection_time_delay_loglan5.png'
-        time_delays = [12.0, 24.0, 36.0, 48.0, 60.0, 72.0, 84.0, 96.0]
+        # time_delays = [12.0, 24.0, 36.0, 48.0, 60.0, 72.0, 84.0, 96.0]
+        time_delays = [12.0, 24.0]
 
         filters_comb = ['gg', 'gr', 'gi', 'gz', 'rg', 'rr', 'ri',
                         'rz', 'ig', 'ir', 'ii', 'iz', 'zg', 'zr', 'zi', 'zz']
@@ -2114,25 +2066,6 @@ if map_mode == 1:
                                 j = j+1
                         k = k+1
             m = m+1
-
-    # NO MORE PLOTTING!
-    # for k in range(0, len(filters_comb)):
-
-    #     fig, ax = plt.subplots(figsize=(10, 15))
-
-    #     ax = sns.heatmap(cadence_matrix[k][-1], annot=True, xticklabels=day_delays_comb,
-    #                     yticklabels=exp_comblegend, linewidths=.5, vmin=0, vmax=100, ax=ax)
-
-    #     # xticklabels
-    #     plt.xlabel("Observing night (Days after merger)",
-    #             fontsize=14)  # days after merger
-
-    #     plt.ylabel("Exposure times", fontsize=9)  # days after merger
-    #     plt.xticks(fontsize=8)
-    #     plt.yticks(fontsize=8)
-
-    #     plt.savefig(plot_name_+filters_comb[k]+"_cadence.png")
-    #     plt.close()
 
     cadence_matrix = np.array(cadence_matrix)
 

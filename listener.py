@@ -11,6 +11,7 @@ from yaml.loader import SafeLoader
 from gcn_kafka import Consumer
 from handlers.gwstreamer import GWStreamer
 from handlers.emails import EmailBot
+from subprocess import Popen
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -21,7 +22,7 @@ if __name__ == "__main__":
                         'For offline testing, use `test` mode. ' +\
                         'For streamed mock alerts, use `mock` mode. ' +\
                         'For real streamed alerts, use `observation` mode.',
-                        choices=['test', 'mock', 'observation'])
+                        choices=['test', 'observation'])
 
     args = parser.parse_args()
     mode = args.mode
@@ -40,7 +41,7 @@ if __name__ == "__main__":
 
             gw_streamer.handle(gcn_fake_alert)
 
-    else:
+    if mode == 'observation':
         try:
             consumer = Consumer(client_id=gcn['client_id'],
                                 client_secret=gcn['client_secret'])

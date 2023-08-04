@@ -6,6 +6,8 @@ from subprocess import run
 from argparse import ArgumentParser
 from astropy.io import fits
 from handlers.slack import SlackBot
+from handlers.observations import *
+from loguru import logger
 
 parser = ArgumentParser()
 parser.add_argument('--trigger-id',
@@ -35,14 +37,11 @@ parser.add_argument('--official',
 
 args = parser.parse_args()
 
-print('Settings for Recycler:')
+logger.info('Settings for Recycler:')
 
 arguments = vars(args)
 for key,value in arguments.items():
-    print('---------------')
-    print(f'{key}: {value}')
-    print()
-    print('---------------')
+    logger.info(f'{key}: {value}')
 
 trigger_id = args.trigger_id
 skymap = args.skymap
