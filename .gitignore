@@ -9,3 +9,6 @@ __pycache__
 DESGW_O4_People.TXT
 test*.json
 des-gw*.json
+OUTPUT/TESTING/GW*/*.csv
+OUTPUT/TESTING/GW*/lowres
+OUTPUT/TESTING/GW*/weights

@@ -1,13 +1,9 @@
 import os
 import sys
 import math
-import glob
 import os.path
 import time as time_mod
 import datetime
-from math import log10
-from argparse import ArgumentParser
-from os.path import join, basename, dirname
 import healpy as hp
 import seaborn as sns
 import pandas as pd
@@ -15,18 +11,16 @@ import numpy as np
 import matplotlib
 import astropy.units as u
 import matplotlib.pyplot as plt
-import astropy_healpix as ah
 from astropy.cosmology import z_at_value
 from scipy.stats import uniform
 from scipy.stats import norm
 from scipy.interpolate import interp1d
 from astropy.cosmology import WMAP9 as cosmo
 from ligo.skymap.postprocess import find_greedy_credible_levels
-from astropy.io import fits
 from loguru import logger
-from typing import List
-from astropy.table import QTable
-
+from math import log10
+from argparse import ArgumentParser
+from os.path import join, basename, dirname
 matplotlib.use("Agg")
 
 np.set_printoptions(threshold=sys.maxsize)
@@ -74,7 +68,7 @@ def open_ascii_cat(file_name, **kwargs):
             m_v = 0
             f_v = 0
             cols = range(0, len(header))
-            print("WARNING: table format is wrong.")
+            logger.warning("Table format is wrong.")
             data = np.genfromtxt(file_name, dtype=vartype, comments=comments,
                                  skip_header=skiprows, skip_footer=sk_last,
                                  missing_values=m_v, filling_values=f_v,
@@ -137,7 +131,7 @@ class KNCalc():
             MSG = "Currently, only times delays less thant 400.8 hours " +\
                   "(16.7 days) post merger are supported."
 
-            print(MSG)
+            logger.info(MSG)
             sys.exit()
 
         self.delta_mjd = round(float(time_delay) / 24.0, 1)
@@ -270,7 +264,7 @@ class KNCalc():
             mag_z_corr = template_df_corr['MAG_z'].values
 
             if delta_mjd_corr > self.delta_mjd:
-                print("correcting magnitudes >")
+                logger.info("correcting magnitudes >")
                 template_df_full['MAG_g'] = [
                     np.interp(delta_mjd_full,
                               [self.delta_mjd,delta_mjd_corr],
@@ -305,8 +299,8 @@ class KNCalc():
                 ]
 
             if delta_mjd_corr < self.delta_mjd:
-                print("correcting magnitudes <")
-                print(mag_g[0])
+                logger.info("correcting magnitudes <")
+                # logger.info(mag_g[0])
                 template_df_full['MAG_g'] = [
                     np.interp(delta_mjd_full,
                               [delta_mjd_corr, self.delta_mjd],
@@ -412,18 +406,17 @@ class KNCalc():
                     self.Resolution = resolution
                     self.area_deg = area_deg_info  # num_pix_covered*resolution
                     use_map = ""
-                    print("Using preprocessed weights for ", use_map_weights)
+                    logger.info(f"Using preprocessed weights for {use_map_weights}")
                     preprocessed_weights = True
                 except:
-                    print("Failed to load preprocessed weights for ",
-                          use_map_weights)
+                    logger.info(f"Failed to load preprocessed weights for {use_map_weights}")
 
         if use_map != "":
-            print("Using maps, not the distance")
+            logger.info("Using maps, not the distance")
             use_map_lowres = basename(self.event)
             path2map = dirname(self.event)
             use_map_lowres = join(path2map, "lowres", use_map_lowres)
-            print("Tryng to open low resolution map")
+            logger.info("Tryng to open low resolution map")
             try:
                 pb, distmu, distsigma, header = hp.read_map(use_map_lowres,
                                                     field=range(3),
@@ -441,16 +434,16 @@ class KNCalc():
                 read_lowres_map = True
 
             except:
-                MSG = (f'Failed to open low resolution map'
+                MSG = (f'Failed to open low resolution map. '
                        f'Opening high resolution map {skymap_name}')
                 logger.info(MSG)
-                pb, distmu, distsigma, header = hp.read_map(skymap_name,
-                                                              field=range(3),
-                                                              dtype=[np.float64,
-                                                                     np.float64,
-                                                                     np.float64,
-                                                                     np.float64],
-                                                              h=True)
+                data, header = hp.read_map(skymap_name,
+                                           field=range(3),
+                                           dtype=[np.float64,
+                                                  np.float64,
+                                                  np.float64],
+                                           h=True)
+                pb, distmu, distsigma = [*data]
                 header = dict(header)
                 skymap_distmean = header['DISTMEAN']
                 read_lowres_map = False
@@ -491,18 +484,17 @@ class KNCalc():
             luminosity_dist_max = max(cosmo.luminosity_distance(
                 np.unique(template_df_full['ZMEAN'].values)))
 
-            print(f"Mean redshift: {mean_z}")
-            print(f"Mean z68: {mean_z68}")
-            print(f"z max: {z_max}")
+            logger.info(f"Mean redshift: {mean_z}")
+            logger.info(f"Mean z68: {mean_z68}")
+            logger.info(f"z max: {z_max}")
             if float(mean_z68) > float(z_max):
-                print('Warning: Object too far away zmax= ',
-                      str(z_max), ' z_event ', str(mean_z))
+                logger.warning(f'fObject too far away zmax = {z_max}, z_event: {mean_z}')
                 self.Flag = 0
                 return
 
             if np.isnan(pb).any():
-                print('Warning: prob map contains nan')
-                print('number of nans'+sum(np.isnan(pb))+' from '+len(pb))
+                logger.warning('Prob map contains nan')
+                logger.info('number of nans'+sum(np.isnan(pb))+' from '+len(pb))
 
             highres_sum = sum(pb)
             NSIDE = hp.npix2nside(pb.shape[0])
@@ -514,9 +506,9 @@ class KNCalc():
                 flag_inf_sigma = False
                 if np.isinf(distmu).any():
                     flag_inf_mu = True
-                    print('Warning: number of infs in distance array ' +
+                    logger.warning('Number of infs in distance array ' +
                           str(sum(np.isinf(distmu)))+' from '+str(len(distmu)))
-                    print('prob of correspondend infs region ', sum(
+                    logger.warning('prob of correspondend infs region ', sum(
                         pb[np.isinf(distmu)]), ' from ', sum(pb[np.logical_not(np.isinf(distmu))]))
 
                     pb_hr = pb[np.logical_not(np.isinf(distmu))]
@@ -532,14 +524,14 @@ class KNCalc():
 
                 if np.isinf(distsigma).any():
                     flag_inf_sigma = True
-                    print('Warning: number of infs in distance sigma array ' +
+                    logger.warning('Number of infs in distance sigma array ' +
                           str(sum(np.isinf(distsigma)))+' from '+str(len(distsigma)))
-                    print('prob of correspondend infs region ', sum(
+                    logger.info('prob of correspondend infs region ', sum(
                         pb[np.isinf(distsigma)]), ' from ', sum(pb[np.logical_not(np.isinf(distsigma))]))
                     pb_hr_sigma = pb[np.logical_not(np.isinf(distsigma))]
                     distsigma_hr = distsigma[np.logical_not(np.isinf(distsigma))]
-                    print(f'len distsigma_hr = {len(distsigma_hr)}')
-                    print(f'len pb_hr_sigma: {len(pb_hr_sigma)}')
+                    logger.info(f'len distsigma_hr = {len(distsigma_hr)}')
+                    logger.info(f'len pb_hr_sigma: {len(pb_hr_sigma)}')
                     distsigma_hr_average = np.average(
                         distsigma_hr, weights=pb_hr_sigma)
                     distsigma_std = weighted_avg_and_std(
@@ -575,12 +567,12 @@ class KNCalc():
                 lowres_sum = sum(pb)
                 distsigma = hp.ud_grade(distsigma, final_nside)
                 distmu = hp.ud_grade(distmu, final_nside)  # power=-2
-                print('saving low resolution map')
-                hp.write_map(use_map_lowres, m=[pb, distmu, distsigma], nest=False, dtype=None, fits_IDL=True,
+                logger.info('saving low resolution map')
+                hp.write_map(use_map_lowres, m=[pb, distmu, distsigma], nest=False, dtype=[np.float64,np.float64,np.float64], fits_IDL=True,
                              coord=None, partial=False, column_names=None, column_units=None, extra_header=(), overwrite=True)
 
                 if flag_inf_mu == True:
-                    print('prob of reduced correspondend region due to infs ', sum(
+                    logger.info('prob of reduced correspondend region due to infs ', sum(
                         pb[np.abs(distmu) > (distmu_hr_average+(3*distmu_std))]), ' from ', sum(pb))
                     pb = pb[np.abs(distmu) < (
                         distmu_hr_average+(3*distmu_std))]
@@ -589,7 +581,7 @@ class KNCalc():
                     distmu = distmu[np.abs(distmu) < (
                         distmu_hr_average+(3*distmu_std))]
                 if flag_inf_sigma == True:
-                    print('prob of reduced correspondend region due to sigma infs ', sum(pb[np.abs(
+                    logger.info('prob of reduced correspondend region due to sigma infs ', sum(pb[np.abs(
                         distsigma) > (distsigma_hr_average+(3*distsigma_std))]), ' from ', sum(pb))
                     pb = pb[np.abs(distsigma) < (
                         distsigma_hr_average+(3*distsigma_std))]
@@ -600,26 +592,28 @@ class KNCalc():
 
                 distmu_lowres_average = np.average(distmu, weights=pb)
                 distsigma_lowres_average = np.average(distsigma, weights=pb)
-
-                print("Reducing map resolution ")
-                print("Previous resolution and new resolution (deg) ",
-                      res_high, " ", res_low)
-                print("Sums - high res map prob sum ", highres_sum,
-                      " low res map pb sum ", lowres_sum)  # " ",sum(new_pb))
-                print("average distance in high and low res map with its standard deviation",
-                      distmu_hr_average, "+-", distmu_std, "and ", distmu_lowres_average)
-                print("average distance sigma in high and low res map with its standard deviation",
-                      distsigma_hr_average, "+-", distsigma_std, "and ", distsigma_lowres_average)
+                average_distmu_msg = (f"Avg. dist. mean in high and low res map with its std: "
+                                    f"{distmu_hr_average} +- {distmu_std} "
+                                    f"and {distmu_lowres_average}")
+                average_distsigma_msg = (f"Avg. dist. sigma in high and low res map with its std: "
+                                         f"{distsigma_hr_average} +- {distsigma_std} "
+                                         f"and { distsigma_lowres_average}")
+                logger.info("Reducing map resolution ")
+                logger.info(f"Previous resolution and new resolution (deg) {res_high} {res_low}")
+                logger.info(f"Sums - high res map prob sum {highres_sum} low res map pb sum {lowres_sum}")
+                logger.info(average_distmu_msg)
+                logger.info(average_distsigma_msg)
                 resolution = res_low
+
             if read_lowres_map == True:
-                print('prob of reduced correspondend region due to infs ', sum(
+                logger.info('prob of reduced correspondend region due to infs ', sum(
                     pb[np.abs(distmu) > (distmu_hr_average+(3*distmu_std))]), ' from ', sum(pb))
                 pb = pb[np.abs(distmu) < (distmu_hr_average+(3*distmu_std))]
                 distsigma = distsigma[np.abs(distmu) < (
                     distmu_hr_average+(3*distmu_std))]
                 distmu = distmu[np.abs(distmu) < (
                     distmu_hr_average+(3*distmu_std))]
-                print('prob of reduced correspondend region due to sigma infs ', sum(pb[np.abs(
+                logger.info('prob of reduced correspondend region due to sigma infs ', sum(pb[np.abs(
                     distsigma) > (distsigma_hr_average+(3*distsigma_std))]), ' from ', sum(pb))
                 pb = pb[np.abs(distsigma) < (
                     distsigma_hr_average+(3*distsigma_std))]
@@ -629,9 +623,9 @@ class KNCalc():
                     distsigma_hr_average+(3*distsigma_std))]  # (distmu_hr_average+(3*distmu_std))
 
             if np.isinf(distmu).any():
-                print('Warning: number of infs in distance array ' +
+                logger.warning('Number of infs in distance array ' +
                       str(sum(np.isinf(distmu)))+' from '+str(len(distmu)))
-                print('prob of correspondend infs region ', sum(
+                logger.warning('prob of correspondend infs region ', sum(
                     pb[np.isinf(distmu)]), ' from ', sum(pb[np.logical_not(np.isinf(distmu))]))
 
                 pb = pb[np.logical_not(np.isinf(distmu))]
@@ -639,10 +633,10 @@ class KNCalc():
                 distmu = distmu[np.logical_not(np.isinf(distmu))]
 
             if np.isnan(distmu).any():
-                print('Warning: distance map contains nan')
-                print('number of nans '+str(sum(np.isnan(distmu))) +
+                logger.warning('Distance map contains nan')
+                logger.info('number of nans '+str(sum(np.isnan(distmu))) +
                       ' from '+str(len(distmu)))
-                print('prob of correspondend nan region ', sum(
+                logger.info('prob of correspondend nan region ', sum(
                     pb[np.isnan(distmu)]), ' from ', sum(pb[np.logical_not(np.isnan(distmu))]))
                 pb = pb[np.logical_not(np.isnan(distmu))]
                 distsigma = distsigma[np.logical_not(np.isnan(distmu))]
@@ -663,7 +657,7 @@ class KNCalc():
                 sum_full = sum_full+pb[this_idx]
                 id_full = id_full+1
             total_area = id_full*resolution
-            print("Total event area (deg)="+str(id_full*resolution)+" ")
+            logger.info("Total event area (deg)="+str(id_full*resolution)+" ")
             while (sum_ < area_covered) and (id_c < len(idx_sort_up)):
                 this_idx = idx_sort_up[id_c]
                 sum_ = sum_+pb[this_idx]
@@ -678,11 +672,10 @@ class KNCalc():
 
             idx_sort_uncovered = idx_sort_up[id_c:]
             if m_exp_kncalc == True:
-                print("number of deep coverage pixels and total covered are pixels=" +
+                logger.info("number of deep coverage pixels and total covered are pixels=" +
                       str(id_deep)+" "+str(id_c))
             if (id_deep == 0) and (m_exp == True):
-                print(
-                    "===== Warning: number of deep coverage is 0, switching to single exposure mode")
+                logger.warning("Number of deep coverage is 0, switching to single exposure mode")
                 m_exp_kncalc = False
                 self.sw_mexp = True
             else:
@@ -710,26 +703,26 @@ class KNCalc():
             except:
                 self.Flag = 0
                 return
-            print("the distance average="+str(distmu_average))
-            print("the distance sigma="+str(distsigma_average))
+            logger.info("the distance average="+str(distmu_average))
+            logger.info("the distance sigma="+str(distsigma_average))
             if m_exp_kncalc == False:
-                print("the area covered="+str(area_covered))
-                print("the prob covered="+str(np.sum(pb_covered)))
+                logger.info("the area covered="+str(area_covered))
+                logger.info("the prob covered="+str(np.sum(pb_covered)))
 
             distmu_full = distmu[idx_sort_full]
             pb_full = pb[idx_sort_full]
             distsigma_full = distsigma[idx_sort_full]
             if (distmu_full < 0.0).any():
-                print('Warning: prob of distmu <0.0 in the full region region ', sum(
+                logger.warning('Prob of distmu <0.0 in the full region region ', sum(
                     pb_full[distmu_full < 0.0]), ' from ', sum(pb_full[distmu_full > 0.0]))
                 distmu_full[distmu_full < 0.0] = 0.01
             if (distmu_covered < 0.0).any():
-                print('Warning: prob of distmu<0.0 region ', sum(
+                logger.warning('Prob of distmu<0.0 region ', sum(
                     pb_covered[distmu_covered < 0.0]), ' from ', sum(pb_covered[distmu_covered > 0.0]))
                 distmu_covered[distmu_covered < 0.0] = 0.01
             if m_exp_kncalc == True:
                 if (distmu_covered < 0.0).any():
-                    print('Warning: prob of distmu<0.0 in the deep region ', sum(
+                    logger.warning('Prob of distmu<0.0 in the deep region ', sum(
                         pb_covered_deep[distsigma_covered_deep < 0.0]), ' from ', sum(pb_covered_deep[distsigma_covered_deep > 0.0]))
                     distsigma_covered_deep[distsigma_covered_deep < 0.0] = 0.01
 
@@ -740,12 +733,12 @@ class KNCalc():
 
             pb_vol_covered_all = pb_vol_covered_all/pb_vol_norm
 
-            print("the prob volume covered (except deep region if any)=" +
+            logger.info("the prob volume covered (except deep region if any)=" +
                   str(pb_vol_covered_all))
 
             if np.isnan(pb_full).any():
-                print('Warning: prob map full cut contains nan')
-                print('number of nans'+sum(np.isnan(pb_full)) +
+                logger.warning('Prob map full cut contains nan')
+                logger.info('number of nans'+sum(np.isnan(pb_full)) +
                       ' from '+len(pb_full))
 
             lum_dist = cosmo.luminosity_distance(template_df_full['ZMEAN'].values)
@@ -763,7 +756,7 @@ class KNCalc():
 
                 pb_vol_covered = (pb_covered[k] * distmu_covered[k])/pb_vol_norm
                 if np.sum(weights_pix_norm) == 0.0:
-                    print("the weights pix sum is 0, skipping pixel")
+                    logger.info("the weights pix sum is 0, skipping pixel")
                     continue
                 weights_pix = (weights_pix / np.sum(weights_pix_norm))
                 weights_pix = weights_pix*float(pb_vol_covered)
@@ -772,11 +765,12 @@ class KNCalc():
                 else:
                     weights_pix_area = np.add(weights_pix_area, weights_pix)
 
-            print("the weights sum="+str(np.sum(weights_pix_area)))
+            logger.info("the weights sum="+str(np.sum(weights_pix_area)))
+            weights_pix_area = np.array(weights_pix_area).flatten()
             template_df_full['WEIGHT'] = weights_pix_area
             
             if m_exp_kncalc == True:
-                print("Getting the weights sum of Deep region with " +
+                logger.info("Getting the weights sum of Deep region with " +
                       str(len(pb_covered_deep))+" voxels")
                 for k in range(0, len(pb_covered_deep)):
                     weights_pix_deep = [norm.pdf(lum_dist,
@@ -789,7 +783,7 @@ class KNCalc():
 
                     pb_vol_covered_deep = (pb_covered_deep[k] * distmu_covered_deep[k])/pb_vol_norm
                     if np.sum(weights_pix_norm) == 0.0:
-                        print("the weights pix sum is 0, skipping pixel")
+                        logger.info("the weights pix sum is 0, skipping pixel")
                         continue
                     weights_pix_deep = (weights_pix_deep / np.sum(weights_pix_norm_deep))
                     weights_pix_deep = weights_pix_deep * float(pb_vol_covered_deep)
@@ -800,8 +794,8 @@ class KNCalc():
                         weights_pix_area_deep = np.add(
                             weights_pix_area_deep, weights_pix_deep)
 
-                print("the weights sum of Deep area=" +
-                      str(np.sum(weights_pix_area_deep)))
+                logger.info(f"the weights sum of Deep area = {np.sum(weights_pix_area_deep)}")
+                weights_pix_area_deep = np.array(weights_pix_area_deep).flatten()
                 template_df_full['WEIGHT_deep'] = weights_pix_area_deep
                 np.save(use_map_weights, [
                         weights_pix_area, weights_pix_area_deep])
@@ -832,9 +826,9 @@ class KNCalc():
 
             template_df_full['WEIGHT'] = (
                 weights / np.sum(weights_norm))  # *area_covered
-            print("the weights sum (no map)=" +
+            logger.info("the weights sum (no map)=" +
                   str(np.sum(template_df_full['WEIGHT'])))
-            print("probability covered (no map)="+str(area_covered))
+            logger.info("probability covered (no map)="+str(area_covered))
 
         template_df_later['WEIGHT'] = template_df_full['WEIGHT'].values
         if m_exp_kncalc == True:
@@ -866,7 +860,7 @@ def weighted_average(quantity, weights):
     return a
 
 def weighted_average_multi(quantity: np.array,
-                           weights: List[np.array, np.array, np.array, np.array]):
+                           weights: list):
 
     # Combine the weights element-wise using multiplication
     out_average = np.ones_like(weights[0])
@@ -976,7 +970,7 @@ def get_all_mags(data: dict, use_knmodel_weights:bool = False, kn_type: str = 'r
 def gw170817(data):
     blue_df = data[data['SIM_TEMPLATE_INDEX'].values == 178.0]
     red_df = data[data['SIM_TEMPLATE_INDEX'].values == 224.0]
-    print('get_all_mags call')
+    logger.info('get_all_mags call')
     blue_mags = get_all_mags(blue_df)
     red_mags = get_all_mags(red_df)
 
@@ -1001,12 +995,11 @@ def calc_mag_fractions(data,
     percentile_levels = np.linspace(0.0, 100.0, 101)
     percentile_dict = {}
     percentile_dict_deep = {}
-    prob_dict = {}
 
-    model_weights_filename = (f'{model_weights_path}kn_weights_type'
+    model_weights_filename = (f'{out_dir}/{model_weights_path}kn_weights_type'
                               f'{kn_type}prior{kn_weight_type}.npy')
     
-    model_weights_ids = (f'{model_weights_path}kn)weights_ids_type'
+    model_weights_ids = (f'{out_dir}/{model_weights_path}kn_weights_ids_type'
                          f'{kn_type}prior{kn_weight_type}.npy')
     try:
         model_weights = np.load(model_weights_filename)
@@ -1150,7 +1143,7 @@ def get_model_weights(kn_weight_type="uniform",
     mass_ = 10 ** logmass_s
 
     if kn_weight_type == "gaussian":
-        print("gaussian prior")
+        logger.info("gaussian prior")
         mass_blue_err = 0.001*10
         loglan_blue_err = 1.0*10
         vk_blue_err = 0.01*10
@@ -1191,7 +1184,7 @@ def get_model_weights(kn_weight_type="uniform",
         
 
     if kn_weight_type == "gaussian_narrow":
-        print("gaussian prior narrow")
+        logger.info("gaussian prior narrow")
         mass_blue_err = 0.001
         loglan_blue_err = 1.0
         vk_blue_err = 0.01
@@ -1238,7 +1231,7 @@ def get_model_weights(kn_weight_type="uniform",
         loglan_red_err = 0.5*10
         vk_red_err = 0.03*10
 
-        print("uniform prior")
+        logger.info("uniform prior")
 
         weights_dict['WEIGHT_loglan_red'] = compute_uniform_pdf_weight(loglans,
                                                         loglan_red - loglan_red_err,
@@ -1305,9 +1298,9 @@ def calc_prob_redshift(data: pd.DataFrame,
     data_out['_ids'] = np.unique(data['ids_'].values)
 
     if quiet == False:
-        print(band)
-        print(data_out['prob_'+band].shape)
-        print(np.sum(data_out['prob_'+band]))
+        logger.info(band)
+        logger.info(data_out['prob_'+band].shape)
+        logger.info(np.sum(data_out['prob_'+band]))
         # print()
     return data_out
 
@@ -1321,7 +1314,7 @@ def get_weighted_redshift_prob_dict(data_obj: pd.DataFrame,
     }
 
     if quiet == False:
-        print('prob sum in z is='+str(sum(data_obj['weights_z'].values)))
+        logger.info('prob sum in z is='+str(sum(data_obj['weights_z'].values)))
     return out_dict
 
 
@@ -1657,13 +1650,13 @@ if __name__ == '__main__':
         m_exp_run = True  # FIXME just to call attention to this variable.
         m_exp = m_exp_run
 
-        print("Getting sky area from HEALPIx high-resolution skymap")
+        logger.info("Getting sky area from HEALPIx high-resolution skymap")
         m = hp.read_map(e)
         npix = len(m)
         nside = hp.npix2nside(npix)
         credible_levels = find_greedy_credible_levels(m)
         sky_area = np.sum(credible_levels <= 0.9) * hp.nside2pixarea(nside, degrees=True)
-        print(f"The Sky area is: {sky_area:.2f} sq-deg!")
+        logger.info(f"The Sky area is: {sky_area:.2f} sq-deg!")
         if m_exp_run == True:
 
             if sky_area <= 300.0:
@@ -1729,9 +1722,7 @@ mjd_correction = True
 
 if map_mode == 1:
 
-    print(" ============================== \n ==============================\n")
-    print(f"starting the run for file {e}")
-    print(" ============================== \n ==============================\n")
+    logger.info(f"starting the run for file {e}")
     plot_name_ = basename(e)
     plot_name_ = plot_name_.rstrip(".fits.gz")
     plot_name_ = plot_name_.rstrip(".fits")
@@ -1743,7 +1734,7 @@ strategy_file = f'bayestar_{teff_kind}_{kntype}_{time}' +\
                 '_allconfig.csv'
 strategy_file = join(out_dir, strategy_file)
 if os.path.isfile(strategy_file):
-    print('This event event strategy already exists. Skipping')
+    logger.info('This event event strategy already exists. Skipping')
 
 warning_area_deep = []
 area_deg_arr = np.zeros((len(time_delays), len(second_loop)))
@@ -1778,7 +1769,7 @@ for j in range(0, len(time_delays)):
             warning_area_deep.append(area_covered_deep[i])
 
         if kn_calc.Flag == 0:
-            print(' I will pass')
+            logger.info(' I will pass')
             continue
         m_exp = kn_calc.mult_exp
 
@@ -1947,7 +1938,7 @@ for j in range(0, len(time_delays)):
                     frac_at_exptz_l_deep
 
 if kn_calc.Flag == 0:
-    print(' I will pass to the next event')
+    logger.info(' I will pass to the next event')
     # continue
     sys.exit()
 
@@ -2009,8 +2000,7 @@ if map_mode == 1:
                                 if j_1 <= j_2:
                                     if (m_exp_run == False) or (area_covered_deep[i] in warning_area_deep):
                                         if area_covered_deep[i] in warning_area_deep:
-                                            print('area deep warning for ', str(
-                                                area_covered_deep[i]))
+                                            logger.info(f"area deep warning for {area_covered_deep[i]}")
                                             area_deg_all_deep.append(0.0)
                                         telescope_time1 = telescope_time(
                                             exptime=exposure_times_calc[k_1], area_deg=area_deg_arr[j_1][i], field_of_view_area=fov)
@@ -2206,3 +2196,4 @@ if map_mode == 0:
 end = time_mod.time() - start
 with open(f'{out_dir}/strategy_runtime.log', 'w') as f:
     f.write(f'This process finished in {end:.2f} seconds!')
+logger.success(f"Successfully made all config strategy in {end:.2f} seconds!")

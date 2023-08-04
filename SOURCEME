@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [[ $HOSTNAME =~ "asantos" ]]; then
-    export ROOT_DIR="/home/data/phd/research_projects/DESGW/Main-Injector"
+    export ROOT_DIR="/home/data/phd/research_projects/Main-Injector"
     export DESGW_DIR="$ROOT_DIR/python"
     export KNLC_ROOT="$ROOT_DIR/python"
     export DATA_DIR="$ROOT_DIR/data"
