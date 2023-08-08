@@ -153,28 +153,29 @@ class GWStreamer():
         the appropriate format for the website."""
 
         columns = ["trigger_label",
-                   #"type",
-                   #"ligo_prob",
-                   #"far",
-                   #"distance",
-                   #"mjd",
+                   "type",
+                   "ligo_prob",
+                   "far",
+                   "distance",
+                   "mjd",
                    "event_datetime",
-                   "mock"]
-                   #"image_url"]
+                   "mock",
+                   "image_url"]
         
         trigger_id = record['superevent_id']
         alert_type, prob = self._get_max_prob(record)
         far = record['event']['far']
         distance = record['event']['distmean']
         mjd = float(Time(record['event']['time']).mjd)
-        event_datetime = Time(record['event']['time']).to_datetime()
+        #event_datetime = Time(record['event']['time']).to_datetime()
+        event_datetime = "2020-02-24 12:00:00"
         mock = True
-        image_url = (f'https://des-ops.fnal.gov:8082/desgw/Triggers/'
-                     f'{trigger_id}/bayestar/{trigger_id}_animate.gif')
-        
-        #values = [trigger_id,alert_type,prob,far,distance,mjd,
-                  #event_datetime,mock,image_url]
-        values = [trigger_id, event_datetime, mock]
+        #image_url = (f'https://des-ops.fnal.gov:8082/desgw/Triggers/'
+                     #f'{trigger_id}/bayestar/{trigger_id}_animate.gif')
+        image_url = 'https://des-ops.fnal.gov:8082/desgw/Triggers/S200128d/bayestar/S200128d_animate.gif'
+        values = [trigger_id,alert_type,prob,far,distance,mjd,
+                  event_datetime,mock,image_url]
+        #values = [trigger_id, event_datetime, mock]
         trigger_data = {key: value for key, value in zip(columns,values)}
         print(trigger_data)
         for key in trigger_data:
