@@ -1,3 +1,4 @@
+import re
 import os
 import sys
 import math
@@ -11,6 +12,7 @@ import numpy as np
 import matplotlib
 import astropy.units as u
 import matplotlib.pyplot as plt
+from astropy.io import fits
 from astropy.cosmology import z_at_value
 from scipy.stats import uniform
 from scipy.stats import norm
@@ -22,7 +24,6 @@ from math import log10
 from argparse import ArgumentParser
 from os.path import join, basename, dirname
 matplotlib.use("Agg")
-
 np.set_printoptions(threshold=sys.maxsize)
 
 
@@ -74,6 +75,13 @@ def open_ascii_cat(file_name, **kwargs):
                                  missing_values=m_v, filling_values=f_v,
                                  usecols=cols, unpack=unpack)
     return data
+
+def get_mjd(skymap):
+    with fits.open(skymap) as f:
+        header = f[1].header
+    
+    mjd = header['MJD-OBS']
+    return mjd
 
 def weighted_avg_and_std(values, weights):
     """
@@ -713,7 +721,7 @@ class KNCalc():
             pb_full = pb[idx_sort_full]
             distsigma_full = distsigma[idx_sort_full]
             if (distmu_full < 0.0).any():
-                logger.warning('Prob of distmu <0.0 in the full region region ', sum(
+                logger.warning('Prob of distmu <0.0 in the full region ', sum(
                     pb_full[distmu_full < 0.0]), ' from ', sum(pb_full[distmu_full > 0.0]))
                 distmu_full[distmu_full < 0.0] = 0.01
             if (distmu_covered < 0.0).any():
@@ -1616,10 +1624,19 @@ if __name__ == '__main__':
      
     parser.add_argument('--kn-type', default='blue')
 
-    parser.add_argument('--time', default=datetime.datetime.now(),
-                        help='Time in mjd that strategy code ran.')
+    parser.add_argument('--time', default=None,
+                        help='Time in mjd from skymap.')
+    
+    parser.add_argument('--time-delays', default=[12.0, 24.0],
+                        nargs='+',
+                        help='Time delays to calculate KN light curve.')
                       
-                      
+    parser.add_argument('--hours-per-night', default=8.0,
+                        type=float,
+                        help='Night Duration.')
+    parser.add_argument('--log-file', default=None,
+                        help='Log file destination.')
+    
     args = parser.parse_args()
     area_deg_fix = 40.0
     if 1 == 1:
@@ -1642,8 +1659,43 @@ if __name__ == '__main__':
         w_type = "gaussian_narrow"  # 'gaussian'#
 
         e = args.input_skymap
+        global out_dir
         out_dir = args.output
         time = args.time
+        log_file = args.log_file
+        # time_delays = [12.0, 24.0, 36.0, 48.0, 60.0, 72.0, 84.0, 96.0]
+        time_delays = args.time_delays
+        time_delays = list(map(float, time_delays))
+        hours_per_night = args.hours_per_night
+        if time == None:
+            time = get_mjd(skymap=e)
+
+        if log_file == None:
+            log_file = os.path.join(out_dir,'strategy.log')
+
+        keys = ['input_skymap',
+                'output',
+                'teff_type',
+                'kn_type',
+                'time',
+                'time_delays'
+                'hours_per_night'
+                'log_file']
+
+        values = [e,
+                  out_dir,
+                  teff_kind,
+                  kntype,
+                  time,
+                  time_delays,
+                  hours_per_night,
+                  log_file]
+        
+        strategy_args = {key: value for key, value in zip(keys, values)}
+        
+        logger.add(f"{output_alert}.log", level="DEBUG", backtrace=True, diagnose=True)
+        logger.add(lambda message: print(message, end=''), level="DEBUG", backtrace=True, diagnose=True)
+        logger.info()
         sufix = '_'+teff_kind+'_'+kntype+'_'
 
         map_mode = 1  # 1 for map 0 for dist
@@ -1691,8 +1743,6 @@ if __name__ == '__main__':
 
         plot_dist_name = 'detection_distance_loglan5.png'
         plot_td_name = 'detection_time_delay_loglan5.png'
-        # time_delays = [12.0, 24.0, 36.0, 48.0, 60.0, 72.0, 84.0, 96.0]
-        time_delays = [12.0, 24.0]
 
         filters_comb = ['gg', 'gr', 'gi', 'gz', 'rg', 'rr', 'ri',
                         'rz', 'ig', 'ir', 'ii', 'iz', 'zg', 'zr', 'zi', 'zz']
@@ -1716,7 +1766,6 @@ if __name__ == '__main__':
             exposure_times_calc), len(second_loop), len(time_delays)),)
 
 day_delays = np.array(time_delays)/24.0
-hours_per_night = 8.0
 time_per_night_sec = hours_per_night*60*60  # 21600
 mjd_correction = True
 
@@ -2194,6 +2243,4 @@ if map_mode == 0:
                 plot_name_+str(time_delays[j])+"exp"+str(exposure_times_calc[k])+"_dist.png")
 
 end = time_mod.time() - start
-with open(f'{out_dir}/strategy_runtime.log', 'w') as f:
-    f.write(f'This process finished in {end:.2f} seconds!')
 logger.success(f"Successfully made all config strategy in {end:.2f} seconds!")

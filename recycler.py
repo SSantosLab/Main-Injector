@@ -2,58 +2,43 @@ import os
 import OneRing
 import pandas as pd
 import multiprocessing
+import yaml
+from datetime import datetime
 from subprocess import run
 from argparse import ArgumentParser
 from astropy.io import fits
 from handlers.slack import SlackBot
-from handlers.observations import *
+import handlers.observations as gwplot
+from handlers.gwstreamer import GWStreamer
 from loguru import logger
+from api import DESGWApi
+def parser():
+    parser = ArgumentParser()
+    parser.add_argument('--trigger-id',
+                        type=str,
+                        help='Superevent ID. example: S230615az')
+    parser.add_argument('--skymap',
+                        type=str,
+                        help='Path to superevent\'s skymap.')
+    parser.add_argument('--event',
+                        type=str,
+                        help='Source of GW Sginal. Can be BNS, NSBH or BBH.')
+    parser.add_argument('--max-hex-count',
+                        type=float,
+                        default=None,
+                        nargs='?',
+                        help='Limit the number of hexes in json file. Default is None')
+    parser.add_argument('--max-hex-time',
+                        type=float,
+                        default=None,
+                        nargs='?',
+                        help='Limit the number of hexes in json file based on time in seconds. Default is None.')
 
-parser = ArgumentParser()
-parser.add_argument('--trigger-id',
-                    type=str,
-                    help='Superevent ID. example: S230615az')
-parser.add_argument('--skymap',
-                    type=str,
-                    help='Path to superevent\'s skymap.')
-parser.add_argument('--event',
-                    type=str,
-                    help='Source of GW Sginal. Can be BNS, NSBH or BBH.')
-parser.add_argument('--max-hex-count',
-                    type=float,
-                    default=None,
-                    nargs='?',
-                    help='Limit the number of hexes in json file. Default is None')
-parser.add_argument('--max-hex-time',
-                    type=float,
-                    default=None,
-                    nargs='?',
-                    help='Limit the number of hexes in json file based on time in seconds. Default is None.')
-
-parser.add_argument('--official',
-                    action='store_true',
-                    default=False,
-                    help='If official, starts recycler for an official event.')
-
-args = parser.parse_args()
-
-logger.info('Settings for Recycler:')
-
-arguments = vars(args)
-for key,value in arguments.items():
-    logger.info(f'{key}: {value}')
-
-trigger_id = args.trigger_id
-skymap = args.skymap
-event = args.event
-max_hex_time = args.max_hex_time
-max_hex_count = args.max_hex_count
-official = args.official
-
-with fits.open(skymap) as f:
-    header = f[1].header
-
-mjd = header['MJD-OBS']
+    parser.add_argument('--official',
+                        action='store_true',
+                        default=False,
+                        help='If official, starts recycler for an official event.')
+    return parser
 
 def run_strategy_and_onering(skymap_filename,
                              trigger_id,
@@ -144,96 +129,59 @@ def run_strategy_and_onering(skymap_filename,
     slack_bot.post_message(subject=subject,
                            text=text)
 
-moony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
-                                        args=(skymap,
-                                            trigger_id,
-                                            mjd,
-                                            'moony',
-                                            event,))
+if __name__ == '__main__':
 
-notmoony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
-                                            args=(skymap,
-                                                trigger_id,
-                                                mjd,
-                                                'notmoony',
-                                                event,))
+    GW = GWStreamer(mode='observation')
+    DESGW = DESGWApi()
+    p = parser()
+    args = p.parse_args()
+    trigger_path = GW.OUTPUT_TRIGGER
+    trigger_id = args.trigger_id
+    output_alert = os.path.join(trigger_path, trigger_id)
+    logger.add(f"{output_alert}.log", level="DEBUG", backtrace=True, diagnose=True)
+    logger.add(lambda message: print(message, end=''), level="DEBUG", backtrace=True, diagnose=True)
 
-moony_strategy.start()
-notmoony_strategy.start()
+    logger.info('Settings for Recycler:')
+    arguments = vars(args)
+    for key,value in arguments.items():
+        logger.info(f'{key}: {value}')
 
-####### BIG MONEY NO WHAMMIES ###############################################
-# if config["wrap_all_triggers"]:
-#     if not dontwrap:
-#         trigger_ids = os.listdir(trigger_path)
-#         trigger_ids = trigger_ids[2:]
-# for trigger_id in trigger_ids:
-#     if force_mjd:
-#         mjd = config["mjd"]
-#     else:
-#         try:
-#             mjd = open(os.path.join(trigger_path, trigger_id,
-#                         trigger_id + '_eventMJD.txt'), 'r').read()
-#         except:
-#             mjd = '99999'
-#     if skymap_filename is None:
-#         try:
-#             # if True:
-#             # mapname = open(os.path.join(trigger_path,
-#             #                            trigger_id,
-#             #                            config['default_map_name']), 'r').read()
-#             # skymap_filename = os.path.join(trigger_path,
-#             #                               trigger_id, config['default_map_name'])
-#             # print os.path.join(trigger_path, trigger_id,'default_skymap.txt')
-#             # print os.path.join(trigger_path, trigger_id,'default_skymap.txt').read()
-#             skymap_filename = os.path.join(trigger_path, trigger_id,
-#                                             open(os.path.join(trigger_path, trigger_id,
-#                                                                 'default_skymap.txt'), 'r').read())
-#         except:
-#             badtriggers = open('badtriggers.txt', 'a')
-#             badtriggers.write(trigger_id + '\n')
-#             print('Could not find skymap url file')
+    logger.info('Creating recycler.yaml config file')
+    with open(os.path.join(trigger_path,'recyler.yaml'), 'w') as f:
+        f.write(yaml.dump(arguments))
+    
+    skymap = args.skymap
+    event = args.event
+    max_hex_time = args.max_hex_time
+    max_hex_count = args.max_hex_count
+    official = args.official
+    with fits.open(skymap) as f:
+        header = f[1].header
 
-#     if 'bayestar' in skymap_filename:
-#         print('bayestar' * 50)
+    mjd = header['MJD-OBS']
 
-# #        try:
-#     if 1 == 1:
-#         try:
-#             mjd = float(mjd)
-#         except:
-#             badtriggers = open('badtriggers.txt', 'a')
-#             badtriggers.write(trigger_id + '\n')
-#             print('WARNING: Could not convert mjd to float. Trigger: ' +
-#                     trigger_id + ' flagged as bad.')
-# # here is where the object is made, and parts of it are filed in
-#         master_dir = os.path.join(trigger_path, trigger_id)
-        
-#         e = event.Event(skymap_filename,
-#                         master_dir,
-#                         trigger_id,
-#                         mjd,
-#                         config,
-#                         official,
-#                         hasrem)
+    logger.info('Making Initial plots')
+    gwplot.make_plots_initial(url=output_alert,
+                              name=trigger_id)
+    
+    alert = f'{output_alert}/{trigger_id}.json'
+    alert_data = GW.make_trigger_data(alert)
+    DESGW.add_trigger(alert)
 
-# # e has variables and code assocaiated with it. The mapMaker is called "e" or "self"
+    # moony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
+    #                                         args=(skymap,
+    #                                             trigger_id,
+    #                                             mjd,
+    #                                             'moony',
+    #                                             event,))
 
-#         e.mapMaker(trigger_id, skymap_filename, config, hasrem) # work end to end
-#         # e.getContours(config)  # work
-#         #e.makeObservingPlots()  # not working
-#         # jsonfilelist = e.makeJSON(config)  # note working
-#         # e.make_cumulative_probs()
-#         # os.system('cp '+e.event_paramfile+' '+master_dir)
-#         # generates the homepage
-#         # e.updateTriggerIndex(real_or_sim=real_or_sim)
-#         # make a blank page with the basic info that is available
-#         # e.updateWebpage(real_or_sim)
-        
-#         e.send_nonurgent_Email()
-        
-
-#        except KeyError:
-#            print("Unexpected error:", sys.exc_info())
-#            badtriggers = open('badtriggers.txt', 'a')
-#            badtriggers.write(trigger_id + '\n')
-#############################################################################
+    # notmoony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
+    #                                             args=(skymap,
+    #                                                 trigger_id,
+    #                                                 mjd,
+    #                                                 'notmoony',
+    #                                                 event,))
+    
+    # logger.info('Firing off moony and notmoony strategy')
+    # moony_strategy.start()
+    # notmoony_strategy.start()

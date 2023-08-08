@@ -12,3 +12,6 @@ des-gw*.json
 OUTPUT/TESTING/GW*/*.csv
 OUTPUT/TESTING/GW*/lowres
 OUTPUT/TESTING/GW*/weights
+OUTPUT/TESTING/skymap300sqdeg*/*.csv
+OUTPUT/TESTING/skymap300sqdeg*/lowres
+OUTPUT/TESTING/skymap300sqdeg*/weights

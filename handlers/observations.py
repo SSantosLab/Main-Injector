@@ -27,8 +27,8 @@ import json
 
 ### Function for reading + parsing the skymap 
 def make_alert_skymap(map_path):
-    skymap = hp.read_map(map_path, field=None)
-    prob, distmu, distsigma, distnorm = skymap
+    skymap = hp.read_map(map_path, field=range(3))
+    prob, distmu, distsigma = skymap
     
     npix = len(prob)
     nside = hp.npix2nside(npix)
@@ -102,7 +102,8 @@ def moon_airmass(event_name, todays_date, target_coords):
     
     
     #midnight = Time('2012-7-13 00:00:00') - utcoffset
-    mytime = todays_date + ' 00:00:00'
+    # mytime = todays_date + ' 00:00:00'
+    mytime = todays_date
     midnight = Time(mytime) - utcoffset
     
     
@@ -163,68 +164,6 @@ def moon_airmass(event_name, todays_date, target_coords):
     ax2.set_ylim(4,1)
     plt.savefig(event_name+'_Moon',dpi=300, bbox_inches = "tight")
     
-
-####################### Functions needed post strategy-code ##################################
-def ra_dec2theta_phi(ra,dec):
-    theta = 0.5 * np.pi - np.pi*dec/180
-    phi = np.deg2rad(ra)
-    return theta, phi
-
-def get_prob_from_observing_json(NSIDE, json_data, prob_array):
-    hex_number = []
-    total_prob = []
-    for i in range(len(data)):
-        ra = data[i]['RA']
-        dec = data[i]['dec']
-        theta_hex, phi_hex = ra_dec2theta_phi(ra,dec)
-        vec = hp.ang2vec(theta_hex, phi_hex)
-        decam_hex_disc = hp.query_disc(nside, vec, radius=np.radians(0.9772))
-        #decam_hex_disc = hp.query_disc(nside, vec, radius=np.radians(0.75))
-        prob_covered = np.sum(prob[decam_hex_disc])
-        hex_number.append(i)
-        total_prob.append(prob_covered)
-    
-    probcum = [sum(total_prob[:i+1]) for i in range(len(total_prob))]
-   
-    prob_percent = [i*100 for i in probcum]
-    return hex_number, prob_percent
-
-def airmass(event_name,target_coords):
-    ''' Target coords is a list of tuples containing ra, dec, and the name of the target'''
-
-    CTIO = Observer(longitude=-70.80*u.deg, latitude=-30.17*u.deg,
-                  elevation=3000*u.m, name="CTIO",timezone='America/Santiago')
-    
-    HSC = Observer(longitude=-155.4761*u.deg, latitude=19.825*u.deg,
-                  elevation=4139*u.m, name="Subaru", timezone="US/Hawaii")
-    
-    tscope = CTIO ; tscope_str = 'CTIO'
-
-    if len(target_coords) > 1:
-        targets=[FixedTarget(coord=SkyCoord(ra=coords[0]*u.deg,dec=coords[1]*u.deg),name=coords[2]) for coords in target_coords]
-    else:
-        targets=FixedTarget(coord=SkyCoord(ra = target_coords[0][0]*u.deg,dec=target_coords[0][1]*u.deg),name='Max Prob Coord')
-
-    constraints = [AltitudeConstraint(10*u.deg, 90*u.deg), AtNightConstraint.twilight_civil()]
-
-    time_range=(Time.now(),Time.now()+1*u.day)
-    #time_range=(Time.now()*u.day,Time.now()+1*u.day)
-    ever_observable = is_observable(constraints, tscope, targets, time_range=time_range)
-    
-    
-
-    fig,ax=plt.subplots(figsize=(12,8))
-    ax.set_title('DECam Hex Airmasses')
-    plot_airmass(targets,ax=ax,
-            observer=tscope,
-            time=tscope.midnight(Time.now()).to_datetime(timezone=tscope.timezone),
-            use_local_tz=True,
-            brightness_shading=True,
-            max_region=3,min_region=1.5)
-    plt.legend(loc='best')
-    plt.savefig(event_name+'_Airmass_Hexes',dpi=300, bbox_inches = "tight")
-#######################
-
 def make_plots_initial(url, name):
     '''url is either the skymap url or the local path to the skymap, name is something like "S230518". 
     
@@ -294,6 +233,69 @@ def make_plots_initial(url, name):
     ax.legend(loc = (0.1,1))
     
     plt.savefig(name+'_initial_skymap',dpi=300, bbox_inches = "tight")
+    
+####################### Functions needed post strategy-code ##################################
+def ra_dec2theta_phi(ra,dec):
+    theta = 0.5 * np.pi - np.pi*dec/180
+    phi = np.deg2rad(ra)
+    return theta, phi
+
+def get_prob_from_observing_json(NSIDE, json_data, prob_array):
+    hex_number = []
+    total_prob = []
+    for i in range(len(json_data)):
+        ra = json_data[i]['RA']
+        dec = json_data[i]['dec']
+        theta_hex, phi_hex = ra_dec2theta_phi(ra,dec)
+        vec = hp.ang2vec(theta_hex, phi_hex)
+        decam_hex_disc = hp.query_disc(NSIDE, vec, radius=np.radians(0.9772))
+        #decam_hex_disc = hp.query_disc(nside, vec, radius=np.radians(0.75))
+        prob_covered = np.sum(prob_array[decam_hex_disc])
+        hex_number.append(i)
+        total_prob.append(prob_covered)
+    
+    probcum = [sum(total_prob[:i+1]) for i in range(len(total_prob))]
+   
+    prob_percent = [i*100 for i in probcum]
+    return hex_number, prob_percent
+
+def airmass(event_name,target_coords):
+    ''' Target coords is a list of tuples containing ra, dec, and the name of the target'''
+
+    CTIO = Observer(longitude=-70.80*u.deg, latitude=-30.17*u.deg,
+                  elevation=3000*u.m, name="CTIO",timezone='America/Santiago')
+    
+    HSC = Observer(longitude=-155.4761*u.deg, latitude=19.825*u.deg,
+                  elevation=4139*u.m, name="Subaru", timezone="US/Hawaii")
+    
+    tscope = CTIO ; tscope_str = 'CTIO'
+
+    if len(target_coords) > 1:
+        targets=[FixedTarget(coord=SkyCoord(ra=coords[0]*u.deg,dec=coords[1]*u.deg),name=coords[2]) for coords in target_coords]
+    else:
+        targets=FixedTarget(coord=SkyCoord(ra = target_coords[0][0]*u.deg,dec=target_coords[0][1]*u.deg),name='Max Prob Coord')
+
+    constraints = [AltitudeConstraint(10*u.deg, 90*u.deg), AtNightConstraint.twilight_civil()]
+
+    time_range=(Time.now(),Time.now()+1*u.day)
+    #time_range=(Time.now()*u.day,Time.now()+1*u.day)
+    ever_observable = is_observable(constraints, tscope, targets, time_range=time_range)
+    
+    
+
+    fig,ax=plt.subplots(figsize=(12,8))
+    ax.set_title('DECam Hex Airmasses')
+    plot_airmass(targets,ax=ax,
+            observer=tscope,
+            time=tscope.midnight(Time.now()).to_datetime(timezone=tscope.timezone),
+            use_local_tz=True,
+            brightness_shading=True,
+            max_region=3,min_region=1.5)
+    plt.legend(loc='best')
+    plt.savefig(event_name+'_Airmass_Hexes',dpi=300, bbox_inches = "tight")
+#######################
+
+
     
 def make_plots_post_strat(url, name, jsonloc):
     '''url is either the skymap url or the local path to the skymap, name is something like "S230518", and jsonloc is the path to the json file produced by the strategy code. 

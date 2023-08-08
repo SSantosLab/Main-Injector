@@ -330,7 +330,7 @@ class GWStreamer():
         self.slack_bot.post_message(subject=subject,text=text)
 
         recycler = os.environ["ROOT_DIR"]
-        recycler = (f'python {os.path.join(recycler,"recycler.py")} '
+        recycler = (f'python {os.path.join(recycler, "recycler.py")} '
                     f'--trigger-id {trigger_id} '
                     f'--skymap {self.OUTPUT_TRIGGER}/bayestar.fits.gz '
                     f'--event {source} '
