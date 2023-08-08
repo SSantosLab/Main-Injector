@@ -153,30 +153,32 @@ class GWStreamer():
         the appropriate format for the website."""
 
         columns = ["trigger_label",
-                   "type",
-                   "ligo_prob",
-                   "far",
-                   "distance",
-                   "mjd",
+                   #"type",
+                   #"ligo_prob",
+                   #"far",
+                   #"distance",
+                   #"mjd",
                    "event_datetime",
-                   "mock",
-                   "image_urgl"]
+                   "mock"]
+                   #"image_url"]
         
         trigger_id = record['superevent_id']
         alert_type, prob = self._get_max_prob(record)
         far = record['event']['far']
         distance = record['event']['distmean']
-        mjd = record['event']
-        event_datetime = record['event']['time']
-        mock = False
+        mjd = float(Time(record['event']['time']).mjd)
+        event_datetime = Time(record['event']['time']).to_datetime()
+        mock = True
         image_url = (f'https://des-ops.fnal.gov:8082/desgw/Triggers/'
                      f'{trigger_id}/bayestar/{trigger_id}_animate.gif')
         
-        values = [trigger_id,alert_type,prob,distance,mjd,
-                  event_datetime,mock,image_url]
-        
+        #values = [trigger_id,alert_type,prob,far,distance,mjd,
+                  #event_datetime,mock,image_url]
+        values = [trigger_id, event_datetime, mock]
         trigger_data = {key: value for key, value in zip(columns,values)}
-
+        print(trigger_data)
+        for key in trigger_data:
+            print(key, type(trigger_data[key]))
         return trigger_data
 
     def process_external_coinc(self,
@@ -324,11 +326,12 @@ class GWStreamer():
                                              record=record,
                                              retraction=False)
 
-        self.email_bot = EmailBot(mode=self.mode)
-        self.email_bot.send_email(subject=subject,text=text)
-        self.slack_bot = SlackBot(mode=self.mode)
-        self.slack_bot.post_message(subject=subject,text=text)
-
+        #self.email_bot = EmailBot(mode=self.mode)
+        #self.email_bot.send_email(subject=subject,text=text)
+        #self.slack_bot = SlackBot(mode=self.mode)
+        #self.slack_bot.post_message(subject=subject,text=text)
+        
+        print('Test')
         recycler = os.environ["ROOT_DIR"]
         recycler = (f'python {os.path.join(recycler, "recycler.py")} '
                     f'--trigger-id {trigger_id} '
