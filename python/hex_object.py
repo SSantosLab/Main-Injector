@@ -1,32 +1,41 @@
-import numpy as np
-import hp2np 
-import hexalate
-import decam2hp
-import jsonMaker
-from os import getenv
-import pandas as pd
-import sys
-import  matplotlib.pyplot as plt
-import mags
+import datetime
 from pyslalib import slalib
-from enum import Enum
+import numpy as np
 
-CTIO_LAT = -30.16527778
-CTIO_LON = -70.8125
-CTIO_HEIGHT = 2215.
-KPNO_LAT = 31.9600784
-KPNO_LON = -111.598169
-KPNO_HEIGHT = 2067.
-MAUNAKEA_LAT = 19.826667
-MAUNAKEA_LON = -155.471667
-MAUNAKEA_HEIGHT = 4215.
+def zenith_distance(ha, dec, latitude):
+    degToRad = 2.*np.pi/360.
+    sinAltRad = np.sin(latitude)*np.sin(dec) + np.cos(latitude)*np.cos(dec)*np.cos(ha)
+    altRad = np.arcsin(sinAltRad)
+    zenithDist = 90*degToRad - altRad
+    return zenithDist / degToRad
 
-class CameraType(Enum):
-    DECam = "decam"
-    DESI = "desi"
-    HSC = "hsc"
+def mjd_to_LST(mjd, eastLongitude):
+    gmst = slalib.sla_gmst(mjd)
+    eqEquinoxes = slalib.sla_eqeqx(mjd)
+    lst = gmst + eqEquinoxes + eastLongitude
+    return lst
+
+def get_moon_pos(mjd, camera='decam'):
+    # Coordinates in degrees
+    if camera == "decam":
+        lat = -30.16527778
+        lon = -70.8125
+    elif camera == "desi":
+        lat = 31.9600784
+        lon = -111.598169
+    elif camera == "hsc":
+        lat = 19.826667
+        lon = -155.471667
+    else:
+        print("Camera not supported")
     
-class hex_object:
+    # These should all be in degrees, but make sure
+    moon_ra, moon_dec, moon_dia = slalib.sla_rdplan(mjd, 3, lon, lat)
+    moon_ha = mjd_to_LST(mjd, lon) - moon_ra
+    moon_zd = zenith_distance(moon_ha, moon_dec, lat)
+    return moon_ra, moon_dec, moon_ha, moon_zd
+
+class HexObject:
     """
     Adapted heavily from Jim's mags.py code (at least for calculations of lunar separation). 
 
@@ -35,157 +44,153 @@ class hex_object:
     Attributes:
     -----------
     ra: float
-        Right Accesion of hex. 
+        Right Accesion of hex (deg)
     dec: float
-        Declination of hex.
+        Declination of hex (deg)
     prob: float
         Given hex's probability.
-    rise_est: string
-        EST and date of hex's rise time.
-    set_est: string
-        EST and date of hex's set time. 
     rise_mjd: float
         Modified Julian Date of hex rise time.
     set_mjd: float
         Modified Julian Date of hex set time.
-    camera: str (Default: "decam")
-        Camera type for observations. 
     """
-    def __init__(self, ra, dec, prob, rise_est, set_est, rise_mjd, set_mjd, camera="decam"):
+    def __init__(self, ra, dec, prob, rise_mjd, set_mjd, expTime, index=None):
         self.prob = prob
-        self.rise_est = rise_est
-        self.set_est = set_est
         self.rise_mjd = rise_mjd
         self.set_mjd = set_mjd
-
-        #get conversion factors
-        self.degToRad = 2. * np.pi / 360.
-        self.radToDeg = 360 / 2 / np.pi
-
-        #determine whether using decam, desi, or hsc (not sure if necessary, jim's mags just does this 
-        #so I put it in 
-        self.observatory = CameraType(camera)
-
-        #calculations for moon separation/distance from moon
-        self.lat = self.obs_lat * self.degToRad
-        self.lon = self.obs_lon * self.degToRad
-        self.height = self.obs_height
-
-        self.ra = ra * self.degToRad
-        self.dec = dec * self.degToRad
-
-        #get moon separation at rise time of hex and set time of hex, saved in
-        #self.rise_moon_sep and self.set_moon_sep, respectively 
-        self.calculate_lunar_separations()
-
-#         print(self.rise_moon_sep, self.set_moon_sep)
-
-
-###WILL WANT TO FILL IN CODE HERE####
-    def airmass_factor(self, time):
-        #airmass factor as a function of time and position 
-    def distance_from_hex(idk):
-        #get distance from hex to another hex
-    def slew_time(distance_from_hex i think):
-        #get slew time
-    def time_to_set(self, current_time):
-        return current_time - self.set_mjd
-    def get_awesomeness_factor(self):
-        #get the awesomeness factor filling in previous factors here
+        self.ra = ra
+        self.dec = dec
+        self.index = index
+        self.expTime = expTime
         
-#####REST OF THIS CODE THEORETICALLY KINDA DONE#########
 
-    def calculate_lunar_separations(self):
-            self.resetTime(self.rise_mjd)
-            rise_moon_sep = self.radToDeg * self.getLunarSeparation(self.ra, self.dec, self.moonData)
+    def getAwesomenessFactor(self, mjd, last_ra, last_dec, moon_ra, moon_dec, moon_zd):
+        # Ranks hex based on attributes. Inputs are current time (MJD), current scope coordinates (deg), and moon coordinates (deg).
+        return self.prob * self.airmassFactor() * self.hexVisibilityFactor(mjd) * \
+                self.slewTimeFactor(last_ra, last_dec) * self.lunarSeparationFactor(moon_ra, moon_dec, moon_zd)
+        
+    def airmassFactor(self, mjd, camera='decam'):
+	# Coordinates in degrees
+	if camera == "decam":
+	    lat = -30.16527778
+	    lon = -70.8125
+	    alt = 2215
+        elif camera == "desi":
+            lat = 31.9600784
+            lon = -111.598169
+            alt = 2067
+        elif camera == "hsc":
+            lat = 19.826667
+            lon = -155.471667
+            alt = 4215
+        else:
+            print("Camera not supported")
+	
+	# Calculate the hour angle for the hex
+	hex_ha = mjd_to_LST(mjd, lon) - self.ra
+	
+	# Calculate the zenith distance for the hex
+	hex_zd = zenith_distance(hex_ha, self.dec, lat)
+	
+	# Calculate the airmass X using the formula from Rozenberg (1966), with an airmass value of 40 at the horizon
+	X = (np.cos(np.deg2rad(hex_zd)) + 0.025*np.exp(-11*np.cos(np.deg2rad(hex_zd))))**-1
+	
+	# Calculate the airmass factor. Airmass = 1 (source at zenith) is given a score of 1. A source with a ~50 degree
+	# zenith angle (airmass = 1.6) is given a score of 0.7. Sources at zenith angles greater than this are given a score
+	# which decays exponentially, with an 80 degree zenith angle (airmass ~ 5.6) given a score of ~0.012.
+	if 1<=X<=1.6:
+	    return 1 - 0.5*(X-1)
+	elif 1.6<X<=40:
+	    return 0.7*np.exp(-(X-1.6))
+	else:
+	    print('Not a valid airmass. Source may be below the horizon.')
+	    return 0.
+ 
+    def hexVisibilityFactor(self, mjd):
+        # Favors hexes that are close to setting and deweights hexes that are not visible. Input is current time (MJD).
+        if (mjd < self.rise_mjd) or (mjd > self.set_mjd):
+            return 0. # Hex not available if not in sky
+        time_to_set = self.set_mjd - mjd
+        return self.visFactorFunc(time_to_set)
 
-            self.resetTime(self.set_mjd)
-            set_moon_sep = self.radToDeg * self.getLunarSeparation(self.ra, self.dec, self.moonData)
+    def visFactorFunc(x, a=1.83, xmin=1./24, pmin=0.05):
+        # Tuned so that the median is at 2 hours to set. Plateau value defaults to 1 hour to set. Input is time to set in days.
+        c = xmin**a
+        xmax = xmin * pmin**(-1./a)
+        if x <= xmin:
+            return 1.
+        if x >= xmax:
+            return pmin
+        return c * x**(-a)
+        
+    def slewTimeFactor(self, last_ra, last_dec):
+        # Find the slew time from current scope position to this hex. Inputs must be current scope position in degrees.
+        hex_sep = self.getAngSep(self.ra, self.dec, last_ra, last_dec)
+        t_slew = hex_sep / 1. # DECam slews at 1 degree per second. This line is for clarity.
+        return self.slewFactorFunc(t_slew)
+        
+    def slewFactorFunc(x, a=0.188, xmin=0.5):
+        # Numbers tuned such that the factor at 20s slew time is 0.5. Input is slew time in seconds.
+        if x <= xmin:
+            return 1.
+        c = xmin**a
+        return c * x**(-a)
+        
+    def lunarSeparationFactor(self, moon_ra, moon_dec, moon_zd):
+        # Inputs must be moon RA, Dec, and Zenith Distance in degrees.
+        moon_sep = self.getAngSep(self.ra, self.dec, moon_ra, moon_dec)
+        if moon_zd > 90:
+            return 1. # If the moon is set, then it shouldn't be a problem. Might need to tweak horizon degree value.
+        elif moon_sep > 15:
+            return 1.
+        else:
+            return 0.
 
-            self.rise_moon_sep = rise_moon_sep
-            self.set_moon_sep = set_moon_sep
+    def getAngSep(self, ra1, dec1, ra2, dec2):
+        # Combined the haversine functions to be more coherent. Inputs must be in degrees.
+        d2r = np.pi/180
+        a1 = ra1 * d2r
+        d1 = dec1 * d2r
+        a2 = ra2 * d2r
+        d2 = dec2 * d2r
+        return 2 * np.asin(np.sqrt(np.sin((d2-d1)/2)**2 + np.cos(d1)*np.cos(d2)*np.sin((a2-a1)/2)**2)) / d2r
 
-    def getLunarPosition(self, mjd, eastLongitude, latitude, lst):
-        ra, dec, diam = slalib.sla_rdplan(mjd, 3, eastLongitude, latitude)
-        ha = lst - ra
-        zd = self.zenithDistance(ha, dec, latitude)
-        return ra, dec, zd
+    def getRiseTimeReadable(self, with_date=False):
+        mjd_integer = int(self.rise_mjd)
+        mjd_decimal = self.rise_mjd - mjd_integer
+
+        # Convert MJD integer to date
+        reference_date = datetime.datetime(1858, 11, 17, 12, 0, 0)  # Reference MJD date
+        target_date = reference_date + datetime.timedelta(days=mjd_integer)
     
-    def getLunarSeparation(self, ra, dec, moonData):
-        moon_ra, moon_dec = self.moonData[0], self.moonData[1]
-        moon_sep = self.gc_separation(ra, dec, moon_ra, moon_dec)
-        return moon_sep
-
-    def obs_lat(self):
-        if self.observatory == CameraType.DECam or self.observatory == CameraType.DESI:
-            return CTIO_LAT
-        elif self.observatory == CameraType.HSC:
-            return MAUNAKEA_LAT
-
-    def obs_lon(self):
-        if self.observatory == CameraType.DECam or self.observatory == CameraType.DESI:
-            return CTIO_LON
-        elif self.observatory == CameraType.HSC:
-            return MAUNAKEA_LON
-        
-    def obs_height(self):
-        if self.observatory == CameraType.DECam or self.observatory == CameraType.DESI:
-            return CTIO_HEIGHT
-        elif self.observatory == CameraType.HSC:
-            return MAUNAKEA_HEIGHT
-        
-    def mjdToLST(self, mjd, eastLongitude):
-        gmst = slalib.sla_gmst(mjd)
-        eqEquinoxes = slalib.sla_eqeqx(mjd)
-        lst = gmst + eqEquinoxes + eastLongitude
-        return lst
-    def gc_separation(self, ra1, dec1, ra2, dec2):
-        delDec = dec1-dec2
-        delRa = ra1-ra2
-        dhav = self.haversine(delDec)
-        rhav = self.haversine(delRa)
-        hav = dhav + np.cos(dec1)*np.cos(dec2)*rhav
-        gc_distance = self.ahaversine(hav)
-        return gc_distance
-
-    def haversine(self, theta):
-        hav = np.sin(theta/2.)**2
-        return hav
-
-    def ahaversine(self, x):
-        ahav = 2*np.arcsin(np.sqrt(x))
-        return ahav
-    def equatorialToObservational(self, ra, dec, lst, latitude):
-        try:
-            if len(self.ra) > 1:
-                ha = lst - ra
-                zd = self.zenithDistance(ha, dec, latitude)
-                ix = np.nonzero(ha > 180.*2*np.pi/360.)
-                ha[ix] = ha[ix] - 360*2*np.pi/360.
-                return ha, zd
-        
-        except:
-            ha = lst - self.ra
-            zd = self.zenithDistance(ha, dec, latitude)
-            return ha, zd
-        
-    def zenithDistance(self, ha, dec, latitude):
-        degToRad = 2.*np.pi/360.
-        sinAltRad = np.sin(latitude)*np.sin(dec) + \
-            np.cos(latitude)*np.cos(dec)*np.cos(ha)
-        altRad = np.arcsin(sinAltRad)
-        zenithDist = 90*degToRad - altRad
-        return zenithDist
+        # Convert MJD decimal to time
+        total_seconds = mjd_decimal * 24 * 60 * 60
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
     
-    def resetTime(self, mjd):
-        self.mjd = mjd
-        self.lst = self.mjdToLST(self.mjd, self.lon)
-        self.ha, self.zd = self.equatorialToObservational(
-            self.ra, self.dec, self.lst, self.lat)
-        self.moonData = self.getLunarPosition(
-            self.mjd, self.lon, self.lat, self.lst)
-        self.moonZD = self.moonData[2]
-        self.moonSep = self.getLunarSeparation(
-            self.ra, self.dec, self.moonData)
-        self.moonRa = self.moonData[0]
-        self.moonDec = self.moonData[1]
+        time_str = f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+        
+        if with_date:
+            return target_date.strftime("%Y-%m-%d") + " " + time_str
+        else:
+            return time_str
+
+    def getSetTimeReadable(self, with_date=False):
+        mjd_integer = int(self.set_mjd)
+        mjd_decimal = self.set_mjd - mjd_integer
+
+        # Convert MJD integer to date
+        reference_date = datetime.datetime(1858, 11, 17, 12, 0, 0)  # Reference MJD date
+        target_date = reference_date + datetime.timedelta(days=mjd_integer)
+    
+        # Convert MJD decimal to time
+        total_seconds = mjd_decimal * 24 * 60 * 60
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+    
+        time_str = f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+        
+        if with_date:
+            return target_date.strftime("%Y-%m-%d") + " " + time_str
+        else:
+            return time_str
