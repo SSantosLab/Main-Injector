@@ -3,16 +3,17 @@ from pyslalib import slalib
 import numpy as np
 
 def zenith_distance(ha, dec, latitude):
-    degToRad = 2.*np.pi/360.
-    sinAltRad = np.sin(latitude)*np.sin(dec) + np.cos(latitude)*np.cos(dec)*np.cos(ha)
+    # Input and Output in degrees
+    sinAltRad = np.sin(np.deg2rad(latitude))*np.sin(np.deg2rad(dec)) + np.cos(np.deg2rad(latitude))*np.cos(np.deg2rad(dec))*np.cos(np.deg2rad(ha))
     altRad = np.arcsin(sinAltRad)
-    zenithDist = 90*degToRad - altRad
-    return zenithDist / degToRad
+    zenithDist = np.pi/2 - altRad
+    return np.rad2deg(zenithDist)
 
 def mjd_to_LST(mjd, eastLongitude):
+    # Input and Output in degrees
     gmst = slalib.sla_gmst(mjd)
     eqEquinoxes = slalib.sla_eqeqx(mjd)
-    lst = gmst + eqEquinoxes + eastLongitude
+    lst = np.rad2deg(gmst) + np.rad2deg(eqEquinoxes) + eastLongitude
     return lst
 
 def get_moon_pos(mjd, camera='decam'):
@@ -29,11 +30,11 @@ def get_moon_pos(mjd, camera='decam'):
     else:
         print("Camera not supported")
     
-    # These should all be in degrees, but make sure
-    moon_ra, moon_dec, moon_dia = slalib.sla_rdplan(mjd, 3, lon, lat)
-    moon_ha = mjd_to_LST(mjd, lon) - moon_ra
-    moon_zd = zenith_distance(moon_ha, moon_dec, lat)
-    return moon_ra, moon_dec, moon_ha, moon_zd
+    # These should all be in degrees
+    moon_ra_rad, moon_dec_rad, moon_dia_rad = slalib.sla_rdplan(mjd, 3, np.deg2rad(lon), np.deg2rad(lat))
+    moon_ha = mjd_to_LST(mjd, lon) - np.rad2deg(moon_ra_rad)
+    moon_zd = zenith_distance(moon_ha, np.rad2deg(moon_dec_rad), lat)
+    return np.rad2deg(moon_ra_rad), np.rad2deg(moon_dec_rad), moon_ha, moon_zd
 
 class HexObject:
     """
@@ -54,7 +55,7 @@ class HexObject:
     set_mjd: float
         Modified Julian Date of hex set time.
     """
-    def __init__(self, ra, dec, prob, rise_mjd, set_mjd, expTime, index=None):
+    def __init__(self, ra, dec, prob, rise_mjd, set_mjd, expTime, index = None):
         self.prob = prob
         self.rise_mjd = rise_mjd
         self.set_mjd = set_mjd
@@ -62,19 +63,41 @@ class HexObject:
         self.dec = dec
         self.index = index
         self.expTime = expTime
+        self.awesomeness_factor = None
         
+#for testing
+        self.awesomeness_factor_list = []
+        self.airmass_Factor = []
+        self.hex_VisibilityFactor = []
+        self.slewTime_Factor = []
+        self.lunarSeparation_Factor = []
+        self.mjd_list = []
 
-    def getAwesomenessFactor(self, mjd, last_ra, last_dec, moon_ra, moon_dec, moon_zd):
+    def getAwesomenessFactor(self, mjd, last_ra, last_dec, moon_ra, moon_dec, moon_zd, detailed = False):
         # Ranks hex based on attributes. Inputs are current time (MJD), current scope coordinates (deg), and moon coordinates (deg).
-        return self.prob * self.airmassFactor() * self.hexVisibilityFactor(mjd) * \
+        if detailed:
+            print(f'Probability: {self.prob} Airmass factor: {self.airmassFactor(mjd)} hexVisibility factor: {self.hexVisibilityFactor(mjd)}, slew time: {self.slewTimeFactor(last_ra, last_dec)}, lunar sep: {self.lunarSeparationFactor(moon_ra, moon_dec, moon_zd)}')
+        self.airmass_Factor.append(self.airmassFactor(mjd))
+        self.hex_VisibilityFactor.append(self.hexVisibilityFactor(mjd))
+        self.slewTime_Factor.append(self.slewTimeFactor(last_ra, last_dec))
+        self.lunarSeparation_Factor.append(self.lunarSeparationFactor(moon_ra, moon_dec, moon_zd))
+        self.mjd_list.append(mjd)
+        
+        AwesomenessFactor = self.prob * self.airmassFactor(mjd) * self.hexVisibilityFactor(mjd) * \
                 self.slewTimeFactor(last_ra, last_dec) * self.lunarSeparationFactor(moon_ra, moon_dec, moon_zd)
+        self.awesomeness_factor = AwesomenessFactor
+        self.awesomeness_factor_list.append(AwesomenessFactor)
         
     def airmassFactor(self, mjd, camera='decam'):
-	# Coordinates in degrees
-	if camera == "decam":
-	    lat = -30.16527778
-	    lon = -70.8125
-	    alt = 2215
+        # Coordinates in degrees
+	if (mjd<self.rise_mjd) or (mjd>self.set_mjd):
+	    # hex not in sky
+	    return 0.
+	
+        if camera == "decam":
+            lat = -30.16527778
+            lon = -70.8125
+            alt = 2215
         elif camera == "desi":
             lat = 31.9600784
             lon = -111.598169
@@ -85,26 +108,29 @@ class HexObject:
             alt = 4215
         else:
             print("Camera not supported")
-	
-	# Calculate the hour angle for the hex
-	hex_ha = mjd_to_LST(mjd, lon) - self.ra
-	
-	# Calculate the zenith distance for the hex
-	hex_zd = zenith_distance(hex_ha, self.dec, lat)
-	
-	# Calculate the airmass X using the formula from Rozenberg (1966), with an airmass value of 40 at the horizon
-	X = (np.cos(np.deg2rad(hex_zd)) + 0.025*np.exp(-11*np.cos(np.deg2rad(hex_zd))))**-1
-	
-	# Calculate the airmass factor. Airmass = 1 (source at zenith) is given a score of 1. A source with a ~50 degree
-	# zenith angle (airmass = 1.6) is given a score of 0.7. Sources at zenith angles greater than this are given a score
-	# which decays exponentially, with an 80 degree zenith angle (airmass ~ 5.6) given a score of ~0.012.
-	if 1<=X<=1.6:
-	    return 1 - 0.5*(X-1)
-	elif 1.6<X<=40:
-	    return 0.7*np.exp(-(X-1.6))
-	else:
-	    print('Not a valid airmass. Source may be below the horizon.')
-	    return 0.
+
+        # Calculate the hour angle for the hex
+        hex_ha = mjd_to_LST(mjd, lon) - self.ra
+
+        # Calculate the zenith distance for the hex
+        hex_zd = zenith_distance(hex_ha, self.dec, lat)
+
+        # Calculate the airmass X using the formula from Rozenberg (1966), with an airmass value of 40 at the horizon
+        X = (np.cos(np.deg2rad(hex_zd)) + 0.025*np.exp(-11*np.cos(np.deg2rad(hex_zd))))**-1
+
+        # Calculate the airmass factor. Airmass = 1 (source at zenith) is given a score of 1. A source with a ~50 degree
+        # zenith angle (airmass = 1.6) is given a score of 0.7. Sources at zenith angles greater than this are given a score
+        # which decays exponentially, with a 56 degree zenith angle (airmass ~ 1.8: limit of camera) given a score of ~0.21
+        # and all airmasses above 2.3 getting a default score of 0.01
+        if 0.9<=X<=1.6:
+            return 1 - 0.5*(X-1)
+        elif 1.6<X<=2.3:
+            return 0.7*np.exp(-6*(X-1.6))
+        elif 2.3<X<=40: # Airmass of 2.3 corresponds to a source 26 degs from the horizon
+            return 0.01
+        else:
+            # Not a valid airmass
+            return 0.
  
     def hexVisibilityFactor(self, mjd):
         # Favors hexes that are close to setting and deweights hexes that are not visible. Input is current time (MJD).
@@ -113,7 +139,7 @@ class HexObject:
         time_to_set = self.set_mjd - mjd
         return self.visFactorFunc(time_to_set)
 
-    def visFactorFunc(x, a=1.83, xmin=1./24, pmin=0.05):
+    def visFactorFunc(self, x, a=1.83, xmin=1./24, pmin=0.05):
         # Tuned so that the median is at 2 hours to set. Plateau value defaults to 1 hour to set. Input is time to set in days.
         c = xmin**a
         xmax = xmin * pmin**(-1./a)
@@ -129,7 +155,7 @@ class HexObject:
         t_slew = hex_sep / 1. # DECam slews at 1 degree per second. This line is for clarity.
         return self.slewFactorFunc(t_slew)
         
-    def slewFactorFunc(x, a=0.188, xmin=0.5):
+    def slewFactorFunc(self, x, a=0.188, xmin=0.5):
         # Numbers tuned such that the factor at 20s slew time is 0.5. Input is slew time in seconds.
         if x <= xmin:
             return 1.
@@ -153,7 +179,7 @@ class HexObject:
         d1 = dec1 * d2r
         a2 = ra2 * d2r
         d2 = dec2 * d2r
-        return 2 * np.asin(np.sqrt(np.sin((d2-d1)/2)**2 + np.cos(d1)*np.cos(d2)*np.sin((a2-a1)/2)**2)) / d2r
+        return 2 * np.arcsin(np.sqrt(np.sin((d2-d1)/2)**2 + np.cos(d1)*np.cos(d2)*np.sin((a2-a1)/2)**2)) / d2r
 
     def getRiseTimeReadable(self, with_date=False):
         mjd_integer = int(self.rise_mjd)
@@ -194,3 +220,6 @@ class HexObject:
             return target_date.strftime("%Y-%m-%d") + " " + time_str
         else:
             return time_str
+      
+    def display_hexinfo(self):
+        print(f'RA: {self.ra:.3f}, DEC: {self.dec:0.3}, PROB: {self.prob:0.3}, AWESOMENESS: {self.awesomeness_factor:0.3}')
