@@ -144,7 +144,7 @@ class GW(Alert):
         hdu = fits.open(moc_skymap)
         order = ah.nside_to_level(nside)
         table = read_sky_map(hdu, moc=True)
-        table = rasterize(table, order=nside)
+        table = rasterize(table, order=order)
         write_sky_map(flatten_path, table, nest=True)
         hdu.close()
 

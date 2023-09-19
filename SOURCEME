@@ -12,6 +12,18 @@ if [[ $HOSTNAME =~ "asantos" ]]; then
 
 fi
 
+if [[ $HOSTNAME =~ "cenpes" ]]; then
+    export ROOT_DIR=$pwd
+    export DESGW_DIR="$ROOT_DIR/python"
+    export KNLC_ROOT="$ROOT_DIR/python"
+    export DATA_DIR="$ROOT_DIR/data"
+    export WEB="$ROOT_DIR/DES_GW_website"
+    export DESGW_MAP_DIR="$MAIN_INJECTOR/skymaps"
+    export PYTHONPATH="$ROOT_DIR/python:$PYTHONPATH"
+    export API_BASE_URL=https://desgw-api-physics-soares-santos-flaskapi.apps.gnosis.lsa.umich.edu/api/v0.1/
+
+fi
+
 if [[ $HOSTNAME =~ "des60" ]] ; then
     conda activate des18a
     export MAIN_INJECTOR="/data/des60.a/data/annis/MainInjectorNov22/Main-Injector"

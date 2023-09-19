@@ -69,8 +69,8 @@ if __name__ == '__main__':
     moc_skymap = os.path.join(os.environ['ROOT_DIR'],
                               'OUTPUT',
                               'O4REAL',
-                              alert_type,
                               gw_id,
+                              alert_type,
                               'bayestar.multiorder.fits')
 
     flatten_skymap = moc_skymap.replace('.multiorder.fits',
@@ -93,6 +93,7 @@ if __name__ == '__main__':
         sys.exit()
     
     if 'all' or 'handle' in options.stages:
+        logger.info('In stage handle.')
         if not os.path.exists(moc_skymap):
             os.makedirs(os.path.dirname(moc_skymap))
 
@@ -103,7 +104,7 @@ if __name__ == '__main__':
         skymap = Table.read(moc_skymap)
         distmean = skymap.meta['DISTMEAN']
         distsigma = skymap.meta['DISTSTD']
-        mjd = round(Time(gw.event.time), 4)
+        mjd = round(Time(gw.event.time).mjd, 4)
         link = os.path.join('https://gracedb.ligo.org',
                             'apiweb',
                             'superevents',
@@ -138,39 +139,53 @@ if __name__ == '__main__':
             slack.send_message(subject=subject,text=message)
 
     if 'all' or 'initial-plots' in options.stages:
+        logger.info('In stage initial-plots')
+        plots_path = os.path.dirname(flatten_skymap)
+
         make_plots_initial(
-            url=flatten_skymap,
-            name=gw_id
+            url=os.path.abspath(flatten_skymap),
+            name=os.path.join(plots_path,
+                              gw_id)
         )
-    
-    if 'all' or 'rank-galaxies' in options.stages:
-        find_galaxy_list(
-            map_path=flatten_skymap,
-            event_name=gw.superevent_id,
-            galax = os.path.join(os.environ['ROOT_DIR'],
-                                 'data',
-                                 'franken_gals_array.npy'),
-            out_path=os.path.join(os.path.dirname(flatten_skymap),
-                                  'ranked_galaxies_list.csv')
-        )
+        logger.info('Initial plots saved at {}'.format(plots_path))
+    # if 'all' or 'rank-galaxies' in options.stages:
+    #     find_galaxy_list(
+    #         map_path=flatten_skymap,
+    #         event_name=gw.superevent_id,
+    #         galax = os.path.join(os.environ['ROOT_DIR'],
+    #                              'data',
+    #                              'franken_gals_array.npy'),
+    #         out_path=os.path.join(os.path.dirname(flatten_skymap),
+    #                               'ranked_galaxies_list.csv')
+    #     )
 
     if 'all' or 'add-trigger' in options.stages:
+        logger.info('In stage add trigger')
         desgw = DESGWApi(os.environ['API_BASE_URL'])
+
+        season = 1000
+        server_dir = os.path.join('/des_web','www','html','desgw-new',f'dp{season}',f'{gw_id}')
+        # Make a directory within the server hosting the webpage corresponding to the season and trigger_id
+        os.system('ssh codemanager@desweb.fnal.gov "mkdir -p {}"'.format(server_dir))
+        # Define a variable 'desweb' to be the directory to store our plots/files in 
+        desweb = "codemanager@desweb.fnal.gov:{}".format(server_dir)
+        # Assuming we store all the relevant plots in our working directory, in a directory called "MI_plots", we just 'scp' the entire directory into the location on the server 
+        os.system(f'scp -r {plots_path}*.png {desweb}')
         trigger_data = {
-            'trigger_label': gw.id,
+            'trigger_label': gw_id,
             'type': source,
             'ligo_prob': event_prob,
             'far': far,
             'distance': distmean,
-            'mjd': mjd,
+            'mjd': float(mjd),
             'event_datetime': Time(gw.event.time).strftime('%Y-%m-%d %H:%M:%S'),
-            'mock': '?',
-            'image_url': '?',
-            'galaxy_percentage_file': '?',
-            'initial_skymap': '?',
-            'moon': '?',
-            'season': '?',
+            'mock': True, # True for mock event, False for real event.
+            'galaxy_percentage_file': f'https://des-ops.fnal.gov:8082/desgw-new/dp{season}/{gw_id}/{galaxy_name}', #output from galaxy ranking file. (csv filepath)
+            'initial_skymap': f'https://des-ops.fnal.gov:8082/desgw-new/dp{season}/{gw_id}/S230518h_initial_skymap.png', # output initial skymap plot filepath
+            'moon': f'https://des-ops.fnal.gov:8082/desgw-new/dp{season}/{gw_id}/{gw_id}_Moon.png',
+            'season': '1000'
         }
+
         desgw.add_trigger(trigger_data = trigger_data)
 
     if 'all' or 'strategy' in options.stages:

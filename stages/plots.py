@@ -157,7 +157,8 @@ def moon_airmass(event_name, todays_date, target_coords):
     ax1.set_ylabel('Altitude [deg]')
     ax2.set_ylabel('Airmass')
     ax2.set_ylim(4,1)
-    plt.savefig(event_name+'_Moon',dpi=300, bbox_inches = "tight")
+    print(event_name)
+    plt.savefig(event_name+'_Moon.png',dpi=300, bbox_inches = "tight")
     
 def make_plots_initial(url, name):
     '''url is either the skymap url or the local path to the skymap, name is something like "S230518". 
@@ -227,7 +228,7 @@ def make_plots_initial(url, name):
         markeredgewidth=3, label = "Max Prob Coord")
     ax.legend(loc = (0.1,1))
     
-    plt.savefig(name+'_initial_skymap',dpi=300, bbox_inches = "tight")
+    plt.savefig(name+'_initial_skymap.png',dpi=300, bbox_inches = "tight")
     
 ####################### Functions needed post strategy-code ##################################
 def ra_dec2theta_phi(ra,dec):
