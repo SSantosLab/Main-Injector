@@ -15,3 +15,9 @@ OUTPUT/TESTING/GW*/weights
 OUTPUT/TESTING/skymap300sqdeg*/*.csv
 OUTPUT/TESTING/skymap300sqdeg*/lowres
 OUTPUT/TESTING/skymap300sqdeg*/weights
+OUTPUT/O4REAL/*
+recycler_old.py
+update_trigger.py
+raw_alerts/*
+data/franken_gals_array.npy
+configs/*

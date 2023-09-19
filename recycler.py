@@ -1,187 +1,177 @@
 import os
-import OneRing
-import pandas as pd
-import multiprocessing
-import yaml
-from datetime import datetime
-from subprocess import run
+import sys
 from argparse import ArgumentParser
-from astropy.io import fits
-from handlers.slack import SlackBot
-import handlers.observations as gwplot
-from handlers.gwstreamer import GWStreamer
+from datetime import datetime
 from loguru import logger
-from api import DESGWApi
-def parser():
-    parser = ArgumentParser()
-    parser.add_argument('--trigger-id',
-                        type=str,
-                        help='Superevent ID. example: S230615az')
-    parser.add_argument('--skymap',
-                        type=str,
-                        help='Path to superevent\'s skymap.')
-    parser.add_argument('--event',
-                        type=str,
-                        help='Source of GW Sginal. Can be BNS, NSBH or BBH.')
-    parser.add_argument('--max-hex-count',
-                        type=float,
-                        default=None,
-                        nargs='?',
-                        help='Limit the number of hexes in json file. Default is None')
-    parser.add_argument('--max-hex-time',
-                        type=float,
-                        default=None,
-                        nargs='?',
-                        help='Limit the number of hexes in json file based on time in seconds. Default is None.')
+from astropy.table import Table
+from astropy.time import Time
+from stages.gw import GW
+from stages.communication import Email, Slack
+from stages.plots import make_plots_initial, make_plots_post_strat
+from stages.api import DESGWApi
+from stages.rank_galaxies import find_galaxy_list
 
-    parser.add_argument('--official',
-                        action='store_true',
-                        default=False,
-                        help='If official, starts recycler for an official event.')
-    return parser
+def parser() -> ArgumentParser:
 
-def run_strategy_and_onering(skymap_filename,
-                             trigger_id,
-                             mjd,
-                             sky_condition: str = 'moony',
-                             event: str = 'BNS'):
-    if event != 'BBH':
-        if event == 'BNS':
-            kn_type = 'blue'
-
-        if event == 'NSBH':
-            kn_type = 'red'
-            
-        mjd = str(mjd).replace('.','')
-        current_time = mjd
-
-        input_dir = os.path.dirname(skymap)
-        output_dir = input_dir
-        cmd = 'python ' +\
-            'python/knlc/kn_strategy_sims_MI.py '+\
-            f'--input-skymap {skymap} '+\
-            f'--output {output_dir} '+\
-            f'--teff-type {sky_condition} ' +\
-            f'--kn-type {kn_type} ' +\
-            f'--time {current_time}'
-            
-        output_log = os.path.join(output_dir,
-                                f'{sky_condition}_{kn_type}_strategy.log')
-        strategy_log = open(output_log, 'w')
-
-        print('strategy started!')
-        run(cmd,
-            shell=True,
-            stdout=strategy_log,
-            stderr=strategy_log,
-            text=True)
-            
-        strategy_file = f'bayestar_{sky_condition}_{kn_type}_{current_time}' +\
-                        '_allconfig.csv'
-            
-        strategy_log.close()
-        strategy = os.path.join(output_dir, strategy_file)
-            
-        df = pd.read_csv(strategy, header=1)
-        df.sort_values(by='Detprob1', ascending=False, inplace=True)
-        optimal_strategy = df.iloc[0]
-        outer, inner, filt, exposure_outer, exposure_inner = optimal_strategy[1:6]
-        json_output = os.path.join(output_dir, 
-                                f"des-gw_{current_time}_{sky_condition}.json")
-        
-        df.assign(json_output=json_output)
-        filt = filt[0]
-
-    else:
-        # Default Strategy for BBHs
-        outer, inner, filt = 0.9, 0.5, 'i'
-        exposure_inner, exposure_outer = 90, 90
+    p = ArgumentParser()
+    p.add_argument('-f', '--file',
+                   help='gw alert content json file location.',
+                   default=None)
     
-    OneRing.run_or(
-        skymap,
-        outer,
-        inner,
-        filt,
-        exposure_inner,
-        exposure_outer,
-        mjd,
-        resolution=64,
-        jsonFilename=json_output,
-        max_hex_count=max_hex_count,
-        max_hex_time=max_hex_time
-    )
-
-    subject = f'Strategy for event {event}'
-    text = f'Outer region coverage: {outer}\n' +\
-        f'Inner region coverage: {inner}\n' +\
-        f'Filter: {filt}\n' +\
-        f'Exposure for Outer Region: {exposure_outer}\n' +\
-        f'Exposure for Inner Region: {exposure_inner}\n' +\
-        f'Json file path: {json_output}\n'
+    p.add_argument('-s', '--stages',
+                   help='Stages to run for main injector. Default is all.',
+                   default='all',
+                   type=str,
+                   nargs='+',
+                   choices=['all',
+                            'handle',
+                            'initial-plots',
+                            'rank-galaxies',
+                            'add-trigger',
+                            'strategy',
+                            'post-plots'
+                            'onering'])
     
-    if official:
-        mode = 'observation'
-    else:
-        mode = 'test'
+    p.add_argument('--skip-message',
+                   help='Use this option to not sent notification to people.',
+                   action='store_true',
+                   default=False)
+    
+    p.add_argument('--max-hex-time',
+                   type=float,
+                   default=None,
+                   nargs='?',
+                   help='Limit the number of hexes in json file based on time in seconds. Default is None.')
+    
+    p.add_argument('--max-hex-count',
+                   type=float,
+                   default=None,
+                   nargs='?',
+                   help='Limit the number of hexes in json file in number of hexes. Default is None.')
+    return p
 
-    slack_bot = SlackBot(mode=mode)
-
-    slack_bot.post_message(subject=subject,
-                           text=text)
-
+# Entrypoint
 if __name__ == '__main__':
 
-    GW = GWStreamer(mode='observation')
-    DESGW = DESGWApi()
     p = parser()
-    args = p.parse_args()
-    trigger_path = GW.OUTPUT_TRIGGER
-    trigger_id = args.trigger_id
-    output_alert = os.path.join(trigger_path, trigger_id)
-    logger.add(f"{output_alert}.log", level="DEBUG", backtrace=True, diagnose=True)
-    logger.add(lambda message: print(message, end=''), level="DEBUG", backtrace=True, diagnose=True)
+    options = p.parse_args()
+    gw = GW.from_alert(options.file)
+    alert_type = gw.alert_type
+    gw_id = gw.superevent_id
 
-    logger.info('Settings for Recycler:')
-    arguments = vars(args)
-    for key,value in arguments.items():
-        logger.info(f'{key}: {value}')
-
-    logger.info('Creating recycler.yaml config file')
-    with open(os.path.join(trigger_path,'recyler.yaml'), 'w') as f:
-        f.write(yaml.dump(arguments))
+    conf = os.path.join(os.environ['ROOT_DIR'],
+                        'configs',
+                        'communications.yaml')
     
-    skymap = args.skymap
-    event = args.event
-    max_hex_time = args.max_hex_time
-    max_hex_count = args.max_hex_count
-    official = args.official
-    with fits.open(skymap) as f:
-        header = f[1].header
-
-    mjd = header['MJD-OBS']
-
-    logger.info('Making Initial plots')
-    gwplot.make_plots_initial(url=output_alert,
-                              name=trigger_id)
+    email = Email.from_config_file(conf)
+    slack = Slack.from_config_file(conf)
     
-    alert = f'{output_alert}/{trigger_id}.json'
-    alert_data = GW.make_trigger_data(alert)
-    DESGW.add_trigger(alert)
+    moc_skymap = os.path.join(os.environ['ROOT_DIR'],
+                              'OUTPUT',
+                              'O4REAL',
+                              alert_type,
+                              gw_id,
+                              'bayestar.multiorder.fits')
 
-    # moony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
-    #                                         args=(skymap,
-    #                                             trigger_id,
-    #                                             mjd,
-    #                                             'moony',
-    #                                             event,))
+    flatten_skymap = moc_skymap.replace('.multiorder.fits',
+                                        '.fits.gz')    
 
-    # notmoony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
-    #                                             args=(skymap,
-    #                                                 trigger_id,
-    #                                                 mjd,
-    #                                                 'notmoony',
-    #                                                 event,))
+    far = round(1/float(gw.event.far)/60/60/24/365, 2)
+    source, event_prob = gw.find_source_and_prob()
+
+    # Thresholds
+    if source == 'BBH' and (far < 1000):
+        logger.info('BBH with low FAR, skipping event!')
+        sys.exit()
+
+    if source == 'Terrestrial':
+        logger.info('Terrestrial source, skipping event!')
+        sys.exit()
+
+    if gw.event.group != 'CBC':
+        logger.info('gw alert without classification, skipping event!')
+        sys.exit()
     
-    # logger.info('Firing off moony and notmoony strategy')
-    # moony_strategy.start()
-    # notmoony_strategy.start()
+    if 'all' or 'handle' in options.stages:
+        if not os.path.exists(moc_skymap):
+            os.makedirs(os.path.dirname(moc_skymap))
+
+        gw.retrieve_skymaps(moc_path=moc_skymap,
+                            flatten_path=flatten_skymap,
+                            nside=1024)
+        
+        skymap = Table.read(moc_skymap)
+        distmean = skymap.meta['DISTMEAN']
+        distsigma = skymap.meta['DISTSTD']
+        mjd = round(Time(gw.event.time), 4)
+        link = os.path.join('https://gracedb.ligo.org',
+                            'apiweb',
+                            'superevents',
+                            f'{gw_id}',
+                            'files',
+                            'bayestar.png')
+        
+        subject = f'Trigger {gw_id} MJD: {mjd} '+\
+            f'Classification: {source} ({event_prob}) FAR: {far} '+\
+            f'Alert Type {gw.alert_type}.'
+        
+        message = (f"Alert Type: {gw.alert_type}\n"
+            f"Superevent ID: {gw.superevent_id}\n"
+            f"Event Time: {gw.event.time} \n"
+            f"Alert Time: {gw.time_created}\n"
+            f"MJD: {mjd}\n"
+            f"FAR: {far}\n"
+            f"Detectors: {gw.event.instruments}\n"
+            f"BNS: {gw.event.classification.BNS:.3f}\n"
+            f"NSBH: {gw.event.classification.NSBH:.3f}\n"
+            f"BBH: {gw.event.classification.BBH:.3f}\n"
+            f"Terrestrial: {gw.event.classification.Terrestrial}\n"
+            f"Has Remmant: {gw.event.properties.HasRemnant}\n"
+            f"DISTMEAN: {distmean:.2f} Mpc\n"
+            f"DISTSIGMA: {distsigma:.2} Mpc\n"
+            f"Has Mass Gap: {gw.event.properties.HasMassGap}\n"
+            f"GraceDB Link: {gw.urls.gracedb}\n"
+            f"Skymap Link: {link}")
+        
+        if not options.skip_message:
+            email.send_message(subject=subject, text=message)
+            slack.send_message(subject=subject,text=message)
+
+    if 'all' or 'initial-plots' in options.stages:
+        make_plots_initial(
+            url=flatten_skymap,
+            name=gw_id
+        )
+    
+    if 'all' or 'rank-galaxies' in options.stages:
+        find_galaxy_list(
+            map_path=flatten_skymap,
+            event_name=gw.superevent_id,
+            galax = os.path.join(os.environ['ROOT_DIR'],
+                                 'data',
+                                 'franken_gals_array.npy'),
+            out_path=os.path.join(os.path.dirname(flatten_skymap),
+                                  'ranked_galaxies_list.csv')
+        )
+
+    if 'all' or 'add-trigger' in options.stages:
+        desgw = DESGWApi(os.environ['API_BASE_URL'])
+        trigger_data = {
+            'trigger_label': gw.id,
+            'type': source,
+            'ligo_prob': event_prob,
+            'far': far,
+            'distance': distmean,
+            'mjd': mjd,
+            'event_datetime': Time(gw.event.time).strftime('%Y-%m-%d %H:%M:%S'),
+            'mock': '?',
+            'image_url': '?',
+            'galaxy_percentage_file': '?',
+            'initial_skymap': '?',
+            'moon': '?',
+            'season': '?',
+        }
+        desgw.add_trigger(trigger_data = trigger_data)
+
+    if 'all' or 'strategy' in options.stages:
+        pass

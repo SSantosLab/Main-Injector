@@ -1,35 +1,30 @@
 
-from __future__ import division
-from __future__ import print_function
-import matplotlib
-matplotlib.use('agg')
 import numpy as np
-import fits_cat as fc
-from fits_cat import make_bin
-from matplotlib import rc
-from misc import quadrance,define_workdir,verify_kwarg,linear,scale
-#from cbomcode.image.image import *
-#import pyfits as fits
+from scipy.interpolate import interp1d
+from astropy.io import fits
 from math import log10,exp,sqrt, atan, log
-import matplotlib.pyplot as plt
-import matplotlib.ticker as mtick
+from matplotlib import rc
 from scipy.optimize import curve_fit
+from scipy.integrate import simps
+from sklearn.metrics import mean_squared_error
+from . import fits_cat as fc
+from . import cosmology as co
+from . import constants as const
+from .fits_cat import make_bin
+from .misc import quadrance,define_workdir,verify_kwarg,linear,scale, gauss_norm, gauss
 import scipy
 import numpy as np
-from misc import gauss_norm, gauss, verify_kwarg
-from sklearn.metrics import mean_squared_error
 import matplotlib.cm as cm
 import itertools
 import random
-import cosmology as co
-import constants as const
-from scipy.integrate import simps
 import math
-from astropy.io import fits
 import seaborn as sns
-from scipy.interpolate import interp1d
 import h5py
 import pandas as pd
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
+matplotlib.use('agg')
 
 
 

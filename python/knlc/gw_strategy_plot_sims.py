@@ -1,23 +1,19 @@
-from __future__ import division
-from __future__ import print_function
 import matplotlib
-from matplotlib import colors
-matplotlib.use('agg')
-#from cbomcode.image.image import *
-from cbomcode.tools import fits_cat as fc
 import os
 import numpy as np
 import seaborn as sns
-from cbomcode.tools.photo_lib import *
 import pandas as pd
-from scipy.interpolate import interpn
-from scipy.stats import norm
-from sklearn.neighbors import KernelDensity
 import matplotlib.pyplot as plt
 import healpy as hp
-from mpl_toolkits.mplot3d import Axes3D
 import sys
 from math import sqrt
+from matplotlib import colors
+from strategy import fits_cat as fc
+from strategy.photo_lib import *
+from argparse import ArgumentParser
+from loguru import logger
+logger.remove()
+matplotlib.use('agg')
 
 
 
@@ -26,6 +22,7 @@ Pipeline to ....
 """
 
 def plt_style():
+
     plt.rcParams.update({
                         'lines.linewidth':1.0,
                         'lines.linestyle':'-',
@@ -63,10 +60,10 @@ def plt_style():
                         'legend.frameon':False})
 
     return 0
+
 def get_map_distance(map_,savedir=''):
 
-    pb,distmu,distsigma,distnorm = hp.read_map(map_,field=range(4),verbose=False, dtype=[np.float64,np.float64,np.float64,np.float64])#clecio dtype='numpy.float64'
-    #pb,distmu,distsigma = hp.read_map(map_,field=range(3),verbose=False, dtype=[np.float64,np.float64,np.float64])#clecio dtype='numpy.float64'
+    pb,distmu,distsigma,distnorm = hp.read_map(map_,field=range(4), dtype=[np.float64,np.float64,np.float64,np.float64])#clecio dtype='numpy.float64'
     NSIDE=hp.npix2nside(pb.shape[0])
     pb_check=pb[np.logical_not(np.isinf(distmu))]
     distsigma_check=distsigma[np.logical_not(np.isinf(distmu))]
@@ -103,7 +100,6 @@ def get_map_distance(map_,savedir=''):
     if savedir!='':
         np.save(savedir,[distmu_check_average,distsigma_check_average])
     return distmu_check_average,distsigma_check_average
-
 
 def create_heatmap(x,y,nCut,outname,feature_name, x_ticks,y_ticks, plot_num=True, show_norm=False,method='sum_norm',z_=None, font_size=20 ,ticks_size=16, label_size=0,precision=".2f", silent=True,remove_zeros=False, add_error=False, cbarlabel='', tit=''):
 
@@ -245,7 +241,6 @@ def create_heatmap(x,y,nCut,outname,feature_name, x_ticks,y_ticks, plot_num=True
     if silent==False:
         sys.exit()
     return 0
-
 
 def create_color_dist_scatter(xdata,ydata,zdata=None,bin_edges_x=np.arange(1,250,20),bin_edges_y=np.arange(1,200,20),xlims=[0,250],ylims=[0,180],outname="area_dist_color.png", zlevels=[90,80,70,60,50,40], colorzlevels=['Indigo','Purple','DarkViolet','MediumOrchid','Plum','Thistle','Lavender'],markers_sc=["o","v","s","P","*","X","D"], color_hist='Indigo', plot_weights=False, log_scale=False,highlightpoints=None,usecolormap=None, highlightpoints_label='',x_label='Luminosity Distance (Mpc)',y_label='Area (sq-deg)', x_ticks=[0,50,100,150,200,250,300,350],top_hist_only=False, hist_labelx='',hist_labely=''):
 
@@ -419,13 +414,42 @@ def correct_expt_deep(exptime):
         print(exptime)
         sys.exit()
 
+def parser():
+
+    parser = ArgumentParser()
+    parser.add_argument('--input',
+                        '-i',
+                        help='Input Skymap directory path.',
+                        type=str)
+    parser.add_argument('--strategy-dir',
+                        help='Strategy all config csv file directory path.',
+                        type=str)
+    parser.add_argument('--teff-type',
+                        '-teff',
+                        help='Time Effective.',
+                        choices=['moony', 'notmoony'],
+                        default='moony',
+                        type=str)
+    parser.add_argument('--kn-type',
+                        '-ktype',
+                        help='Kilonova model type.',
+                        choices=['blue', 'red'],
+                        default='blue',
+                        type=str)
+    parser.add_argument('--time-delays',
+                        '-tdelay',
+                        help='Time delays after trigger. Default is [12.0, 24.0]',
+                        choices=[12.0, 24.0, 36.0, 48.0, 60.0, 72.0, 84.0, 96.0],
+                        default=[12.0, 24.0, 36.0],
+                        nargs='+')
+
+    return parser
 
 tableau20 = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),
              (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),
              (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),
              (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),
              (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)]
-
 
 markers20=["*","D",".","v","^","<",">","1","2","3","4","8","s","p","P",",","o"]
 
@@ -439,13 +463,13 @@ for i in range(len(tableau20)):
 #===================================================================
 
 import glob
-map_path='/home/cbpf/dadosCloud/gw_sim/fits_flattened/'#'/share/storage1/SLcosmology/darksirens/sims/O4_BNS/gw_sims04/flatten/'#'/share/storage1/SLcosmology/darksirens/sims/O4_BNS/gw_sims04/flatten/'#'/share/storage1/SLcosmology/darksirens/sims/O4_BNS/'
-map_path_info='/home/dadosSSD/kn_strategy_new/INFO/'#'/home/dadosSSD/kn_strategy_sci/INFO/'#'/home/dadosSSD/kn_strategy_new/INFO/'#'/share/storage1/SLcosmology/knstrategy_runs/O4_BN_SIMS_INFO/'
-strategy_dir='/home/cbpf/clecio10T/kn_strategy_sci/mbnmo2/'#'/home/cbpf/clecio10T/kn_strategy_sci/mrnmo2/'#'/home/cbpf/clecio10T/kn_strategy_sci/mbnmo_gw170817narrow/'#'/home/cbpf/clecio10T/kn_strategy_sci/mbnmo2/'#'/home/cbpf/clecio10T/kn_strategy_sci/mrnmo2/'#'/home/cbpf/clecio10T/kn_strategy_sci/mrnmo2/'#'/home/dadosSSD/kn_strategy_sci/mrnmo/'#'/home/dadosSSD/kn_strategy_sci/mbnmo2/'#'/home/dadosSSD/kn_strategy_sci/mrnmo/'#'/home/dadosSSD/kn_strategy_sci/mbnmo_gw170817narrow/'#'/home/dadosSSD/kn_strategy_sci/mbnmo2/'#'/home/dadosSSD/kn_strategy_sci/mrnmo/'#'/home/dadosSSD/kn_strategy_sci/mbnmo_gw170817narrow/'#'/home/dadosSSD/kn_strategy_sci/mbnmo2/'#'/home/dadosSSD/kn_strategy_sci/mbnmo_gw170817narrow/'#'/home/dadosSSD/kn_strategy_sci/mbnmo2/'#'/home/dadosSSD/kn_strategy_sci/mbnmo_gw170817narrow/'#'/home/dadosSSD/kn_strategy_sci/mbnmo2/'#'/home/dadosSSD/kn_strategy_sci/mbnmo_gw170817narrow/'#'/home/dadosSSD/kn_strategy_sci/mbnmo2/'#'/home/dadosSSD/kn_strategy_sci/sbnmo/'#'/home/dadosSSD/kn_strategy_sci/sbnmo/'#'/home/dadosSSD/kn_strategy_sci/mbnmo/'##'/home/dadosSSD/kn_strategy_sci/srnmo/'#'/home/dadosSSD/kn_strategy_sci/mrnmo/'#'/home/dadosSSD/kn_strategy_sci/mbnmo/'#'/home/dadosSSD/kn_strategy_sci/sbnmo/'#'/home/dadosSSD/kn_strategy_sci/mbnmo/'#'/home/dadosSSD/kn_strategy_new/mrednmo/'#'/home/dadosSSD/kn_strategy_new/mbluenmo/'#'/home/dadosSSD/kn_strategy_new/sbluenmo/'#'/home/dadosSSD/kn_strategy_new/mbluenmo/'#'/home/dadosSSD/kn_strategy_new/srednmo/'#'/home/dadosSSD/kn_strategy_new/sbluenmo/'##'/share/storage1/SLcosmology/kn_strategy_paper/mexp_rednmo/'#'/share/storage1/SLcosmology/kn_strategy_paper/sblue_nmo/'#'/share/storage1/SLcosmology/kn_strategy_paper/mexp_rednmo/'#'/share/storage1/SLcosmology/kn_strategy_paper/sblue_nmo/'#'/share/storage1/SLcosmology/kn_strategy_paper/mexp_bluenmo/'#'/share/storage1/SLcosmology/kn_strategy_paper/srednmo/'#'/share/storage1/SLcosmology/kn_strategy_paper/mexp_bluenmo/'#'/share/storage1/SLcosmology/kn_strategy_paper/sblue_nmo/'# '/share/storage1/SLcosmology/kn_strategy_paper/mexp_bluenmo/''/share/storage1/SLcosmology/kn_strategy_paper/sblue_nmo/'#'/share/storage1/SLcosmology/kn_strategy_paper/mexp_bluenmo/''/share/storage1/SLcosmology/knstrategy_runs/results_bns_sims_blue_notmoony_210913/'#'/home/cleciobom/lib/cbomcode/pipelines/knlc/results_bns_sims_blue_notmoony_210913_95/'#'/home/cleciobom/lib/cbomcode/pipelines/knlc/results_bns_sims_blue_notmoony_210913_95_48/'#'/home/cleciobom/lib/cbomcode/pipelines/knlc/sim_results_bns_moony_blue/'
-#sufix='bns_moony_blue_all_95'
-#event_list= glob.glob(map_path+'*.fits.gz')
-#event_list_top=glob.glob(strategy_dir+'*_topconfig.csv') #1036_notmoony_blue_20210622_topconfig.csv
-event_list_all=glob.glob(strategy_dir+'*_allconfig.csv')#['/share/storage1/SLcosmology/knstrategy_runs/singleexp_full_opt_rednmo/1005_notmoony_red_20211124_mexp_test_mult_allconfig.csv']# #1036_notmoony_blue_20210622_allconfig.csv
+
+
+args = parser().parse_args()
+map_path = os.path.dirname(args.input)
+strategy_dir = args.strategy_dir
+map_path_info=os.path.join(map_path,'lowres')
+event_list_all=glob.glob(strategy_dir+'*_allconfig.csv')
 
 evaluate_strategies=True
 plot_individual_strategies=True
@@ -465,9 +489,6 @@ nsbh_markers=["s","o"]
 if m_exp==False:
     ares_depth_bins=[np.array([0.65,0.7,0.75,0.8,0.85,0.9])+0.025,[45.0,75.0,105.0,135.0,265.0,335.0,865.0,1535.0,3225.0,3975.0]]
 
-
-
-
 if m_exp==True:
     dualexp_depth_bins=[[75.0,105.0,135.0,265.0,335.0,865.0,1535.0,3225.0,3975.0,6825.0],[45.0,75.0,105.0,135.0,265.0,335.0,865.0,1535.0,3225.0,3975.0]]
     ares_depth_bins=[np.array([0.65,0.75,0.85,0.95]),[45.0,75.0,105.0,135.0,265.0,335.0,865.0,1535.0,3225.0,3975.0]]
@@ -475,60 +496,41 @@ if m_exp==True:
     area_area_deep_bins=[np.array([0.65,0.75,0.85,0.95]),np.array([0.25,0.35,0.55,0.75,0.85])]
     x_area_deep=[0.3,0.5,0.7,0.8]#0.4
     y_area=[0.7,0.8,0.9]
-    y_depth_deep=[1.5,2.0,3.3,5.0,10.0,20.0,40.0,60.0,90.0]#[90,120,200,300,600,1200,2400,3600,5400]
-    depth_outer=[1.0,1.5,2.0,3.3,5.0,10.0,20.0,40.0,60.0]#[60,90,120,200,300,600,1200,2400,3600]
-    #x_depth=[90.0,120.0,200.0,300.0,600.0,1200.0,2400.0,3600.0]
-    #dualexp_area_bins=[np.array([0.65,0.75,0.85,0.95]),np.array([0.65,0.75,0.85,0.95])]
-    #area_covered=[0.9,0.9,0.9,0.9,0.8,0.8,0.8,0.7,0.7,0.7] #[0.8,0.7,0.5,0.3,0.7,0.5,0.3,0.5,0.4,0.3]
+    y_depth_deep=[1.5,2.0,3.3,5.0,10.0,20.0,40.0,60.0,90.0]
+    depth_outer=[1.0,1.5,2.0,3.3,5.0,10.0,20.0,40.0,60.0]
 
-
-#       create_heatmap(x=total_prob_area,y=total_prob_area_deep,nCut=area_area_deep_bins,outname=types_of_strategy[i]+sufix+'areainvsareaout_2.png',feature_name=['Integrated Prob Area','Integrated Prob Area Inner'], x_ticks=y_area,y_ticks=x_area_deep)
 if m_exp==False:
     xdvsw=[0.7,0.75,0.8,0.85,0.9]
     ydvsw=[60,90,120,200,300,600,1200,2400,3600]
 else:
     xdvsw=[0.7,0.8,0.9]
-    #xdvd=[60.0,90.0,120.0,200.0,300.0,600.0,1200.0,2400.0]
     ydvsw=[60,90,120,200,300,600,1200,2400,3600]
-
-# [60.0,90.0,120.0,200.0,300.0,600.0,1200.0,2400.0,3600.0] [0.9,0.85,0.8,0.75,0.7,0.65]
-#scatalog='/share/storage1/SLcosmology/kn_strategy_paper/sblue_nmo/'
-#scat_sufix='_notmoony_blue__allconfig.csv'
-
-
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
 
-constrain_time=True#True
-low_budget=True #mbnmo_timett10_bright  mbnmo_timett10_bright
-sufix='mbnmo_timett10_bright_final_reader'#'mrnmo_timett5_bright'#'mbnmo_narrow_timett5_bright'#'mbnmo_timett10_bright'#'mbnmo_timett10_bright_final_reader'#'mrnmo_timett5_bright'#'mbnmo_timett10_bright'#'mrnmo_timett5'#'mbnmo_time_20220919_v2_lowttbudget_consistency_testTTuniform'#'mbnmo_timett10_bright'##'mbnmo_time_bbtt5'#'mrnmo_time_20220629_v2_lowttbudget_tt15'#'mbnmo_time_20220629_v2_lowttbudget_tt5_narrow'#'mbnmo_time_20220503_v2'#'mbnmo_time_20220503_v2_narrow_vg'#'mbnmo_time_20220503_v2'#'mbnmo_time_20220503_v2_narrow_vg'#'mbnmo_time_20220503_v2'#20220323'#'srnmo_time_'#'mbnmo_time'#'sbnmo_time_'#'mrnmo_time_'#'srnmo_time_'#'_mexp'#'mbnmo_time_'
 
+#{"Detection Probability": probs_all,
+# second_loop_legend: area_all ,
+# "Filter_comb": filters_all,
+# "Exposure01 ": exposure01_all,
+# "Exposure02": exposure02_all,
+# "Observation01": time_delays01_all,
+# "Observation02": time_delays02_all,
+# "Telescope_time01": telescope_time1_all,
+# "Telescope_time02": telescope_time2_all,
+# "Area_deg": areas }
 
-_2d_map_dist=True
-use_ref_mult=True #false if you dont want the multiple exposure catalog to include the reference strategy
-#========= in case you are running multiple exposure times and want to plot the reference strategy together
-sufix_nomulti_strategy='_notmoony_blue__allconfig.csv'#'_notmoony_red__allconfig.csv'#'_notmoony_blue__allconfig.csv'#'_notmoony_red__allconfig.csv'#'_notmoony_blue__allconfig.csv'#'_notmoony_red__allconfig.csv'#'_notmoony_blue__allconfig.csv'
-path_nomulti_Strategy='/home/cbpf/clecio10T/kn_strategy_sci/sbnmo/'#'/home/cbpf/clecio10T/kn_strategy_sci/srnmo/'#'/home/cbpf/clecio10T/kn_strategy_sci/sbnmo/'#'/home/cbpf/clecio10T/kn_strategy_sci/sbnmo_gw170817narrow/'#'/home/cbpf/clecio10T/kn_strategy_sci/srnmo/'#'/home/dadosSSD/kn_strategy_sci/sbnmo_gw170817narrow/'#'/home/dadosSSD/kn_strategy_sci/sbnmo/'#'/home/dadosSSD/kn_strategy_sci/srnmo/'#'/home/dadosSSD/kn_strategy_sci/sbnmo_gw170817narrow/'##'/home/dadosSSD/kn_strategy_sci/sbnmo_gw170817narrow/'#'/home/dadosSSD/kn_strategy_sci/sbnmo/'#'/home/dadosSSD/kn_strategy_sci/sbnmo_gw170817narrow/'#'/home/dadosSSD/kn_strategy_sci/sbnmo/'#'/home/dadosSSD/kn_strategy_sci/sbnmo_gw170817narrow/'#'/home/dadosSSD/kn_strategy_sci/sbnmo/'#'/home/dadosSSD/kn_strategy_sci/sbnmo/'#'/home/dadosSSD/kn_strategy_new/sbluenmo/'#'/home/dadosSSD/kn_strategy_new/srednmo/'#'/home/dadosSSD/kn_strategy_new/sbluenmo/'#'/share/storage1/SLcosmology/kn_strategy_paper/srednmo/'#'/share/storage1/SLcosmology/kn_strategy_paper/sblue_nmo/'
+time_delays = np.array(args.time_delays) / 24.0
 
-#========================================================== bright plot
+old_strategy_arr=[
+    [90.0,90.0,'gi',0.5,1.5,0.90],
+    [90.0,90.0,'zz',0.5,1.5,0.90],
+    [90.0,90.0,'zi',0.5,1.5,0.90],
+    [90.0,90.0,'iz',0.5,1.5,0.90],
+    [90.0,90.0,'ii',0.5,1.5,0.90]
+]
 
-plot_bright_night_strategy=False
-plot_bright_ref_st=False
-sufix_bright_strategy='_moony_blue__allconfig.csv'#'_moony_blue__allconfig.csv'#'_moony_red__allconfig.csv'#'_notmoony_blue__allconfig.csv'#'_notmoony_red__allconfig.csv'#'_notmoony_blue__allconfig.csv'
-path_bright_Strategy='/home/cbpf/clecio10T/kn_strategy_sci/mbmo/'#'/home/cbpf/clecio10T/kn_strategy_sci/mrmo/'#'/home/cbpf/clecio10T/kn_strategy_sci/mbmo_gw170817narrow/'#'/home/cbpf/clecio10T/kn_strategy_sci/mrmo/'#'/home/dadosSSD/kn_strategy_sci/sbnmo/'#'/home/dadosSSD/kn_strategy_new/sbluenmo/'#'/home/dadosSSD/
-path_bright_ref_Strategy=''#'/home/cbpf/clecio10T/kn_strategy_sci/srmo/'
-sufix_bright_ref_strategy='_moony_blue__allconfig.csv'#'_moony_red__allconfig.csv'
-#========================================
-
-strategy_csv_cat=strategy_dir+sufix+'.csv'#'_results_bns_sims_singleexp_full_2022_v4.csv'
-#False
-
-
-#{"Detection Probability": probs_all,second_loop_legend: area_all ,"Filter_comb": filters_all,"Exposure01 ": exposure01_all,"Exposure02": exposure02_all,"Observation01": time_delays01_all,"Observation02": time_delays02_all, "Telescope_time01": telescope_time1_all, "Telescope_time02": telescope_time2_all,"Area_deg": areas }
-old_strategy_arr=[[90.0,90.0,'gi',0.5,1.5,0.90],[90.0,90.0,'zz',0.5,1.5,0.90],[90.0,90.0,'zi',0.5,1.5,0.90],[90.0,90.0,'iz',0.5,1.5,0.90], [90.0,90.0,'ii',0.5,1.5,0.90]]
-
-#[[90.0,90.0,'zz',0.5,1.0,0.90],[90.0,90.0,'zi',0.5,1.0,0.90],[90.0,90.0,'iz',0.5,1.0,0.90]]# [60.0,200.0,'iz',0.5,1.0,0.90]]#, [60.0,90.0,'ii',0.5,1.0,0.90]] #[60.0,90.0,'iz',0.5,0.5,0.90],[90.0,90.0,'iz',0.5,0.5,0.90] # the same day, no diference, the first very low prob in high end
 import pandas as pd
 
 ltt_config=[0.05,0.10,0.15] # ltt_config[1]changed for a test
@@ -571,17 +573,36 @@ probs_old=[]
 if evaluate_strategies==False:
     event_list_all=[]
 
-for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) len(event_list_all)
-    map_file_aux=event_list_all[i].split('/')[-1]
+for i in range(0,len(event_list_all)):
+    mjd = event_list_all[i].split('_')[3]
+    constrain_time=True#True
+    low_budget=True
+    sufix='mbnmo_timett10_bright_final_reader'
+
+    _2d_map_dist=True
+    use_ref_mult=True #false if you dont want the multiple exposure catalog to include the reference strategy
+
+    #========= in case you are running multiple exposure times and want to plot the reference strategy together
+    sufix_nomulti_strategy=f'_{args.teff_type}_{args.kn_type}_{mjd}_allconfig.csv'
+    path_nomulti_Strategy=strategy_dir
+
+    #========================================================== bright plot
+
+    plot_bright_night_strategy=False
+    plot_bright_ref_st=False
+    sufix_bright_strategy=f'_{args.teff_type}_{args.kn_type}_{mjd}_allconfig.csv'
+    path_bright_Strategy=strategy_dir
+    path_bright_ref_Strategy=''
+    sufix_bright_ref_strategy=f'_{args.teff_type}_{args.kn_type}_{mjd}_allconfig.csv'
+    #========================================
+
+    strategy_csv_cat=strategy_dir+sufix+'.csv'
+    map_file_aux=os.path.basename(event_list_all[i])
     map_id=map_file_aux.split('_')[0]
     map_file=map_file_aux.split('_')[0]+'.fits.gz'
-    print (map_file)
-    print("this is event "+str(i+1))
-    try: 
-        distance,distance_err=np.load(map_path_info+map_file_aux.split('_')[0]+'.npy')
-    except:
-        print("Did not find npy with event info. So, I am Calculating Map distance for "+map_file) 
-        distance,distance_err=get_map_distance(map_path+map_file,savedir=map_path_info+map_file_aux.split('_')[0]+'.npy')
+    logger.info("Calculating Map distance for "+map_file) 
+    distance,distance_err=get_map_distance(os.path.join(map_path,map_file),
+                                            savedir=os.path.join(map_path_info,map_file_aux.split('.')[0]+'.npy'))
 
 
     if _2d_map_dist==True:
@@ -599,7 +620,8 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
         area_deg_info=-1
     #top=pd.read_csv(event_list_top[i],comment='#')
     all_df=pd.read_csv(event_list_all[i],comment='#')
-
+    print(event_list_all[i])
+    print(all_df)
 
 
     if constrain_time==True:
@@ -687,8 +709,8 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
     exposure2_all=all_df_top["Exposure02"].values
     region_all=all_df_top["Region Coverage"].values
     region_all_deg=all_df_top["Region_coverage_deg"].values
-    #Deprob1 , Deprob2
-    probdet1_all=all_df_top["Deprob1"].values#top["Detection Probability"].values
+    #Detprob1 , Deprob2
+    probdet1_all=all_df_top["Detprob1"].values#top["Detection Probability"].values
     probdet2_all=all_df_top["Detprob2"].values
     telescope_time1_all=all_df_top["Telescope_time01"].values
     telescope_time2_all=all_df_top["Telescope_time02"].values
@@ -884,15 +906,15 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
         plt.savefig(map_id+'TT_hist_'+"highdist"+str(round(distance,0))+"_higharea"+str(round(area_deg_info,0))+'.png')
 
         df_ltt_ = df_ltt.sort_values(by = "Total_TT", ascending=False)
-        probdet1_ltt_aux=df_ltt_["Deprob1"].values#top["Detection Probability"].values
+        probdet1_ltt_aux=df_ltt_["Detprob1"].values#top["Detection Probability"].values
         probdet2_ltt_aux=df_ltt_["Detprob2"].values
         #prob_ltt_sel=prob_ltt[np.where(total_telescope_timeltt==min(total_telescope_timeltt))]
         ltt_plot=min(total_telescope_timeltt)/(60*60)
         total_telescope_timeltt_=df_ltt_["Total_TT"].values
         pdet1_ltt=probdet1_ltt_aux[np.where(total_telescope_timeltt_==min(total_telescope_timeltt_))][0]
         pdet2_ltt=probdet2_ltt_aux[np.where(total_telescope_timeltt_==min(total_telescope_timeltt_))][0]
-        #p1det=df_ltt_["Deprob1"].values
-        #p1det=df_ltt_["Deprob1"].values
+        #p1det=df_ltt_["Detprob1"].values
+        #p1det=df_ltt_["Detprob1"].values
         
         highlightpoints_=[[probdet1_maxprob,probdet2_maxprob],[pdet1_ltt,pdet2_ltt]]
         highlightpoints_label_=['Top','Low Telescope Time']
@@ -902,13 +924,13 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
 
         df_ltt_prob=all_df[all_df["Detection Probability"].values > 2.0]
 
-        df_ltt_prob = df_ltt_prob.sort_values(by = "Deprob1", ascending=True)
+        df_ltt_prob = df_ltt_prob.sort_values(by = "Detprob1", ascending=True)
         total_telescope_timeltt_prob=np.add(df_ltt_prob["Telescope_time01"].values,df_ltt_prob["Telescope_time02"].values) 
         total_telescope_timeltt_hour_prob=np.divide(total_telescope_timeltt_prob,60*60)
         df_ltt_prob["Total_TT"]=total_telescope_timeltt_hour_prob
 
 
-        probdet1_ltt_aux=df_ltt_prob["Deprob1"].values#top["Detection Probability"].values
+        probdet1_ltt_aux=df_ltt_prob["Detprob1"].values#top["Detection Probability"].values
         probdet2_ltt_aux=df_ltt_prob["Detprob2"].values
         index_x=np.arange(0,len(probdet1_ltt_aux))
         #prob_ltt_sel=prob_ltt[np.where(total_telescope_timeltt==min(total_telescope_timeltt))]
@@ -981,15 +1003,15 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
         #ax1.set_xlim((0.1, xmax_))
         plt.savefig(map_id+'TT_hist_'+"lowdist"+str(round(distance,0))+"_lowarea"+str(round(area_deg_info,0))+'.png')
         df_ltt_ = df_ltt.sort_values(by = "Total_TT", ascending=False)
-        probdet1_ltt_aux=df_ltt_["Deprob1"].values#top["Detection Probability"].values
+        probdet1_ltt_aux=df_ltt_["Detprob1"].values#top["Detection Probability"].values
         probdet2_ltt_aux=df_ltt_["Detprob2"].values
         #prob_ltt_sel=prob_ltt[np.where(total_telescope_timeltt==min(total_telescope_timeltt))]
         ltt_plot=min(total_telescope_timeltt)/(60*60)
         total_telescope_timeltt_=df_ltt_["Total_TT"].values
         pdet1_ltt=probdet1_ltt_aux[np.where(total_telescope_timeltt_==min(total_telescope_timeltt_))][0]
         pdet2_ltt=probdet2_ltt_aux[np.where(total_telescope_timeltt_==min(total_telescope_timeltt_))][0]
-        #p1det=df_ltt_["Deprob1"].values
-        #p1det=df_ltt_["Deprob1"].values
+        #p1det=df_ltt_["Detprob1"].values
+        #p1det=df_ltt_["Detprob1"].values
         
         highlightpoints_=[[probdet1_maxprob,probdet2_maxprob],[pdet1_ltt,pdet2_ltt]]
         highlightpoints_label_=['Top','Low Telescope Time']
@@ -998,11 +1020,11 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
 
         df_ltt_prob=all_df[all_df["Detection Probability"].values > 2.0]
 
-        df_ltt_prob = df_ltt_prob.sort_values(by = "Deprob1", ascending=True)
+        df_ltt_prob = df_ltt_prob.sort_values(by = "Detprob1", ascending=True)
         total_telescope_timeltt_prob=np.add(df_ltt_prob["Telescope_time01"].values,df_ltt_prob["Telescope_time02"].values) 
         total_telescope_timeltt_hour_prob=np.divide(total_telescope_timeltt_prob,60*60)
         df_ltt_prob["Total_TT"]=total_telescope_timeltt_hour_prob
-        probdet1_ltt_aux=df_ltt_prob["Deprob1"].values#top["Detection Probability"].values
+        probdet1_ltt_aux=df_ltt_prob["Detprob1"].values#top["Detection Probability"].values
         probdet2_ltt_aux=df_ltt_prob["Detprob2"].values
         index_x=np.arange(0,len(probdet1_ltt_aux))
         #prob_ltt_sel=prob_ltt[np.where(total_telescope_timeltt==min(total_telescope_timeltt))]
@@ -1050,7 +1072,7 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
     region_ltt=df_ltt["Region Coverage"].values
     region_ltt_deg=df_ltt["Region_coverage_deg"].values
     filters_ltt=df_ltt["Filter_comb"].values
-    probdet1_ltt=df_ltt["Deprob1"].values#top["Detection Probability"].values
+    probdet1_ltt=df_ltt["Detprob1"].values#top["Detection Probability"].values
     probdet2_ltt=df_ltt["Detprob2"].values
     telescope_time1_ltt=df_ltt["Telescope_time01"].values
     telescope_time2_ltt=df_ltt["Telescope_time02"].values
@@ -1196,7 +1218,7 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
         region_ltt=df_ltt["Region Coverage"].values
         region_ltt_deg=df_ltt["Region_coverage_deg"].values
         filters_ltt=df_ltt["Filter_comb"].values
-        probdet1_ltt=df_ltt["Deprob1"].values#top["Detection Probability"].values
+        probdet1_ltt=df_ltt["Detprob1"].values#top["Detection Probability"].values
         probdet2_ltt=df_ltt["Detprob2"].values
         telescope_time1_ltt=df_ltt["Telescope_time01"].values
         telescope_time2_ltt=df_ltt["Telescope_time02"].values
@@ -1296,7 +1318,7 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
     region_ltt=df_ltt["Region Coverage"].values
     region_ltt_deg=df_ltt["Region_coverage_deg"].values
     filters_ltt=df_ltt["Filter_comb"].values
-    probdet1_ltt=df_ltt["Deprob1"].values#top["Detection Probability"].values
+    probdet1_ltt=df_ltt["Detprob1"].values#top["Detection Probability"].values
     probdet2_ltt=df_ltt["Detprob2"].values
     telescope_time1_ltt=df_ltt["Telescope_time01"].values
     telescope_time2_ltt=df_ltt["Telescope_time02"].values
@@ -1396,7 +1418,7 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
     region_ltt=df_ltt["Region Coverage"].values
     region_ltt_deg=df_ltt["Region_coverage_deg"].values
     filters_ltt=df_ltt["Filter_comb"].values
-    probdet1_ltt=df_ltt["Deprob1"].values#top["Detection Probability"].values
+    probdet1_ltt=df_ltt["Detprob1"].values#top["Detection Probability"].values
     probdet2_ltt=df_ltt["Detprob2"].values
     telescope_time1_ltt=df_ltt["Telescope_time01"].values
     telescope_time2_ltt=df_ltt["Telescope_time02"].values
@@ -1509,8 +1531,8 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
         exposure2_all=df_all_bright_top["Exposure02"].values
         region_all=df_all_bright_top["Region Coverage"].values
         region_all_deg=df_all_bright_top["Region_coverage_deg"].values
-        #Deprob1 , Deprob2
-        probdet1_all=df_all_bright_top["Deprob1"].values#top["Detection Probability"].values
+        #Detprob1 , Deprob2
+        probdet1_all=df_all_bright_top["Detprob1"].values#top["Detection Probability"].values
         probdet2_all=df_all_bright_top["Detprob2"].values
         telescope_time1_all=df_all_bright_top["Telescope_time01"].values
         telescope_time2_all=df_all_bright_top["Telescope_time02"].values
@@ -1597,7 +1619,7 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
         region_ltt=df_ltt_bright["Region Coverage"].values
         region_ltt_deg=df_ltt_bright["Region_coverage_deg"].values
         filters_ltt=df_ltt_bright["Filter_comb"].values
-        probdet1_ltt=df_ltt_bright["Deprob1"].values#top["Detection Probability"].values
+        probdet1_ltt=df_ltt_bright["Detprob1"].values#top["Detection Probability"].values
         probdet2_ltt=df_ltt_bright["Detprob2"].values
         telescope_time1_ltt=df_ltt_bright["Telescope_time01"].values
         telescope_time2_ltt=df_ltt_bright["Telescope_time02"].values
@@ -1679,19 +1701,9 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
             prob_ostrategy_bright=-1.0
             for j in range(0,len(old_strategy_arr)):
                 old_strategy=old_strategy_arr[j]
-
-         
-
                 df_ostrategy_bright=df_all_bright_ref[(df_all_bright_ref["Exposure01"].values==old_strategy[0]) & (df_all_bright_ref["Exposure02"].values ==old_strategy[1]) & (df_all_bright_ref["Filter_comb"].values==old_strategy[2]) & (df_all_bright_ref["Observation01"].values ==old_strategy[3]) & (df_all_bright_ref["Observation02"].values==old_strategy[4]) & (df_all_bright_ref["Region Coverage"].values==old_strategy[5])].copy().reset_index(drop=True)
-    #filter_top=np.loadtxt(event_list_top[i],delimiter=',',skiprows=2,usecols=(0,3),unpack=True)
                 if df_ostrategy_bright["Detection Probability"].values[0] > prob_ostrategy_bright:
                     prob_ostrategy_bright=df_ostrategy_bright["Detection Probability"].values
-                    #TT_old.append(np.add(df_ostrategy["Telescope_time01"].values,df_ostrategy["Telescope_time02"].values)[0])
-                    #print("Telescope time for old strategy")
-                    #print(df_ostrategy_bright["Telescope_time01"]+df_ostrategy_bright["Telescope_time02"])
-                    #print("====")
-                    #print(np.add(df_ostrategy_bright["Telescope_time01"].values,df_ostrategy_bright["Telescope_time02"].values)[0])
-                    #print("2 ====") 
                     TT_old_sel=np.add(df_ostrategy_bright["Telescope_time01"].values,df_ostrategy_bright["Telescope_time02"].values)[0]
                     TT1_old_sel=df_ostrategy_bright["Telescope_time01"].values[0]
                     TT2_old_sel=df_ostrategy_bright["Telescope_time02"].values[0]
@@ -1702,7 +1714,7 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
                     bands_old_sel=old_strategy[2]
                     prob_area_old_sel=old_strategy[5]
                     prob_area_deg_old_sel=df_ostrategy_bright["Region_coverage_deg"].values[0]
-                    probdet1_old_sel=df_ostrategy_bright["Deprob1"].values[0]
+                    probdet1_old_sel=df_ostrategy_bright["Detprob1"].values[0]
                     probdet2_old_sel=df_ostrategy_bright["Detprob2"].values[0]
             TT.append(TT_old_sel)
             TT1.append(TT1_old_sel)
@@ -1763,8 +1775,8 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
     exposure2_all=df_all_old_top["Exposure02"].values
     region_all=df_all_old_top["Region Coverage"].values
     region_all_deg=df_all_old_top["Region_coverage_deg"].values
-    #Deprob1 , Deprob2
-    probdet1_all=df_all_old_top["Deprob1"].values#top["Detection Probability"].values
+    #Detprob1 , Deprob2
+    probdet1_all=df_all_old_top["Detprob1"].values#top["Detection Probability"].values
     probdet2_all=df_all_old_top["Detprob2"].values
     telescope_time1_all=df_all_old_top["Telescope_time01"].values
     telescope_time2_all=df_all_old_top["Telescope_time02"].values
@@ -1851,7 +1863,7 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
     region_ltt=df_ltt_s["Region Coverage"].values
     region_ltt_deg=df_ltt_s["Region_coverage_deg"].values
     filters_ltt=df_ltt_s["Filter_comb"].values
-    probdet1_ltt=df_ltt_s["Deprob1"].values#top["Detection Probability"].values
+    probdet1_ltt=df_ltt_s["Detprob1"].values#top["Detection Probability"].values
     probdet2_ltt=df_ltt_s["Detprob2"].values
     telescope_time1_ltt=df_ltt_s["Telescope_time01"].values
     telescope_time2_ltt=df_ltt_s["Telescope_time02"].values
@@ -1918,28 +1930,58 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
         prob_area_deep.append(prob_area_deg_lttprob)
         prob_area_deg_deep.append(prob_area_deg_deep_lttprob)
 
-
-
- 
-
-#=====================================
-
     prob_ostrategy=-1.0
     for j in range(0,len(old_strategy_arr)):
         old_strategy=old_strategy_arr[j]
+        # print('cutoff1:', old_strategy[0])
+        # print('cutoff2:', old_strategy[1])
+        # print('cutoff3:', old_strategy[2])
+        # print('cutoff4:', old_strategy[3])
+        # print('cutoff5:', old_strategy[4])
+        # print('cutoff6:', old_strategy[5])
+        
+        # df_ostrategy=df_all_old[(df_all_old["Exposure01"].values==old_strategy[0])]
+        # print('len df after cutoff1:', len(df_ostrategy))
+        
+        # df_ostrategy=df_all_old[(df_all_old["Exposure01"].values==old_strategy[0])\
+        #                         & (df_all_old["Exposure02"].values ==old_strategy[1])]
+        # print('len df after cutoff2:', len(df_ostrategy))
 
-         
+        # df_ostrategy=df_all_old[(df_all_old["Exposure01"].values==old_strategy[0])\
+        #                         & (df_all_old["Exposure02"].values ==old_strategy[1])\
+        #                         & (df_all_old["Filter_comb"].values==old_strategy[2])]
+        # print('len df after cutoff3:', len(df_ostrategy))
+        
+        # df_ostrategy=df_all_old[(df_all_old["Exposure01"].values==old_strategy[0])\
+        #                         & (df_all_old["Exposure02"].values ==old_strategy[1])\
+        #                         & (df_all_old["Filter_comb"].values==old_strategy[2])\
+        #                         & (df_all_old["Observation01"].values ==old_strategy[3])]
+        # print('len df after cutoff4:', len(df_ostrategy))
+        # print(df_ostrategy[['Detection Probability', 'Region Coverage', 'Exposure01', 'Exposure02', 'Filter_comb','Observation01','Observation02']])
+        # # df_ostrategy=df_all_old[(df_all_old["Exposure01"].values==old_strategy[0])\
+        #                         & (df_all_old["Exposure02"].values ==old_strategy[1])\
+        #                         & (df_all_old["Filter_comb"].values==old_strategy[2])\
+        #                         & (df_all_old["Observation01"].values ==old_strategy[3])\
+        #                         & (df_all_old["Observation02"].values==old_strategy[4])]
+        # print('len df after cutoff5:', len(df_ostrategy))
+        
+        # df_ostrategy=df_all_old[(df_all_old["Exposure01"].values==old_strategy[0])\
+        #                         & (df_all_old["Exposure02"].values ==old_strategy[1])\
+        #                         & (df_all_old["Filter_comb"].values==old_strategy[2])\
+        #                         & (df_all_old["Observation01"].values ==old_strategy[3])\
+        #                         & (df_all_old["Observation02"].values==old_strategy[4])\
+        #                         & (df_all_old["Region Coverage"].values==old_strategy[5])].copy().reset_index(drop=True)
+        # print('len df after cutoff6:', len(df_ostrategy))
+        
+        df_ostrategy=df_all_old[(df_all_old["Exposure01"].values==old_strategy[0])\
+                                & (df_all_old["Exposure02"].values ==old_strategy[1])\
+                                & (df_all_old["Filter_comb"].values==old_strategy[2])\
+                                & (df_all_old["Observation01"].values ==old_strategy[3])\
+                                & (df_all_old["Observation02"].values==old_strategy[4])\
+                                & (df_all_old["Region Coverage"].values==old_strategy[5])].copy().reset_index(drop=True)
 
-        df_ostrategy=df_all_old[(df_all_old["Exposure01"].values==old_strategy[0]) & (df_all_old["Exposure02"].values ==old_strategy[1]) & (df_all_old["Filter_comb"].values==old_strategy[2]) & (df_all_old["Observation01"].values ==old_strategy[3]) & (df_all_old["Observation02"].values==old_strategy[4]) & (df_all_old["Region Coverage"].values==old_strategy[5])].copy().reset_index(drop=True)
-    #filter_top=np.loadtxt(event_list_top[i],delimiter=',',skiprows=2,usecols=(0,3),unpack=True)
-        if df_ostrategy["Detection Probability"].values[0] > prob_ostrategy:
+        if (df_ostrategy["Detection Probability"].values[0] > prob_ostrategy).all():
             prob_ostrategy=df_ostrategy["Detection Probability"].values
-            #TT_old.append(np.add(df_ostrategy["Telescope_time01"].values,df_ostrategy["Telescope_time02"].values)[0])
-            #print("Telescope time for old strategy")
-            #print(df_ostrategy["Telescope_time01"]+df_ostrategy["Telescope_time02"])
-            #print("====")
-            #print(np.add(df_ostrategy["Telescope_time01"].values,df_ostrategy["Telescope_time02"].values)[0])
-            #print("2 ====") 
             TT_old_sel=np.add(df_ostrategy["Telescope_time01"].values,df_ostrategy["Telescope_time02"].values)[0]
             TT1_old_sel=df_ostrategy["Telescope_time01"].values[0]
             TT2_old_sel=df_ostrategy["Telescope_time02"].values[0]
@@ -1950,7 +1992,7 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
             bands_old_sel=old_strategy[2]
             prob_area_old_sel=old_strategy[5]
             prob_area_deg_old_sel=df_ostrategy["Region_coverage_deg"].values[0]
-            probdet1_old_sel=df_ostrategy["Deprob1"].values[0]
+            probdet1_old_sel=df_ostrategy["Detprob1"].values[0]
             probdet2_old_sel=df_ostrategy["Detprob2"].values[0]
     TT.append(TT_old_sel)
     TT1.append(TT1_old_sel)
@@ -1980,78 +2022,17 @@ for i in range(0,len(event_list_all)):#len(event_list_all) #len(event_list_all) 
         prob_area_deep.append(0.0)
         prob_area_deg_deep.append(0.0)
 
-
-    #print ()
-    #fc.open_ascii_cat(event_list_top[i],usecols=(0,3), unpack=True, skiprows=2, delimiter=',')
-    #print(prob_top)#,filter_top
-    #print(prob_top[0])#,filter_top
-    #prob_all,filter_all=np.loadtxt(event_list_all[i],delimiter=',',skiprows=2,usecols=(0,3),unpack=True)
-    #prob_all,filter_all=fc.open_ascii_cat(event_list_all[i],usecols=(0,3), unpack=True, skiprows=2, delimiter=',')
-    #if i==(len(event_list_top)-1):
-    #    color_plot_opt="red"
-    #    color_plot_os="blue"
-    #else:
     color_plot_opt='indianred' 
     color_plot_os=tableau20[0]
-           
-    
-    #print(distance)
-    #probs_top_.append(prob_top)
-    #probs_low_tt.append(prob_ltt_sel[0])
-    #probs_old.append(prob_ostrategy[0])
-    #print('TOP filter and probability   ', prob_top ) 
-    #print('Old Strategy filter and probability   ',prob_ostrategy[0] )
-    #plt.scatter([distance],[prob_top], c=tableau20[0],marker="*")
-    #plt.scatter([distance],[prob_ostrategy], c=tableau20[1], marker='D')
-    #plt.scatter([distance],[prob_ltt_sel[0]], c=tableau20[2], marker='.')
-
-
 
 if evaluate_strategies==True:   
-    #plt.xlabel(r'Distance (MPC)')
-    #plt.ylabel(r'Detection Probability (2 detections)')
-    #plt.savefig('scatter_sims_moony_blue_.png',dpi=200)
-
-    #plt.clf()
-
-    #fig = plt.figure()
-    #ax = fig.add_subplot(111)#projection='3d')
-
-    #TT_low=np.array(TT_low)/(60.0*6.00)
-    #TT_max=np.array(TT_max)/(60.0*60.0)
-    #TT_old=np.array(TT_old)/(60.0*60.0)
     TT=np.array(TT)#/(60.0*60.0)
-    
-    #plt.scatter(TT_max,probs_top_, c=color_plot_opt,marker="*")
-    #plt.scatter(TT_old,probs_old, c=color_plot_os, marker='D')
-    #plt.scatter(TT_low,probs_low_tt, c=tableau20[1], marker='.')
-    #plt.ylabel(r'Detection Probability (2 detections)')
-    #plt.xlabel(r' Total telescope time (hours)')
-    #plt.savefig('scatter_sims_moony_blue_TT_.png',dpi=200)
-    #plt.clf()
-
-
     exp1=np.array(exp1)
     exp2=np.array(exp2)
     obs1=np.array(obs1)
     obs2=np.array(obs2)
     strategy_type=np.array(strategy_type)
     allstrategy_prob=np.array(allstrategy_prob)
-
-    #print (TT)
-    #print (type(TT))
-    #print(TT.shape)
-    #print(exp1.shape)
-    #print(exp2.shape)
-    #print(obs1.shape)
-    #print(obs2.shape)
-    #print(np.array(bands).shape)
-    #print(np.array(prob_area).shape)
-    #print(np.array(allstrategy_prob).shape)
-  
-    #print(strategy_type.shape) #'Exposure1': np.array(exp1), 'Exposure2': np.array(exp2)
-    #print (TT)
-    #print (prob_area_deg)
     if (m_exp==True):
 
         strategy_dict={'Telescope Time': TT,'Observation1': np.array(obs1), 'Observation2': np.array(obs2), 'Strategy': np.array(strategy_type), 'Detection Prob': allstrategy_prob, 'Integrated Prob Area': np.array(prob_area), 'Filters': np.array(bands),'Exposure1': np.array(exp1), 'Exposure2': np.array(exp2), 'Distance':   np.array(distance_all), 'Coverage_deg': prob_area_deg,'TT/area': np.divide(TT,prob_area_deg), 'Prob01': probdet1  , 'Prob02': probdet2, 'TTime1': TT1, 'TTime2': TT2, 'Exposure1_deep':  np.array(exp1_deep), 'Exposure2_deep': np.array(exp2_deep), 'Integrated Prob Area deep': np.array(prob_area_deep), 'Coverage_deg_deep': np.array(prob_area_deg_deep), 'Area90_deg': np.array(area_deg90_all), 'Event_ID':event_names}
@@ -2059,93 +2040,19 @@ if evaluate_strategies==True:
     else:
         strategy_dict={'Telescope Time': TT,'Observation1': np.array(obs1), 'Observation2': np.array(obs2), 'Strategy': np.array(strategy_type), 'Detection Prob': allstrategy_prob, 'Integrated Prob Area': np.array(prob_area), 'Filters': np.array(bands),'Exposure1': np.array(exp1), 'Exposure2': np.array(exp2), 'Distance':   np.array(distance_all), 'Coverage_deg': prob_area_deg,'TT/area': np.divide(TT,prob_area_deg), 'Prob01': probdet1  , 'Prob02': probdet2, 'TTime1': TT1, 'TTime2': TT2, 'Area90_deg': np.array(area_deg90_all)}
 
-
-
-    #if m_exp==True:
-    #     strategy_dict['Exposure1_deep']=np.array(exp1_deep)    
-    #     strategy_dict['Exposure2_deep']=np.array(exp2_deep)
-    #     strategy_dict['Coverage_deg_deep']=prob_area_deg_deep
-
     strategy_df=pd.DataFrame.from_dict(strategy_dict)
     strategy_df.to_csv(strategy_csv_cat, index=False)  
 else:
     print('Loading strategy catalog file')
     strategy_df=pd.read_csv(strategy_csv_cat)
 
-#strategy_df['TT/area']=strategy_df['TT/area'].values*60
-#print('Strategy before pair')
-#plot_vars=['Detection Prob','Telescope Time','Observation1','Observation2']
-#g = sns.PairGrid(strategy_df,  corner=True, hue='Strategy', vars = plot_vars)
-#g.map_lower(sns.scatterplot, size=strategy_df['Filters'], style=strategy_df['Filters'])
-#g.map_diag(sns.histplot, color=".3")
-#g.add_legend(title="", adjust_subtitles=True)
-
-#g.map_upper(sns.kdeplot)
-
-# deep (exp1,exp2) vs area (deg or intprob) vs distance
-# early or later obs1 vs ob2 (as function of distance?)
-# prob vs distance for moony, not moony, red or blue (one plot per strategy)
-# telescope time vs distance
-# filters vs distance
-# area coverage vs volume coverage 50%, 95%
-
-#sns.pairplot(strategy_df, hue='Strategy',  diag_kind="hist") #corner=True
-#plt.savefig('strategy_pair_.png',dpi=200)
-
-#plt.clf()
-print('Strategy after pair')
-#g = sns.PairGrid(strategy_df,  corner=True, hue='Strategy', vars = ['Exposure1','Exposure2','Distance','TT/area'])
-#g.map_lower(sns.scatterplot, size=strategy_df['Filters'], style=strategy_df['Filters'])
-#g.map_diag(sns.histplot, color=".3")
-#g.add_legend(title="", adjust_subtitles=True)
-#plt.savefig('strategy_pair_v2.png',dpi=200)
-
-print('Strategy after second pair')
-#plt.clf()
-#h=sns.jointplot(data=strategy_df, x='Distance', y="TT/area", hue='Strategy', kind="kde")
-#plt.savefig('ALLstrategy_joinkde_ttdist.png',dpi=200)
 plt.clf()
-
-
-#h=sns.histplot(data=strategy_df, x='Exposure1', y='Exposure2', hue="Strategy")
-#plt.savefig('ALLstrategy_allexp.png',dpi=200)
-#plt.clf()
-
-
-#h=sns.histplot(data=strategy_df, x='Distance', y='TT/area', hue="Strategy")
-#plt.savefig('ALLstrategy_alldisttttarea.png',dpi=200)
-#plt.clf()
-
-#h=sns.histplot(data=strategy_df, x='Distance', y='Telescope Time', hue="Strategy")
-#plt.savefig('ALLstrategy_alldistttt.png',dpi=200)
-#plt.clf()
-
-#h=sns.histplot(data=strategy_df, x='Exposure1', y='Integrated Prob Area', hue="Strategy")
-#plt.savefig('ALLstrategy_allexp_intarea.png',dpi=200)
-#plt.clf()
-
-#h=sns.histplot(data=strategy_df, x='Exposure1', y='Coverage_deg', hue="Strategy")
-#plt.savefig('ALLstrategy_allexp_covarea.png',dpi=200)
-#plt.clf()
-
-plt.clf()
-
 frac_label="Fraction of Simulated Events"
-
 if m_exp==False or use_ref_mult==True:
-
-    #if plot_bright_night_strategy==True:
-    #    types_of_strategy_name=["O3 Reference","Early Discovery","Low Telescope Time","Top", "Late discovery", "Half Nights","Top Bright"] #"Telescope Time 5%"
-    #    types_of_strategy=["Reference","Early discovery","Telescope Time 10%", "Top", "Late discovery","Half Nights","Top_bright"] #"Telescope Time 5%"
-    #else:
-
     if  plot_bright_night_strategy==True: #
 
         types_of_strategy_name=["Ref Strategy","Early Discovery","Low Telescope Time","Top", "Late discovery","Half Nights","Low Telescope Time - Bright"] #"Telescope Time 5%"
         types_of_strategy=["Reference","Early discovery","Telescope Time 10%", "Top", "Late discovery", "Half Nights", "Telescope Time 10%_bright"] #"Te
-        #color_strategy=["darkred","olive","indigo","dimgray","peru",'palegreen','indigo']
-        #ls_strategy=['dashdot','dotted','dashed','solid',(0, (3, 1, 1, 1, 1, 1)),'solid','dotted'] #  (0, (1, 10)) lossely dot and lossely dashdot
-        #hist_color=["lightgray"]
     else:
 
         types_of_strategy_name=["Ref Strategy","Early Discovery","Low Telescope Time","Top", "Late discovery","Half Nights"] #"Telescope Time 5%"
@@ -2383,7 +2290,7 @@ for i in range(0,len(types_of_strategy_bright)):
         total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
         strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
         total_hn_after_cut=len(strategy_plt_dict['Detection Prob'].values)
-        print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
+        # print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
 
 
 
@@ -2470,7 +2377,7 @@ for i in range(0,len(types_of_strategy_multi)):
         total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
         strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
         total_hn_after_cut=len(strategy_plt_dict['Detection Prob'].values)
-        print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
+        #print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
 
     if types_of_strategy_multi[i]=="Telescope Time 10% single":
         total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
@@ -2558,7 +2465,7 @@ for i in range(0,len(types_of_strategy_multi_two)):
         total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
         strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
         total_hn_after_cut=len(strategy_plt_dict['Detection Prob'].values)
-        print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
+        #print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
 
 #    if  types_of_strategy_multi_two[i]=="Late Discovery":
 #        total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
@@ -2649,7 +2556,7 @@ for i in range(0,len(types_of_strategy_multi_two_tt)):
         total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
         strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
         total_hn_after_cut=len(strategy_plt_dict['Detection Prob'].values)
-        print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
+        #print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
 
     total_prob=strategy_plt_dict['Detection Prob'].values
     first_prob=strategy_plt_dict['Prob01'].values
@@ -2729,7 +2636,7 @@ for i in range(0,len(types_of_strategy_restrict)):
         total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
         strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
         total_hn_after_cut=len(strategy_plt_dict['Detection Prob'].values)
-        print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
+        #print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
     total_prob=strategy_plt_dict['Detection Prob'].values
     first_prob=strategy_plt_dict['Prob01'].values
     second_prob=strategy_plt_dict['Prob02'].values
@@ -2795,10 +2702,6 @@ plt.savefig('strategy_distance_allfirst_secondprob_'+sufix+'.png',dpi=400)
 plt.clf()
 
 
-
-
-
-
 for i in range(0,len(types_of_strategy)):
     #print('Strategy '+str(types_of_strategy[i]))
     strategy_plt_dict=strategy_df[(strategy_df['Strategy'].values==types_of_strategy[i])].copy().reset_index(drop=True)
@@ -2811,7 +2714,7 @@ for i in range(0,len(types_of_strategy)):
         #strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Distance'].values<200.0)].copy().reset_index(drop=True)
         #strategy_plt_dict['Distance'].values
         total_hn_after_cut=len(strategy_plt_dict['Detection Prob'].values)
-        print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
+        #print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
     
     strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
     total_prob=strategy_plt_dict['Detection Prob'].values
@@ -2904,7 +2807,7 @@ for i in range(0,len(types_of_strategy)):
         total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
         strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
         total_hn_after_cut=len(strategy_plt_dict['Detection Prob'].values)
-        print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
+        #print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
 
     ratio_ab=float(objects_after)/float(objects_before)
     total_prob_area=strategy_plt_dict['Integrated Prob Area'].values
@@ -3050,7 +2953,7 @@ for i in range(0,len(types_of_strategy)):
         total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
         strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
         total_hn_after_cut=len(strategy_plt_dict['Detection Prob'].values)
-        print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
+        #print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
 
 
     total_prob=strategy_plt_dict['TT/area'].values
@@ -3089,7 +2992,7 @@ for i in range(0,len(types_of_strategy)):
         total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
         strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
         total_hn_after_cut=len(strategy_plt_dict['Detection Prob'].values)
-        print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
+        #print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
     total_prob=strategy_plt_dict['TT/area'].values
     total_prob=np.divide(1,total_prob)
     #first_prob=strategy_plt_dict['Prob01'].values
@@ -3123,7 +3026,7 @@ for i in range(0,len(types_of_strategy)):
         total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
         strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
         total_hn_after_cut=len(strategy_plt_dict['Detection Prob'].values)
-        print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
+        # print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
     total_prob=strategy_plt_dict['TT/area'].values
     total_prob=np.divide(1,total_prob)
     #first_prob=strategy_plt_dict['Prob01'].values
@@ -3159,7 +3062,7 @@ for i in range(0,len(types_of_strategy)):
         total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
         strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
         total_hn_after_cut=len(strategy_plt_dict['Detection Prob'].values)
-        print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
+        # print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
     total_prob=np.divide(strategy_plt_dict['TT/area'].values,60*60)
     total_prob=np.divide(np.ones(len(total_prob)).astype('float'),total_prob.astype('float'))
     total_prob_nan=np.isnan(total_prob)
@@ -3200,7 +3103,7 @@ for i in range(0,len(types_of_strategy)):
         total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
         strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
         total_hn_after_cut=len(strategy_plt_dict['Detection Prob'].values)
-        print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
+        # print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
     total_prob=strategy_plt_dict['Telescope Time'].values
     total_prob=np.divide(strategy_plt_dict['Telescope Time'].values,60*60)
     #first_prob=strategy_plt_dict['Prob01'].values
@@ -3234,7 +3137,7 @@ for i in range(0,len(types_of_strategy)):
         total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
         strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
         total_hn_after_cut=len(strategy_plt_dict['Detection Prob'].values)
-        print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
+        # print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
     total_prob=strategy_plt_dict['Telescope Time'].values
     total_prob=np.divide(strategy_plt_dict['Telescope Time'].values,60*60)
     #first_prob=strategy_plt_dict['Prob01'].values
@@ -3293,7 +3196,7 @@ for i in range(0,len(types_of_strategy)):
         total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
         strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
         total_hn_after_cut=len(strategy_plt_dict['Detection Prob'].values)
-        print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
+        # print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
     #strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
     #if (types_of_strategy[i]=="Late discovery"):
     strategy_plt_dict_area=strategy_plt_dict.sort_values(by = 'Area90_deg', ascending=True) #        df_ltt_= df_ltt_.sort_values(by = "Detection Probability")
@@ -3301,6 +3204,7 @@ for i in range(0,len(types_of_strategy)):
     n50_objects=int(len(total_tt_area)*0.5)
     n90_objects=int(len(total_tt_area)*0.9)
     n100_objects=len(total_tt_area)
+    print(n50_objects)
     tb_50ttarea.append(sum(total_tt_area[0:n50_objects])/n50_objects)
     tb_90ttarea.append(sum(total_tt_area[0:n90_objects])/n90_objects)
     tb_100ttarea.append(sum(total_tt_area)/n100_objects) 
@@ -3392,7 +3296,7 @@ for i in range(0,len(types_of_strategy)):
         total_hn_before_cut=len(strategy_plt_dict['Detection Prob'].values)
         strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
         total_hn_after_cut=len(strategy_plt_dict['Detection Prob'].values)
-        print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
+        # print('=======+++++ Half Night lost '+str(float(total_hn_after_cut)/float(total_hn_before_cut))+' ',str(total_hn_after_cut),' of ', str(total_hn_before_cut))
     if (types_of_strategy[i]=="Late Discovery"):
         strategy_plt_dict=strategy_plt_dict[(strategy_plt_dict['Detection Prob'].values>0.0)].copy().reset_index(drop=True)
     if (types_of_strategy[i]=="Late discovery"):

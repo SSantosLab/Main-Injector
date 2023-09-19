@@ -19,7 +19,7 @@ import os
 import matplotlib.pyplot as plt
 import math
 import datetime
-from misc import verify_kwarg, quadrance
+from .misc import verify_kwarg, quadrance
 #from cbomcode.image.image import image_hist_plot
 from astropy.coordinates import SkyCoord,Angle
 import astropy.coordinates as coord

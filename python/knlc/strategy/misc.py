@@ -45,10 +45,6 @@ def get_string_file(string_test,search_dir,copy_dir=''):
 
     return matching
 
-
-
-
-
 def matplotlib_import():
     import matplotlib
     if not is_X_running():
@@ -68,9 +64,6 @@ def gauss_norm(x, p):
     A=1/(sigma*sqrt(2*pi))
     return A*numpy.exp(-(x-mu)**2/(2.*sigma**2))
 
-
-
-
 def linear(x,*p):
     A, B = p
     return A*numpy.array(x)+B
@@ -78,8 +71,6 @@ def linear(x,*p):
 def scale(x,*p):
     A = p
     return A*numpy.array(x)
-
-
 
 def verify_kwarg(param_name,default_value,kwargs): 
     if param_name in kwargs.keys():

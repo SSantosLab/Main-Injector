@@ -4,7 +4,6 @@ import sys
 import math
 import os.path
 import time as time_mod
-import datetime
 import healpy as hp
 import seaborn as sns
 import pandas as pd
@@ -12,6 +11,7 @@ import numpy as np
 import matplotlib
 import astropy.units as u
 import matplotlib.pyplot as plt
+from astropy.time import Time
 from astropy.io import fits
 from astropy.cosmology import z_at_value
 from scipy.stats import uniform
@@ -23,8 +23,10 @@ from loguru import logger
 from math import log10
 from argparse import ArgumentParser
 from os.path import join, basename, dirname
+from subprocess import run
 matplotlib.use("Agg")
 np.set_printoptions(threshold=sys.maxsize)
+logger.remove()
 
 
 def verify_kwarg(param_name, default_value, kwargs):
@@ -80,7 +82,7 @@ def get_mjd(skymap):
     with fits.open(skymap) as f:
         header = f[1].header
     
-    mjd = header['MJD-OBS']
+    mjd = Time(header['MJD-OBS'],format='mjd').mjd
     return mjd
 
 def weighted_avg_and_std(values, weights):
@@ -1620,22 +1622,30 @@ if __name__ == '__main__':
                       help='Output location for csv file.')
 
     parser.add_argument('--teff-type', default='moony',
-                        help='Sky Condition for time effective. moony/notmoony')
+                        help='Sky Condition for time effective. Default is moony.',
+                        choices=['moony','notmoony'])
      
-    parser.add_argument('--kn-type', default='blue')
+    parser.add_argument('--kn-type',
+                        type=str,
+                        help='Kilonova Model',
+                        choices=['blue','red'],
+                        default='blue')
 
-    parser.add_argument('--time', default=None,
-                        help='Time in mjd from skymap.')
+    parser.add_argument('--time',
+                        default=None,
+                        help='Time in mjd from skymap. If None, infer from skymap header.')
     
-    parser.add_argument('--time-delays', default=[12.0, 24.0],
+    parser.add_argument('--time-delays', default=[12.0, 24.0, 36.0],
                         nargs='+',
-                        help='Time delays to calculate KN light curve.')
+                        help='Time delays to calculate KN light curve. Default is [12.0, 24.0]',
+                        choices=[12.0, 24.0, 36.0, 48.0, 60.0, 72.0, 84.0, 96.0])
                       
     parser.add_argument('--hours-per-night', default=8.0,
                         type=float,
-                        help='Night Duration.')
+                        help='Night Duration. Default is 8.0 hours')
+    
     parser.add_argument('--log-file', default=None,
-                        help='Log file destination.')
+                        help='Log file destination. If None, output log file will be in the same location as input skymap.')
     
     args = parser.parse_args()
     area_deg_fix = 40.0
@@ -1661,14 +1671,11 @@ if __name__ == '__main__':
         e = args.input_skymap
         global out_dir
         out_dir = args.output
-        time = args.time
+        time = Time(args.time,format='mjd').mjd if args.time != None else get_mjd(skymap=e)
         log_file = args.log_file
-        # time_delays = [12.0, 24.0, 36.0, 48.0, 60.0, 72.0, 84.0, 96.0]
         time_delays = args.time_delays
         time_delays = list(map(float, time_delays))
         hours_per_night = args.hours_per_night
-        if time == None:
-            time = get_mjd(skymap=e)
 
         if log_file == None:
             log_file = os.path.join(out_dir,'strategy.log')
@@ -1693,9 +1700,8 @@ if __name__ == '__main__':
         
         strategy_args = {key: value for key, value in zip(keys, values)}
         
-        logger.add(f"{output_alert}.log", level="DEBUG", backtrace=True, diagnose=True)
+        logger.add(log_file, level="DEBUG", backtrace=True, diagnose=True)
         logger.add(lambda message: print(message, end=''), level="DEBUG", backtrace=True, diagnose=True)
-        logger.info()
         sufix = '_'+teff_kind+'_'+kntype+'_'
 
         map_mode = 1  # 1 for map 0 for dist
@@ -1779,11 +1785,26 @@ if map_mode == 1:
 else:
     plot_name_ = out_dir+"GW_sim"+sufix
 
-strategy_file = f'bayestar_{teff_kind}_{kntype}_{time}' +\
+skymap_name = os.path.basename(e).split('.')[0]
+strategy_file = f'{skymap_name}_{teff_kind}_{kntype}_{time}' +\
                 '_allconfig.csv'
 strategy_file = join(out_dir, strategy_file)
+
 if os.path.isfile(strategy_file):
-    logger.info('This event event strategy already exists. Skipping')
+    logger.info('all strategy csv file already exists for this event. Skipping')
+    logger.info('Making lowTT and HighProb strategies')
+    cmd = 'python ' +\
+    'python/knlc/gw_strategy_plot_sims.py '+\
+    f'--input {args.input_skymap} '+\
+    f'--strategy-dir {args.output} '
+
+    run(cmd,
+        shell=True)#,
+        # stdout=os.path.join(os.path.basename(args.input_skymap), 'strategies.log'),
+        # stderr=os.path.join(os.path.basename(args.input_skymap), 'strategies.log'),
+        # text=True)
+    logger.success('Strategies done!')
+    sys.exit()
 
 warning_area_deep = []
 area_deg_arr = np.zeros((len(time_delays), len(second_loop)))
@@ -2244,3 +2265,12 @@ if map_mode == 0:
 
 end = time_mod.time() - start
 logger.success(f"Successfully made all config strategy in {end:.2f} seconds!")
+logger.info("Making Different strategies from all config strategy file.")
+cmd = 'python ' +\
+'python/knlc/gw_strategy_plot_sims.py '+\
+f'--input {args.input_skymap} '+\
+f'--strategy-dir {args.output} '
+run(cmd,
+    shell=True)
+
+logger.success("Strategies done!")

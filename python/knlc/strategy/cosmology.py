@@ -1,18 +1,14 @@
-from __future__ import division
-from __future__ import print_function
 import matplotlib
 matplotlib.use('agg')
-#import pymc
 import numpy 
 import matplotlib.pyplot as plt
-#import gbclib.constants as const
-import cosmoconst as cosmo
-import constants as const
+from . import cosmoconst as cosmo
+from . import constants as const
 from scipy import integrate
 from math import sqrt
 import random
 import itertools as it
-from misc import verify_kwarg, quadrance
+from .misc import verify_kwarg, quadrance
 """
  Just a toy model to exemplify the mcmc. Its double einstein ring system, with only \omega_r and \omega_m as free parameters in a point-like lens
 

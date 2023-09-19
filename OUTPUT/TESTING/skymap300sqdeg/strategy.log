@@ -1,0 +1,272 @@
+2023-08-25 11:22:36.525 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 11:22:40.576 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 11:22:40.576 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 11:22:41.038 | INFO     | __main__:__init__:417 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.8.npy
+2023-08-25 11:22:41.040 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 11:22:41.041 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 11:23:16.940 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 11:23:16.941 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 11:23:58.597 | INFO     | __main__:__init__:417 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.7.npy
+2023-08-25 11:23:58.600 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 11:23:58.601 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 11:24:31.789 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 11:24:31.790 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 11:25:09.289 | INFO     | __main__:__init__:417 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.5.npy
+2023-08-25 11:25:09.295 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 11:25:09.296 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 11:25:42.985 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 11:25:42.986 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 11:26:22.623 | INFO     | __main__:__init__:417 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.8.npy
+2023-08-25 11:26:22.626 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 11:26:22.627 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 11:26:56.016 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 11:26:56.017 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 11:27:30.060 | INFO     | __main__:__init__:417 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.7.npy
+2023-08-25 11:27:30.063 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 11:27:30.064 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 11:27:57.875 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 11:27:57.876 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 11:28:28.674 | INFO     | __main__:__init__:417 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.5.npy
+2023-08-25 11:28:28.677 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 11:28:28.678 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 11:29:00.703 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 11:29:00.704 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 11:29:33.904 | SUCCESS  | __main__:<module>:2252 - Successfully made all config strategy in 418.13 seconds!
+2023-08-25 13:41:52.733 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 13:41:55.769 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 13:41:55.770 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 13:41:55.770 | INFO     | __main__:<module>:1792 - This event event strategy already exists. Skipping
+2023-08-25 13:41:56.143 | INFO     | __main__:__init__:417 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.8.npy
+2023-08-25 13:41:56.144 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:41:56.145 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 13:42:30.783 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:42:30.784 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 13:43:13.960 | INFO     | __main__:__init__:417 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.7.npy
+2023-08-25 13:43:13.962 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:43:13.964 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 13:43:52.907 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:43:52.909 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 13:44:33.064 | INFO     | __main__:__init__:417 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.5.npy
+2023-08-25 13:44:33.067 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:44:33.068 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 13:45:14.416 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:45:14.417 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 13:45:59.695 | INFO     | __main__:__init__:417 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.8.npy
+2023-08-25 13:45:59.698 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:45:59.699 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 13:46:36.452 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:46:36.453 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 13:47:09.709 | INFO     | __main__:__init__:417 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.7.npy
+2023-08-25 13:47:09.712 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:47:09.714 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 13:47:41.413 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:47:41.414 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 13:48:13.962 | INFO     | __main__:__init__:417 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.5.npy
+2023-08-25 13:48:13.965 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:48:13.966 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 13:48:48.758 | INFO     | __main__:calc_mag_fractions:1001 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:48:48.760 | INFO     | __main__:calc_mag_fractions:1016 - loading KN model weights ...
+2023-08-25 13:49:18.399 | INFO     | __main__:<module>:1712 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 13:49:21.999 | INFO     | __main__:<module>:1718 - The Sky area is: 299.16 sq-deg!
+2023-08-25 13:49:22.000 | INFO     | __main__:<module>:1781 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 13:49:22.001 | INFO     | __main__:<module>:1792 - Here1
+2023-08-25 13:49:22.001 | INFO     | __main__:<module>:1793 - OUTPUT/TESTING/skymap300sqdeg/bayestar_moony_blue_56099.13284555132_allconfig.csv
+2023-08-25 13:49:22.001 | INFO     | __main__:<module>:1795 - Here2
+2023-08-25 13:49:22.002 | INFO     | __main__:<module>:1796 - This event event strategy already exists. Skipping
+2023-08-25 13:49:22.456 | INFO     | __main__:__init__:418 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.8.npy
+2023-08-25 13:49:22.459 | INFO     | __main__:calc_mag_fractions:1002 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:49:22.460 | INFO     | __main__:calc_mag_fractions:1017 - loading KN model weights ...
+2023-08-25 13:50:00.409 | INFO     | __main__:calc_mag_fractions:1002 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:50:00.410 | INFO     | __main__:calc_mag_fractions:1017 - loading KN model weights ...
+2023-08-25 13:50:43.602 | INFO     | __main__:__init__:418 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.7.npy
+2023-08-25 13:50:43.605 | INFO     | __main__:calc_mag_fractions:1002 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:50:43.606 | INFO     | __main__:calc_mag_fractions:1017 - loading KN model weights ...
+2023-08-25 13:51:27.209 | INFO     | __main__:calc_mag_fractions:1002 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:51:27.211 | INFO     | __main__:calc_mag_fractions:1017 - loading KN model weights ...
+2023-08-25 13:51:41.747 | INFO     | __main__:<module>:1712 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 13:51:45.386 | INFO     | __main__:<module>:1718 - The Sky area is: 299.16 sq-deg!
+2023-08-25 13:51:45.387 | INFO     | __main__:<module>:1781 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 13:51:45.387 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 13:51:45.387 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 13:54:29.687 | INFO     | __main__:<module>:1712 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 13:54:33.470 | INFO     | __main__:<module>:1718 - The Sky area is: 299.16 sq-deg!
+2023-08-25 13:54:33.470 | INFO     | __main__:<module>:1781 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 13:54:33.470 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 13:54:33.471 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 13:54:45.942 | INFO     | __main__:<module>:1712 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 13:54:49.399 | INFO     | __main__:<module>:1718 - The Sky area is: 299.16 sq-deg!
+2023-08-25 13:54:49.400 | INFO     | __main__:<module>:1781 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 13:54:49.400 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 13:54:49.400 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 13:54:49.484 | SUCCESS  | __main__:<module>:1806 - Strategies done!
+2023-08-25 13:54:49.895 | INFO     | __main__:__init__:418 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.8.npy
+2023-08-25 13:54:49.899 | INFO     | __main__:calc_mag_fractions:1002 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 13:54:49.900 | INFO     | __main__:calc_mag_fractions:1017 - loading KN model weights ...
+2023-08-25 13:56:05.158 | INFO     | __main__:<module>:1712 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 13:56:08.661 | INFO     | __main__:<module>:1718 - The Sky area is: 299.16 sq-deg!
+2023-08-25 13:56:08.661 | INFO     | __main__:<module>:1781 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 13:56:08.661 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 13:56:08.661 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 13:56:10.282 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 13:57:40.818 | INFO     | __main__:<module>:1712 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 13:57:44.403 | INFO     | __main__:<module>:1718 - The Sky area is: 299.16 sq-deg!
+2023-08-25 13:57:44.404 | INFO     | __main__:<module>:1781 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 13:57:44.404 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 13:57:44.404 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 13:57:46.443 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 13:59:28.967 | INFO     | __main__:<module>:1712 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 13:59:31.715 | INFO     | __main__:<module>:1718 - The Sky area is: 299.16 sq-deg!
+2023-08-25 13:59:31.716 | INFO     | __main__:<module>:1781 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 13:59:31.716 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 13:59:31.716 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 13:59:33.353 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 14:02:36.298 | INFO     | __main__:<module>:1712 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:02:39.561 | INFO     | __main__:<module>:1718 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:02:39.562 | INFO     | __main__:<module>:1781 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:02:39.562 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:02:39.562 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 14:02:41.371 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 14:03:03.290 | INFO     | __main__:<module>:1712 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:03:06.379 | INFO     | __main__:<module>:1718 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:03:06.379 | INFO     | __main__:<module>:1781 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:03:06.380 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:03:06.380 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 14:03:07.870 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 14:08:28.545 | INFO     | __main__:<module>:1712 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:08:31.938 | INFO     | __main__:<module>:1718 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:08:31.938 | INFO     | __main__:<module>:1781 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:08:31.938 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:08:31.938 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 14:08:33.828 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 14:09:33.677 | INFO     | __main__:<module>:1712 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:09:36.824 | INFO     | __main__:<module>:1718 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:09:36.824 | INFO     | __main__:<module>:1781 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:09:36.825 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:09:36.825 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 14:09:38.472 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 14:11:39.216 | INFO     | __main__:<module>:1713 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:11:42.304 | INFO     | __main__:<module>:1719 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:11:42.304 | INFO     | __main__:<module>:1782 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:11:42.304 | INFO     | __main__:<module>:1794 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:11:42.304 | INFO     | __main__:<module>:1795 - Making lowTT and HighProb strategies
+2023-08-25 14:11:44.178 | SUCCESS  | __main__:<module>:1806 - Strategies done!
+2023-08-25 14:13:04.098 | INFO     | __main__:<module>:1713 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:13:07.304 | INFO     | __main__:<module>:1719 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:13:07.304 | INFO     | __main__:<module>:1782 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:13:07.304 | INFO     | __main__:<module>:1794 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:13:07.305 | INFO     | __main__:<module>:1795 - Making lowTT and HighProb strategies
+2023-08-25 14:13:09.478 | SUCCESS  | __main__:<module>:1806 - Strategies done!
+2023-08-25 14:15:54.528 | INFO     | __main__:<module>:1713 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:15:57.330 | INFO     | __main__:<module>:1719 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:15:57.330 | INFO     | __main__:<module>:1782 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:15:57.330 | INFO     | __main__:<module>:1794 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:15:57.330 | INFO     | __main__:<module>:1795 - Making lowTT and HighProb strategies
+2023-08-25 14:15:58.960 | SUCCESS  | __main__:<module>:1806 - Strategies done!
+2023-08-25 14:17:42.514 | INFO     | __main__:<module>:1713 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:17:45.961 | INFO     | __main__:<module>:1719 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:17:45.961 | INFO     | __main__:<module>:1782 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:17:45.961 | INFO     | __main__:<module>:1794 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:17:45.961 | INFO     | __main__:<module>:1795 - Making lowTT and HighProb strategies
+2023-08-25 14:17:47.771 | SUCCESS  | __main__:<module>:1806 - Strategies done!
+2023-08-25 14:20:42.650 | INFO     | __main__:<module>:1713 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:20:45.643 | INFO     | __main__:<module>:1719 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:20:45.643 | INFO     | __main__:<module>:1782 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:20:45.643 | INFO     | __main__:<module>:1794 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:20:45.643 | INFO     | __main__:<module>:1795 - Making lowTT and HighProb strategies
+2023-08-25 14:20:47.581 | SUCCESS  | __main__:<module>:1806 - Strategies done!
+2023-08-25 14:23:33.847 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:23:37.080 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:23:37.080 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:23:37.080 | INFO     | __main__:<module>:1792 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:23:37.081 | INFO     | __main__:<module>:1793 - Making lowTT and HighProb strategies
+2023-08-25 14:23:39.528 | SUCCESS  | __main__:<module>:1804 - Strategies done!
+2023-08-25 14:24:19.695 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:24:22.408 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:24:22.408 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:24:22.408 | INFO     | __main__:<module>:1792 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:24:22.408 | INFO     | __main__:<module>:1793 - Making lowTT and HighProb strategies
+2023-08-25 14:24:24.519 | SUCCESS  | __main__:<module>:1804 - Strategies done!
+2023-08-25 14:31:06.411 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:31:09.243 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:31:09.244 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:31:09.244 | INFO     | __main__:<module>:1792 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:31:09.245 | INFO     | __main__:<module>:1793 - Making lowTT and HighProb strategies
+2023-08-25 14:31:10.844 | SUCCESS  | __main__:<module>:1804 - Strategies done!
+2023-08-25 14:32:56.464 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:32:59.624 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:32:59.624 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:32:59.625 | INFO     | __main__:<module>:1792 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:32:59.625 | INFO     | __main__:<module>:1793 - Making lowTT and HighProb strategies
+2023-08-25 14:32:59.714 | SUCCESS  | __main__:<module>:1804 - Strategies done!
+2023-08-25 14:33:20.888 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:33:23.466 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:33:23.466 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:33:23.466 | INFO     | __main__:<module>:1792 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:33:23.467 | INFO     | __main__:<module>:1793 - Making lowTT and HighProb strategies
+2023-08-25 14:33:25.058 | SUCCESS  | __main__:<module>:1804 - Strategies done!
+2023-08-25 14:36:34.551 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:36:37.981 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:36:37.982 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:36:38.383 | INFO     | __main__:__init__:419 - Using preprocessed weights for OUTPUT/TESTING/skymap300sqdeg/weights/1430ac0.9ad0.8.npy
+2023-08-25 14:36:38.385 | INFO     | __main__:calc_mag_fractions:1003 - ===== Using KN model priors gaussian_narrow, considering gw170817 with blue component
+2023-08-25 14:36:38.386 | INFO     | __main__:calc_mag_fractions:1018 - loading KN model weights ...
+2023-08-25 14:37:14.885 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:37:18.199 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:37:18.200 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:37:18.200 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:37:18.200 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 14:37:20.142 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 14:38:17.979 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:38:20.824 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:38:20.825 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:38:20.825 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:38:20.825 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 14:38:28.362 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 14:58:47.476 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 14:58:51.740 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 14:58:51.740 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 14:58:51.741 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 14:58:51.741 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 14:59:02.209 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 15:00:07.962 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 15:00:13.284 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 15:00:13.285 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 15:00:13.285 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 15:00:13.285 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 15:00:24.545 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 15:01:09.818 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 15:01:15.653 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 15:01:15.654 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 15:01:15.654 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 15:01:15.654 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 15:01:26.669 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 15:04:30.414 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 15:04:34.471 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 15:04:34.472 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 15:04:34.472 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 15:04:34.472 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 15:04:44.869 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 15:10:03.480 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 15:10:07.692 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 15:10:07.692 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 15:10:07.692 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 15:10:07.693 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 15:10:17.886 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 15:12:19.200 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 15:12:22.423 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 15:12:22.423 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 15:12:22.424 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 15:12:22.424 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 15:12:30.346 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 15:13:00.832 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 15:13:04.422 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 15:13:04.422 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 15:13:04.423 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 15:13:04.423 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 15:13:13.872 | SUCCESS  | __main__:<module>:1805 - Strategies done!
+2023-08-25 15:15:50.497 | INFO     | __main__:<module>:1711 - Getting sky area from HEALPIx high-resolution skymap
+2023-08-25 15:15:54.026 | INFO     | __main__:<module>:1717 - The Sky area is: 299.16 sq-deg!
+2023-08-25 15:15:54.026 | INFO     | __main__:<module>:1780 - starting the run for file OUTPUT/TESTING/skymap300sqdeg/1430.fits.gz
+2023-08-25 15:15:54.027 | INFO     | __main__:<module>:1793 - all strategy csv file already exists for this event. Skipping
+2023-08-25 15:15:54.027 | INFO     | __main__:<module>:1794 - Making lowTT and HighProb strategies
+2023-08-25 15:16:02.537 | SUCCESS  | __main__:<module>:1805 - Strategies done!
