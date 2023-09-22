@@ -16,7 +16,6 @@ from astroplan import (AltitudeConstraint, AirmassConstraint,AtNightConstraint)
 from astroplan import is_observable
 from astropy.time import Time
 from astroplan.plots import plot_airmass
-import sys
 from astropy.visualization import astropy_mpl_style, quantity_support
 from astropy.coordinates import AltAz, EarthLocation, SkyCoord
 from astropy.coordinates import get_sun
@@ -24,6 +23,7 @@ from astropy.coordinates import get_body
 import datetime
 import ephem
 import json
+import os
 
 ### Function for reading + parsing the skymap 
 def make_alert_skymap(map_path):
@@ -180,7 +180,7 @@ def make_plots_initial(url, name):
     #airmass(name, [(maxprob_ra, maxprob_dec)])
 
     fig = plt.figure(figsize=(10, 10), dpi=100)
-    plt.annotate('Event Name: {}'.format(name) + '\n'
+    plt.annotate('Event Name: {}'.format(os.path.basename(name)) + '\n'
                  + r'50% Area: {} deg$^2$'.format(area50) + '\n'
                  + r'90% Area: {} deg$^2$'.format(area90) + '\n'
                  + r'Max Prob Coordinates: ({},{})'.format(maxprob_ra, maxprob_dec) + '\n'
