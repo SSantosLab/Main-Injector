@@ -849,6 +849,7 @@ class KNCalc():
         self.template_df_full = template_df_full
         self.Flag = 1
         self.mult_exp = m_exp_kncalc
+ 
         return
 
 # Telescope Dependent functions
@@ -1618,7 +1619,7 @@ if __name__ == '__main__':
     parser.add_argument('--input-skymap',
                       help='Skymap Location.')
 
-    parser.add_argument('--output', default=None,
+    parser.add_argument('--output-strategy', default=None,
                       help='Output location for csv file.')
 
     parser.add_argument('--teff-type', default='moony',
@@ -1635,9 +1636,9 @@ if __name__ == '__main__':
                         default=None,
                         help='Time in mjd from skymap. If None, infer from skymap header.')
     
-    parser.add_argument('--time-delays', default=[12.0, 24.0, 36.0],
+    parser.add_argument('--time-delays', default=[12.0, 24.0, 36.0, 48.0],
                         nargs='+',
-                        help='Time delays to calculate KN light curve. Default is [12.0, 24.0]',
+                        help='Time delays to calculate KN light curve. Default is [12.0, 24.0, 36.0, 48.0]',
                         choices=[12.0, 24.0, 36.0, 48.0, 60.0, 72.0, 84.0, 96.0])
                       
     parser.add_argument('--hours-per-night', default=8.0,
@@ -1670,7 +1671,7 @@ if __name__ == '__main__':
 
         e = args.input_skymap
         global out_dir
-        out_dir = args.output
+        out_dir = os.path.dirname(args.output_strategy)
         time = Time(args.time,format='mjd').mjd if args.time != None else get_mjd(skymap=e)
         log_file = args.log_file
         time_delays = args.time_delays
@@ -1788,22 +1789,10 @@ else:
 skymap_name = os.path.basename(e).split('.')[0]
 strategy_file = f'{skymap_name}_{teff_kind}_{kntype}_{time}' +\
                 '_allconfig.csv'
-strategy_file = join(out_dir, strategy_file)
+strategy_file = args.output_strategy
 
 if os.path.isfile(strategy_file):
     logger.info('all strategy csv file already exists for this event. Skipping')
-    logger.info('Making lowTT and HighProb strategies')
-    cmd = 'python ' +\
-    'python/knlc/gw_strategy_plot_sims.py '+\
-    f'--input {args.input_skymap} '+\
-    f'--strategy-dir {args.output} '
-
-    run(cmd,
-        shell=True)#,
-        # stdout=os.path.join(os.path.basename(args.input_skymap), 'strategies.log'),
-        # stderr=os.path.join(os.path.basename(args.input_skymap), 'strategies.log'),
-        # text=True)
-    logger.success('Strategies done!')
     sys.exit()
 
 warning_area_deep = []
@@ -2265,12 +2254,3 @@ if map_mode == 0:
 
 end = time_mod.time() - start
 logger.success(f"Successfully made all config strategy in {end:.2f} seconds!")
-logger.info("Making Different strategies from all config strategy file.")
-cmd = 'python ' +\
-'python/knlc/gw_strategy_plot_sims.py '+\
-f'--input {args.input_skymap} '+\
-f'--strategy-dir {args.output} '
-run(cmd,
-    shell=True)
-
-logger.success("Strategies done!")

@@ -79,9 +79,6 @@ class Email(Bot):
             None
         """
 
-        if self.mode == 'test':
-            return
-        
         email_args = {
             'from_addr': 'DESGW Team',
             'smtpserver': '%s:%s' % ('smtp.gmail.com', 587),
@@ -229,7 +226,7 @@ class Slack(Bot):
             subject = 'OFFLINE TESTING ' + subject
 
         if self.mode == 'observation':
-            subject = '@channel ' + subject
+            subject = subject
 
         post = {}
         post["value1"] = subject

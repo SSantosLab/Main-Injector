@@ -1,5 +1,7 @@
 import os
 import sys
+import multiprocessing
+import pandas as pd
 from argparse import ArgumentParser
 from datetime import datetime
 from loguru import logger
@@ -11,6 +13,75 @@ from stages.plots import make_plots_initial, make_plots_post_strat
 from stages.api import DESGWApi
 from stages.rank_galaxies import find_galaxy_list
 from pathlib import Path
+from python.OneRing import run_or
+from subprocess import run
+
+def run_strategy(
+        skymap_location: str or os.PathLike,
+        time: float,
+        output_dir: str or os.PathLike,
+        sky_condition: str = "moony",
+        event: str = "BNS",
+        queue: multiprocessing.Queue = None
+):
+    """
+    Run strategy code and return output csv file location.
+    
+    Parameters:
+    -----------
+    
+    skymap_location: str or os.Pathlike
+        input skymap location (flatten, constant nside).
+    time: float
+        Modified Julian Date (MJD) of event.
+    output_dir: str or os.Pathlike
+        output folder location for strategy
+    sky_condition: str
+        Estimate for sky conditions during observing night.
+        Options are 'moony' and 'notmoony'.
+    event: str
+        Classification for event. can be either 'BNS' or 'NSBH'.
+    """
+
+    if event == 'BNS':
+        kn_type = 'blue'
+
+    if event == 'NSBH':
+        kn_type = 'red'
+
+    if event == 'BBH':
+        logger.warning(f"Trying to run strategy for {event} kind. Skipping!")
+        sys.exit()
+
+    mjd = str(time).replace('.','')
+    strategy_filename = f"bayestar_{sky_condition}_{kn_type}_{mjd}_allconfig.csv"
+    strategy_output = os.path.join(output_dir, strategy_filename)
+    cmd = f"python " +\
+        "python/knlc/kn_strategy_sims_MI.py " +\
+        f"--input-skymap {skymap_location} " +\
+        f"--teff-type {sky_condition} " +\
+        f"--kn-type {kn_type} " +\
+        f"--time {mjd} " +\
+        f"--output-strategy {strategy_output}"
+        
+    output_log = os.path.join(
+        output_dir,
+        f'{sky_condition}_{kn_type}_strategy.log'
+    )
+
+    strategy_log = open(output_log, 'w')
+    logger.info(f'Using {kn_type} kn for {event} event with teff {sky_condition}')
+
+    run(cmd,
+        shell=True,
+        stdout=strategy_log,
+        stderr=strategy_log,
+        text=True)
+        
+    strategy_log.close()
+
+    return strategy_output
+
 
 def parser() -> ArgumentParser:
 
@@ -30,7 +101,7 @@ def parser() -> ArgumentParser:
                             "rank-galaxies",
                             "add-trigger",
                             "strategy",
-                            "post-plots"
+                            "post-plots",
                             "onering"])
     
     p.add_argument("--skip-message",
@@ -81,7 +152,7 @@ if __name__ == "__main__":
     far = round(1/float(gw.event.far)/60/60/24/365, 2)
     source, event_prob = gw.find_source_and_prob()
 
-    if "all" or "handle" in options.stages:
+    if ("all" in options.stages) or ("handle" in options.stages):
         logger.info(f"Handling Event {gw_id} with alert type {alert_type}")
 
         if not moc_skymap.parent.exists():
@@ -97,8 +168,13 @@ if __name__ == "__main__":
         distmean = skymap.meta["DISTMEAN"]
         distsigma = skymap.meta["DISTSTD"]
         mjd = round(Time(gw.event.time).mjd, 4)
-        gracedb = Path("https://gracedb.ligo.org")
-        link = gracedb/"apiweb"/"superevents"/gw_id/"files"/"bayestar.png"
+        gracedb = "https://gracedb.ligo.org"
+        link = os.path.join(gracedb,
+                            "apiweb",
+                            "superevents",
+                            gw_id,
+                            "files",
+                            "bayestar.png")
         
         subject = f"Trigger {gw_id} MJD: {mjd} "+\
             f"Classification: {source} ({event_prob}) FAR: {far} "+\
@@ -122,7 +198,6 @@ if __name__ == "__main__":
             f"GraceDB Link: {gw.urls.gracedb}\n"
             f"Skymap Link: {link}")
         
-        # Thresholds
         if source == "BBH" and (far < 1000):
             logger.info("BBH with low FAR, skipping event!")
             sys.exit()
@@ -136,12 +211,16 @@ if __name__ == "__main__":
             sys.exit()
 
         if not options.skip_message:
+
+            if (source == 'BNS') or (source == 'NSBH'):
+                subject = '@channel ' + subject
+            
             email.send_message(subject=subject, text=message)
             slack.send_message(subject=subject,text=message)
             logger.info(f"Messages about {alert_type} {gw_id} event ent!")
     
     if ("all" in options.stages) or ("initial-plots" in options.stages):
-        logger.info(f"In stage initial-plots for {alert_type} {gw_id}")
+        logger.info(f"In stage initial-plots for {alert_type} {gw_id} alert.")
         plots_path = flatten_skymap.parent
 
         make_plots_initial(url=flatten_skymap.as_posix(),
@@ -162,7 +241,7 @@ if __name__ == "__main__":
 
     if ("all" in options.stages) or ("add-trigger" in options.stages):
 
-        logger.info("In stage add trigger")
+        logger.info(f"Pushing data from alert {gw.superevent_id} to website")
         desgw = DESGWApi(os.environ.get("API_BASE_URL"))
 
         season = 1000  # Change to official season later
@@ -191,8 +270,50 @@ if __name__ == "__main__":
         desgw.add_trigger(trigger_data = trigger_data)
 
     if ("all" in options.stages) or ("strategy" in options.stages):
-        pass
 
-    if ("all" in options.stages) or ("onering" in options.stages):
-        pass
-        # run_onering()
+        strategies = multiprocessing.Queue()
+        processes = []
+
+        print(os.path.dirname(flatten_skymap))
+        for teff_kind in ['moony', 'notmoony']:
+            process = multiprocessing.Process(
+                target=run_strategy,
+                args=(
+                    flatten_skymap,
+                    mjd,
+                    os.path.dirname(flatten_skymap),
+                    teff_kind,
+                    source,
+                    strategies
+                )
+            )
+            processes.append(process)
+            process.start()
+
+        for process in processes:
+            process.join()
+
+        result_strategy = []
+        while not strategies.empty():
+            result = strategies.get()
+            result_strategy.append(result)
+        
+        print(result_strategy)
+
+    # if ("all" in options.stages) or ("onering" in options.stages):
+        
+    #     for strategy in result_strategy:
+
+    #         strategy = pd.read_csv()
+    #         run_or(
+    #             skymap=flatten_skymap,
+    #             probArea_inner=0.5,
+    #             probArea_outer=0.9,
+    #             flt='i',
+    #             expTime_inner=90,
+    #             expTime_outer=90,
+    #             mjd=60209.0859,
+    #             hexFile='data/all-sky-hexCenters-decam.txt'
+    #         )
+    #     print('done')
+    #     # run_onering()

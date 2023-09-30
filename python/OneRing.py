@@ -3,10 +3,14 @@ import hp2np
 import hexalate
 import decam2hp
 import jsonMaker
-from os import getenv
+import os
 import pandas as pd
 import sys
 import  matplotlib.pyplot as plt
+from astropy.time import Time
+from os import getenv
+from datetime import datetime
+from argparse import ArgumentParser
 
 
 # Code to demonstrate a very simple way to go from Strategy (from the strategy paper)
@@ -333,6 +337,91 @@ def sort_zone(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob, 
         outer_df = sort_nearest_highest(outer_ra, outer_dec, outer_prob, startorder=len(inner_df), radThreshold=radThreshold)
     return pd.concat([inner_df, outer_df], axis=0)
 
-    
 
+def parser() -> ArgumentParser:
+
+    p = ArgumentParser()
+    p.add_argument('--skymap',
+                   type=str,
+                   help='input skymap location.')
+    
+    p.add_argument('--prob-inner',
+                   type=float,
+                   help='Prob. for inner region coverage.')
+    
+    p.add_argument('--prob-outer',
+                   type=float,
+                   help='Prob. for outer region coverage.')
+    
+    p.add_argument('--filt',
+                   type=str,
+                   help='Filter to use.')
+    
+    p.add_argument('--texp-inner',
+                   type=float,
+                   help='Exposure time for inner region.')
+    
+    p.add_argument('--texp-outer',
+                   type=float,
+                   help='Exposure time for outer region.')
+    
+    p.add_argument('--mjd',
+                   type=float,
+                   help='Current MJD.',
+                   default=round(Time(datetime.now()).mjd,4))
+    
+    p.add_argument('--output',
+                   type=str,
+                   help='Output json file. Default is des-gw.json',
+                   default='des-gw.json')
+    
+    p.add_argument('--resolution',
+                   type=int,
+                   default=64,
+                   help='Resolution (nside) to map pixels to R.A and DEC.' +\
+                        'Default value is 64.')
+    
+    p.add_argument('--hex-file',
+                   type=str,
+                   default=os.getenv('DATA_DIR')+'/all-sky-hexCenters-decam.txt',
+                   help='Hex file center txt file location.')
+    
+    p.add_argument('--plot-numbers',
+                   action='store_true',
+                   default=False,
+                   help='If set, plot numbers for hexes.')
+    
+    p.add_argument("--max-hex-time",
+                   type=float,
+                   default=None,
+                   nargs="?",
+                   help="Limit the number of hexes in json file based on time in seconds. Default is None.")
+    
+    p.add_argument("--max-hex-count",
+                   type=float,
+                   default=None,
+                   nargs="?",
+                   help="Limit the number of hexes in json file in number of hexes. Default is None.")
+
+    return p
+
+
+if __name__ == '__main__':
+
+    options = parser().parse_args() 
+
+    run_or(skymap=options.skymap,
+           probArea_inner=options.prob_inner,
+           probArea_outer=options.prob_outer,
+           flt=options.filt,
+           expTime_inner=options.texp_inner,
+           expTime_outer=options.texp_outer,
+           mjd=options.mjd,
+           resolution=options.resolution,
+           hexFile=options.hex_file,
+           jsonFilename=options.output,
+           plot_numbers=options.plot_numbers,
+           max_hex_count=options.max_hex_count,
+           max_hex_time=options.max_hex_time
+    )
 
