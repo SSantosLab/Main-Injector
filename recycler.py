@@ -136,8 +136,8 @@ if __name__ == "__main__":
     listener_log = LOG_DIR/"recyler.log"
     logger.add(listener_log, level="INFO", rotation="00:00")
 
-    if alert_type[0] == "S":
-        EVENT_DIR = ROOT_DIR/"OUTPUT"/"O4REAL"/gw_id/alert_type
+    if gw_id[0] == "S": #previouslt was 'alert_type[0]'
+        EVENT_DIR = ROOT_DIR/"OUTPUT"/"O4REAL"/gw_id/alert_type 
     else:
         EVENT_DIR = ROOT_DIR/"OUTPUT"/"TESTING"/gw_id/alert_type
     
@@ -244,14 +244,16 @@ if __name__ == "__main__":
         logger.info(f"Pushing data from alert {gw.superevent_id} to website")
         desgw = DESGWApi(os.environ.get("API_BASE_URL"))
 
-        season = 1000  # Change to official season later
-        server_dir = os.path.join("/des_web","www","html","desgw-new",f"dp{season}",f"{gw_id}")
-        # Make a directory within the server hosting the webpage corresponding to the season and trigger_id
+        season = -9  # Change to official season later
+        
+         # Make a directory within the server hosting the webpage corresponding to the gw_id
+        server_dir = os.path.join("/des_web","www","html","desgw-new",f"{gw_id}")
         os.system("ssh -k codemanager@desweb.fnal.gov 'mkdir -p {}'".format(server_dir))
         # Define a variable "desweb" to be the directory to store our plots/files in 
         desweb = "codemanager@desweb.fnal.gov:{}".format(server_dir)
-        # Assuming we store all the relevant plots in our working directory, in a directory called "MI_plots", we just "scp" the entire directory into the location on the server 
+        # scp the relevant plots to the website server 
         os.system(f"scp -r {plots_path}*.png {desweb}")
+        os.system(f"scp -r {plots_path}*.csv {desweb}")
         trigger_data = {
             "trigger_label": gw_id,
             "type": source,
@@ -261,10 +263,10 @@ if __name__ == "__main__":
             "mjd": float(mjd),
             "event_datetime": Time(gw.event.time).strftime("%Y-%m-%d %H:%M:%S"),
             "mock": True, # True for mock event, False for real event.
-            # "galaxy_percentage_file": f"https://des-ops.fnal.gov:8082/desgw-new/dp{season}/{gw_id}/{galaxy_name}", #output from galaxy ranking file. (csv filepath)
-            "initial_skymap": f"https://des-ops.fnal.gov:8082/desgw-new/dp{season}/{gw_id}/S230518h_initial_skymap.png", # output initial skymap plot filepath
-            "moon": f"https://des-ops.fnal.gov:8082/desgw-new/dp{season}/{gw_id}/{gw_id}_Moon.png",
-            "season": "1000"
+            "galaxy_percentage_file": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/ranked_galaxies_list.csv", #output from galaxy ranking file. (csv filepath)
+            "initial_skymap": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{gw_id}_initial_skymap.png", # output initial skymap plot filepath
+            "moon": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{gw_id}_Moon.png",
+            "season": "-9"
         }
 
         desgw.add_trigger(trigger_data = trigger_data)

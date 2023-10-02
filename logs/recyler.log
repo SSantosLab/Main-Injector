@@ -7,3 +7,4 @@
 2023-09-22 10:32:16.892 | INFO     | __main__:<module>:144 - In stage initial-plots for INITIAL MS230915q
 2023-09-22 10:32:30.726 | INFO     | __main__:<module>:150 - Initial plots for INITIAL MS230915q saved at /home/data/phd/research_projects/Main-Injector/OUTPUT/TESTING/MS230915q/INITIAL
 2023-09-22 10:33:30.183 | INFO     | __main__:<module>:163 - Ranked galaxies list saved at /home/data/phd/research_projects/Main-Injector/OUTPUT/TESTING/MS230915q/INITIAL
+2023-09-30 16:56:39.001 | INFO     | __main__:<module>:227 - In stage initial-plots for PRELIMINARY S230930t alert.
