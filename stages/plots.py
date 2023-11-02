@@ -68,9 +68,9 @@ def make_alert_skymap(map_path):
             index += 1
         return c
 
-    c90 = ci(.5)
-    c50 = ci(.9)
-    levels = [c50, c90]
+    c50 = ci(.5)
+    c90 = ci(.9)
+    levels = [c90, c50]
         
     area50, area90 = find_area(prob, contours = [.5, .9])
     
@@ -85,9 +85,7 @@ def make_alert_skymap(map_path):
 
 def moon_airmass(event_name, todays_date, target_coords):
     date = datetime.date.today()
-    #print(date)
     m = ephem.Moon(todays_date)
-    #m = ephem.Moon(date)
     phase = round(m.moon_phase, 2)
     
     plt.style.use(astropy_mpl_style)
@@ -96,60 +94,50 @@ def moon_airmass(event_name, todays_date, target_coords):
     
     
     CTIO = EarthLocation(lat=-30.17*u.deg, lon=-70.80*u.deg, height=3000*u.m)
-    HSC = EarthLocation(lat=19.8255*u.deg, lon=-155.476*u.deg, height=4139*u.m)
     utcoffset = -4*u.hour  # Eastern Daylight Time
-    
-    
-    
-    #midnight = Time('2012-7-13 00:00:00') - utcoffset
-    # mytime = todays_date + ' 00:00:00'
+
     mytime = todays_date
     midnight = Time(mytime) - utcoffset
     
     
     delta_midnight = np.linspace(-12, 12, 1000)*u.hour
-    times_July12_to_13 = midnight + delta_midnight
-    frame_July12_to_13 = AltAz(obstime=times_July12_to_13, location=CTIO)
-    sunaltazs_July12_to_13 = get_sun(times_July12_to_13).transform_to(frame_July12_to_13)
+    times_tonight = midnight + delta_midnight
+    frame = AltAz(obstime=times_tonight, location=CTIO)
+    sunaltazs = get_sun(times_tonight).transform_to(frame)
     
-    m33 = SkyCoord(target_coords[0], target_coords[1], unit="deg")
-    #m33 = SkyCoord.from_name('M33')
+    max_prob_coord = SkyCoord(target_coords[0], target_coords[1], unit="deg")
+    max_prob_coord_altazs = max_prob_coord.transform_to(frame)
     
-    m33altazs_July12_to_13 = m33.transform_to(frame_July12_to_13)
     
-    moon_July12_to_13 = get_body("moon", times_July12_to_13)
-    moonaltazs_July12_to_13 = moon_July12_to_13.transform_to(frame_July12_to_13)
+    moon = get_body("moon", times_tonight)
+    moonaltazs = moon.transform_to(frame)
     
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
-    slope = m33altazs_July12_to_13.secz / delta_midnight
-    slope = np.array([abs(i.value) for i in slope])
-    condition = [i for i in range(len(slope)) if slope[i] > 10]
-    n1 = [i == 0 if i in condition else m33altazs_July12_to_13.secz[i] for i in range(len(m33altazs_July12_to_13.secz)) ]
-    t = m33altazs_July12_to_13.secz
+    t = max_prob_coord_altazs.secz
+    condition = [i for i in range(len(t)-1) if abs(t[i] - t[1+1]) > 10]
     t[condition] = np.nan
     
-    l1 = ax1.plot(delta_midnight, moonaltazs_July12_to_13.alt, color='blue', ls='--', label='Moon')
-    #ax2.plot(delta_midnight, m33altazs_July12_to_13.secz, color='red', ls='--', label='M33')
-    l2 = ax2.plot(delta_midnight, t, color = 'red', ls='-', label='Max Prob Coord')
+    
+    l1 = ax1.plot(delta_midnight, moonaltazs.alt, color='blue', ls='--', label='Moon')
+    l2 = ax2.plot(delta_midnight, t, color = 'red', ls='-', label='Max Prob Coord', alpha = 0.5)
     label = ['Moon (Alt)', 'Max Prob Coord (Airmass)']
-    fig.legend([l1, l2], labels=label,
+    fig.legend(labels=label,
            loc= (0.1, 0.82), fontsize = 9)
     
+  
     ax2.grid(visible = False)
     ax1.fill_between(delta_midnight, 0*u.deg, 90*u.deg, 
-                     sunaltazs_July12_to_13.alt < -0*u.deg, color='0.9', zorder=0)
+                     sunaltazs.alt < -0*u.deg, color='0.9', zorder=0)
     ax1.fill_between(delta_midnight, 0*u.deg, 90*u.deg, 
-                     sunaltazs_July12_to_13.alt < -6*u.deg, color='0.8', zorder=0)
+                     sunaltazs.alt < -6*u.deg, color='0.8', zorder=0)
     ax1.fill_between(delta_midnight, 0*u.deg, 90*u.deg, 
-                     sunaltazs_July12_to_13.alt < -12*u.deg, color='0.7', zorder=0)
+                     sunaltazs.alt < -12*u.deg, color='0.7', zorder=0)
     ax1.fill_between(delta_midnight, 0*u.deg, 90*u.deg, 
-                     sunaltazs_July12_to_13.alt < -18*u.deg, color='0.6', zorder=0)
+                     sunaltazs.alt < -18*u.deg, color='0.6', zorder=0)
     
-    ax1.text(-3, 80, 'Moon phase = {}'.format(phase),bbox=dict(facecolor='blue', alpha=0.3))
+    ax1.text(-3, 80, 'Moon phase = {}'.format(phase),bbox=dict(facecolor='blue', alpha = 0.3))
     ax1.set_title(todays_date)
-    #ax1.legend(loc='upper left')
-    #ax2.legend(loc='upper left')
     ax1.set_xlim(-12*u.hour, 12*u.hour)
     ax1.set_xticks((np.arange(13)*2-12)*u.hour)
     ax1.set_ylim(0*u.deg, 90*u.deg)
@@ -157,8 +145,7 @@ def moon_airmass(event_name, todays_date, target_coords):
     ax1.set_ylabel('Altitude [deg]')
     ax2.set_ylabel('Airmass')
     ax2.set_ylim(4,1)
-    print(event_name)
-    plt.savefig(event_name+'_Moon.png',dpi=300, bbox_inches = "tight")
+    #plt.savefig(event_name+'_Moon.png',dpi=300, bbox_inches = "tight")
     
 def make_plots_initial(url, name):
     '''url is either the skymap url or the local path to the skymap, name is something like "S230518". 
@@ -167,23 +154,17 @@ def make_plots_initial(url, name):
     
     date = str(datetime.date.today())
     
-    print('URL: ',url)
-    print('Name: ',name)
-    print('Date: ',date)
-    
-    
     area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob = make_alert_skymap(url)
     
     moon_airmass(name, date, [maxprob_ra, maxprob_dec])
     center = SkyCoord(maxprob_ra, maxprob_dec, unit="deg")  # defaults to ICRS frame
 
-    #airmass(name, [(maxprob_ra, maxprob_dec)])
 
     fig = plt.figure(figsize=(10, 10), dpi=100)
     plt.annotate('Event Name: {}'.format(os.path.basename(name)) + '\n'
                  + r'50% Area: {} deg$^2$'.format(area50) + '\n'
                  + r'90% Area: {} deg$^2$'.format(area90) + '\n'
-                 + r'Max Prob Coordinates: ({},{})'.format(maxprob_ra, maxprob_dec) + '\n'
+                 + r'Max Prob Coordinates (degrees): ({},{})'.format(maxprob_ra, maxprob_dec) + '\n'
                  + r'Max Prob Distance: {}$\pm${} Mpc'.format(maxprob_dist, maxprob_distsigma)
                  ,(0.9,0.8))
     plt.box(False)
@@ -227,8 +208,9 @@ def make_plots_initial(url, name):
         markersize=10,
         markeredgewidth=3, label = "Max Prob Coord")
     ax.legend(loc = (0.1,1))
+
     
-    plt.savefig(name+'_initial_skymap.png',dpi=300, bbox_inches = "tight")
+    #plt.savefig(name+'_initial_skymap.png',dpi=300, bbox_inches = "tight")
     
 ####################### Functions needed post strategy-code ##################################
 def ra_dec2theta_phi(ra,dec):
