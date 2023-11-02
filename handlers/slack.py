@@ -29,22 +29,21 @@ class SlackBot():
             image path.
 
         """
-        print('hey')
+
+        print('here!')
         post = {}
-
-        with open(impath, 'rb') as f:
-            encoded_map = base64.b64encode(f.read()).decode('utf-8')
-
         post["value1"] = ''
-        post["value2"] = encoded_map
-        
+        post["value2"] = open(impath,'rb').read()
+        print(self._link)
+
         requests.post(self._link, data=post)
+
 
     def post_message(self, subject: str, text: str) -> None:
         """Post text to slack"""
 
         if self.mode == 'test':
-            subject = 'OFFLINE TESTING ' + subject
+            subject = 'OFFLINE TESTING NO PANICKING IS REQUIRED ' + subject
 
         if self.mode == 'mock':
             subject = 'GCN STREAM TEST ' + subject
@@ -55,4 +54,5 @@ class SlackBot():
         post = {}
         post["value1"] = subject
         post["value2"] = text
+        print(self._link)
         requests.post(self._link, data=post)

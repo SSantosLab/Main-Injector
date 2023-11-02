@@ -22,6 +22,7 @@ import astropy_healpix as ah
 import pprint
 import json
 import yaml
+from .short_latency_plots import make_plots_initial
 
 class GWStreamer():
 
@@ -56,6 +57,8 @@ class GWStreamer():
     def _format_message(self,
                         trigger_id: str,
                         record: dict,
+                        skymap_plot_link: str = None,
+                        moon_plot_link: str = None,
                         retraction: bool = False) -> tuple:
         """
         Format Subject and Text for messages.
@@ -110,6 +113,8 @@ class GWStreamer():
             f"Has Mass Gap: {record['event']['properties']['HasMassGap']}\n"+\
             f"GraceDB Link: {record['urls']['gracedb']}\n"+\
             f"Skymap Link: https://gracedb.ligo.org/apiweb/superevents/{trigger_id}/files/bayestar.png"
+            # f"Initial plot link: https://des-ops.fnal.gov:8082/desgw-new/S231030av/initial_plots/S231030av_initial_skymap.png\n"+\
+            # f"Moon Plot link: https://des-ops.fnal.gov:8082/desgw-new/S231030av/initial_plots/S231030av_Moon.png"
         
         source, prob_source = self._get_max_prob(record)
 
@@ -288,19 +293,38 @@ class GWStreamer():
         if source == 'Terrestrial':
             return
         
-        subject, text = self._format_message(trigger_id=trigger_id,
-                                             record=record,
-                                             retraction=False)
+        skymap_plot, moon_plot = make_plots_initial(OUTPUT_FLATTEN,
+                                                    self.OUTPUT_TRIGGER)
+
 
         self.email_bot = EmailBot(mode=self.mode)
         self.email_bot.send_email(subject=subject,text=text)
+        
+        # Code to scp to codemanager
+        """
+        server_dir = os.path.join("/des_web","www","html","desgw-new",f"{gw_id}")
+        os.system("ssh -k codemanager@desweb.fnal.gov 'mkdir -p {}'".format(server_dir))
+        # Define a variable "desweb" to be the directory to store our plots/files in 
+        desweb = f"codemanager@desweb.fnal.gov:{server_dir}"
+        # rsync the relevant plots to the website server 
+        os.system(f"rsync -a {plots_path} {desweb}")
+        # self.slack_bot.post_message(subject=subject,text=text)
+        """
+
+        # In the future, we're going to put the link to initial plots
+        subject, text = self._format_message(trigger_id=trigger_id,
+                                        record=record,
+                                        retraction=False)
+
         self.slack_bot = SlackBot(mode=self.mode)
-        self.slack_bot.post_message(subject=subject,text=text)
+        self.slack_bot.post_message(subject=subject, text=text)
+        self.slack_bot.post_image(skymap_plot)
+        self.slack_bot.post_image(moon_plot)
 
         OUTPUT_IMAGE = OUTPUT_FLATTEN.replace('bayestar.fits.gz', 'bayestar.png')
-        recycler = os.environ["ROOT_DIR"]
+        root_dir = os.environ["ROOT_DIR"]
         recycler = 'python ' +\
-                    f'{recycler}/recycler.py ' +\
+                    f'{root_dir}/recycler.py ' +\
                     f'--trigger-id {trigger_id} ' +\
                     f'--skymap {self.OUTPUT_TRIGGER}/bayestar.fits.gz ' +\
                     f'--event {source} ' +\
