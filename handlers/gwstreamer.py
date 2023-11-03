@@ -295,10 +295,6 @@ class GWStreamer():
         
         skymap_plot, moon_plot = make_plots_initial(OUTPUT_FLATTEN,
                                                     self.OUTPUT_TRIGGER)
-
-
-        self.email_bot = EmailBot(mode=self.mode)
-        self.email_bot.send_email(subject=subject,text=text)
         
         # Code to scp to codemanager
         """
@@ -320,7 +316,9 @@ class GWStreamer():
         self.slack_bot.post_message(subject=subject, text=text)
         self.slack_bot.post_image(skymap_plot)
         self.slack_bot.post_image(moon_plot)
-
+        self.email_bot = EmailBot(mode=self.mode)
+        self.email_bot.send_email(subject=subject,text=text)
+        
         OUTPUT_IMAGE = OUTPUT_FLATTEN.replace('bayestar.fits.gz', 'bayestar.png')
         root_dir = os.environ["ROOT_DIR"]
         recycler = 'python ' +\
