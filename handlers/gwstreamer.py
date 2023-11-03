@@ -9,6 +9,7 @@ from astropy.table import Table
 from argparse import ArgumentParser
 from astropy.time import Time
 from astropy.io import fits
+from pathlib import Path
 from ligo.skymap.io.fits import read_sky_map, write_sky_map
 from ligo.skymap.bayestar import rasterize
 from .slack import SlackBot
@@ -112,9 +113,9 @@ class GWStreamer():
             f"DISTSIGMA: {record['event']['distsigma']:.2} Mpc\n"+\
             f"Has Mass Gap: {record['event']['properties']['HasMassGap']}\n"+\
             f"GraceDB Link: {record['urls']['gracedb']}\n"+\
-            f"Skymap Link: https://gracedb.ligo.org/apiweb/superevents/{trigger_id}/files/bayestar.png"
-            # f"Initial plot link: https://des-ops.fnal.gov:8082/desgw-new/S231030av/initial_plots/S231030av_initial_skymap.png\n"+\
-            # f"Moon Plot link: https://des-ops.fnal.gov:8082/desgw-new/S231030av/initial_plots/S231030av_Moon.png"
+            f"Skymap Link: https://gracedb.ligo.org/apiweb/superevents/{trigger_id}/files/bayestar.png\n"+\
+            f"SLIP Moon plot: https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/initial_plots/Moon.png\n"+\
+            f"SLIP Initial Skymap: https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/initial_plots/initial_skymap.png"
         
         source, prob_source = self._get_max_prob(record)
 
@@ -293,21 +294,15 @@ class GWStreamer():
         if source == 'Terrestrial':
             return
         
-        skymap_plot, moon_plot = make_plots_initial(OUTPUT_FLATTEN,
-                                                    self.OUTPUT_TRIGGER)
+        plots_path = Path(os.path.join(self.OUTPUT_TRIGGER, "initial_plots"))
         
-        # Code to scp to codemanager
-        """
-        server_dir = os.path.join("/des_web","www","html","desgw-new",f"{gw_id}")
+        plots_path.mkdir(parents=True, exist_ok=True)
+        skymap_plot, moon_plot = make_plots_initial(OUTPUT_FLATTEN, plots_path.as_posix())
+        server_dir = os.path.join("/des_web","www","html","desgw-new",f"{trigger_id}")
         os.system("ssh -k codemanager@desweb.fnal.gov 'mkdir -p {}'".format(server_dir))
-        # Define a variable "desweb" to be the directory to store our plots/files in 
         desweb = f"codemanager@desweb.fnal.gov:{server_dir}"
-        # rsync the relevant plots to the website server 
         os.system(f"rsync -a {plots_path} {desweb}")
-        # self.slack_bot.post_message(subject=subject,text=text)
-        """
-
-        # In the future, we're going to put the link to initial plots
+        
         subject, text = self._format_message(trigger_id=trigger_id,
                                         record=record,
                                         retraction=False)

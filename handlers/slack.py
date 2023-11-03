@@ -30,11 +30,9 @@ class SlackBot():
 
         """
 
-        print('here!')
         post = {}
         post["value1"] = ''
         post["value2"] = open(impath,'rb').read()
-        print(self._link)
 
         requests.post(self._link, data=post)
 
@@ -54,5 +52,4 @@ class SlackBot():
         post = {}
         post["value1"] = subject
         post["value2"] = text
-        print(self._link)
         requests.post(self._link, data=post)
