@@ -47,7 +47,6 @@ fi
 if [[ $HOSTNAME =~ "des"* ]] ; then
     conda activate /data/des80.a/data/asantos/andsantos/miniconda3/envs/mi37 
     export ROOT_DIR=$pwd # 12-13-22 note to change to more permanent dir  after testing
-    #export ROOT_DIR="/data/des70.a/data/desgw/O4/Main-Injector/" #9/30/23 -- Testing
     export DESGW_DIR="/data/des80.a/data/asantos/andsantos/Main-Injector/python"
     export KNLC_ROOT="$ROOT_DIR/python"
     export DATA_DIR="$ROOT_DIR/data"
