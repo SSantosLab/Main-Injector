@@ -145,7 +145,11 @@ def moon_airmass(event_name, todays_date, target_coords):
     ax1.set_ylabel('Altitude [deg]')
     ax2.set_ylabel('Airmass')
     ax2.set_ylim(4,1)
-    #plt.savefig(event_name+'_Moon.png',dpi=300, bbox_inches = "tight")
+
+    moon_plot = event_name+'/Moon.png'
+    plt.savefig(moon_plot, dpi=300, bbox_inches = "tight")
+    
+    return moon_plot
     
 def make_plots_initial(url, name):
     '''url is either the skymap url or the local path to the skymap, name is something like "S230518". 
@@ -156,7 +160,7 @@ def make_plots_initial(url, name):
     
     area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob = make_alert_skymap(url)
     
-    moon_airmass(name, date, [maxprob_ra, maxprob_dec])
+    moon_plot = moon_airmass(name, date, [maxprob_ra, maxprob_dec])
     center = SkyCoord(maxprob_ra, maxprob_dec, unit="deg")  # defaults to ICRS frame
 
 
@@ -209,8 +213,10 @@ def make_plots_initial(url, name):
         markeredgewidth=3, label = "Max Prob Coord")
     ax.legend(loc = (0.1,1))
 
-    
-    #plt.savefig(name+'_initial_skymap.png',dpi=300, bbox_inches = "tight")
+    initial_skymap_plot = name+'/initial_skymap.png'
+    plt.savefig(initial_skymap_plot,dpi=300, bbox_inches = "tight")
+
+    return initial_skymap_plot, moon_plot, area50, area90
     
 ####################### Functions needed post strategy-code ##################################
 def ra_dec2theta_phi(ra,dec):
@@ -270,7 +276,11 @@ def airmass(event_name,target_coords):
             brightness_shading=True,
             max_region=3,min_region=1.5)
     plt.legend(loc='best')
-    plt.savefig(event_name+'_Airmass_Hexes',dpi=300, bbox_inches = "tight")
+
+    airmass_hexes = name+'/airmass_hexes.png'
+    plt.savefig(airmass_hexes,dpi=300, bbox_inches = "tight")
+
+    return airmass_hexes
 #######################
     
 def make_plots_post_strat(url, name, jsonloc):
@@ -288,7 +298,7 @@ def make_plots_post_strat(url, name, jsonloc):
     area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob = make_alert_skymap(url)
 
     airmass_input = [(data[i]['RA'], data[i]['dec'], 'Hex_'+str(i)) for i in range(len(data))]
-    airmass(name, airmass_input)
+    airmass_hexes = airmass(name, airmass_input)
 
     center = SkyCoord(maxprob_ra, maxprob_dec, unit="deg")  # defaults to ICRS frame
 
@@ -367,14 +377,19 @@ def make_plots_post_strat(url, name, jsonloc):
         markersize=10,
         markeredgewidth=3, label = "Max Prob Coord")
     ax.legend(loc = (0.1,1))
-    plt.savefig(name + '_w_Hexes',dpi=300, bbox_inches = "tight")
+
+    skymap_obs_hexes = name+'/skymap_obs_hexes.png'
+    plt.savefig(skymap_obs_hexes,dpi=300, bbox_inches = "tight")
     
     plt.figure()
     plt.bar(get_prob_from_observing_json(nside, data, prob)[0], get_prob_from_observing_json(nside, data, prob)[1], width = 1, edgecolor = 'k')
     plt.xlabel('Hex #')
     plt.ylabel(r'Cumulative $\%$ of Probability Covered')
     plt.title(name)
-    plt.savefig(name+'_Cumulative_Hex_Prob',dpi=300, bbox_inches = "tight")
+    cum_hex_prob = name+'/cum_hex_prob.png'
+    plt.savefig(cum_hex_prob,dpi=300, bbox_inches = "tight")
+
+    return airmass_hexes, skymap_obs_hexes, cum_hex_prob
 
 def parser():
     pass
