@@ -96,8 +96,8 @@ def parser() -> ArgumentParser:
                    type=str,
                    nargs="+",
                    choices=["all",
-                            "handle",
                             "initial-plots",
+                            "handle",
                             "rank-galaxies",
                             "add-trigger",
                             "add-trigger-by-day-initial",
@@ -179,6 +179,28 @@ if __name__ == "__main__":
     far = round(1/float(gw.event.far)/60/60/24/365, 2)
     source, event_prob = gw.find_source_and_prob()
 
+    if ("all" in options.stages) or ("initial-plots" in options.stages):
+        logger.info(f"In stage initial-plots for {alert_type} {gw_id} alert.")
+        #plots_path = EVENT_DIR/"initial_plots"
+        #plots_path.mkdir(parents=True, exist_ok=True)
+        plots_path = Path(os.path.join(EVENT_DIR, "initial_data"))
+        plots_path.mkdir(parents=True, exist_ok=True)
+
+        skymap_plot, moon_plot, area50, area90 = make_plots_initial(flatten_skymap.as_posix(), plots_path.as_posix())
+
+        logger.info(f"rsync data from alert {gw.superevent_id} to website")
+        desgw = DESGWApi(os.environ.get("API_BASE_URL"))
+
+        # Make a directory within the server hosting the webpage corresponding to the gw_id
+        server_dir = os.path.join("/des_web","www","html","desgw-new",f"{gw_id}", f"{alert_type_codemanager}")
+        os.system("ssh -k codemanager@desweb.fnal.gov 'mkdir -p {}'".format(server_dir))
+        # Define a variable "desweb" to be the directory to store our plots/files in 
+        desweb = f"codemanager@desweb.fnal.gov:{server_dir}"
+        # rsync the relevant plots to the website server 
+        os.system(f"rsync -a {plots_path} {desweb}")
+
+        logger.info(f"Initial plots for {alert_type} {gw_id} stored at {plots_path}.")
+
     if ("all" in options.stages) or ("handle" in options.stages):
         logger.info(f"Handling Event {gw_id} with alert type {alert_type}")
 
@@ -223,7 +245,9 @@ if __name__ == "__main__":
             f"DISTSIGMA: {distsigma:.2} Mpc\n"
             f"Has Mass Gap: {gw.event.properties.HasMassGap}\n"
             f"GraceDB Link: {gw.urls.gracedb}\n"
-            f"Skymap Link: {link}")
+            f"Skymap Link: {link}\n"
+            f"SLIP Moon plot: https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial_plots/Moon.png\n"
+            f"SLIP Initial Skymap: https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial_plots/initial_skymap.png")
         
         if source == "BBH" and (far < 1000):
             logger.info("BBH with low FAR, skipping event!")
@@ -246,29 +270,18 @@ if __name__ == "__main__":
             slack.send_message(subject=subject,text=message)
             logger.info(f"Messages about {alert_type} {gw_id} event sent!")
     
-    if ("all" in options.stages) or ("initial-plots" in options.stages):
-        logger.info(f"In stage initial-plots for {alert_type} {gw_id} alert.")
-        #plots_path = EVENT_DIR/"initial_plots"
-        #plots_path.mkdir(parents=True, exist_ok=True)
-        plots_path = Path(os.path.join(EVENT_DIR, "initial_data"))
-        plots_path.mkdir(parents=True, exist_ok=True)
-
-        #make_plots_initial(url=flatten_skymap.as_posix(),
-                           #name=(plots_path/gw_id).as_posix())
-        skymap_plot, moon_plot, area50, area90 = make_plots_initial(flatten_skymap.as_posix(), plots_path.as_posix())
-
-        logger.info(f"Initial plots for {alert_type} {gw_id} stored at {plots_path}.")
 
     if ("all" in options.stages) or ("rank-galaxies" in options.stages):
         logger.info(f"Ranking galaxies for {alert_type} {gw_id} alert.")
         catalog_path = EVENT_DIR/"initial_data"
-        find_galaxy_list(
+        galaxy_list = find_galaxy_list(
             map_path=flatten_skymap.as_posix(),
             event_name=gw.superevent_id,
             galax = ROOT_DIR/"data"/"franken_gals_array.npy",
             out_path=catalog_path/"ranked_galaxies_list.csv"
         )
 
+        os.system(f"rsync -a {galaxy_list} {desweb}")
         logger.info(f"Ranked galaxies list stored at {catalog_path}")
 
     if ("all" in options.stages) or ("add-trigger" in options.stages):
@@ -296,13 +309,6 @@ if __name__ == "__main__":
         desgw = DESGWApi(os.environ.get("API_BASE_URL"))
 
         
-        # Make a directory within the server hosting the webpage corresponding to the gw_id
-        server_dir = os.path.join("/des_web","www","html","desgw-new",f"{gw_id}", f"{alert_type_codemanager}")
-        os.system("ssh -k codemanager@desweb.fnal.gov 'mkdir -p {}'".format(server_dir))
-        # Define a variable "desweb" to be the directory to store our plots/files in 
-        desweb = f"codemanager@desweb.fnal.gov:{server_dir}"
-        # rsync the relevant plots to the website server 
-        os.system(f"rsync -a {plots_path} {desweb}")
         trigger_data = {
             "type": source,
             "ligo_prob": event_prob,
@@ -358,22 +364,20 @@ if __name__ == "__main__":
         airmass_hexes, skymap_obs_hexes, cum_hex_prob = make_plots_post_strat(flatten_skymap.as_posix(), plots_path.as_posix(), 'CHOOSE_JSON')
         logger.info(f"Post strategy plots for {alert_type} {gw_id} stored at {plots_path}.")
 
+        # Make a directory within the server hosting the webpage corresponding to the gw_id
+        server_dir = os.path.join("/des_web","www","html","desgw-new",f"{gw_id}")
+        # Define a variable "desweb" to be the directory to store our plots/files in 
+        desweb = "codemanager@desweb.fnal.gov:{}".format(server_dir)
+        # scp the relevant plots to the website server 
+        os.system(f"rsync -a {plots_path} {desweb}")
+
 
     if ("all" in options.stages) or ("add-trigger-by-day-final" in options.stages):
 
         logger.info(f"scp data from alert {gw.superevent_id} to website")
-        desgw = DESGWApi(os.environ.get("API_BASE_URL"))
 
         #season = -9  # Change to official season later
-        
-         # Make a directory within the server hosting the webpage corresponding to the gw_id
-        server_dir = os.path.join("/des_web","www","html","desgw-new",f"{gw_id}")
-        #os.system("ssh -k codemanager@desweb.fnal.gov 'mkdir -p {}'".format(server_dir))
-        # Define a variable "desweb" to be the directory to store our plots/files in 
-        desweb = "codemanager@desweb.fnal.gov:{}".format(server_dir)
-        # scp the relevant plots to the website server 
-        os.system(f"scp -r {plots_path} {desweb}")
-        '''trigger_data = {
+        trigger_data = {
             "date": datetime.now()
             "n_hexes":
             "econ_prob":
@@ -395,10 +399,10 @@ if __name__ == "__main__":
             "json_link":
             "log_link":
             "strategy_table":
-            "final_skymap":
-            "airmass":
-            "cumulative_hex_prob":
-            }'''
+            "final_skymap": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/skymap_obs_hexes.png", 
+            "airmass": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/airmass_hexes.png", 
+            "cumulative_hex_prob": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/cum_hex_prob.png"
+            }
 
         desgw.add_trigger(trigger_data = trigger_data)
 

@@ -101,4 +101,4 @@ def find_galaxy_list(map_path: str,
     newdf['Percent'] = percent_loc
     newdf.to_csv(out_path, index=False)
     
-    return
+    return out_path
