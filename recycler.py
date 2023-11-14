@@ -15,6 +15,7 @@ from stages.rank_galaxies import find_galaxy_list
 from pathlib import Path
 #from python.OneRing import run_or
 from subprocess import run
+from stages.chirp_mass import get_chirp_mass
 
 def run_strategy(
         skymap_location: str or os.PathLike,
@@ -308,7 +309,7 @@ if __name__ == "__main__":
         logger.info(f"rsync data from alert {gw.superevent_id} to website")
         desgw = DESGWApi(os.environ.get("API_BASE_URL"))
 
-        
+        chirp_mass = get_chirp_mass(distmean, distsigma, area50, area90)
         trigger_data = {
             "type": source,
             "ligo_prob": event_prob,
@@ -322,7 +323,7 @@ if __name__ == "__main__":
             "prob_region_90": area90,
             "prob_coverage": 'Need to figure out what this is',
             "snr": 'Need to determine how to find this from FAR',
-            "chirp_mass": 'Awaiting Isaacs code',
+            "chirp_mass": chirp_mass, #list
             "component_mass": 'Updated afer LVC releases these values'
         }
         logger.info(f"Pushing initial data from alert {gw.superevent_id} to website")
