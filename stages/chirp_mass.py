@@ -4,7 +4,7 @@ import numpy as np
 def get_chirp_mass(distmean, diststd, area90, area50):
     test_event = [[distmean, diststd, area90, area50]] # distmean, diststd, area90, area50
 
-    with open('chirp_mass.dat', 'rb') as f:
+    with open('./stages/chirp_mass.dat', 'rb') as f:
         clf = pickle.load(f)
 
     pdf = clf.predict_proba(test_event)[0]
