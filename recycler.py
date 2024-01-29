@@ -143,6 +143,9 @@ def run_strategy_and_onering(skymap_filename,
             filt = optimal_strategy['Filter_comb'][0]
             exposure_outer = optimal_strategy['Exposure01']
             exposure_inner = optimal_strategy['Exposure01_deep']
+            json_output = os.path.join(output_dir, f"des-gw_{current_time}_{sky_condition}.json")
+
+            df.assign(json_output=json_output)
 
     else:
         # Default Strategy for BBHs
