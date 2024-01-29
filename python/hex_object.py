@@ -55,16 +55,37 @@ class HexObject:
     set_mjd: float
         Modified Julian Date of hex set time.
     """
-    def __init__(self, ra, dec, prob, rise_mjd, set_mjd, expTime, index = None):
+    def __init__(self, ra, dec, prob, rise_mjd, set_mjd, expTime, coverage = 0, camera='decam', index=None):
         self.prob = prob
         self.rise_mjd = rise_mjd
         self.set_mjd = set_mjd
         self.ra = ra
         self.dec = dec
+        if camera == "decam":
+            self.lat = -30.16527778
+            self.lon = -70.8125
+            self.alt = 2215
+        elif camera == "desi":
+            self.lat = 31.9600784
+            self.lon = -111.598169
+            self.alt = 2067
+        elif camera == "hsc":
+            self.lat = 19.826667
+            self.lon = -155.471667
+            self.alt = 4215
+        else:
+            print("Camera not supported")
+        self.limit_mjd = self.getUnobservableTime() # Time when hex reaches telescope airmass limit
         self.index = index
         self.expTime = expTime
         self.awesomeness_factor = None
+        self.coverage = 0
         
+        base_hex_coverage = 0.8522 #percent of a single hex covered without a dither (ie at 0, 0)
+        self.coverage_factor = base_hex_coverage #percent of hex that would be covered initially
+        
+        self.dither = [0.00, 0.00] #ra and dec of dither on this current observation; updates if observed again at a new dither
+
 #for testing
         self.awesomeness_factor_list = []
         self.airmass_Factor = []
@@ -72,83 +93,139 @@ class HexObject:
         self.slewTime_Factor = []
         self.lunarSeparation_Factor = []
         self.mjd_list = []
+        self.coverage_list = []
+        
+        
 
-    def getAwesomenessFactor(self, mjd, last_ra, last_dec, moon_ra, moon_dec, moon_zd, detailed = False):
+    def getAwesomenessFactor(self, mjd, last_ra, last_dec, moon_ra, moon_dec, moon_zd, dither = [0, 0], detailed = False):
         # Ranks hex based on attributes. Inputs are current time (MJD), current scope coordinates (deg), and moon coordinates (deg).
         if detailed:
             print(f'Probability: {self.prob} Airmass factor: {self.airmassFactor(mjd)} hexVisibility factor: {self.hexVisibilityFactor(mjd)}, slew time: {self.slewTimeFactor(last_ra, last_dec)}, lunar sep: {self.lunarSeparationFactor(moon_ra, moon_dec, moon_zd)}')
+            
         self.airmass_Factor.append(self.airmassFactor(mjd))
         self.hex_VisibilityFactor.append(self.hexVisibilityFactor(mjd))
         self.slewTime_Factor.append(self.slewTimeFactor(last_ra, last_dec))
         self.lunarSeparation_Factor.append(self.lunarSeparationFactor(moon_ra, moon_dec, moon_zd))
         self.mjd_list.append(mjd)
+        self.updateCoverageFactor()
+        self.coverage_list.append(self.coverage_factor)
         
-        AwesomenessFactor = self.prob * self.airmassFactor(mjd) * self.hexVisibilityFactor(mjd) * \
-                self.slewTimeFactor(last_ra, last_dec) * self.lunarSeparationFactor(moon_ra, moon_dec, moon_zd)
+        AwesomenessFactor = 2*self.prob * self.airmassFactor(mjd) * self.hexVisibilityFactor(mjd) * \
+                self.slewTimeFactor(last_ra, last_dec) * self.lunarSeparationFactor(moon_ra, moon_dec, moon_zd) * self.coverage_factor
+        
         self.awesomeness_factor = AwesomenessFactor
         self.awesomeness_factor_list.append(AwesomenessFactor)
         
-    def airmassFactor(self, mjd, camera='decam'):
-        # Coordinates in degrees
-	if (mjd<self.rise_mjd) or (mjd>self.set_mjd):
-	    # hex not in sky
-	    return 0.
-	
-        if camera == "decam":
-            lat = -30.16527778
-            lon = -70.8125
-            alt = 2215
-        elif camera == "desi":
-            lat = 31.9600784
-            lon = -111.598169
-            alt = 2067
-        elif camera == "hsc":
-            lat = 19.826667
-            lon = -155.471667
-            alt = 4215
-        else:
-            print("Camera not supported")
-
-        # Calculate the hour angle for the hex
-        hex_ha = mjd_to_LST(mjd, lon) - self.ra
-
-        # Calculate the zenith distance for the hex
-        hex_zd = zenith_distance(hex_ha, self.dec, lat)
-
-        # Calculate the airmass X using the formula from Rozenberg (1966), with an airmass value of 40 at the horizon
-        X = (np.cos(np.deg2rad(hex_zd)) + 0.025*np.exp(-11*np.cos(np.deg2rad(hex_zd))))**-1
-
-        # Calculate the airmass factor. Airmass = 1 (source at zenith) is given a score of 1. A source with a ~50 degree
-        # zenith angle (airmass = 1.6) is given a score of 0.7. Sources at zenith angles greater than this are given a score
-        # which decays exponentially, with a 56 degree zenith angle (airmass ~ 1.8: limit of camera) given a score of ~0.21
-        # and all airmasses above 2.3 getting a default score of 0.01
-        if 0.9<=X<=1.6:
-            return 1 - 0.5*(X-1)
-        elif 1.6<X<=2.3:
-            return 0.7*np.exp(-6*(X-1.6))
-        elif 2.3<X<=40: # Airmass of 2.3 corresponds to a source 26 degs from the horizon
-            return 0.01
-        else:
-            # Not a valid airmass
+    def airmassFactor(self, mjd):
+        # Rates the hex based on the airmass of the current position.
+        if (mjd<self.rise_mjd) or (mjd>self.set_mjd):
+            # Hex not in sky
             return 0.
- 
+        
+        airmass = self.getAirmass(mjd)
+        
+        if airmass<=1.8: # Airmass of 1.8 is DECam limit
+            return 2 - airmass
+        elif airmass<1:
+            return 1.
+        else:
+            return 0.
+    
+    def getAirmass(self, mjd):
+        # Calculate the airmass X using the formula from Rozenberg (1966), with an airmass value of 40 at the horizon
+        hex_ha = mjd_to_LST(mjd, self.lon) - self.ra # Calculate the hour angle for the hex
+        hex_zd = zenith_distance(hex_ha, self.dec, self.lat) # Calculate the zenith distance for the hex
+        X = (np.cos(np.deg2rad(hex_zd)) + 0.025*np.exp(-11*np.cos(np.deg2rad(hex_zd))))**-1
+        return X
+    
+    def getUnobservableTime(self):
+        # Gets the MJD at which the airmass for this hex reaches 1.8. If the hex is always below above 1.8, then this returns None.
+        t = np.linspace(self.rise_mjd+(self.set_mjd-self.rise_mjd)/2, self.set_mjd, 100)
+        for time in t:
+            if self.getAirmass(time)>=1.8:
+                return time
+        return self.set_mjd
+
     def hexVisibilityFactor(self, mjd):
-        # Favors hexes that are close to setting and deweights hexes that are not visible. Input is current time (MJD).
+        # Favors hexes that are close to airmass limit and deweights hexes that are not visible. Input is current time (MJD).
         if (mjd < self.rise_mjd) or (mjd > self.set_mjd):
             return 0. # Hex not available if not in sky
-        time_to_set = self.set_mjd - mjd
-        return self.visFactorFunc(time_to_set)
+        if self.limit_mjd==None:
+            return 0.
+        else:
+            return self.visFactorFunc(self.limit_mjd - mjd)
 
-    def visFactorFunc(self, x, a=1.83, xmin=1./24, pmin=0.05):
-        # Tuned so that the median is at 2 hours to set. Plateau value defaults to 1 hour to set. Input is time to set in days.
-        c = xmin**a
-        xmax = xmin * pmin**(-1./a)
-        if x <= xmin:
+    def visFactorFunc(self, time, a=1.1, tmin=1/48., pmin=0.1):
+        # Input is time until an event. Increases until event-tmin, at which point this function starts to return 1.
+        c = tmin**a
+        tmax = tmin * pmin**(-1./a)
+        if time <= tmin:
             return 1.
-        if x >= xmax:
-            return pmin
-        return c * x**(-a)
+        return c * time**(-a)
+    
+    def observe_hex(self):
+        #update coverage if hex has been observed
+        if self.dither == [0.00, 0.00]:
+            #update dither to be next most coverage
+            self.dither = [0.06389, 0.287436]
+        elif self.dither == [0.06389, 0.287436]:
+            self.dither = [0.0484, -0.6725]
+            self.coverage = self.coverage_factor
+        elif self.dither == [0.0484, -0.6725]:
+            self.dither = [-0.2395875, -0.135264]
+            self.coverage = self.coverage_factor
+        elif self.dither == [-0.2395875, -0.135264]:
+            self.dither = [0.9423775, -0.405792]
+            self.coverage = self.coverage_factor
+        elif self.dither == [0.9423775, 0.405792]:
+            self.dither = [-0.76668, 0.473424]
+            self.coverage = self.coverage_factor
+        elif self.dither == [-0.76668, 0.473424]:
+            self.dither = [-0.543065, -0.828492]
+            self.coverage = self.coverage_factor
+        elif self.dither == [-0.543065, -0.828492]:
+            self.dither = [-0.0479175, 0.388884]
+            self.coverage = self.coverage_factor
+    
+    def updateCoverageFactor(self):
+        #determine sky coverage factor for a given dither. this number is additional percent of sky covered, which will be multiplied by hex probability in awesomeness factor calculations
+        if self.dither == [0.00, 0.00]:
+            #if hex has not been covered, use sky coverage from no dither
+            pass
+        elif self.dither == [0.06389, 0.287436]:
+            added_coverage = 0.111371 #coverage from dither [-0.2395875, -0.135264], which adds the most probability space
+            
+            self.coverage = self.coverage_factor
+            self.coverage_factor = added_coverage
+        elif self.dither == [0.0484, -0.6725]:
+            added_coverage = 0.022066
+            self.coverage = self.coverage_factor
+            self.coverage_factor = added_coverage
+        elif self.dither == [-0.2395875, -0.135264]:
+            added_coverage = 0.007529
+            self.coverage = self.coverage_factor
+            self.coverage_factor = added_coverage
+        elif self.dither == [0.9423775, -0.405792]:
+            added_coverage = 0.004673
+            self.coverage = self.coverage_factor
+            self.coverage_factor = added_coverage  
+        elif self.dither == [0.9423775, 0.405792]:
+            added_coverage = 0.001298
+            self.coverage = self.coverage_factor
+            self.coverage_factor = added_coverage   
+        elif self.dither == [-0.76668, 0.473424]:
+            added_coverage = 0.000519
+            self.coverage = self.coverage_factor
+            self.coverage_factor = added_coverage  
+        else:
+            added_coverage = 0.0 #coverage from dither [-0.2395875, -0.135264], which adds the most probability space
+#         else:
+#             added_coverage = 0.5 #make it bigger to prioritize dithers more
+            self.coverage_factor = added_coverage
+    
+            
         
+
     def slewTimeFactor(self, last_ra, last_dec):
         # Find the slew time from current scope position to this hex. Inputs must be current scope position in degrees.
         hex_sep = self.getAngSep(self.ra, self.dec, last_ra, last_dec)

@@ -1,5 +1,6 @@
 import numpy as np
 import hp2np 
+import hex_object
 import hexalate
 import decam2hp
 import jsonMaker
@@ -7,7 +8,11 @@ from os import getenv
 import pandas as pd
 import sys
 import  matplotlib.pyplot as plt
+import hex_functions
+from hex_functions import get_hexinfo 
 
+#elise added
+# from get_riseandset import get_riseset as hex_info
 
 # Code to demonstrate a very simple way to go from Strategy (from the strategy paper)
 # to Json file (mocked up here by printing hexes, filters, exposure times to screen).
@@ -45,9 +50,7 @@ def run_or(
     propid='propid', 
     jsonFilename="des-gw.json",
     test=False,
-    plot_numbers=False,
-    max_hex_count=None,
-    max_hex_time=None
+    plot_numbers=False
 ):
     
     camera = "decam"
@@ -97,45 +100,81 @@ def run_or(
     outer_ra = np.array(outer_ra); outer_dec = np.array(outer_dec); 
     inner_prob = np.array(inner_prob); outer_prob = np.array(outer_prob); 
 
-
-    # Sort in the Alyssa approved way!
-    # done separately in inner and outer areas.
-    # Nora, Elise, Andre (hereafter NEA) update sorting to *only* use sort_zone (the bestest sorting function in OneRing as of 31.03.2023)
-   # new_inner_ra, new_inner_dec, new_inner_prob = \
-   #     sort_nearest_neighbor (inner_ra, inner_dec, inner_prob) 
-   # new_outer_ra, new_outer_dec, new_outer_prob = \
-   #     sort_nearest_neighbor (outer_ra, outer_dec, outer_prob) 
-
-    # having resorted on optimal slew time, combine and prep for JSON writing
-    #inner_ra = new_inner_ra; inner_dec = new_inner_dec
-    #outer_ra = new_outer_ra; outer_dec = new_outer_dec
-    #inner_prob = new_inner_prob; outer_prob = new_outer_prob
-    #ra = np.concatenate([inner_ra,outer_ra])
-    #dec = np.concatenate([inner_dec,outer_dec])
-    #prob = np.concatenate([inner_prob,outer_prob])
-
-    #expTime = np.concatenate([np.ones(ra.size)*expTime_inner , np.ones(ra.size)*expTime_outer])
-    #### test new nearest_highest:                                     
-#    df = sort_nearest_highest(ra, dec, prob)
-#    print('nearest highest')
-#    print(df)
     
-    ### test sort by nearst only
-#    df = sort_nearest_neighbor(ra, dec, prob)
-#    print('nearest neighbor')
-#    print(df)
-
-    ## test spiral
-    df = sort_zone(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob, radThreshold=4.)
-
-    #NEA 31.03.2023
-    ra = df['ra'].values
-    dec = df['dec'].values
-    prob = df['probs'].values
-    expTime = np.concatenate([np.ones(ra.size)*expTime_inner , np.ones(ra.size)*expTime_outer])
-#    print('spiral')
-   # print(df)
+    # From here on is implementation of The Main Injectors (consisting of Elise, Nora, Isaac, Thomas, and Andre) new hex sorting code, with sorting based on awesomeness factor
+    og_inner_hexlist, sunrise, sunset = get_hexinfo(inner_ra, inner_dec, inner_prob, expTime_inner, flt, mjd, True)
+    og_outer_hexlist = get_hexinfo(outer_ra, outer_dec, outer_prob, expTime_outer, flt, mjd)
     
+    # Create copies of original inner and outer lists of hexes in order to remove hexes as they're sorted
+    inner_hexlist = og_inner_hexlist.copy()
+    outer_hexlist = og_outer_hexlist.copy()
+    
+    #find starting time for observing
+    all_risetimes = []
+    for thishex in inner_hexlist:
+        all_risetimes.append(thishex.rise_mjd)
+    for thishex in outer_hexlist:
+        all_risetimes.append(thishex.rise_mjd)
+        
+    # initialize ra and dec for slew time factor as not existing, and list of observing mjds and corresponding hexes
+    last_ra = None
+    last_dec = None
+    observe_mjds = []
+    obs_order = []
+    current_mjd = sunset
+    
+    starttime = np.min(all_risetimes)
+    
+    #do hex sorting
+    while current_mjd < sunrise:
+        hexes = []
+        hexes_outer = []
+
+        if len(inner_hexlist) != 0:
+            #print(f'in loop one with inner_hexlist of size {len(inner_hexlist)}')
+            found_any_hex = True
+            current_mjd, last_ra, last_dec, found_hex = sort_hexes(inner_hexlist, current_mjd, last_ra, last_dec)
+            found_any_hex = found_hex
+            if len(inner_hexlist) != 0 and not found_hex:
+                current_mjd, last_ra, last_dec, found_outer_hex = sort_hexes(outer_hexlist, current_mjd, last_ra, last_dec)
+                found_any_hex = found_outer_hex
+                #if found_outer_hex:
+                   # print(f'in loop two with inner_hexlist of size {len(inner_hexlist)}, outer_hexlist of size {len(outer_hexlist)}')
+                if not found_any_hex:
+                    current_mjd += (30 / 86400)
+    #                 print(current_mjd)
+        elif len(outer_hexlist) != 0:
+                #print(f'in loop three with outer_hexlist of size {len(outer_hexlist)}')
+                found_any_hex = True
+                current_mjd, last_ra, last_dec, found_outer_hex = sort_hexes(outer_hexlist, current_mjd, last_ra, last_dec)
+                found_any_hex = found_outer_hex
+                if not found_any_hex:
+                    current_mjd += (30 / 86400)
+                #if found_outer_hex:
+                    #print(f'after finding hex outer hexlist has {len(outer_hexlist)}')
+
+        else:
+            current_mjd = sunrise
+            break
+
+
+    for i in range(len(obs_order)):
+        print(f'At {mjd_to_date_time(observe_mjds[i])} will observe this hex:')
+        obs_order[i].display_hexinfo()
+        #print(f'Probability: {obs_order[i].prob} Airmass factor: {obs_order[i].airmass_Factor} hexVisibility factor: {obs_order[i].hex_VisibilityFactor}, slew time: {obs_order[i].slewTime_Factor}, lunar sep: {obs_order[i].lunarSeparation_Factor}')
+    # Now we have the hexes we're going to observe tonight!
+    ra = []
+    dec = []
+    expTime = []
+    flt = []
+    for i in range(len(obs_order)):
+        print(f'At {hex_functions.mjd_to_date_time(observe_mjds[i])} will observe this hex:')
+        obs_order[i].display_hexinfo()
+        ra.append(obs_order[i].ra)
+        dec.append(obs_order[i].dec)
+        expTime.append(obs_order[i].expTime)
+        #CHANGE THIS LINE
+        flt.append(flt)
     if plot_numbers:
         plt.clf()
         mymarker = ['$'+str(int(x))+'$' for x in df['order'].values]
@@ -144,27 +183,10 @@ def run_or(
         for i in range(len(myra)):
             plt.scatter(myra[i], mydec[i], marker=mymarker[i], s=100)
             plt.savefig('plotnumbers.jpeg')
-
-    # Now we have the hexes:  can we observe them tonight?
-    # this prints details to the screen, a prototype for some action on them
-    #obs_object = [simplicity.calc(ra, dec, prob, exp, flt, mjd) for exp in expTime]
-    #obs_object = simplicity.calc(ra[0:1], dec[0:1], prob[0:1], expTime[0:1], flt, mjd)
-
-
-
-    if max_hex_count:
-        num_hexes_allowed = int(max_hex_count)
-        ra = ra[:num_hexes_allowed]
-        dec = dec[:num_hexes_allowed]
-        expTime = expTime[:num_hexes_allowed]
-
-    if max_hex_time:
-        num_hexes_allowed = int(max_hex_time // expTime_inner)
-        ra = ra[:num_hexes_allowed]
-        dec = dec[:num_hexes_allowed]
-        expTime = expTime[:num_hexes_allowed]
-
-    # Now we have the hexes we're going to observe tonight!
+    ra = np.array(ra)
+    dec = np.array(dec)
+    expTime = np.array(expTime)
+    
     # JSON writing
     jsonMaker.writeJson(ra,dec,expTime,flt, 
             trigger_id, trigger_type, propid, skymap, jsonFilename ) 
@@ -333,6 +355,46 @@ def sort_zone(inner_ra, outer_ra, inner_dec, outer_dec, inner_prob, outer_prob, 
         outer_df = sort_nearest_highest(outer_ra, outer_dec, outer_prob, startorder=len(inner_df), radThreshold=radThreshold)
     return pd.concat([inner_df, outer_df], axis=0)
 
+def order_hexes(hex_list):
+    new_list = sorted(hex_list, key=lambda x: x.awesomeness_factor, reverse=True)
+    return new_list
+
+last_ra = None
+last_dec = None
+observe_mjds = []
+obs_order = []
+#for testing purposes
+all_mjds = []
+all_awesomeness_factors = []
+
+def sort_hexes(hex_list, current_mjd, last_ra, last_dec):
+    moon_ra, moon_dec, moon_ha, moon_zd = hex_object.get_moon_pos(current_mjd)
+    afactors = []
+    indices = []
+    for i in range(len(hex_list)):
+        if len(obs_order) == 0:
+            last_ra, last_dec = hex_list[i].ra, hex_list[i].dec
+        hex_list[i].getAwesomenessFactor(current_mjd, last_ra, last_dec, moon_ra, moon_dec, moon_zd)
+    has_nonzero_awesomeness = any(hex_obj.awesomeness_factor != 0 for hex_obj in hex_list)
+
+    if has_nonzero_awesomeness:
+        hexes_list = order_hexes(hex_list)
+#         print(hexes_list[0].expTime)
+        obs_order.append(hexes_list[0])
+        observe_mjds.append(current_mjd)
+
+        # Remove elements at the specified index from all lists
+        new_mjd = current_mjd + (hexes_list[0].expTime / 86400)
+        last_ra, last_dec = hexes_list[0].ra, hexes_list[0].dec
+        hex_list.remove(hexes_list[0])
+        all_mjds.append(new_mjd)
+        return new_mjd, last_ra, last_dec, True
+            
+    else: 
+#         print(f'found no hex')
+        new_mjd = current_mjd #+ (30 / 86400)
+#         all_mjds.append(new_mjd)
+        return new_mjd, last_ra, last_dec, False
     
 
 

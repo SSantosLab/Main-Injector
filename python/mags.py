@@ -3,6 +3,7 @@ import os
 import sys
 import numpy as np
 import healpy as hp
+from pyslalib import slalib
 
 import hp2np
 import atmosphere
@@ -71,10 +72,13 @@ class observed(object):
                  degradeRes=True,  # change map resolution
                  doMaps=True,  # don't think of ra,dec,vals as a healpy map; don't do map work
                  camera="decam",
-                 verbose=True   # be very loud or no
+                 verbose=True,   # be very loud or no
+                 single_obj = False # be even less loud or no, added by Elise
                  ):
 
         self.verbose = verbose
+        self.single_obj = single_obj
+        print(self.single_obj)
         data_dir = os.environ["DATA_DIR"]
         ctio_lat = -30.16527778
         ctio_lon = -70.8125
@@ -154,9 +158,10 @@ class observed(object):
         self.ebv = ebv
 
         # stellar density in the form of a probability of recognizing object map
-        print(
-            "loading inverse stellar density = probability of recognition map"
-        )
+        if not self.single_obj:
+            print(
+                "loading inverse stellar density = probability of recognition map"
+            )
 
         ra, dec, precog = hp2np.hp2np(os.path.join(data_dir, "precognize.fits"))
 
@@ -205,7 +210,7 @@ class observed(object):
         self.moonRa = self.moonData[0]
         self.moonDec = self.moonData[1]
 
-    def limitMag(self, filter, exposure=30, verbose=True):
+    def limitMag(self, filt, exposure=30, verbose=True):
         # print "\t JTA limiting magnitude", self.mjd, self.mjdToLST(self.mjd, self.lon)
         # print self.ha[int(self.ha.size/2.)]
         mjd = self.mjd
@@ -221,29 +226,30 @@ class observed(object):
         if sunIsUp:
             m = np.copy(ebv)*0.1+-10.0
             mglobal = np.copy(ebv)*0.1+-10.0
-            print("\t ... the sun is up")
+            if not self.single_obj:
+                print("\t ... the sun is up")
         else:
-            dust = self.dustTransmission(filter, ebv)
-            atmo = self.atmosphereTransmission(zd, airmass, filter, moon_sep)
-            seeing = self.seeing(airmass, filter, seeingAtZenith=0.9)
-            sky = self.skyBrightness(zd, moon_zd, moon_sep, moon_phase, filter)
-            skyFid = self.skyBrightnessFid(filter)
+            dust = self.dustTransmission(filt, ebv)
+            atmo = self.atmosphereTransmission(zd, airmass, filt, moon_sep)
+            seeing = self.seeing(airmass, filt, seeingAtZenith=0.9)
+            sky = self.skyBrightness(zd, moon_zd, moon_sep, moon_phase, filt)
+            skyFid = self.skyBrightnessFid(filt)
 
             telescope = self.telescopeLimits(self.ha, self.dec)
             self.limits = telescope
 
-            if filter == "g":
+            if filt == "g":
                 m_zp = 23.3
-            elif filter == "r":
+            elif filt == "r":
                 m_zp = 23.4
-            elif filter == "i":
+            elif filt == "i":
                 m_zp = 22.9
-            elif filter == "z":
+            elif filt == "z":
                 m_zp = 22.5
-            elif filter == "y":
+            elif filt == "y":
                 m_zp = 20.6
             else:
-                raise Exception("no such filter")
+                raise Exception("no such filt")
 
             SN = telescope*dust*atmo*(1./seeing)*np.sqrt(exposure/30.)
             ix = np.nonzero(SN <= 0)
@@ -275,17 +281,17 @@ class observed(object):
         self.maglim = m
         self.maglimall = mglobal
 
-    def dustTransmission(self, filter, ebv):
+    def dustTransmission(self, filt, ebv):
         if self.verbose:
             print("\t ... dust")
-        dustTransmission = dust.dustTransmission(filter, ebv)
+        dustTransmission = dust.dustTransmission(filt, ebv)
         return dustTransmission
 
     def atmosphereTransmission(self, zd, airmass,
-                               filter, moon_sep, refAirmass=1.3):
+                               filt, moon_sep, refAirmass=1.3):
         if self.verbose:
             print("\t ... atmosphere")
-        atransmission = atmosphere.transmission(airmass, filter, refAirmass)
+        atransmission = atmosphere.transmission(airmass, filt, refAirmass)
         if self.verbose:
             print("\t ... earth")
         dtransmission = atmosphere.dirtTransmission(zd)
@@ -317,15 +323,15 @@ class observed(object):
             airmass, wavelength, seeingAtZenith)
         return seeing
 
-    def skyBrightness(self, zd, moon_zd, moon_sep, moon_phase, filter):
+    def skyBrightness(self, zd, moon_zd, moon_sep, moon_phase, filt):
         if self.verbose:
             print("\t ... sky brightness")
         sky = sky_model.sky_brightness_at_time(
-            filter, zd, moon_zd, moon_sep, moon_phase)
+            filt, zd, moon_zd, moon_sep, moon_phase)
         return sky
 
-    def skyBrightnessFid(self, filter):
-        skyfiducial = sky_model.skyFiducial(filter)
+    def skyBrightnessFid(self, filt):
+        skyfiducial = sky_model.skyFiducial(filt)
         return skyfiducial
 
     #
@@ -351,11 +357,19 @@ class observed(object):
     def equatorialToObservational(self, ra, dec, lst, latitude):
         if self.verbose:
             print("\t LST to HA,zenith distance")
-        ha = lst - ra
-        zd = self.zenithDistance(ha, dec, latitude)
-        ix = np.nonzero(ha > 180.*2*np.pi/360.)
-        ha[ix] = ha[ix] - 360*2*np.pi/360.
-        return ha, zd
+    #Elise's addition to help handling single hexes
+        try:
+            if len(self.ra) > 1:
+                ha = lst - ra
+                zd = self.zenithDistance(ha, dec, latitude)
+                ix = np.nonzero(ha > 180.*2*np.pi/360.)
+                ha[ix] = ha[ix] - 360*2*np.pi/360.
+                return ha, zd
+        
+        except:
+            ha = lst - self.ra
+            zd = self.zenithDistance(ha, dec, latitude)
+            return ha, zd
 
     #
     # Calculating zenith distance
@@ -384,7 +398,11 @@ class observed(object):
         numerator = 1.002432*coszdsq + 0.148386*coszd + 0.0096467
         denominator = coszdsq*coszd + 0.149864*coszdsq + 0.0102963*coszd \
                       + 0.000303978
-        airmass[ix] = numerator[ix]/denominator[ix]
+    # Another Elise addition so it can handle a single hex 
+        try:
+            airmass[ix] = numerator[ix]/denominator[ix]
+        except:
+            airmass = numerator/denominator
         return airmass
 
     #
@@ -491,7 +509,7 @@ def findNightDuration(mjd: float,
     lon = obs_lon*degToRad
     height = obs_height
 
-    imjd = np.int(mjd)
+    imjd = np.int64(mjd)
     start_mjd = imjd - 6./24.  # before sunset at CTIO
 
     sunset = ""

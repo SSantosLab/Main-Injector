@@ -1,5 +1,5 @@
 import os
-import OneRing
+import UpdatedOneRing as OneRing
 import pandas as pd
 import multiprocessing
 from subprocess import run
@@ -33,6 +33,12 @@ parser.add_argument('--official',
                     default=False,
                     help='If official, starts recycler for an official event.')
 
+#NEW ADDITION -- LEAST TELESCOPE TIME STRATEGY?#
+parser.add_argument('--ltt',
+                    action='store_true',
+                    default=False,
+                    help='If true, uses least telescope time strategy.')
+
 args = parser.parse_args()
 
 print('Settings for Recycler:')
@@ -50,6 +56,7 @@ event = args.event
 max_hex_time = args.max_hex_time
 max_hex_count = args.max_hex_count
 official = args.official
+least_telescope = args.ltt
 
 with fits.open(skymap) as f:
     header = f[1].header
@@ -97,16 +104,45 @@ def run_strategy_and_onering(skymap_filename,
             
         strategy_log.close()
         strategy = os.path.join(output_dir, strategy_file)
-            
-        df = pd.read_csv(strategy, header=1)
-        df.sort_values(by='Detprob1', ascending=False, inplace=True)
-        optimal_strategy = df.iloc[0]
-        outer, inner, filt, exposure_outer, exposure_inner = optimal_strategy[1:6]
-        json_output = os.path.join(output_dir, 
-                                f"des-gw_{current_time}_{sky_condition}.json")
         
-        df.assign(json_output=json_output)
-        filt = filt[0]
+        if not least_telescope:
+            df = pd.read_csv(strategy, header=1)
+            df.sort_values(by='Detprob1', ascending=False, inplace=True)
+            optimal_strategy = df.iloc[0]
+            outer, inner, filt, exposure_outer, exposure_inner = optimal_strategy[1:6]
+            json_output = os.path.join(output_dir, 
+                                    f"des-gw_{current_time}_{sky_condition}.json")
+
+            df.assign(json_output=json_output)
+            filt = filt[0]
+
+#     print(df)
+        if least_telescope:
+## NEW LINES: THESE ARE FOR LEAST TELESCOPE TIME ##
+            df = pd.read_csv(strategy_csv)
+            strategy_time_delays=np.add(-1*np.array(df["Observation01"].values),df["Observation02"].values) 
+            strategy_time_delays=np.add(-1*np.array(df["Observation01"].values),df["Observation02"].values) 
+            df_all_old=df
+            df=df[np.logical_or(strategy_time_delays > 0.6,strategy_time_delays < 0.4) ]
+
+            total_telescope_time=np.add(df["Telescope_time01"].values,df["Telescope_time02"].values)
+            total_telescope_time=np.add(df["Telescope_time01"].values,df["Telescope_time02"].values)
+            prob_all=df["Detection Probability"].values#top["Detection Probability"].values
+            prob_top_test=max(prob_all)-0.01#-1.5
+            all_df_top=df[df["Detection Probability"]>prob_top_test].copy().reset_index(drop=True)
+            prob_top=max(df["Detection Probability"].values)
+            
+            ltt_config=[0.05,0.10,0.15]
+            df_ltt=df[df["Detection Probability"].values > (prob_top-(ltt_config[1]*prob_top))]
+    
+            df.sort_values(by='Deprob1', ascending=False, inplace=True)
+            optimal_strategy = df_ltt.iloc[0]
+#     print(optimal_strategy)
+            outer = optimal_strategy['Region Coverage']
+            inner = optimal_strategy['Region Coverage_deep']
+            filt = optimal_strategy['Filter_comb'][0]
+            exposure_outer = optimal_strategy['Exposure01']
+            exposure_inner = optimal_strategy['Exposure01_deep']
 
     else:
         # Default Strategy for BBHs
