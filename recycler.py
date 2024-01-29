@@ -119,7 +119,7 @@ def run_strategy_and_onering(skymap_filename,
 #     print(df)
         if least_telescope:
 ## NEW LINES: THESE ARE FOR LEAST TELESCOPE TIME ##
-            df = pd.read_csv(strategy_csv)
+            df = pd.read_csv(strategy, header=1)
             strategy_time_delays=np.add(-1*np.array(df["Observation01"].values),df["Observation02"].values) 
             strategy_time_delays=np.add(-1*np.array(df["Observation01"].values),df["Observation02"].values) 
             df_all_old=df
