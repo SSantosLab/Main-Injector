@@ -1,5 +1,6 @@
 import os
-import OneRing
+import numpy as np
+import UpdatedOneRing as OneRing
 import pandas as pd
 import multiprocessing
 from subprocess import run
@@ -33,6 +34,12 @@ parser.add_argument('--official',
                     default=False,
                     help='If official, starts recycler for an official event.')
 
+#NEW ADDITION -- LEAST TELESCOPE TIME STRATEGY?#
+parser.add_argument('--ltt',
+                    action='store_true',
+                    default=False,
+                    help='If true, uses least telescope time strategy.')
+
 args = parser.parse_args()
 
 print('Settings for Recycler:')
@@ -50,6 +57,7 @@ event = args.event
 max_hex_time = args.max_hex_time
 max_hex_count = args.max_hex_count
 official = args.official
+least_telescope = args.ltt
 
 with fits.open(skymap) as f:
     header = f[1].header
@@ -68,7 +76,9 @@ def run_strategy_and_onering(skymap_filename,
         if event == 'NSBH':
             kn_type = 'red'
             
-        mjd = str(mjd).replace('.','')
+        #ELISE TOOK OUT THIS LINE. DECIMAL IS NEEDED FOR DEPENDENT CODE.
+        #mjd = str(mjd).replace('.','')
+        print(f'mjd in runstrategy code: {mjd}')
         current_time = mjd
 
         input_dir = os.path.dirname(skymap)
@@ -97,22 +107,61 @@ def run_strategy_and_onering(skymap_filename,
             
         strategy_log.close()
         strategy = os.path.join(output_dir, strategy_file)
-            
-        df = pd.read_csv(strategy, header=1)
-        df.sort_values(by='Detprob1', ascending=False, inplace=True)
-        optimal_strategy = df.iloc[0]
-        outer, inner, filt, exposure_outer, exposure_inner = optimal_strategy[1:6]
-        json_output = os.path.join(output_dir, 
-                                f"des-gw_{current_time}_{sky_condition}.json")
         
-        df.assign(json_output=json_output)
-        filt = filt[0]
+        if not least_telescope:
+            df = pd.read_csv(strategy, header=1)
+            df.sort_values(by='Detprob1', ascending=False, inplace=True)
+            optimal_strategy = df.iloc[0]
+            outer, inner, filt, exposure_outer, exposure_inner = optimal_strategy[1:6]
+            json_output = os.path.join(output_dir, 
+                                    f"des-gw_{current_time}_{sky_condition}.json")
+
+            df.assign(json_output=json_output)
+            filt = filt[0]
+
+#     print(df)
+        if least_telescope:
+## NEW LINES: THESE ARE FOR LEAST TELESCOPE TIME. WRITTEN BY JOHNNY NOT FULLY UNDER ##
+            #read in the strategy csv file
+            df = pd.read_csv(strategy, header=1)
+            #determine time delays. note: ask Johnny what specifically this does. he's said Observation01 = time delays after merger on first pass, and Observation02 = time delays after merger on second pass.
+            strategy_time_delays=np.add(-1*np.array(df["Observation01"].values),df["Observation02"].values) 
+            strategy_time_delays=np.add(-1*np.array(df["Observation01"].values),df["Observation02"].values) 
+
+            #limit the strategy time delay. this somehow does least telescope time
+            df=df[np.logical_or(strategy_time_delays > 0.6,strategy_time_delays < 0.4) ]
+
+            total_telescope_time=np.add(df["Telescope_time01"].values,df["Telescope_time02"].values)
+            total_telescope_time=np.add(df["Telescope_time01"].values,df["Telescope_time02"].values)
+            prob_all=df["Detection Probability"].values#top["Detection Probability"].values
+            prob_top_test=max(prob_all)-0.01#-1.5
+            all_df_top=df[df["Detection Probability"]>prob_top_test].copy().reset_index(drop=True)
+            prob_top=max(df["Detection Probability"].values)
+            
+            ltt_config=[0.05,0.10,0.15]
+            df_ltt=df[df["Detection Probability"].values > (prob_top-(ltt_config[1]*prob_top))]
+    
+            df.sort_values(by='Detprob1', ascending=False, inplace=True)
+            optimal_strategy = df_ltt.iloc[0]
+#     print(optimal_strategy)
+
+            #extract onering parameters from dataframe
+            outer = optimal_strategy['Region Coverage']
+            inner = optimal_strategy['Region Coverage_deep']
+            filt = optimal_strategy['Filter_comb'][0]
+            exposure_outer = optimal_strategy['Exposure01']
+            exposure_inner = optimal_strategy['Exposure01_deep']
+            json_output = os.path.join(output_dir, f"des-gw_{current_time}_{sky_condition}.json")
+
+            df.assign(json_output=json_output)
 
     else:
         # Default Strategy for BBHs
         outer, inner, filt = 0.9, 0.5, 'i'
         exposure_inner, exposure_outer = 90, 90
-    
+        
+    print(f'OneRing inputs: skymap: {skymap}, outer: {outer}, inner: {inner}, filt: {filt}, exp_out: {exposure_outer}, exposure_inner: {exposure_inner}, mjd:{mjd}')
+    #run updated onering!
     OneRing.run_or(
         skymap,
         outer,
@@ -122,9 +171,7 @@ def run_strategy_and_onering(skymap_filename,
         exposure_outer,
         mjd,
         resolution=64,
-        jsonFilename=json_output,
-        max_hex_count=max_hex_count,
-        max_hex_time=max_hex_time
+        jsonFilename=json_output
     )
 
     subject = f'Strategy for event {event}'
