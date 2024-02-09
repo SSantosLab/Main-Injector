@@ -514,7 +514,10 @@ def findNightDuration(mjd: float,
 
     sunset = ""
     sunrise = ""
-    # check every minute
+    
+    print(f'mjd is: {mjd}')
+    
+    #check every minute
     for i in np.arange(0, 1., 1./(24.*60)):
         mjd = start_mjd + i
         gmst = slalib.sla_gmst(mjd)
@@ -537,5 +540,6 @@ def findNightDuration(mjd: float,
             sunset = mjd
         if sunset != "" and sunrise == "" and bright == True:
             sunrise = mjd
-    duration = sunrise-sunset
+    print(sunrise, sunset)
+    duration = float(sunrise)-float(sunset)
     return duration, sunset, sunrise
