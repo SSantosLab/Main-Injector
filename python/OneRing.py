@@ -204,7 +204,7 @@ def run_or(
 
         else: 
     #         print(f'found no hex')
-            #if didn't find any hex, just skip forward 30 seconds so the code can try again
+        #if didn't find any hex, just skip forward 30 seconds so the code can try again
         #this is actually done outside this function, which is why it is commented out
             new_mjd = current_mjd #+ (30 / 86400)
     #         all_mjds.append(new_mjd)
@@ -254,15 +254,13 @@ def run_or(
     ra = []
     dec = []
     expTime = []
-    flt = []
     for i in range(len(obs_order)):
         print(f'At {hex_functions.mjd_to_date_time(observe_mjds[i])} will observe this hex:')
         obs_order[i].display_hexinfo()
         ra.append(obs_order[i].ra)
         dec.append(obs_order[i].dec)
         expTime.append(obs_order[i].expTime)
-        #CHANGE THIS LINE
-        flt.append(flt)
+
     if plot_numbers:
         plt.clf()
         mymarker = ['$'+str(int(x))+'$' for x in df['order'].values]
