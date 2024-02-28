@@ -49,8 +49,8 @@ class EmailBot():
         emails=[]
 
         test_emails = [
-            'andsouzasanttos@gmail.com',
-            'norafs@umich.edu'
+            'seanmacb@umich.edu',
+            'isaac.mcmahon@physik.uzh.ch'
         ]
         
         if not emergency:
