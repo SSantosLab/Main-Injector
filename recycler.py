@@ -61,6 +61,12 @@ least_telescope = args.ltt
 
 with fits.open(skymap) as f:
     header = f[1].header
+	if header['ORDERING'] == 'NUNIQ':
+		skymap_flatten_path = skymap.replace(skymap.split('/')[-1], skymap.split('/')[-1].partition('.')[0] + "_flatten.fits.gz")
+		os.system('ligo-skymap-flatten --nside 1024 {} {}'.format(skymap, skymap_flatten_path))
+		with fits.open(skymap_flatten_path as f_flat:
+			header = f_flat[1].header
+		skymap = skymap_flatten_path 
 
 mjd = header['MJD-OBS']
 
