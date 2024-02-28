@@ -145,8 +145,8 @@ class GWStreamer():
         --------
             flatten skymap.
         """
-		
-		os.system("ligo-skymap-flatten --nside {} {} {}".format(nside, input_skymap, output_skymap))
+        
+        os.system("ligo-skymap-flatten --nside {} {} {}".format(nside, input_skymap, output_skymap))
         
         return
     
