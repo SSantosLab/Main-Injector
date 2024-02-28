@@ -145,12 +145,8 @@ class GWStreamer():
         --------
             flatten skymap.
         """
-
-        hdu = fits.open(input_skymap)
-        order = ah.nside_to_level(nside)
-        table = read_sky_map(hdu, moc=True)
-        table = rasterize(table, order=order)
-        write_sky_map(output_skymap, table, nest=True)
+		
+		os.system("ligo-skymap-flatten --nside {} {} {}".format(nside, input_skymap, output_skymap))
         
         return
     
@@ -187,8 +183,6 @@ class GWStreamer():
                                                       'combined_skymap.fits.gz')
         
         skymap.write(combined_skymap_output, overwrite=True)        
-        self.flatten_skymap(combined_skymap_output,
-                            combined_skymap_output_flatten)
         self.flatten_skymap(combined_skymap_output,
                             combined_skymap_output_flatten)
                     
