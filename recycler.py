@@ -83,7 +83,7 @@ def run_strategy_and_onering(skymap_filename,
             kn_type = 'red'
             
         #ELISE TOOK OUT THIS LINE. DECIMAL IS NEEDED FOR DEPENDENT CODE.
-        #mjd = str(mjd).replace('.','')
+        outname = str(mjd).replace('.','')
         print(f'mjd in runstrategy code: {mjd}')
         current_time = mjd
 
@@ -120,7 +120,7 @@ def run_strategy_and_onering(skymap_filename,
             optimal_strategy = df.iloc[0]
             outer, inner, filt, exposure_outer, exposure_inner = optimal_strategy[1:6]
             json_output = os.path.join(output_dir, 
-                                    f"des-gw_{current_time}_{sky_condition}.json")
+                                    f"des-gw_{outname}_{sky_condition}.json")
 
             df.assign(json_output=json_output)
             filt = filt[0]
@@ -157,7 +157,7 @@ def run_strategy_and_onering(skymap_filename,
             filt = optimal_strategy['Filter_comb'][0]
             exposure_outer = optimal_strategy['Exposure01']
             exposure_inner = optimal_strategy['Exposure01_deep']
-            json_output = os.path.join(output_dir, f"des-gw_{current_time}_{sky_condition}.json")
+            json_output = os.path.join(output_dir, f"des-gw_{outname}_{sky_condition}.json")
 
             df.assign(json_output=json_output)
 

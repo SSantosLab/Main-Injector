@@ -310,10 +310,19 @@ class GWStreamer():
         
         OUTPUT_IMAGE = OUTPUT_FLATTEN.replace('bayestar.fits.gz', 'bayestar.png')
         root_dir = os.environ["ROOT_DIR"]
+#        recycler = 'python ' +\
+#                    f'{root_dir}/recycler.py ' +\
+#                    f'--trigger-id {trigger_id} ' +\
+#                    f'--skymap {self.OUTPUT_TRIGGER}/bayestar.fits.gz ' +\
+#                    f'--event {source} ' +\
+#                    '--official'
+
+### TESTING CHANGES HERE ####### BIG MONEY NO WHAMMIES ### PLEASE CHANGE #####
+        skymap_location = '/data/des80.a/data/eliseke/Main-Injector/new_test_skymaps/o4_hlv_bns/348.fits.gz'
         recycler = 'python ' +\
-                    f'{root_dir}/recycler.py ' +\
-                    f'--trigger-id {trigger_id} ' +\
-                    f'--skymap {self.OUTPUT_TRIGGER}/bayestar.fits.gz ' +\
-                    f'--event {source} ' +\
-                    '--official'
+                   f'{root_dir}/recycler.py ' +\
+                   f'--trigger-id {trigger_id} ' +\
+                   f'--skymap {skymap_location} ' +\
+                   f'--event {source} ' +\
+                   f'--ltt'
         subprocess.Popen(recycler,shell=True)
