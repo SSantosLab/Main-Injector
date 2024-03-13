@@ -1,12 +1,13 @@
 import os
 import numpy as np
-import UpdatedOneRing as OneRing
+import OneRing
 import pandas as pd
 import multiprocessing
 from subprocess import run
 from argparse import ArgumentParser
 from astropy.io import fits
 from handlers.slack import SlackBot
+import time
 
 parser = ArgumentParser()
 parser.add_argument('--trigger-id',
@@ -41,7 +42,7 @@ parser.add_argument('--ltt',
                     help='If true, uses least telescope time strategy.')
 
 args = parser.parse_args()
-
+timer_start = time.perf_counter()
 print('Settings for Recycler:')
 
 arguments = vars(args)
@@ -113,23 +114,16 @@ def run_strategy_and_onering(skymap_filename,
             
         strategy_log.close()
         strategy = os.path.join(output_dir, strategy_file)
-        
+        df = pd.read_csv(strategy, header=1)
+
         if not least_telescope:
-            df = pd.read_csv(strategy, header=1)
             df.sort_values(by='Detprob1', ascending=False, inplace=True)
             optimal_strategy = df.iloc[0]
-            outer, inner, filt, exposure_outer, exposure_inner = optimal_strategy[1:6]
-            json_output = os.path.join(output_dir, 
-                                    f"des-gw_{outname}_{sky_condition}.json")
-
-            df.assign(json_output=json_output)
-            filt = filt[0]
 
 #     print(df)
         if least_telescope:
 ## NEW LINES: THESE ARE FOR LEAST TELESCOPE TIME. WRITTEN BY JOHNNY NOT FULLY UNDER ##
             #read in the strategy csv file
-            df = pd.read_csv(strategy, header=1)
             #determine time delays. note: ask Johnny what specifically this does. he's said Observation01 = time delays after merger on first pass, and Observation02 = time delays after merger on second pass.
             strategy_time_delays=np.add(-1*np.array(df["Observation01"].values),df["Observation02"].values) 
             strategy_time_delays=np.add(-1*np.array(df["Observation01"].values),df["Observation02"].values) 
@@ -151,20 +145,23 @@ def run_strategy_and_onering(skymap_filename,
             optimal_strategy = df_ltt.iloc[0]
 #     print(optimal_strategy)
 
-            #extract onering parameters from dataframe
-            outer = optimal_strategy['Region Coverage']
-            inner = optimal_strategy['Region Coverage_deep']
-            filt = optimal_strategy['Filter_comb'][0]
-            exposure_outer = optimal_strategy['Exposure01']
-            exposure_inner = optimal_strategy['Exposure01_deep']
-            json_output = os.path.join(output_dir, f"des-gw_{outname}_{sky_condition}.json")
+    outer = optimal_strategy['Region Coverage']
+    inner = optimal_strategy['Region Coverage_deep']
+    filt = optimal_strategy['Filter_comb']
+    exposure_outer1 = optimal_strategy['Exposure01']
+    exposure_inner1 = optimal_strategy['Exposure01_deep']
+    exposure_outer2 = optimal_strategy['Exposure02']
+    exposure_inner2 = optimal_strategy['Exposure02_deep']
+    json_output = os.path.join(output_dir, f"des-gw_{outname}_{sky_condition}.json")
 
-            df.assign(json_output=json_output)
+    df.assign(json_output=json_output)
+    # else:
+    #     # Default Strategy for BBHs
+    #     outer, inner, filt = 0.9, 0.5, 'i'
+    #     exposure_inner, exposure_outer = 90, 90
 
-    else:
-        # Default Strategy for BBHs
-        outer, inner, filt = 0.9, 0.5, 'i'
-        exposure_inner, exposure_outer = 90, 90
+    exposure_inner = [exposure_inner1, exposure_inner2]
+    exposure_outer = [exposure_outer1, exposure_outer2]
         
     print(f'OneRing inputs: skymap: {skymap}, outer: {outer}, inner: {inner}, filt: {filt}, exp_out: {exposure_outer}, exposure_inner: {exposure_inner}, mjd:{mjd}')
     #run updated onering!
@@ -214,6 +211,9 @@ notmoony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
 
 moony_strategy.start()
 notmoony_strategy.start()
+
+timer_end = time.perf_counter()
+print(f"Finished recycler in {timer_end - timer_start:0.4f} seconds")
 
 ####### BIG MONEY NO WHAMMIES ###############################################
 # if config["wrap_all_triggers"]:

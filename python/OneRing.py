@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import hex_functions
 import awesomeness_functions as af
 from hex_functions import get_hexinfo 
+import time
 
 # Code to demonstrate a very simple way to go from Strategy (from the strategy paper)
 # to Json file.
@@ -46,6 +47,7 @@ def run_or(
     plot_numbers=False
 ):
     
+    timer_start = time.perf_counter()
     camera = "decam"
     inner_exptime = expTime_inner
     outer_exptime = expTime_outer
@@ -136,130 +138,128 @@ def run_or(
     observe_mjds = []
     obs_order = []
 
-    def sort_hexes(hex_list, current_mjd, last_ra, last_dec, dithering = False):
-        """
-        Takes list of hex objects, sorts it by awesomeness factor at the current mjd, 
-        and observes the best hex. 
-        ---
-        Inputs
-        ---
-        hex_list (list): List of hex objects to sort.
-        current_mjd (float): The MJD we are observing at.
-        last_ra (float): The last ra observed at. Used to calculate slew time. 
-        last_dec (float): The last dec observed at. Used to calculate slew time. 
-        dithering (boolean): True if we care about observing the hex again with another dither later.
-        Outputs
-        ---
-        hex_list (list): New list of hex objects to sort. If a hex was observed, it's
-        gone from the list.
-        new_mjd (float): Updated MJD used for the next observation.
-        last_ra (float): Updated last ra observed at. 
-        last_dec (float): Updated last dec observed at. 
-        found_hex (boolean): True if a good hex was found and observed, false if not. Basically
-        just tells you if it found an observable hex. 
-        """
-        
-        #get moon position
+
+    def sort_hexes(hex_list, current_mjd, last_ra, last_dec, obs_order, observe_mjds, filt_list, exp_list, dithering=False, secondpass=False):
         moon_ra, moon_dec, moon_ha, moon_zd = hex_object.get_moon_pos(current_mjd)
-        
-        #determine the awesomeness factor for each hex in the list
-        for i in range(len(hex_list)):
-            if len(obs_order) == 0:
-                last_ra, last_dec = hex_list[i].ra, hex_list[i].dec
-            hex_list[i].getAwesomenessFactor(current_mjd, last_ra, last_dec, moon_ra, moon_dec, moon_zd)
-            
-        #figures out if any of the awesomeness factors are nonzero (ie determines if any observable)
+
+        # Update awesomeness factor for each hex
+        for hex_obj in hex_list:
+            # If obs_order (the observing plan) is empty, make last ra and dec just current one bc no slew time
+            if not obs_order:
+                last_ra, last_dec = hex_obj.ra, hex_obj.dec
+            hex_obj.getAwesomenessFactor(current_mjd, last_ra, last_dec, moon_ra, moon_dec, moon_zd)
+
+        # Figure out if any hexes have nonzero awesomeness factor
         has_nonzero_awesomeness = any(hex_obj.awesomeness_factor != 0 for hex_obj in hex_list)
 
-        #if there are observable hexes, sort them by awesomeness factor by calling order_hexes
-        if has_nonzero_awesomeness:
-            hexes_list = order_hexes(hex_list)
-            # Get the best hex. has to be a copy for dither purposes
-            best_hex = copy.deepcopy(hexes_list[0])
-            # Add it to the observation plan
-            obs_order.append(hexes_list[0])
-            observe_mjds.append(current_mjd)
+        if not has_nonzero_awesomeness:
+            # If no hex has a nonzero awesomeness, return early with minimal updates (and saying didn't find any)
+            return hex_list, current_mjd, last_ra, last_dec, obs_order, observe_mjds, False, filt_list, exp_list
 
-            # Remove elements at the specified index from all lists (remove observed hex)
-            new_mjd = current_mjd + (hexes_list[0].expTime / 86400)
-            # update last observed ra and dec based on hex just observed
-            last_ra, last_dec = hexes_list[0].ra, hexes_list[0].dec
-            
-            #if you're observing something again, ie seeing it with a dither, say we dithered
-            if hexes_list[0].dither != [0.00, 0.00]:
-                print(f'Observed hex {hexes_list[0].ra}, {hexes_list[0].dec} multiple times')
-            
-            # update the observed hex object so it's possible to see it with dither
-            best_hex.observe_hex()
-            #Add the observed hex to hexes_list_outer so that it may be observed again with new dither
-            if dithering:
-                outer_hexlist.append(best_hex)
-            index_to_remove = hex_list.index(hexes_list[0])
-            #remove the observed hex from hexlist
-            hex_list.pop(index_to_remove)
+        hexes_list = order_hexes(hex_list)
+        #deep copy is necessary to preserve dithers, even though computationally heavy
+        best_hex = copy.deepcopy(hexes_list[0])
+        obs_order.append(hexes_list[0])
+        observe_mjds.append(current_mjd)
 
-            all_mjds.append(new_mjd)
-    #         print(f'after observing a hex, have {af.mjd_to_date_time(new_mjd)}')
-            return hex_list, new_mjd, last_ra, last_dec, True
+        # Decide on exposure time and filter based on pass
+        exptime, filt = (hexes_list[0].expTime[1], hexes_list[0].filt[1]) if secondpass else (hexes_list[0].expTime[0], hexes_list[0].filt[0])
+        exp_list.append(exptime)
+        filt_list.append(filt)
+        
+        #get slew time for overhead time calculation
+        slewtime = hexes_list[0].slewTime
 
-        else: 
-    #         print(f'found no hex')
-        #if didn't find any hex, just skip forward 30 seconds so the code can try again
-        #this is actually done outside this function, which is why it is commented out
-            new_mjd = current_mjd #+ (30 / 86400)
-    #         all_mjds.append(new_mjd)
-            return hex_list, new_mjd, last_ra, last_dec, False
+        # Calculate new MJD with exposure time and overhead
+        new_mjd = current_mjd + exptime / 86400 + 28.6 / 86400 + slewtime / 86400 #add overhead
+        #28.6 for overhead. 20.6s is the time between readouts, and 8s is the max for filter changes/hexapod movement. additional time is from slew time.
+        last_ra, last_dec = best_hex.ra, best_hex.dec
+        best_hex.observe_hex()
+        print(best_hex.dither)
+
+        # Handle dithering, if this is the first pass send it to be observed with second pass, else put it in the nonpriority 
+        #hexlist for further dithers
+        if dithering:
+            (outer_hexlist if secondpass else dithers_hexlist).append(best_hex)
+
+        # Remove observed hex from queue 
+        hex_list.pop(hex_list.index(hexes_list[0]))
+
+        return hex_list, new_mjd, last_ra, last_dec, obs_order, observe_mjds, True, filt_list, exp_list
+
 
     current_mjd = np.float64(starttime)
 
 
-    while current_mjd < sunrise:
-        #feel bad there's a while loop, but this works. this goes through each mjd, finds best
-        #hex, and makes the json. 
-        
-        #prioritize inner hexes that have not been observed yet -- if there are any, sort those
-        #and observe best one. 
-        if len(inner_hexlist) != 0:
-            found_any_hex = True
-            inner_hexlist, current_mjd, last_ra, last_dec, found_hex = sort_hexes(inner_hexlist, current_mjd, last_ra, last_dec, dithering=True)
-            found_any_hex = found_hex
-    #         if found_any_hex:
-    #                 print('yay i found one')
-            #if didn't find any good inner hexes, look for non-priority hexes.
-            if len(inner_hexlist) != 0 and not found_hex:
-                outer_hexlist, current_mjd, last_ra, last_dec, found_outer_hex = sort_hexes(outer_hexlist, current_mjd, last_ra, last_dec, dithering=False)
-                found_any_hex = found_outer_hex
-                
-                #if didn't find any hexes at all, just skip forward and try again
-                if not found_any_hex:
-                    current_mjd += (30 / 86400)
-                    #print(f'first guy bud at {af.mjd_to_date_time(current_mjd, with_date=True)}')
-        #if there's no inner hexes left, observe nonpriority hexes (outer hexes and inner hexes 
-        #with a dither)
-        elif len(outer_hexlist) != 0:
-                found_any_hex = True
-                outer_hexlist, current_mjd, last_ra, last_dec, found_outer_hex = sort_hexes(outer_hexlist, current_mjd, last_ra, last_dec)
-                found_any_hex = found_outer_hex
-                if not found_any_hex:
-                    current_mjd += (30 / 86400)
-                #if found_outer_hex:
-                    #print(f'after finding hex outer hexlist has {len(outer_hexlist)}')
 
-        else:
-            print(len(outer_hexlist), len(inner_hexlist))
-            current_mjd = sunrise
-            break
+    def plan_observations(starttime, sunrise, inner_hexlist, outer_hexlist, last_ra, last_dec, obs_order, dithers_hexlist):
+        current_mjd = np.float64(starttime)
+        observed_twice = []
+        obs_order = []
+        observe_mjds = []
+        filt_list = []
+        exp_list = []
+        current_seconds = 0
+        while current_mjd < sunrise:
+            found_any_hex = False
+            #if it has been 2-3 min, take second pass of hexes already covered (in other words, take first dither with 2nd pass filter)
+            if current_seconds >= 120:
+                    while len(dithers_hexlist) != 0:
+                        dithers_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, found_hex, filt_list, exp_list = sort_hexes(dithers_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, filt_list, exp_list, dithering=True, secondpass=True)
+                    current_seconds = 0
+            elif len(inner_hexlist) != 0 and current_seconds < 120:
+                    old_mjd = current_mjd
+                    inner_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, found_hex, filt_list, exp_list = sort_hexes(inner_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, filt_list, exp_list, dithering=True)
+                    
+                    found_any_hex = found_hex
+                    if found_any_hex:
+                        current_seconds += (current_mjd - old_mjd)*86400
+    #                     print(current_seconds)
+                    if len(inner_hexlist) != 0 and not found_hex:
+                        outer_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, found_outer_hex, filt_list, exp_list = sort_hexes(outer_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, exp_list, filt_list, dithering=False)
+                        found_any_hex = found_outer_hex
+                        if not found_any_hex:
+                            current_mjd += (30 / 86400)
+            elif len(outer_hexlist) != 0:
+                outer_hexlist, current_mjd, last_ra, last_dec,  obs_order, observe_mjds, found_outer_hex, filt_list, exp_list = sort_hexes(outer_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, filt_list, exp_list, dithering=False)
+                found_any_hex = found_outer_hex
+                if not found_any_hex:
+                    current_mjd += (30 / 86400)
+            else:
+                print(len(outer_hexlist), len(inner_hexlist))
+                break
+
+        sky_covered = 0.
+        prob_covered = 0.
+        coverage_list = []
+        prob_list = []
+
+        for i in range(len(obs_order)):
+            print(f'At {af.mjd_to_date_time(observe_mjds[i])} will observe this hex:')
+            obs_order[i].display_hexinfo()
+            print(f'With filter {filt_list[i]}, exptime {exp_list[i]}, and dither {obs_order[i].dither}')
+            sky_covered += obs_order[i].coverage_factor
+            prob_covered += obs_order[i].coverage_factor * obs_order[i].prob
+            coverage_list.append(sky_covered)
+            prob_list.append(prob_covered)
+
+        return obs_order, observe_mjds, coverage_list, prob_list, filt_list, exp_list
+
+
 
     # Now we have the hexes we're going to observe tonight!
+    obs_order = []
+    dithers_hexlist = []
+    # inner_hexlist = og_inner_hexlist.copy()
+    # outer_hexlist = og_outer_hexlist.copy()
+    obs_order, obs_mjds, coverage_list, prob_list, filt_list, exp_list = plan_observations(starttime, sunrise, inner_hexlist, outer_hexlist, None, None, obs_order, dithers_hexlist)
     ra = []
     dec = []
-    expTime = []
     for i in range(len(obs_order)):
-        print(f'At {hex_functions.mjd_to_date_time(observe_mjds[i])} will observe this hex:')
-        obs_order[i].display_hexinfo()
+        # print(f'At {hex_functions.mjd_to_date_time(observe_mjds[i])} will observe this hex:')
+        # obs_order[i].display_hexinfo()
         ra.append(obs_order[i].ra)
         dec.append(obs_order[i].dec)
-        expTime.append(obs_order[i].expTime)
 
     if plot_numbers:
         plt.clf()
@@ -275,8 +275,11 @@ def run_or(
     
     print(f'Writing observing plan to {jsonFilename}')
     # JSON writing
-    jsonMaker.writeJson(ra,dec,expTime,flt, 
+    jsonMaker.writeJson(ra,dec,exp_list,filt_list, 
             trigger_id, trigger_type, propid, skymap, jsonFilename ) 
+
+    timer_end = time.perf_counter()
+    print(f"Finished OneRing in {timer_end - timer_start:0.4f} seconds")
 
     return
 

@@ -55,7 +55,7 @@ class HexObject:
     set_mjd: float
         Modified Julian Date of hex set time.
     """
-    def __init__(self, ra, dec, prob, rise_mjd, set_mjd, expTime, coverage = 0, camera='decam', index=None):
+    def __init__(self, ra, dec, prob, rise_mjd, set_mjd, expTime, filt, coverage = 0, camera='decam', index=None):
         self.prob = prob
         self.rise_mjd = rise_mjd
         self.set_mjd = set_mjd
@@ -77,7 +77,6 @@ class HexObject:
             print("Camera not supported")
         self.limit_mjd = self.getUnobservableTime() # Time when hex reaches telescope airmass limit
         self.index = index
-        self.expTime = expTime
         self.awesomeness_factor = None
         self.coverage = 0
         
@@ -94,6 +93,10 @@ class HexObject:
         self.lunarSeparation_Factor = []
         self.mjd_list = []
         self.coverage_list = []
+
+        self.expTime = expTime
+        self.filt = filt
+        self.slewTime = 0
         
         
 
@@ -230,6 +233,7 @@ class HexObject:
         # Find the slew time from current scope position to this hex. Inputs must be current scope position in degrees.
         hex_sep = self.getAngSep(self.ra, self.dec, last_ra, last_dec)
         t_slew = hex_sep / 1. # DECam slews at 1 degree per second. This line is for clarity.
+        self.slewTime = t_slew
         return self.slewFactorFunc(t_slew)
         
     def slewFactorFunc(self, x, a=0.188, xmin=0.5):
