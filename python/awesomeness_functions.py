@@ -170,7 +170,7 @@ def get_hexinfo(ra, dec, prob, expTime, filt, mjd, get_sunrise_sunset = False, c
     obs = mags.observed(ra,dec,prob, sunset, doMaps=False, verbose=False)
     for mjd in mjd_list :
         obs.resetTime(mjd)
-        obs.limitMag(filt,exposure=expTime)
+        obs.limitMag(filt[0],exposure=expTime[0])
         limit_mag.append(obs.maglim)
     limit_mag = np.vstack(limit_mag)
     
@@ -224,7 +224,7 @@ def get_hexinfo(ra, dec, prob, expTime, filt, mjd, get_sunrise_sunset = False, c
     
     list_hexes = []
     for i in range(len(ra)):
-        thishex = hex_object.HexObject(ra[i], dec[i], prob[i], rise_times[i], set_times[i], expTime, index = i)
+        thishex = hex_object.HexObject(ra[i], dec[i], prob[i], rise_times[i], set_times[i], expTime, filt, index = i)
         list_hexes.append(thishex)
         
     if get_sunrise_sunset:
