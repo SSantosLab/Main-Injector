@@ -1,4 +1,5 @@
 import os
+import time
 import numpy as np
 import UpdatedOneRing as OneRing
 import pandas as pd
@@ -7,6 +8,10 @@ from subprocess import run
 from argparse import ArgumentParser
 from astropy.io import fits
 from handlers.slack import SlackBot
+
+def elapsedTimeString(start):
+    elapsed = int(time.time() - start)
+    return "{}h {:02d}m {:02d}s".format(elapsed//(60*60), elapsed//60%60, elapsed%60)
 
 parser = ArgumentParser()
 parser.add_argument('--trigger-id',
@@ -42,7 +47,7 @@ parser.add_argument('--ltt',
 
 args = parser.parse_args()
 
-print('Settings for Recycler:')
+print('Begin Recycler with settings:')
 
 arguments = vars(args)
 for key,value in arguments.items():
@@ -58,7 +63,9 @@ max_hex_time = args.max_hex_time
 max_hex_count = args.max_hex_count
 official = args.official
 least_telescope = args.ltt
+t0 = time.time()
 
+print('Reading Skymap at '+skymap)
 with fits.open(skymap) as f:
     header = f[1].header
     if header['ORDERING'] == 'NUNIQ':
@@ -212,8 +219,10 @@ notmoony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
                                                 'notmoony',
                                                 event,))
 
+print('Beginning Strategy...')
 moony_strategy.start()
 notmoony_strategy.start()
+print('Recycler completed after '+elapsedTimeString(t0))
 
 ####### BIG MONEY NO WHAMMIES ###############################################
 # if config["wrap_all_triggers"]:

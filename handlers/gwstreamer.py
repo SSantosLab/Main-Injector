@@ -1,4 +1,3 @@
-import os
 from yaml.loader import SafeLoader
 from base64 import b64decode
 from datetime import datetime
@@ -15,15 +14,19 @@ from ligo.skymap.bayestar import rasterize
 from .slack import SlackBot
 from .emails import EmailBot
 import glob
+import time
 import subprocess
 import os
-import numpy as np
 import numpy as np
 import astropy_healpix as ah
 import pprint
 import json
 import yaml
 from .short_latency_plots import make_plots_initial
+
+def elapsedTimeString(start):
+    elapsed = int(time.time() - start)
+    return "{}h {:02d}m {:02d}s".format(elapsed//(60*60), elapsed//60%60, elapsed%60)
 
 class GWStreamer():
 
@@ -190,13 +193,15 @@ class GWStreamer():
         """
         Parsers gcn kafka notice
         """
-
+        
+        t0 = time.time()
         record = gcn_alert
         alert_type = record['alert_type']
         trigger_id = record['superevent_id']
 
         if self.mode == 'observation':
             if record['superevent_id'][0] != 'S':
+                print('MI running in Observing Mode; unofficial trigger discarded')
                 return
             
             self.OUTPUT_PATH = os.path.join(self._ROOT,
@@ -204,6 +209,7 @@ class GWStreamer():
                 
         if (self.mode == 'test') or (self.mode == 'mock'):
             if record['superevent_id'][0] != 'M':
+                print('MI running in a testing mode; non-testing trigger discarded')
                 return
             
             self.OUTPUT_PATH = os.path.join(self._ROOT,
@@ -218,6 +224,7 @@ class GWStreamer():
             return None
 
         if record['event']['group'] != 'CBC':
+            print('Non-CBC event discarded')
             return
         
         if alert_type == 'PRELIMINARY':
@@ -236,7 +243,7 @@ class GWStreamer():
         if not os.path.exists(self.OUTPUT_TRIGGER):
             os.makedirs(self.OUTPUT_TRIGGER)
 
-
+        print('Handling Trigger...')
         skymap_str = record.get('event', {}).pop('skymap')
         if skymap_str:
             skymap_bytes = b64decode(skymap_str)
@@ -264,6 +271,7 @@ class GWStreamer():
 
         if not os.path.isfile(OUTPUT_SKYMAP):
             skymap.write(OUTPUT_SKYMAP, overwrite=True)
+            print('Skymap saved at '+OUTPUT_FLATTEN)
         
         self.flatten_skymap(OUTPUT_SKYMAP, OUTPUT_FLATTEN)
 
@@ -277,6 +285,7 @@ class GWStreamer():
         event_paramfile = os.path.join(self.OUTPUT_TRIGGER,
                                        f"{trigger_id}_params.npz")
         np.savez(event_paramfile, record)
+        print('Parameters saved at '+event_paramfile)
         FAR = record['event']['far']
         FAR = round(1./float(FAR)/60./60./24./365., 2)
         source, EVENT_PROB = self._get_max_prob(record)
@@ -288,6 +297,7 @@ class GWStreamer():
         if source == 'Terrestrial':
             return
         
+        print('Plotting...')
         plots_path = Path(os.path.join(self.OUTPUT_TRIGGER, "initial_plots"))
         
         plots_path.mkdir(parents=True, exist_ok=True)
@@ -309,6 +319,7 @@ class GWStreamer():
         self.email_bot.send_email(subject=subject,text=text)
         
         OUTPUT_IMAGE = OUTPUT_FLATTEN.replace('bayestar.fits.gz', 'bayestar.png')
+        print('Passing event to Recycler. Handler took '+elapsedTimeString(t0))
         root_dir = os.environ["ROOT_DIR"]
 #        recycler = 'python ' +\
 #                    f'{root_dir}/recycler.py ' +\
