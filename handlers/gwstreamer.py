@@ -321,19 +321,21 @@ class GWStreamer():
         OUTPUT_IMAGE = OUTPUT_FLATTEN.replace('bayestar.fits.gz', 'bayestar.png')
         print('Passing event to Recycler. Handler took '+elapsedTimeString(t0))
         root_dir = os.environ["ROOT_DIR"]
-#        recycler = 'python ' +\
-#                    f'{root_dir}/recycler.py ' +\
-#                    f'--trigger-id {trigger_id} ' +\
-#                    f'--skymap {self.OUTPUT_TRIGGER}/bayestar.fits.gz ' +\
-#                    f'--event {source} ' +\
-#                    '--official'
+        recycler = 'python ' +\
+                    f'{root_dir}/recycler.py ' +\
+                    f'--trigger-id {trigger_id} ' +\
+                    f'--skymap {self.OUTPUT_TRIGGER}/bayestar.fits.gz ' +\
+                    f'--event {source} ' +\
+                    '--ltt'
+                    # '--official' +\
+                    # NEED TO REMOVE ABOVE LINE COMMENT 
 
 ### TESTING CHANGES HERE ####### BIG MONEY NO WHAMMIES ### PLEASE CHANGE #####
-        skymap_location = '/data/des80.a/data/eliseke/Main-Injector/new_test_skymaps/o4_hlv_bns/348.fits.gz'
-        recycler = 'python ' +\
-                   f'{root_dir}/recycler.py ' +\
-                   f'--trigger-id {trigger_id} ' +\
-                   f'--skymap {skymap_location} ' +\
-                   f'--event {source} ' +\
-                   f'--ltt'
+#        skymap_location = '/data/des80.a/data/eliseke/Main-Injector/new_test_skymaps/o4_hlv_bns/348.fits.gz'
+ #       recycler = 'python ' +\
+  #                 f'{root_dir}/recycler.py ' +\
+   #                f'--trigger-id {trigger_id} ' +\
+    #               f'--skymap {skymap_location} ' +\
+     #              f'--event {source} ' +\
+      #             f'--ltt'
         subprocess.Popen(recycler,shell=True)

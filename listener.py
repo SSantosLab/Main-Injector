@@ -54,14 +54,14 @@ if __name__ == "__main__":
     	
     elif mode == 'mock-bayestar':
         print('Simulating BAYESTAR event...')
-    	fake_alert = makeBayestarMock()
-    	with open(fake_alert, 'r', encoding='utf-8') as f:
-    	    gcn_fake_alert = json.load(f)
-    	
-    	print('Passing event to Handler - Listener took '+elapsedTimeString(start_time))
-    	gw_streamer = GWStreamer(mode='mock')
-    	gw_streamer.handle(gcn_fake_alert)
-    	
+        fake_alert = makeBayestarMock()
+        with open(fake_alert, 'r', encoding='utf-8') as f:
+            gcn_fake_alert = json.load(f)
+
+        print('Passing event to Handler - Listener took '+elapsedTimeString(start_time))
+        gw_streamer = GWStreamer(mode='mock')
+        gw_streamer.handle(gcn_fake_alert)
+        	
     else:
         try:
             consumer = Consumer(client_id=gcn['client_id'],
