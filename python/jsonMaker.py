@@ -49,10 +49,11 @@ def writeJson(
         exp = exposureTimeList[i]
         tra = ra[i]
         tdec = dec[i]
+        filt = flt[i]
         # comment = "DESGW: LIGO {} event {}: {} of {}, hex {} ".format(
         #    trigger_type, seqid, seqnum, seqtot, id[i], 9)
         comment = "{} strategy {} on {}: image {}, filter {},".format(
-            trigger_id, trigger_type, skymap, i+1, flt)
+            trigger_id, trigger_type, skymap, i+1, filt)
         object = trigger_id
 
         fd.write("{")
@@ -60,7 +61,7 @@ def writeJson(
         fd.write("  \"object\" : \"{}\",\n".format(object))
         fd.write("  \"expTime\" : {:d},\n".format(int(exp)))
         fd.write("  \"wait\" : \"False\",\n")
-        fd.write("  \"filter\" : \"{}\",\n".format(flt))
+        fd.write("  \"filter\" : \"{}\",\n".format(filt))
         fd.write("  \"program\" : \"des gw\",\n")
         fd.write("  \"RA\" : {:.6f},\n".format(tra))
         fd.write("  \"dec\" : {:.5f},\n".format(tdec))
