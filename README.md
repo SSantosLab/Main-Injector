@@ -1,6 +1,6 @@
 # Main Injector Docs
 
-Main Injector is a python package designed by the SoaresSantosLab team in order to retrieve alerts from LVC GCN and work with those alerts to search for Electromagnetic Counterparts of Gravitational Wave Events. A full standard operating procedure can be found [here](https://seanmacb.notion.site/Main-Injector-Standard-OperAting-Procedure-MISOAP-d9795b62a2644bae8daf4f2c990b40cd)
+Main Injector is a python package designed by the SoaresSantosLab team in order to retrieve alerts from LVC GCN and work with those alerts to search for Electromagnetic Counterparts of Gravitational Wave Events. A full standard operating procedure can be found [here](https://seanmacb.notion.site/Main-Injector-Standard-OperAting-Procedure-MISOAP-d9795b62a2644bae8daf4f2c990b40cd). It includes information about procedures, data structures, FAQ, and more. It is a living document, so it will likely have the most up to date information about `Main-Injector`. For an older procedure, continue reading.
 
 ## Setup Main-Injector
 
