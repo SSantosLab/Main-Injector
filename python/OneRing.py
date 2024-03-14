@@ -271,7 +271,7 @@ def run_or(
             plt.savefig('plotnumbers.jpeg')
     ra = np.array(ra)
     dec = np.array(dec)
-    expTime = np.array(expTime)
+#    expTime = np.array(expTime)
     
     print(f'Writing observing plan to {jsonFilename}')
     # JSON writing
