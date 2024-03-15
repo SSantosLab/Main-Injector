@@ -1,0 +1,57 @@
+allSky: true
+area_per_hex: 3.0
+camera: decam
+debug: 'False'
+distance: true
+do_make_gifs: true
+do_make_hexes: true
+do_make_jsons: false
+do_make_maps: true
+end_of_season: 57996
+events_observed:
+- GW150914
+- GW151226
+exposure_filter_BH:
+- r
+exposure_filter_Rem:
+- i
+- z
+exposure_length_BH:
+- 90.0
+exposure_length_Rem:
+- 60.0
+- 90.0
+exposure_tiling_BH:
+- 10
+exposure_tiling_Rem:
+- 0
+- 5
+force_distance: true
+force_mjd: null
+force_recycler_mjd: false
+gif_resolution: 0.1
+kasen_fraction: 50
+map_name: bayestar.fits
+maxHexesPerSlot_BH: 18
+maxHexesPerSlot_Rem: 6
+max_number_of_hexes_to_do: 10000
+mjd: null
+ns_threshold: 0.5
+observed_event: null
+output: ../
+overhead: 30
+propid_BH: propideBH
+propid_Rem: propideRem
+real_or_sim: sim
+rem_strategy: null
+resolution: 64
+season_end: true
+season_start: ''
+skipAll: null
+skipPlots: null
+skymap_filename: Default
+start_of_season: 57444
+trigger_id: null
+trigger_path: ./
+type: sim
+wrap_all_triggers: false

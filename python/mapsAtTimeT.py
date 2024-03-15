@@ -1,32 +1,25 @@
+"""
+Routines to compute probability maps
+for a given burst time and given observation time
+in days since the burst.
+"""
+
+import os
+
 import numpy as np
 import healpy as hp
-import os
+
 import decam2hp
 import hexalate
 import kasen_modelspace
-
 import sourceProb
 import modelRead
 
+
 #
-# mapsAtTimeT
+
 #
-# This file contains routines to compute probability maps
-#   for a given burst time and given observation time 
-#   in days since the burst.
-#
-# probabilityMaps
-#   Use the mags and sourceProb objects to calculate
-#   the limiting magnitude and probability maps at a given time
-#   in a given filter and exposure time
-#   The models needed as input are found via:
-#       models = modelRead.getModels()
-#   and then models are ready to roll
-#
-# totalProbability
-#   Return the total probability of in the map at a given time
-#   in a given filter and exposure. 
-#       This is a thin wrapper about probabilityMaps
+
 #
 # manyDaysOfTotalProbability 
 #   Return a list of times and total probabilites
@@ -35,8 +28,7 @@ import modelRead
 #       The deltaTime parameter sets the duration of a "slot",
 #       in the langauge of getHexObservations
 #
-# oneDayOfTotalProbability 
-#   A thin wrapper about manyDaysOfTotalProbability to do one 24 hour period
+
 #
 # probabilityMapSaver 
 #   Given a list of times and total probabilites,
@@ -57,8 +49,26 @@ import modelRead
 #   deltaTime = 0.223*2 ;# twice as long slots, (8 hexes/slot)
 
 
-def oneDayOfTotalProbability (obs, deltaTime, start_mjd, 
-        probTimeFile, gw_map_trigger, gw_map_strategy, gw_map_control) :
+def oneDayOfTotalProbability (obs: object, deltaTime: float, start_mjd: float,
+                              probTimeFile: str, gw_map_trigger,
+                              gw_map_strategy, gw_map_control):
+    """
+    A thin wrapper about manyDaysOfTotalProbability to do one 24 hour period.
+
+    Parameters:
+    -----------
+
+    obs: object
+        Observed class instance.
+    deltaTime: float
+        Time interval between Start and End of Event.
+    start_mjd: float
+        Start time of an Event in MJD format.
+    probTimeFile: str
+        filepath tro probTime file.
+    gw_map_trigger: func
+
+    """
 
     burst_mjd      = gw_map_trigger.burst_mjd
     trigger_type   = gw_map_trigger.trigger_type
@@ -104,8 +114,8 @@ def manyDaysOfTotalProbability (
     dark = False
     isDark = []
     for time_since_start in np.arange(startOfDays,endOfDays,deltaTime) :
-        print "================================== ",
-        print "hours since Time Zero: {:5.1f}".format(time_since_start*24.),
+        print("================================== ")
+        print("hours since Time Zero: {:5.1f}".format(time_since_start*24.))
         totalProb, sunIsUp = totalProbability(obs, burst_mjd, start_mjd, time_since_start, \
             spatial, distance, distance_sig, \
             filter=filter, exposure=exposure, \
@@ -113,9 +123,9 @@ def manyDaysOfTotalProbability (
             kasen_fraction=kasen_fraction, data_dir = data_dir,
             simple_distance=simple_distance, simple_dist_err=simple_dist_err)
         if sunIsUp: 
-            print "\t ... the sun is up"
+            print("\t ... the sun is up")
         else:
-            print ""
+            print("")
         print("totalprob", totalProb)
         print("startOfDays,endOfDays,deltaTime ", startOfDays,endOfDays,deltaTime)
         times.append(time_since_start)
@@ -125,10 +135,10 @@ def manyDaysOfTotalProbability (
         if dark and sunIsUp:
             dark = False ;# model sunrise
         isDark.append(dark)
-    print "================================== "
-    print "================================== ",
-    print "full 24 hours calculated"
-    print "================================== "
+    print("================================== ")
+    print("================================== ")
+    print("full 24 hours calculated")
+    print("================================== ")
     totalProbs =np.array(totalProbs)
     times = np.array(times)
     isDark = np.array(isDark).astype(bool)
@@ -140,10 +150,10 @@ def manyDaysOfTotalProbability (
 
     # informational
     ix, = np.where(totalProbs > 0)
-    if verbose: print "total all-sky summed probability of detection (where > 0):"
-    if verbose: print totalProbs[ix]
-    if verbose: print "days since sunset:"
-    if verbose: print times[ix]
+    if verbose: print("total all-sky summed probability of detection (where > 0):")
+    if verbose: print(totalProbs[ix])
+    if verbose: print("days since sunset:")
+    if verbose: print(times[ix])
     #if verbose: print "isDark:"
     #if verbose: print isDark.astype(int)
     #if verbose: print "dark slots count:",darkCount.size
@@ -172,7 +182,15 @@ def totalProbability(obs, burst_mjd, start_mjd, daysSinceStart, \
         filter="i", exposure=180, trigger_type="bright", 
         kasen_fraction=50, data_dir="./",
         simple_distance=100, simple_dist_err=30) :
+    """
+    Return the total probability of in the map 
+    at a given time in a given filter and exposure. 
+    This is a thin wrapper about probabilityMaps.
 
+    Parameters:
+    -----------
+
+    """
     obs,sm,sunIsUp = probabilityMaps(obs, burst_mjd, start_mjd, daysSinceStart, \
         spatial, distance, distance_sig,
         filter, exposure, trigger_type=trigger_type, 
@@ -185,12 +203,28 @@ def totalProbability(obs, burst_mjd, start_mjd, daysSinceStart, \
     return totalProb, sunIsUp
 
 # drive the probability map calculations. In the end, distance only is used here
-def probabilityMaps(obs, burst_mjd, start_mjd, daysSinceStart, \
-        spatial, distance, distance_sig, 
+def probabilityMaps(obs: object, burst_mjd: float, start_mjd: float,
+                    daysSinceStart: float, spatial, distance, distance_sig, 
         filter="i", exposure=180, trigger_type="bright", 
         kasen_fraction=50, data_dir="./", 
-        simple_distance=100, simple_dist_err=30, verbose=True) :
+        simple_distance=100, simple_dist_err=30, verbose=True):
+    """
+    Use the mags and sourceProb objects to calculate the limiting magnitude
+    and probability maps at a given time in a given filter and exposure time.
+    The models needed as input are found via: models = modelRead.getModels()
+    and then models are ready to roll.
 
+    Parameters:
+    ----------
+    obs: object
+        Observed class Istance
+    burst_mjd: float
+        burst time in Modified Julian Date (MJD).
+    start_mjd: float
+        Start of event in Modified Julian Date (MJD).
+    daysSinceStart: float
+        Days Since strat of event in MJD format.
+    """
     obs.resetTime(start_mjd+daysSinceStart)
 
     sunIsUp = obs.sunBrightnessModel(obs.sunZD)
@@ -267,8 +301,8 @@ def probabilityMapSaver (obs, times, probabilities,
     onlyHexesAlreadyDone  = []
 
     # one reads the tiling 9 hex centers as that is our default position
-    gw_data_dir          = os.environ["DESGW_DATA_DIR"]
-    hexFile = gw_data_dir + "all-sky-hexCenters-"+camera+".txt"
+    gw_data_dir          = os.environ["DATA_DIR"]
+    hexFile = os.path.join(gw_data_dir, "all-sky-hexCenters-"+camera+".txt")
     keep_flag = performHexalatationCalculation
     
     prob_slots = np.percentile(probabilities, 95)
@@ -309,7 +343,7 @@ def probabilityMapSaver (obs, times, probabilities,
         # sm.probMap = total prob map
         # hexRa,hexDec,hexVals
         nameStem = os.path.join(data_dir, str(trigger_id) + "-{}".format(str(counter)))
-        print "\t Writing map files as {} for time {:.3f} and prob {:.2e}".format(nameStem,time,prob)
+        print("\t Writing map files as {} for time {:.3f} and prob {:.2e}".format(nameStem,time,prob))
         made_maps_list = np.append(made_maps_list, counter)
 
         name = nameStem + "-ra.hp"

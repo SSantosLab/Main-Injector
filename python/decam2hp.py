@@ -16,22 +16,22 @@ import scipy.spatial
 def countData (ligo_map_name) :
     import healpy as hp
     import hp2np
-    print "\t reading {}".format(ligo_map_name)
+    print("\t reading {}".format(ligo_map_name))
     ra,dec,vals = hp2np.hp2np(ligo_map_name)
-    print "\t computing spatial tree data"
+    print("\t computing spatial tree data")
     treedata = buildtree(ra,dec,nsides=hp.get_nside(ra),recompute=True)
     tree = treedata[2]
     return ra,dec,vals,tree
 def countLigoProb (hexRa, hexDec, ra,dec,vals,tree, giveProbs=False) :
     probs = hexalateMapWithoutOverlap(ra,dec,vals,tree, hexRa, hexDec, "decam")
-    print probs
+    print(probs)
     if giveProbs:
         return probs
     else :
         return probs.sum()
 
 def isCatalogInHexes(hexRa, hexDec, ra, dec) :
-    tree = scipy.spatial.cKDTree(zip(ra*np.cos(dec*2*np.pi/360.),dec))
+    tree = scipy.spatial.cKDTree(list(zip(ra*np.cos(dec*2*np.pi/360.), dec)))
     ix_all = np.array([])
     for i in range(0,hexRa.size) :
         ix =  isCatalogInHex(hexRa[i], hexDec[i], ra,dec, tree)
@@ -40,28 +40,28 @@ def isCatalogInHexes(hexRa, hexDec, ra, dec) :
     return ix_all
 def isCatalogInHex(hexRa, hexDec, ra,dec, tree="") :
     if tree == "" :
-        tree = scipy.spatial.cKDTree(zip(ra*np.cos(dec*2*np.pi/360.),dec))
-    ix = radecInHex ( hexRa, hexDec, ra,dec,tree, "decam") 
+        tree = scipy.spatial.cKDTree(list(zip(ra*np.cos(dec*2*np.pi/360.),dec)))
+    ix = radecInHex( hexRa, hexDec, ra,dec,tree, "decam") 
     return ix
     
 
 # keeps count of times a hex, any hex, overlies a map pixel
 #   camera outline for the hexes given
 def hexesOnMap(ra,dec, raHexen, decHexen, camera) :
-    print "    checking {} hexes : ".format(raHexen.size),
+    print("    checking {} hexes : ".format(raHexen.size))
     count = np.zeros(ra.size)
     for i in range(0,raHexen.size) :
         ix = radecInHex( raHexen[i], decHexen[i], ra, dec, camera)
         count[ix] += 1
-    print " "
+    print(" ")
     return count
 
 
 # I think doing this using a tree requires a projection we will
 # use the Sanson-Flamsteed projection, aka sinusoidal projection (x=ra*cos(dec), y=dec)
 def hexalateMap(ra, dec, vals, tree, raHexen, decHexen,  camera, verbose=1) :
-    if verbose : print "\t hexalateMap \t nhex = {},".format(raHexen.size),
-    if verbose: print " npix = {}".format(ra.size)
+    if verbose : print("\t hexalateMap \t nhex = {},".format(raHexen.size))
+    if verbose: print(" npix = {}".format(ra.size))
     hexVal = np.zeros(raHexen.size)
     counter = 0
     for i in range(0,raHexen.size) :
@@ -70,15 +70,15 @@ def hexalateMap(ra, dec, vals, tree, raHexen, decHexen,  camera, verbose=1) :
         try  :
             hexVal[i] = vals[ix].sum()
         except Exception: 
-            print "why are there exceptions in hexalateMap?"
+            print("why are there exceptions in hexalateMap?")
             hexVal[i] = 0
     return hexVal
 
 def hexalateMapWithoutOverlap(ra, dec, vals, tree, raHexen, decHexen,  camera, verbose=1) :
     #the order of the raHexen,decHexen will determine which hex has priority on the sky.
     #the first hex grabs all the ixs, then next one doesnt get those sky pixels inside the first hex
-    if verbose : print "\t hexalateMap \t nhex = {},".format(raHexen.size),
-    if verbose: print " npix = {}".format(ra.size)
+    if verbose : print("\t hexalateMap \t nhex = {},".format(raHexen.size))
+    if verbose: print(" npix = {}".format(ra.size))
     hexVal = np.zeros(raHexen.size)
     counter = 0
     ixs = []
@@ -92,7 +92,7 @@ def hexalateMapWithoutOverlap(ra, dec, vals, tree, raHexen, decHexen,  camera, v
             hexVal[i] = vals[ix][slicePixelsUsed].sum()
             pixelsused[ix] = True
         except Exception:
-            print "why are there exceptions in hexalateMap?"
+            print("why are there exceptions in hexalateMap?")
             hexVal[i] = 0
     return hexVal
 
@@ -120,7 +120,7 @@ def sumHexalatedMap(ra, dec, vals, tree, raHexen, decHexen,  camera, verbose=1) 
 # return an index that is true/exists if ra,dec is inside
 # the camera outline for the hex 
 
-def radecInHex ( raCenter, decCenter, ra,dec,tree, camera,mapCenter= 0.) :
+def radecInHex( raCenter, decCenter, ra,dec,tree, camera,mapCenter= 0.):
     if camera == 'decam':
         camera_radius = 1.1
     elif camera == 'hsc':
@@ -169,7 +169,7 @@ def buildtree(ra,dec,nsides=1024,recompute=False, \
     # I think doing this using a tree requires a projection we will
     # use a Sanon-Flamsteed projection (aka sinusoidal, x=ra*cos(dec), y=dec)
     import os.path
-    import cPickle
+    import pickle
 
     # zero is center of map (i.e, 180 is at singularity)
     ix = ra > 180; ra[ix]=ra[ix]-360.
@@ -185,10 +185,10 @@ def buildtree(ra,dec,nsides=1024,recompute=False, \
     #file = "/data/des30.a/data/annis/test/healpix_{}_ra_dec_tree_wrap_180.pickle".format(nsides)
     file = "./healpix_{}_ra_dec_tree_wrap_180.pickle".format(nsides)
     if not recompute and os.path.exists(file):
-        ra,dec,tree = cPickle.load(open(file,"rb"))
+        ra,dec,tree = pickle.load(open(file,"rb"))
     else :
-        tree = scipy.spatial.cKDTree(zip(ra*np.cos(dec*2*np.pi/360.),dec))
-        if dumpTree: cPickle.dump([ra,dec,tree],open(file,"wb"))
+        tree = scipy.spatial.cKDTree(list( zip(ra*np.cos(dec*2*np.pi/360.), dec)  ))
+        if dumpTree: pickle.dump([ra,dec,tree],open(file,"wb"))
 
     # 180 is center of map (i.e, 0 is at singularity)
     ra0 = np.copy(ra); dec0 = dec
@@ -204,20 +204,20 @@ def buildtree(ra,dec,nsides=1024,recompute=False, \
     #file = "/data/des30.a/data/annis/test/healpix_{}_ra_dec_tree_wrap_0.pickle".format(nsides)
     file = "./healpix_{}_ra_dec_tree_wrap_0.pickle".format(nsides)
     if not recompute and os.path.exists(file):
-        ra0,dec0,tree0 = cPickle.load(open(file,"rb"))
+        ra0,dec0,tree0 = pickle.load(open(file,"rb"))
     else :
-        tree0 = scipy.spatial.cKDTree(zip((ra0-180.)*np.cos(dec0*2*np.pi/360.),dec0))
-        if dumpTree: cPickle.dump([ra0,dec0,tree0],open(file,"wb"))
+        tree0 = scipy.spatial.cKDTree( list( zip((ra0-180.)*np.cos(dec0*2*np.pi/360.),dec0) ))
+        if dumpTree: pickle.dump([ra0,dec0,tree0],open(file,"wb"))
     return ra,dec,tree, ra0, dec0, tree0
     
 def radecInHexPath ( hex_path, ra, dec) :
-    ix = hex_path.contains_points( zip(ra,dec) )
+    ix = hex_path.contains_points( list( zip(ra,dec) ) )
     ix = np.array(ix)
     return ix
 
 def hexPath (raCenter, decCenter, camera) :
     ra,dec = cameraOutline(raCenter, decCenter, camera) 
-    hex = matplotlib.path.Path(zip(ra,dec))
+    hex = matplotlib.path.Path(list(zip(ra,dec)))
     return hex
 
 def cameraOutline (raCenter, decCenter, camera) :

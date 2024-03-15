@@ -1,20 +1,48 @@
 import os
+import subprocess
+
 import numpy as np
 from knlc import kn_brightness_estimate
 
 def run_ap_mag_for_kasen_models (filter, distance, dist_err, days_since_burst, 
         kasen_fraction, data_dir="./", fast=False, doPlots=True) :
     report_file = data_dir + "kn_report"
+    
     if not fast :
-        knlc_dir = os.getenv("DESGW_DIR", "./")+ "knlc/"
-        code = knlc_dir+"kn_brightness_estimate.py"
-        cmd = "python {} --distance {} --distance_err {} --time_delay {} ".format(
-            code, distance, dist_err, days_since_burst)
-        cmd = cmd + "--fraction {} ".format(kasen_fraction)
-        if doPlots :
-            cmd = cmd + "--magplot_file kn_mag_plot.png "
-            cmd = cmd + "--expplot_file kn_exp_plot.png "
-            cmd = cmd + "--report_file {} ".format(report_file)
+        knlc_dir = os.path.join(os.environ["KNLC_ROOT"], "knlc")
+        code = os.path.join(knlc_dir, "kn_brightness_estimate.py")
+
+        if doPlots:
+            cmd = subprocess.run([
+                'python',
+                code,
+                '--distance',
+                distance,
+                '--distance_err',
+                dist_err,
+                '--time_delay',
+                {days_since_burst},
+                '--fraction',
+                {kasen_fraction},
+                '--magplot_file',
+                'kn_mag_plot.png',
+                '--report_file',
+                report_file
+            ])
+
+        cmd = subprocess.run([
+            'python',
+            code,
+            '--distance',
+            distance,
+            '--distance_err',
+            dist_err,
+            '--time_delay',
+            days_since_burst,
+            '--fraction',
+            kasen_fraction
+        ])
+
         print(cmd) #ag test 8.5.2020
         os.system(cmd)
 
@@ -30,10 +58,16 @@ def run_ap_mag_for_kasen_models (filter, distance, dist_err, days_since_burst,
         ap_mag = apparent_mag[filter]
 
     else :
-        kn_calc         = kn_brightness_estimate.KNCalc(distance, dist_err, days_since_burst)
-        percentile_dict = kn_brightness_estimate.calc_mag_fractions(kn_calc.template_df_full)
+        kn_calc         = kn_brightness_estimate.KNCalc(distance,
+                                                        dist_err,
+                                                        days_since_burst)
+
+        percentile_dict = kn_brightness_estimate.calc_mag_fractions(
+            kn_calc.template_df_full)
+
         cutoffs         = kn_brightness_estimate.mags_of_percentile(
             kasen_fraction, percentile_dict)
+
         kn_brightness_estimate.make_output_csv(
             np.linspace(0., 100., 101), 
             percentile_dict, 

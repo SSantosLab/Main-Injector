@@ -21,7 +21,8 @@ license="""
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
-def transmission(airmass, filter, refAirmass=1.3) :
+def transmission(airmass, filter, refAirmass=1.3):
+    
     extCoeff = extinctionModel (filter) 
     transmission = 10**(-0.4 * extCoeff*(airmass-refAirmass))
     return transmission

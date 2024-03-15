@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/data/des80.a/data/asantos/andsantos/NotModularMISSantosLab/recycler.py", line 6, in <module>
+    import event
+  File "/data/des80.a/data/asantos/andsantos/NotModularMISSantosLab/event.py", line 17, in <module>
+    import obsSlots
+  File "/data/des80.a/data/asantos/andsantos/NotModularMI/main_injector/python/obsSlots.py", line 51, in <module>
+    import observations as obs
+  File "/data/des80.a/data/asantos/andsantos/NotModularMI/main_injector/python/observations.py", line 15, in <module>
+    import hp2np, decam2hp, jsonMaker, obsSlots
+  File "/data/des80.a/data/asantos/andsantos/NotModularMI/main_injector/python/hp2np.py", line 64
+    shutil.copy(skymap, f'{filename}_moc.fits.gz')
+    ^
+SyntaxError: invalid syntax

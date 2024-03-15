@@ -1,31 +1,41 @@
-#!/bin/sh
+#!/bin/bash
 
-export DESGW_DATA_DIR="data/"
-export DESGW_DIR="./python/"
-export PYTHONPATH="./python/:/data/des41.a/data/desgw/osgsetup/eeups/fnaleups/Linux64/lxml/v3.4.4/lib/python/:$PYTHONPATH"
+if [[ $HOSTNAME =~ "asantos" ]]; then
+    export ROOT_DIR="/home/data/phd/research_projects/DESGW/Main-Injector"
+    export DESGW_DIR="$ROOT_DIR/python"
+    export KNLC_ROOT="$ROOT_DIR/python"
+    export DATA_DIR="$ROOT_DIR/data"
+    export WEB="$ROOT_DIR/DES_GW_website"
+    export DESGW_MAP_DIR="$MAIN_INJECTOR/skymaps"
+    export PYTHONPATH="$ROOT_DIR/python:$PYTHONPATH"
 
-umask 002
+fi
 
-echo ''
-echo ''
-echo "Setting up Python environment..."
+if [[ $HOSTNAME =~ "des60" ]] ; then
+    conda activate des18a
+    export MAIN_INJECTOR="/data/des60.a/data/annis/MainInjectorNov22/Main-Injector"
+    export DATA_DIR="$MAIN_INJECTOR/data"
+    export WEB="$MAIN_INJECTOR/DES_GW_website"
+    export GCN_DIR="$MAIN_INJECTOR/GCN"
+    export DESGW_DATA_DIR="$MAIN_INJECTOR/OUTPUT"
+    export DESGW_MAP_DIR="$MAIN_INJECTOR/skymaps"
+    export DESGW_CATALOGS="$MAIN_INJECTOR/catalogs"
+    export DESGW_CONFIG="$MAIN_INJECTOR/configs"
+# root dir appear to have something to do with python, only
+    export ROOT_DIR="/data/des60.a/data/annis/MainInjectorNov22/Main-Injector/main_injector"
+    export PYTHONPATH="$PYTHONPATH:$ROOT_DIR"
+# in the conda environment
+    #export PYSLALIB="$PYTHONPATH:$ROOT_DIR/main_injector/pyslalib"
+    export DESGW_CONFIG="$MAIN_INJECTOR"
+fi
 
-source /cvmfs/des.opensciencegrid.org/eeups/startupcachejob21i.sh
-export EUPS_PATH=${EUPS_PATH}:/data/des41.a/data/desgw/osgsetup/eeups/fnaleups
-setup --nolocks pyslalib
-
-export PATH=/cvmfs/des.opensciencegrid.org/fnal/anaconda2/bin:$PATH
-source activate des18a
-
-unsetup numpy
-
-#setup python
-#setup numpy
-#setup scipy
-#setup matplotlib
-#setup astropy
-#setup fitsio
-#setup yaml
-#setup pygcn
-#setup easyaccess
-###s#etup healpy #MUST BE LAST
+if [[ $HOSTNAME =~ "des"* ]] ; then
+    conda activate /data/des80.a/data/imcmahon/micromamba/envs/mi38
+    export ROOT_DIR="./" # 12-13-22 note to change to more permanent dir  after testing
+    export DESGW_DIR="/data/des80.a/data/asantos/andsantos/Main-Injector/python"
+    export KNLC_ROOT="$ROOT_DIR/python"
+    export DATA_DIR="$ROOT_DIR/data"
+    export WEB="$ROOT_DIR/DES_GW_website"
+    export DESGW_MAP_DIR="$ROOT_DIR/skymaps"
+    export PYTHONPATH="$ROOT_DIR/python:$PYTHONPATH"
+fi
