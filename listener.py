@@ -34,7 +34,7 @@ if __name__ == "__main__":
     mode = args.mode
     start_time = time.time()
     print("Listener Activating")
-    print('Running Listener in {} mode...'.format(mode))
+    print('Running Listener in {} mode...'.format(mode), flush=True)
     
     gw_streamer = GWStreamer(mode=mode)
     email_bot = EmailBot(mode=mode)
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     if mode == 'test':
         print('Reading test event...')
         fake_alert_list = glob.glob('test_hexes/MS181101ab*preliminary*.json')
-        print('Passing event to Handler - Listener took '+elapsedTimeString(start_time))
+        print('Passing event to Handler - Listener took '+elapsedTimeString(start_time), flush=True)
         for fake_alert in fake_alert_list:
             with open(fake_alert, 'r', encoding='utf-8') as f:
                 gcn_fake_alert = json.load(f)
@@ -53,12 +53,12 @@ if __name__ == "__main__":
             gw_streamer.handle(gcn_fake_alert)
     	
     elif mode == 'mock-bayestar':
-        print('Simulating BAYESTAR event...')
+        print('Simulating BAYESTAR event...', flush=True)
         fake_alert = makeBayestarMock()
         with open(fake_alert, 'r', encoding='utf-8') as f:
             gcn_fake_alert = json.load(f)
 
-        print('Passing event to Handler - Listener took '+elapsedTimeString(start_time))
+        print('Passing event to Handler - Listener took '+elapsedTimeString(start_time), flush=True)
         gw_streamer = GWStreamer(mode='mock')
         gw_streamer.handle(gcn_fake_alert)
         	
@@ -72,7 +72,7 @@ if __name__ == "__main__":
                 for message in consumer.consume(timeout=10):
                     print('Trigger Received...')
                     gcn_alert = json.loads(message.value())
-                    print('Passing event to Handler.')
+                    print('Passing event to Handler.', flush=True)
                     gw_streamer.handle(gcn_alert)
 
         except Exception as e:
@@ -80,4 +80,3 @@ if __name__ == "__main__":
             email_bot.send_email(subject='Listener went down, see traceback',
                                 text=traceback.format_exc(),
                                 emergency=True)
-    print('Main Injector exiting after '+elapsedTimeString(start_time))

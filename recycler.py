@@ -9,6 +9,10 @@ from astropy.io import fits
 from handlers.slack import SlackBot
 import time
 
+def elapsedTimeString(start):
+    elapsed = int(time.time() - start)
+    return "{}h {:02d}m {:02d}s".format(elapsed//(60*60), elapsed//60%60, elapsed%60)
+
 parser = ArgumentParser()
 parser.add_argument('--trigger-id',
                     type=str,
@@ -42,7 +46,7 @@ parser.add_argument('--ltt',
                     help='If true, uses least telescope time strategy.')
 
 args = parser.parse_args()
-timer_start = time.perf_counter()
+t0 = time.time()
 print('Settings for Recycler:')
 
 arguments = vars(args)
@@ -102,7 +106,7 @@ def run_strategy_and_onering(skymap_filename,
                                 f'{sky_condition}_{kn_type}_strategy.log')
         strategy_log = open(output_log, 'w')
 
-        print('strategy started!')
+        print('strategy started!', flush=True)
         run(cmd,
             shell=True,
             stdout=strategy_log,
@@ -163,7 +167,7 @@ def run_strategy_and_onering(skymap_filename,
     exposure_inner = [exposure_inner1, exposure_inner2]
     exposure_outer = [exposure_outer1, exposure_outer2]
         
-    print(f'OneRing inputs: skymap: {skymap}, outer: {outer}, inner: {inner}, filt: {filt}, exp_out: {exposure_outer}, exposure_inner: {exposure_inner}, mjd:{mjd}')
+    print(f'OneRing inputs: skymap: {skymap}, outer: {outer}, inner: {inner}, filt: {filt}, exp_out: {exposure_outer}, exposure_inner: {exposure_inner}, mjd:{mjd}', flush=True)
     #run updated onering!
     OneRing.run_or(
         skymap,
@@ -212,8 +216,7 @@ notmoony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
 moony_strategy.start()
 notmoony_strategy.start()
 
-timer_end = time.perf_counter()
-print(f"Finished recycler in {timer_end - timer_start:0.4f} seconds")
+print('Strategy begun. Recycler exiting after '+elapsedTimeString(t0), flush=True)
 
 ####### BIG MONEY NO WHAMMIES ###############################################
 # if config["wrap_all_triggers"]:

@@ -243,7 +243,7 @@ class GWStreamer():
         if not os.path.exists(self.OUTPUT_TRIGGER):
             os.makedirs(self.OUTPUT_TRIGGER)
 
-        print('Handling Trigger...')
+        print('Handling Trigger...', flush=True)
         skymap_str = record.get('event', {}).pop('skymap')
         if skymap_str:
             skymap_bytes = b64decode(skymap_str)
@@ -285,7 +285,7 @@ class GWStreamer():
         event_paramfile = os.path.join(self.OUTPUT_TRIGGER,
                                        f"{trigger_id}_params.npz")
         np.savez(event_paramfile, record)
-        print('Parameters saved at '+event_paramfile)
+        print('Parameters saved at '+event_paramfile, flush=True)
         FAR = record['event']['far']
         FAR = round(1./float(FAR)/60./60./24./365., 2)
         source, EVENT_PROB = self._get_max_prob(record)
@@ -297,7 +297,7 @@ class GWStreamer():
         if source == 'Terrestrial':
             return
         
-        print('Plotting...')
+        print('Plotting...', flush=True)
         plots_path = Path(os.path.join(self.OUTPUT_TRIGGER, "initial_plots"))
         
         plots_path.mkdir(parents=True, exist_ok=True)
@@ -319,7 +319,7 @@ class GWStreamer():
         self.email_bot.send_email(subject=subject,text=text)
         
         OUTPUT_IMAGE = OUTPUT_FLATTEN.replace('bayestar.fits.gz', 'bayestar.png')
-        print('Passing event to Recycler. Handler took '+elapsedTimeString(t0))
+        print('Passing event to Recycler. Handler took '+elapsedTimeString(t0), flush=True)
         root_dir = os.environ["ROOT_DIR"]
         recycler = 'python ' +\
                     f'{root_dir}/recycler.py ' +\

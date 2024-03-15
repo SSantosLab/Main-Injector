@@ -1,8 +1,6 @@
-OUTPUT/TESTING/MS*/*
+OUTPUT/TESTING/*
 OUTPUT/04REAL/*
-20230405_checkevent_kafka.log
 PHONE_AND_EMAIL_LIST.TXT
-20230414_mock_run.log
 *.pyc
 python/*.pyc
 __pycache__
@@ -10,3 +8,4 @@ DESGW_O4_People.TXT
 test*.json
 des-gw*.json
 test_hexes/mock_simulations/*
+test_logs/
