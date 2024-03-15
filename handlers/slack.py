@@ -45,6 +45,9 @@ class SlackBot():
 
         if self.mode == 'mock':
             subject = 'GCN STREAM TEST ' + subject
+
+        if self.mode == 'mock-bayestar':
+            subject = 'MOCK BAYESTAR TEST: ' + subject
             
         if self.mode == 'observation':
             subject = '@channel ' + subject

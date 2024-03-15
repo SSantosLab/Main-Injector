@@ -96,7 +96,7 @@ def run_strategy_and_onering(skymap_filename,
             f'--output {output_dir} '+\
             f'--teff-type {sky_condition} ' +\
             f'--kn-type {kn_type} ' +\
-            f'--time {current_time}'
+            f'--time {outname}'
             
         output_log = os.path.join(output_dir,
                                 f'{sky_condition}_{kn_type}_strategy.log')
@@ -109,7 +109,7 @@ def run_strategy_and_onering(skymap_filename,
             stderr=strategy_log,
             text=True)
             
-        strategy_file = f'bayestar_{sky_condition}_{kn_type}_{current_time}' +\
+        strategy_file = f'bayestar_{sky_condition}_{kn_type}_{outname}' +\
                         '_allconfig.csv'
             
         strategy_log.close()
