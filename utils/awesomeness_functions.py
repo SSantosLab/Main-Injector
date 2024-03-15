@@ -367,7 +367,7 @@ def run_or(
     expTime_outer,
     mjd,
     resolution=64,
-    hexFile=getenv('DATA_DIR')+"/all-sky-hexCenters-decam.txt", 
+    hexFile=getenv('ROOT_DIR')+"/data/all-sky-hexCenters-decam.txt", 
     trigger_id="LIGO/Virgo", 
     trigger_type="bright", 
     propid='propid', 

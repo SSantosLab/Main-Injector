@@ -1,41 +1,10 @@
 #!/bin/bash
 
-if [[ $HOSTNAME =~ "asantos" ]]; then
-    export ROOT_DIR="/home/data/phd/research_projects/DESGW/Main-Injector"
-    export DESGW_DIR="$ROOT_DIR/python"
-    export KNLC_ROOT="$ROOT_DIR/python"
-    export DATA_DIR="$ROOT_DIR/data"
-    export WEB="$ROOT_DIR/DES_GW_website"
-    export DESGW_MAP_DIR="$MAIN_INJECTOR/skymaps"
-    export PYTHONPATH="$ROOT_DIR/python:$PYTHONPATH"
+# If running on DES machines, use this conda env:
+#conda activate /data/des80.a/data/imcmahon/micromamba/envs/mi38
 
-fi
+# If running on a local machine, use these:
+source ~/.bashrc
+mamba activate mi38
 
-if [[ $HOSTNAME =~ "des60" ]] ; then
-    conda activate des18a
-    export MAIN_INJECTOR="/data/des60.a/data/annis/MainInjectorNov22/Main-Injector"
-    export DATA_DIR="$MAIN_INJECTOR/data"
-    export WEB="$MAIN_INJECTOR/DES_GW_website"
-    export GCN_DIR="$MAIN_INJECTOR/GCN"
-    export DESGW_DATA_DIR="$MAIN_INJECTOR/OUTPUT"
-    export DESGW_MAP_DIR="$MAIN_INJECTOR/skymaps"
-    export DESGW_CATALOGS="$MAIN_INJECTOR/catalogs"
-    export DESGW_CONFIG="$MAIN_INJECTOR/configs"
-# root dir appear to have something to do with python, only
-    export ROOT_DIR="/data/des60.a/data/annis/MainInjectorNov22/Main-Injector/main_injector"
-    export PYTHONPATH="$PYTHONPATH:$ROOT_DIR"
-# in the conda environment
-    #export PYSLALIB="$PYTHONPATH:$ROOT_DIR/main_injector/pyslalib"
-    export DESGW_CONFIG="$MAIN_INJECTOR"
-fi
-
-if [[ $HOSTNAME =~ "des"* ]] ; then
-    conda activate /data/des80.a/data/imcmahon/micromamba/envs/mi38
-    export ROOT_DIR="./" # 12-13-22 note to change to more permanent dir  after testing
-    export DESGW_DIR="/data/des80.a/data/asantos/andsantos/Main-Injector/python"
-    export KNLC_ROOT="$ROOT_DIR/python"
-    export DATA_DIR="$ROOT_DIR/data"
-    export WEB="$ROOT_DIR/DES_GW_website"
-    export DESGW_MAP_DIR="$ROOT_DIR/skymaps"
-    export PYTHONPATH="$ROOT_DIR/python:$PYTHONPATH"
-fi
+export ROOT_DIR=$PWD

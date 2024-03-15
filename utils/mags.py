@@ -79,7 +79,7 @@ class observed(object):
         self.verbose = verbose
         self.single_obj = single_obj
         print(self.single_obj)
-        data_dir = os.environ["DATA_DIR"]
+        data_dir = os.environ["ROOT_DIR"]+'/data'
         ctio_lat = -30.16527778
         ctio_lon = -70.8125
         ctio_height = 2215.

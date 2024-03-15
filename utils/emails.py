@@ -39,7 +39,7 @@ class EmailBot():
 
         print('Preparing email')
 
-        people = np.genfromtxt(f"{os.path.join(root_dir,'DESGW_O4_People.TXT')}",
+        people = np.genfromtxt(f"{os.path.join(root_dir, 'configs', 'DESGW_O4_People.txt')}",
                                 dtype=[('name','S50'),('email','S50'),('phone','S50')],
                                 delimiter=",",
                                 skip_header=1)

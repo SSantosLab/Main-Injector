@@ -11,8 +11,8 @@ from argparse import ArgumentParser
 import yaml
 from yaml.loader import SafeLoader
 from gcn_kafka import Consumer
-from handlers.gwstreamer import GWStreamer
-from handlers.emails import EmailBot
+from gwstreamer import GWStreamer
+from utils.emails import EmailBot
 from utils.bayestar_mock_event import makeBayestarMock
 
 

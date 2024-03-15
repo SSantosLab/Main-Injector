@@ -39,7 +39,7 @@ def dustA(filter) :
         raise Exception ("no such filter {}".format(filter))
     return A
 
-def loadDust(dir = os.environ["DATA_DIR"],
+def loadDust(dir = os.environ["ROOT_DIR"]+'/data',
         file = "plank-ebv-HFI_CompMap_ThermaDustModel.fits") :
     print(f"Loading dust map: {os.path.join(dir, file)}")
     hpFile = True

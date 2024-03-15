@@ -1,0 +1,3 @@
+#NAME,		EMAIL,		PHONE
+Nora Sherman,		seanmacb@umich.edu,		8155282667@mms.att.net,
+Sean MacBride,		seanmacb@umich.edu,		8155282667@mms.att.net,

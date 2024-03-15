@@ -184,7 +184,7 @@ def mtCoord(ra, dec, alpha, beta):
 
 
 def solveMT():
-    data_dir = os.environ["DATA_DIR"]
+    data_dir = os.environ["ROOT_DIR"]+'/data'
     file = os.path.join(data_dir, "mcbrydethomas-psi.dat")
     fd = open(file, "w")
     for i in range(-90, 91):
@@ -207,7 +207,7 @@ def solveMT():
 
 def readMT():
     global psi_spline
-    data_dir = os.environ["DATA_DIR"]
+    data_dir = os.environ["ROOT_DIR"]+'/data'
     file = os.path.join(data_dir, "mcbrydethomas-psi.dat")
     dec, psi = np.genfromtxt(file, unpack=True)
     psispline = interp1d(np.array(dec, dtype='float'), np.array(

@@ -166,7 +166,7 @@ class KNCalc():
                  loglan=None,
                  vk=None,
                  logmass=None,
-                 info_file=os.path.join(os.environ["DESGW_DIR"], "knlc", "knsed_info.txt"),
+                 info_file=os.path.join(os.environ["ROOT_DIR"], "data", "knsed_info.txt"),
                  kn_weight_type="gaussian",
                  plot=False,
                  use_map=None,
@@ -212,56 +212,54 @@ class KNCalc():
             self.set_mjd_correction = False
 
         # Set directory for lookup table
-        knlc_dir = os.getenv("DESGW_DIR", "./")
-        if knlc_dir != "./":
-            knlc_dir = knlc_dir + "/knlc/"
+        knlc_dir = os.environ['ROOT_DIR'] + '/data/knlc/
 
         # Choose lookup table based on time_delay
         if delta_mjd_later < 2.3:
-            df_later = pd.read_csv(knlc_dir+'data/grouped_photometry.csv')
+            df_later = pd.read_csv(knlc_dir+'grouped_photometry.csv')
         elif delta_mjd_later < 4.7:
-            df_later = pd.read_csv(knlc_dir+'data/grouped_photometry_2.csv')
+            df_later = pd.read_csv(knlc_dir+'grouped_photometry_2.csv')
         elif delta_mjd_later < 7.1:
-            df_later = pd.read_csv(knlc_dir+'data/grouped_photometry_3.csv')
+            df_later = pd.read_csv(knlc_dir+'grouped_photometry_3.csv')
         elif delta_mjd_later < 9.5:
-            df_later = pd.read_csv(knlc_dir+'data/grouped_photometry_4.csv')
+            df_later = pd.read_csv(knlc_dir+'grouped_photometry_4.csv')
         elif delta_mjd_later < 11.9:
-            df_later = pd.read_csv(knlc_dir+'data/grouped_photometry_5.csv')
+            df_later = pd.read_csv(knlc_dir+'grouped_photometry_5.csv')
         elif delta_mjd_later < 14.3:
-            df_later = pd.read_csv(knlc_dir+'data/grouped_photometry_6.csv')
+            df_later = pd.read_csv(knlc_dir+'grouped_photometry_6.csv')
         elif delta_mjd_later < 16.7:
-            df_later = pd.read_csv(knlc_dir+'data/grouped_photometry_7.csv')
+            df_later = pd.read_csv(knlc_dir+'grouped_photometry_7.csv')
 
         if self.delta_mjd < 2.3:
-            df = pd.read_csv(knlc_dir+'data/grouped_photometry.csv')
+            df = pd.read_csv(knlc_dir+'grouped_photometry.csv')
         elif self.delta_mjd < 4.7:
-            df = pd.read_csv(knlc_dir+'data/grouped_photometry_2.csv')
+            df = pd.read_csv(knlc_dir+'grouped_photometry_2.csv')
         elif self.delta_mjd < 7.1:
-            df = pd.read_csv(knlc_dir+'data/grouped_photometry_3.csv')
+            df = pd.read_csv(knlc_dir+'grouped_photometry_3.csv')
         elif self.delta_mjd < 9.5:
-            df = pd.read_csv(knlc_dir+'data/grouped_photometry_4.csv')
+            df = pd.read_csv(knlc_dir+'grouped_photometry_4.csv')
         elif self.delta_mjd < 11.9:
-            df = pd.read_csv(knlc_dir+'data/grouped_photometry_5.csv')
+            df = pd.read_csv(knlc_dir+'grouped_photometry_5.csv')
         elif self.delta_mjd < 14.3:
-            df = pd.read_csv(knlc_dir+'data/grouped_photometry_6.csv')
+            df = pd.read_csv(knlc_dir+'grouped_photometry_6.csv')
         elif self.delta_mjd < 16.7:
-            df = pd.read_csv(knlc_dir+'data/grouped_photometry_7.csv')
+            df = pd.read_csv(knlc_dir+'grouped_photometry_7.csv')
 
         if self.set_mjd_correction:
             if delta_mjd_corr < 2.3:
-                df_corr = pd.read_csv(knlc_dir+'data/grouped_photometry.csv')
+                df_corr = pd.read_csv(knlc_dir+'grouped_photometry.csv')
             elif delta_mjd_corr < 4.7:
-                df_corr = pd.read_csv(knlc_dir+'data/grouped_photometry_2.csv')
+                df_corr = pd.read_csv(knlc_dir+'grouped_photometry_2.csv')
             elif delta_mjd_corr < 7.1:
-                df_corr = pd.read_csv(knlc_dir+'data/grouped_photometry_3.csv')
+                df_corr = pd.read_csv(knlc_dir+'grouped_photometry_3.csv')
             elif delta_mjd_corr < 9.5:
-                df_corr = pd.read_csv(knlc_dir+'data/grouped_photometry_4.csv')
+                df_corr = pd.read_csv(knlc_dir+'grouped_photometry_4.csv')
             elif delta_mjd_corr < 11.9:
-                df_corr = pd.read_csv(knlc_dir+'data/grouped_photometry_5.csv')
+                df_corr = pd.read_csv(knlc_dir+'grouped_photometry_5.csv')
             elif delta_mjd_corr < 14.3:
-                df_corr = pd.read_csv(knlc_dir+'data/grouped_photometry_6.csv')
+                df_corr = pd.read_csv(knlc_dir+'grouped_photometry_6.csv')
             elif delta_mjd_corr < 16.7:
-                df_corr = pd.read_csv(knlc_dir+'data/grouped_photometry_7.csv')
+                df_corr = pd.read_csv(knlc_dir+'grouped_photometry_7.csv')
 
         df_later['ZMEAN'] = np.mean(df_later[['ZMIN', 'ZMAX']].values, axis=1)
         df['ZMEAN'] = np.mean(df[['ZMIN', 'ZMAX']].values, axis=1)
@@ -1051,8 +1049,8 @@ def print_dict(d, title='', outfile=None):
 def calc_mag_fractions(data,
                        use_knmodel_weights=False,
                        kn_type='red',
-                       info_file=os.path.join(os.getenv("DESGW_DIR"),
-                                              "knlc",
+                       info_file=os.path.join(os.environ['ROOT_DIR'],
+                                              "data",
                                               "knsed_info.txt"),
                        kn_weight_type="uniform",
                        kn_weight_sigma=1.0,
@@ -1147,7 +1145,7 @@ def calc_mag_fractions(data,
     return percentile_dict
 
 
-def get_model_weights(kn_weight_type="uniform", kn_type='red', info_file=os.path.join(os.getenv("DESGW_DIR"), "knlc", "knsed_info.txt"), kn_weight_sigma=1.0):
+def get_model_weights(kn_weight_type="uniform", kn_type='red', info_file=os.path.join(os.environ['ROOT_DIR'], "data", "knsed_info.txt"), kn_weight_sigma=1.0):
 
     sed_filenames, kn_inds, vks, loglans, logmass_s = open_ascii_cat(
         info_file, unpack=True)  # usecols=(0,1)
@@ -1675,7 +1673,7 @@ if __name__ == '__main__':
     parser.add_argument('--time', default=datetime.datetime.now(),
                         help='Time in mjd that strategy code ran.')
                       
-                      
+    root_dir = os.environ['ROOT_DIR']
     args = parser.parse_args()
     area_deg_fix = 40.0
     if 1 == 1:

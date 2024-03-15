@@ -11,8 +11,8 @@ from astropy.io import fits
 from pathlib import Path
 from ligo.skymap.io.fits import read_sky_map, write_sky_map
 from ligo.skymap.bayestar import rasterize
-from .slack import SlackBot
-from .emails import EmailBot
+from utils.slack import SlackBot
+from utils.emails import EmailBot
 import glob
 import time
 import subprocess
@@ -22,7 +22,7 @@ import astropy_healpix as ah
 import pprint
 import json
 import yaml
-from .short_latency_plots import make_plots_initial
+from utils.short_latency_plots import make_plots_initial
 
 def elapsedTimeString(start):
     elapsed = int(time.time() - start)
@@ -31,9 +31,7 @@ def elapsedTimeString(start):
 class GWStreamer():
 
     def __init__(self, mode):
-
-        mi_dir = os.path.dirname(os.path.abspath(__file__))
-        root = os.path.dirname(mi_dir)
+        root = os.environ['ROOT_DIR']
 
         self.mode = mode
         self.OUTPUT_PATH = None
@@ -303,9 +301,9 @@ class GWStreamer():
         plots_path.mkdir(parents=True, exist_ok=True)
         skymap_plot, moon_plot = make_plots_initial(OUTPUT_FLATTEN, plots_path.as_posix())
         server_dir = os.path.join("/des_web","www","html","desgw-new",f"{trigger_id}")
-        os.system("ssh -k codemanager@desweb.fnal.gov 'mkdir -p {}'".format(server_dir))
-        desweb = f"codemanager@desweb.fnal.gov:{server_dir}"
-        os.system(f"rsync -a {plots_path} {desweb}")
+        #os.system("ssh -k codemanager@desweb.fnal.gov 'mkdir -p {}'".format(server_dir))
+        #desweb = f"codemanager@desweb.fnal.gov:{server_dir}"
+        #os.system(f"rsync -a {plots_path} {desweb}")
         
         subject, text = self._format_message(trigger_id=trigger_id,
                                         record=record,
@@ -320,7 +318,6 @@ class GWStreamer():
         
         OUTPUT_IMAGE = OUTPUT_FLATTEN.replace('bayestar.fits.gz', 'bayestar.png')
         print('Passing event to Recycler. Handler took '+elapsedTimeString(t0), flush=True)
-        root_dir = os.environ["ROOT_DIR"]
         recycler = 'python ' +\
                     f'{root_dir}/recycler.py ' +\
                     f'--trigger-id {trigger_id} ' +\
@@ -328,14 +325,5 @@ class GWStreamer():
                     f'--event {source} ' +\
                     '--ltt'
                     # '--official' +\
-                    # NEED TO REMOVE ABOVE LINE COMMENT 
-
-### TESTING CHANGES HERE ####### BIG MONEY NO WHAMMIES ### PLEASE CHANGE #####
-#        skymap_location = '/data/des80.a/data/eliseke/Main-Injector/new_test_skymaps/o4_hlv_bns/348.fits.gz'
- #       recycler = 'python ' +\
-  #                 f'{root_dir}/recycler.py ' +\
-   #                f'--trigger-id {trigger_id} ' +\
-    #               f'--skymap {skymap_location} ' +\
-     #              f'--event {source} ' +\
-      #             f'--ltt'
+                    # NEED TO REMOVE ABOVE LINE COMMENT
         subprocess.Popen(recycler,shell=True)

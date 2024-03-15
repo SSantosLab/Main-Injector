@@ -1,17 +1,17 @@
 import numpy as np
-import hp2np 
-import hex_object
-import hexalate
-import decam2hp
-import jsonMaker
+import utils.hp2np 
+import utils.hex_object
+import utils.hexalate
+import utils.decam2hp
+import utils.jsonMaker
 from os import getenv
 import pandas as pd
 import sys
 import copy
 import matplotlib.pyplot as plt
-import hex_functions
-import awesomeness_functions as af
-from hex_functions import get_hexinfo 
+import utils.hex_functions
+import utils.awesomeness_functions as af
+from utils.hex_functions import get_hexinfo 
 import time
 
 # Code to demonstrate a very simple way to go from Strategy (from the strategy paper)
@@ -38,7 +38,7 @@ def run_or(
     expTime_outer,
     mjd,
     resolution=64,
-    hexFile=getenv('DATA_DIR')+"/all-sky-hexCenters-decam.txt", 
+    hexFile=getenv('ROOT_DIR')+"/data/all-sky-hexCenters-decam.txt", 
     trigger_id="LIGO/Virgo", 
     trigger_type="bright", 
     propid='propid', 

@@ -4,15 +4,13 @@ import base64
 import yaml
 from yaml.loader import SafeLoader
 
+root_dir = os.environ['ROOT_DIR']
+
 class SlackBot():
     """Slack Bot Class to handle interationcs with Slack trough IFTTT"""
 
     def __init__(self, mode:bool = 'test') -> None:
-
-        ROOT = os.path.abspath(__file__)
-        ROOT = os.path.dirname(ROOT)
-        ROOT = os.path.dirname(ROOT)
-        self.CONFIG = os.path.join(ROOT, 'configs','communications.yaml')
+        self.CONFIG = os.path.join(root_dir, 'configs', 'communications.yaml')
         with open(self.CONFIG) as f:
             slack_config = yaml.load(f, Loader=SafeLoader)
 
