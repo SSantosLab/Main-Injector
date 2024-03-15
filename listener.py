@@ -2,6 +2,7 @@
 Python script to listen from LVK alerts trough gcn.
 """
 
+import os
 import glob
 import time
 import traceback
@@ -12,13 +13,15 @@ from yaml.loader import SafeLoader
 from gcn_kafka import Consumer
 from handlers.gwstreamer import GWStreamer
 from handlers.emails import EmailBot
-from test_hexes.mock_bayestar_event import makeBayestarMock
+from utils.bayestar_mock_event import makeBayestarMock
+
 
 def elapsedTimeString(start):
     elapsed = int(time.time() - start)
     return "{}h {:02d}m {:02d}s".format(elapsed//(60*60), elapsed//60%60, elapsed%60)
 
 if __name__ == "__main__":
+    root_dir = os.environ['ROOT_DIR']
     parser = ArgumentParser()
     parser.add_argument('--mode',
                         default='test',
@@ -39,12 +42,12 @@ if __name__ == "__main__":
     gw_streamer = GWStreamer(mode=mode)
     email_bot = EmailBot(mode=mode)
 
-    with open('configs/gcn_credentials.yaml', 'r', encoding='utf-8') as f:
+    with open(root_dir+'/configs/gcn_credentials.yaml', 'r', encoding='utf-8') as f:
         gcn = yaml.load(f, Loader=SafeLoader)
 
     if mode == 'test':
         print('Reading test event...')
-        fake_alert_list = glob.glob('test_hexes/MS181101ab*preliminary*.json')
+        fake_alert_list = glob.glob(root_dir+'/data/test_hexes/MS181101ab*preliminary*.json')
         print('Passing event to Handler - Listener took '+elapsedTimeString(start_time), flush=True)
         for fake_alert in fake_alert_list:
             with open(fake_alert, 'r', encoding='utf-8') as f:

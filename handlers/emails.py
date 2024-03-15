@@ -6,16 +6,13 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from yaml.loader import SafeLoader
 
+root_dir = os.environ['ROOT_DIR']
+
 class EmailBot():
 
     def __init__(self, mode) -> None:
-
-        ROOT = os.path.abspath(__file__)
-        ROOT = os.path.dirname(ROOT)
-        ROOT = os.path.dirname(ROOT)
-
-        self.ROOT = ROOT
-        self.CONFIG = os.path.join(ROOT, 'configs','communications.yaml')
+        self.ROOT = root_dir
+        self.CONFIG = os.path.join(root_dir, 'configs','communications.yaml')
         with open(self.CONFIG) as f:
             email_config = yaml.load(f, Loader=SafeLoader)
 
@@ -42,7 +39,7 @@ class EmailBot():
 
         print('Preparing email')
 
-        people = np.genfromtxt(f"{os.path.join(self.ROOT,'DESGW_O4_People.TXT')}",
+        people = np.genfromtxt(f"{os.path.join(root_dir,'DESGW_O4_People.TXT')}",
                                 dtype=[('name','S50'),('email','S50'),('phone','S50')],
                                 delimiter=",",
                                 skip_header=1)
