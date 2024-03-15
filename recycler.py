@@ -6,7 +6,7 @@ from subprocess import run
 from argparse import ArgumentParser
 from astropy.io import fits
 from utils.slack import SlackBot
-from .OneRing import run_or
+from OneRing import run_or
 import time
 
 def elapsedTimeString(start):

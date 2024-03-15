@@ -5,13 +5,13 @@ import numpy as np
 import healpy as hp
 from pyslalib import slalib
 
-import hp2np
-import atmosphere
-import telescope
-import dust
-import seeingModel
-import sky_model
-import mcbryde
+from utils import hp2np
+from utils import atmosphere
+from utils import telescope
+from utils import dust
+from utils import seeingModel
+from utils import sky_model
+from utils import mcbryde
 
 
 license = """

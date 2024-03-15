@@ -1,5 +1,5 @@
 import numpy as np
-from atmosphere import extinctionModel
+from utils.atmosphere import extinctionModel
 
 license = """
    Copyright (C) 2014 James Annis

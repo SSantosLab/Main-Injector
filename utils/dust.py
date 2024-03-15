@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from astropy.io import fits
-import hp2np
+from utils import hp2np
 license="""
    Copyright (C) 2014 James Annis
 

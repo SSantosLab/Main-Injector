@@ -24,6 +24,8 @@ import json
 import yaml
 from utils.short_latency_plots import make_plots_initial
 
+root_dir = os.environ['ROOT_DIR']
+
 def elapsedTimeString(start):
     elapsed = int(time.time() - start)
     return "{}h {:02d}m {:02d}s".format(elapsed//(60*60), elapsed//60%60, elapsed%60)
@@ -31,13 +33,11 @@ def elapsedTimeString(start):
 class GWStreamer():
 
     def __init__(self, mode):
-        root = os.environ['ROOT_DIR']
-
         self.mode = mode
         self.OUTPUT_PATH = None
         self.OUTPUT_TRIGGER = None
         self.SKYMAP_OUTPUT = None
-        self._ROOT = root
+        self._ROOT = root_dir
         self.email_bot = EmailBot(mode=mode)
         self.slack_bot = SlackBot(mode=mode)
 

@@ -1,16 +1,16 @@
 import numpy as np
-import utils.hp2np 
-import utils.hex_object
-import utils.hexalate
-import utils.decam2hp
-import utils.jsonMaker
+from utils import hp2np 
+from utils import hex_object
+from utils import hexalate
+from utils import decam2hp
+from utils import jsonMaker
 from os import getenv
 import pandas as pd
 import sys
 import copy
 import matplotlib.pyplot as plt
-import utils.hex_functions
-import utils.awesomeness_functions as af
+from utils import hex_functions
+from utils import awesomeness_functions as af
 from utils.hex_functions import get_hexinfo 
 import time
 

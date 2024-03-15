@@ -1,13 +1,9 @@
-OUTPUT/TESTING/*
-!OUTPUT/TESTING/MS181101ab/
-OUTPUT/04REAL/*
-!OUTPUT/04REAL/S230518h/
+OUTPUT/*
 PHONE_AND_EMAIL_LIST.TXT
 *.pyc
-python/*.pyc
+utils/*.pyc
 __pycache__
 DESGW_O4_People.TXT
 test*.json
 des-gw*.json
-test_hexes/mock_simulations/*
-test_logs/
+kn_*

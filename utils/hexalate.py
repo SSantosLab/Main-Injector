@@ -1,4 +1,4 @@
-import decam2hp
+from utils import decam2hp
 import numpy as np
 license = """
    Copyright (C) 2015 James Annis

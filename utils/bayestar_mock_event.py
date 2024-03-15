@@ -8,7 +8,7 @@ def makeBayestarMock():
     trigger_id = 'MS'+t.isot[2:4]+t.isot[5:7]+t.isot[8:10]+''.join(random.choices(string.ascii_lowercase, k=3))
     outdir = root_dir+"/OUTPUT/TESTING/"+trigger_id+"/"
     os.makedirs(outdir, exist_ok=True)
-    sourcefile = root_dir+"/data/host_galaxies.txt"
+    sourcefile = root_dir+"/data/bayestar_host_galaxies.txt"
     
     os.system(root_dir+'/utils/bayestar_injection.sh {} {} {} {}'.format(t.gps-1, t.gps-0.5, sourcefile, outdir))
     

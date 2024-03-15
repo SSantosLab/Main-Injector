@@ -212,7 +212,7 @@ class KNCalc():
             self.set_mjd_correction = False
 
         # Set directory for lookup table
-        knlc_dir = os.environ['ROOT_DIR'] + '/data/knlc/
+        knlc_dir = os.environ['ROOT_DIR'] + '/data/knlc/'
 
         # Choose lookup table based on time_delay
         if delta_mjd_later < 2.3:

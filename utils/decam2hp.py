@@ -15,7 +15,7 @@ import scipy.spatial
 # frst get the ligo data, then count prob in hexes
 def countData (ligo_map_name) :
     import healpy as hp
-    import hp2np
+    from utils import hp2np
     print("\t reading {}".format(ligo_map_name))
     ra,dec,vals = hp2np.hp2np(ligo_map_name)
     print("\t computing spatial tree data")

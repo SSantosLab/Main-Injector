@@ -1,15 +1,15 @@
-import hex_object
+from utils import hex_object
 import numpy as np
-import hp2np 
-import hexalate
-import decam2hp
-import jsonMaker
+from utils import hp2np 
+from utils import hexalate
+from utils import decam2hp
+from utils import jsonMaker
 from os import getenv
 import os
 import pandas as pd
 import sys
 import  matplotlib.pyplot as plt
-import mags
+from utils import mags
 from pyslalib import slalib
 import datetime
 
