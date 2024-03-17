@@ -4,6 +4,7 @@ import base64
 import yaml
 from yaml.loader import SafeLoader
 import numpy as np
+import json
 
 class SlackBot():
     """
@@ -19,7 +20,7 @@ class SlackBot():
         ROOT = os.path.dirname(ROOT)
         self.CONFIG = os.path.join(ROOT, 'configs','slack_token.txt') # need to make a new file called 'slack_token.txt' with the oauth token, and include it in the .gitignore
         with open(self.CONFIG) as f:
-            self.token = np.loadtxt(self.CONFIG,dtype=str) # Open and log the token
+            self.token = str(np.loadtxt(self.CONFIG,dtype=str)) # Open and log the token
         self.mode = mode
         self.channel = "#michigan-gw-students" # CHANGE AS NEEDED
     
@@ -40,12 +41,13 @@ class SlackBot():
 
         # requests.post(self._link, data=post)
 
+        my_file = {'file' : (impath, open(impath, 'rb'), 'png')}
 
+        payload={"filename":impath,"token":self.token,"channels":self.channel}
+
+        # dicto = {'token':self.token,'filename': impath, 'channels': self.channel}
             
-        return requests.post('https://slack.com/api/files.upload', {'token': os.getenv(self.token),
-                                                                    'filename': impath,
-                                                                    'channels': os.getenv(self.channel)},
-                             files = { 'file': file_bytes }).json()
+        return requests.post("https://slack.com/api/files.upload", params=payload, files=my_file)
 
 
     def post_message(self, subject: str, text: str) -> None:
@@ -66,8 +68,6 @@ class SlackBot():
         # this should probably work, but if not, then removing the 'subject' key might fix it
         # change the channel key as needed - set as '#michigan-gw-students' for testing
         
-        requests.post('https://slack.com/api/chat.postMessage',{'token': os.getenv(self.token),
-                                                                'channel': os.getenv(self.channel),
-                                                                'subject':subject,
-                                                                'text': text,
-                                                                'blocks': json.dumps(blocks) if blocks else None}).json()
+        slack_msg = {'text': text,'subject':subject}
+
+        return requests.post(self.token,data=json.dumps(slack_msg))

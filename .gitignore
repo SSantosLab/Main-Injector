@@ -11,3 +11,4 @@ test*.json
 des-gw*.json
 test_hexes/mock_simulations/*
 test_logs/
+configs/slack_token.txt
