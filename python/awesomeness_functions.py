@@ -151,6 +151,10 @@ def get_hexinfo(ra, dec, prob, expTime, filt, mjd, get_sunrise_sunset = False, c
     sunset: np.float64
         mjd decimal of given night's sunset, given if get_sunrise_sunset is true
     """
+    
+    if len(ra)==0:
+    	print('No hexes in region')
+    	return []
 
     # Find night statistics
     night, sunset, sunrise = mags.findNightDuration(mjd, camera)
