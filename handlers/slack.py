@@ -3,22 +3,27 @@ import requests
 import base64
 import yaml
 from yaml.loader import SafeLoader
+import numpy as np
+import json
 
 class SlackBot():
-    """Slack Bot Class to handle interationcs with Slack trough IFTTT"""
+    """
+    Slack Bot Class to handle interationcs with Slack
+
+    contact @seanmacb if you have questions about the slackbot
+    """
 
     def __init__(self, mode:bool = 'test') -> None:
 
         ROOT = os.path.abspath(__file__)
         ROOT = os.path.dirname(ROOT)
         ROOT = os.path.dirname(ROOT)
-        self.CONFIG = os.path.join(ROOT, 'configs','communications.yaml')
+        self.CONFIG = os.path.join(ROOT, 'configs','slack_token.txt') # need to make a new file called 'slack_token.txt' with the oauth token, and include it in the .gitignore
         with open(self.CONFIG) as f:
-            slack_config = yaml.load(f, Loader=SafeLoader)
-
+            self.token = str(np.loadtxt(self.CONFIG,dtype=str)) # Open and log the token
         self.mode = mode
-        self._link = slack_config['ifttt_link']
-
+        self.channel = "#michigan-gw-students" # CHANGE AS NEEDED
+    
     def post_image(self, impath: str) -> None:
         """
         Post_image method. Post a image to slack trough POST request.
@@ -30,11 +35,19 @@ class SlackBot():
 
         """
 
-        post = {}
-        post["value1"] = ''
-        post["value2"] = open(impath,'rb').read()
+        # post = {}
+        # post["value1"] = ''
+        # post["value2"] = open(impath,'rb').read()
 
-        requests.post(self._link, data=post)
+        # requests.post(self._link, data=post)
+
+        my_file = {'file' : (impath, open(impath, 'rb'), 'png')}
+
+        payload={"filename":impath,"token":self.token,"channels":self.channel}
+
+        # dicto = {'token':self.token,'filename': impath, 'channels': self.channel}
+            
+        return requests.post("https://slack.com/api/files.upload", params=payload, files=my_file)
 
 
     def post_message(self, subject: str, text: str) -> None:
@@ -51,8 +64,10 @@ class SlackBot():
             
         if self.mode == 'observation':
             subject = '@channel ' + subject
+
+        # this should probably work, but if not, then removing the 'subject' key might fix it
+        # change the channel key as needed - set as '#michigan-gw-students' for testing
         
-        post = {}
-        post["value1"] = subject
-        post["value2"] = text
-        requests.post(self._link, data=post)
+        slack_msg = {'text': text,'subject':subject}
+
+        return requests.post(self.token,data=json.dumps(slack_msg))
