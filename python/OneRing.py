@@ -460,31 +460,31 @@ obs_order = []
 all_mjds = []
 all_awesomeness_factors = []
 
-def sort_hexes(hex_list, current_mjd, last_ra, last_dec):
-    moon_ra, moon_dec, moon_ha, moon_zd = hex_object.get_moon_pos(current_mjd)
-    for i in range(len(hex_list)):
-        if len(obs_order) == 0:
-            last_ra, last_dec = hex_list[i].ra, hex_list[i].dec
-        hex_list[i].getAwesomenessFactor(current_mjd, last_ra, last_dec, moon_ra, moon_dec, moon_zd)
-    has_nonzero_awesomeness = any(hex_obj.awesomeness_factor != 0 for hex_obj in hex_list)
+# def sort_hexes(hex_list, current_mjd, last_ra, last_dec):
+#     moon_ra, moon_dec, moon_ha, moon_zd = hex_object.get_moon_pos(current_mjd)
+#     for i in range(len(hex_list)):
+#         if len(obs_order) == 0:
+#             last_ra, last_dec = hex_list[i].ra, hex_list[i].dec
+#         hex_list[i].getAwesomenessFactor(current_mjd, last_ra, last_dec, moon_ra, moon_dec, moon_zd)
+#     has_nonzero_awesomeness = any(hex_obj.awesomeness_factor != 0 for hex_obj in hex_list)
 
-    if has_nonzero_awesomeness:
-        hexes_list = order_hexes(hex_list)
-#         print(hexes_list[0].expTime)
-        obs_order.append(hexes_list[0])
-        observe_mjds.append(current_mjd)
+#     if has_nonzero_awesomeness:
+#         hexes_list = order_hexes(hex_list)
+# #         print(hexes_list[0].expTime)
+#         obs_order.append(hexes_list[0])
+#         observe_mjds.append(current_mjd)
 
-        # Remove elements at the specified index from all lists
-        new_mjd = current_mjd + (hexes_list[0].expTime / 86400)
-        last_ra, last_dec = hexes_list[0].ra, hexes_list[0].dec
-        hex_list.remove(hexes_list[0])
-        all_mjds.append(new_mjd)
-        return new_mjd, last_ra, last_dec, True
-            
-    else: 
-#         print(f'found no hex')
-        new_mjd = current_mjd #+ (30 / 86400)
+#         # Remove elements at the specified index from all lists
+#         new_mjd = current_mjd + (hexes_list[0].expTime / 86400)
+#         last_ra, last_dec = hexes_list[0].ra, hexes_list[0].dec
+#         hex_list.remove(hexes_list[0])
 #         all_mjds.append(new_mjd)
-        return new_mjd, last_ra, last_dec, False
+#         return new_mjd, last_ra, last_dec, True
+            
+#     else: 
+# #         print(f'found no hex')
+#         new_mjd = current_mjd #+ (30 / 86400)
+# #         all_mjds.append(new_mjd)
+#         return new_mjd, last_ra, last_dec, False
     
 
