@@ -20,9 +20,8 @@ class SlackBot():
         ROOT = os.path.dirname(ROOT)
         self.CONFIG = os.path.join(ROOT, 'configs','slack_token.txt') # need to make a new file called 'slack_token.txt' with the oauth token, and include it in the .gitignore
         with open(self.CONFIG) as f:
-            self.token = str(np.loadtxt(self.CONFIG,dtype=str)) # Open and log the token
+            self.token,self.channel = np.loadtxt(self.CONFIG,dtype=str,delimiter=",",comments="\0") # Open and log the token and channel
         self.mode = mode
-        self.channel = "#michigan-gw-students" # CHANGE AS NEEDED
     
     def post_image(self, impath: str) -> None:
         """
