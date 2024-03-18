@@ -216,7 +216,7 @@ def run_or(
                         current_seconds += (current_mjd - old_mjd)*86400
     #                     print(current_seconds)
                     if len(inner_hexlist) != 0 and not found_hex:
-                        outer_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, found_outer_hex, filt_list, exp_list = sort_hexes(outer_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, exp_list, filt_list, dithering=False)
+                        outer_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, found_outer_hex, filt_list, exp_list = sort_hexes(outer_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, filt_list, exp_list, dithering=False)
                         found_any_hex = found_outer_hex
                         if not found_any_hex:
                             current_mjd += (30 / 86400)
