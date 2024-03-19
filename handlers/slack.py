@@ -62,10 +62,11 @@ class SlackBot():
             subject = 'MOCK BAYESTAR TEST: ' + subject
             
         if self.mode == 'observation':
-            subject = '@channel ' + subject
+            subject = '<!channel> ' + subject
 
         # this should probably work, but if not, then removing the 'subject' key might fix it
-        # change the channel key as needed - set as '#michigan-gw-students' for testing
+
+        text = subject + "\n" + text
         
         slack_msg = {'text': text,'subject':subject}
 
