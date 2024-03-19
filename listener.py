@@ -12,6 +12,7 @@ from yaml.loader import SafeLoader
 from gcn_kafka import Consumer
 from handlers.gwstreamer import GWStreamer
 from handlers.emails import EmailBot
+from handlers.emails import SlackBot
 from test_hexes.mock_bayestar_event import makeBayestarMock
 
 def elapsedTimeString(start):
@@ -38,9 +39,11 @@ if __name__ == "__main__":
     
     gw_streamer = GWStreamer(mode=mode)
     email_bot = EmailBot(mode=mode)
+    slack_bot = SlackBot(mode=mode)
 
     with open('configs/gcn_credentials.yaml', 'r', encoding='utf-8') as f:
         gcn = yaml.load(f, Loader=SafeLoader)
+        slack_bot.post_message("","Starting listener.py")
 
     if mode == 'test':
         print('Reading test event...')
@@ -49,7 +52,7 @@ if __name__ == "__main__":
         for fake_alert in fake_alert_list:
             with open(fake_alert, 'r', encoding='utf-8') as f:
                 gcn_fake_alert = json.load(f)
-
+            slack_bot.post_message("","Starting handler on test event: {}".format(gcn_fake_alert['superevent_id']))
             gw_streamer.handle(gcn_fake_alert)
     	
     elif mode == 'mock-bayestar':
@@ -59,6 +62,7 @@ if __name__ == "__main__":
             gcn_fake_alert = json.load(f)
 
         print('Passing event to Handler - Listener took '+elapsedTimeString(start_time), flush=True)
+        slack_bot.post_message("","Starting handler on mock-bayestar event: {}".format(gcn_fake_alert['superevent_id']))
         gw_streamer = GWStreamer(mode='mock')
         gw_streamer.handle(gcn_fake_alert)
         	
@@ -73,10 +77,12 @@ if __name__ == "__main__":
                     print('Trigger Received...')
                     gcn_alert = json.loads(message.value())
                     print('Passing event to Handler.', flush=True)
+                    slack_bot.post_message("","Starting handler on event: {}".format(gcn_alert['superevent_id']))
                     gw_streamer.handle(gcn_alert)
 
         except Exception as e:
             print(e)
+            slack_bot.post_message("","Listener went down! Please investigate! Traceback attached <@U05V24X6MHB><@U0545QECWJZ><@UAV5VNB9N>. {}".format(traceback.format_exc()))
             email_bot.send_email(subject='Listener went down, see traceback',
                                 text=traceback.format_exc(),
                                 emergency=True)
