@@ -12,7 +12,7 @@ from yaml.loader import SafeLoader
 from gcn_kafka import Consumer
 from handlers.gwstreamer import GWStreamer
 from handlers.emails import EmailBot
-from handlers.emails import SlackBot
+from handlers.slack import SlackBot
 from test_hexes.mock_bayestar_event import makeBayestarMock
 
 def elapsedTimeString(start):
