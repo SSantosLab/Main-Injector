@@ -177,17 +177,18 @@ class GWStreamer():
             f"Time coincidence FAR: {COINC_FAR} Years\n" +\
             f"FAR using Timing and Sky position: {COINC_TIME_SKY_FAR}\n"
             
-        combined_skymap_str = external_coinc.get('combined_skymap', {})
-        skymap_bytes = b64decode(combined_skymap_str)
-        skymap = Table.read(BytesIO(skymap_bytes))
-        combined_skymap_output = os.path.join(self.OUTPUT_TRIGGER,
-                                              'combined_skymap.multiorder.fits')
-        combined_skymap_output_flatten = os.path.join(self.OUTPUT_TRIGGER,
-                                                      'combined_skymap.fits.gz')
-        
-        skymap.write(combined_skymap_output, overwrite=True)        
-        self.flatten_skymap(combined_skymap_output,
-                            combined_skymap_output_flatten)
+        combined_skymap_str = external_coinc.get('combined_skymap', '')
+        if combined_skymap_str != '':
+            skymap_bytes = b64decode(combined_skymap_str)
+            skymap = Table.read(BytesIO(skymap_bytes))
+            combined_skymap_output = os.path.join(self.OUTPUT_TRIGGER,
+                                                  'combined_skymap.multiorder.fits')
+            combined_skymap_output_flatten = os.path.join(self.OUTPUT_TRIGGER,
+                                                          'combined_skymap.fits.gz')
+            
+            skymap.write(combined_skymap_output, overwrite=True)        
+            self.flatten_skymap(combined_skymap_output,
+                                combined_skymap_output_flatten)
                     
     def handle(self, gcn_alert: dict) -> None:
         """
@@ -242,6 +243,9 @@ class GWStreamer():
             
         if not os.path.exists(self.OUTPUT_TRIGGER):
             os.makedirs(self.OUTPUT_TRIGGER)
+        
+        with open(f'{self.OUTPUT_TRIGGER}/{trigger_id}.json', 'w') as jsonfile:
+            json.dump(record, jsonfile)
 
         print('Handling Trigger...', flush=True)
         skymap_str = record.get('event', {}).pop('skymap')
@@ -259,9 +263,7 @@ class GWStreamer():
             self.process_external_coinc(trigger_id=trigger_id,
                                         alert_type=alert_type,
                                         external_coinc=external_coinc)
-            record['external_coinc'].pop('combined_skymap')
-        with open(f'{self.OUTPUT_TRIGGER}/{trigger_id}.json', 'w') as jsonfile:
-            json.dump(record, jsonfile)
+            record['external_coinc'].pop('combined_skymap', None)
 
         pprint.pprint(record)
         OUTPUT_SKYMAP = os.path.join(self.OUTPUT_TRIGGER,
