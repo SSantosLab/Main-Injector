@@ -1056,7 +1056,7 @@ def calc_mag_fractions(data,
                                               "knsed_info.txt"),
                        kn_weight_type="uniform",
                        kn_weight_sigma=1.0,
-                       model_weights_path='',
+                       model_weights_path=os.path.join(os.getenv("DESGW_DIR"),'knlc/'),
                        m_exp=False):
 
     if use_knmodel_weights == True:
