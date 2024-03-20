@@ -313,8 +313,8 @@ class GWStreamer():
 
         self.slack_bot = SlackBot(mode=self.mode)
         self.slack_bot.post_message(subject=subject, text=text)
-        self.slack_bot.post_image(skymap_plot)
-        self.slack_bot.post_image(moon_plot)
+        self.slack_bot.post_image(skymap_plot,"Skymap - {}".format(trigger_id),"Skymap for {}".format(trigger_id))
+        self.slack_bot.post_image(moon_plot,"MoonPlot - {}".format(trigger_id),"MoonPlot for {}".format(trigger_id))
         self.email_bot = EmailBot(mode=self.mode)
         self.email_bot.send_email(subject=subject,text=text)
         
