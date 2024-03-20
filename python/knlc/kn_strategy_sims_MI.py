@@ -422,10 +422,10 @@ class KNCalc():
             use_map_info = join(lowres_path,f"{map_name}_mapinfo.npy")
 
             if not os.path.isdir(lowres_path):
-                os.mkdir(lowres_path,exist_ok=True)
+                os.mkdirs(lowres_path,exist_ok=True)
             
             if not os.path.isdir(weights_path):
-                os.mkdir(weights_path,exist_ok=True)
+                os.mkdirs(weights_path,exist_ok=True)
 
             if m_exp_kncalc == False:
                 use_map_weights = join(path2map, "weights"),
