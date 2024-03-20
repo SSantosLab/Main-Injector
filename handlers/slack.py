@@ -72,16 +72,16 @@ class SlackBot():
         """Post text to slack"""
 
         if self.mode == 'test':
-            subject = 'OFFLINE TESTING NO PANICKING IS REQUIRED ' + subject
+            subject = '*OFFLINE TESTING NO PANICKING IS REQUIRED* \n\n' + subject
 
         if self.mode == 'mock':
-            subject = 'GCN STREAM TEST ' + subject
+            subject = '*GCN STREAM TEST* \n\n' + subject
 
         if self.mode == 'mock-bayestar':
-            subject = 'MOCK BAYESTAR TEST: ' + subject
+            subject = '*MOCK BAYESTAR TEST* \n\n' + subject
             
         if self.mode == 'observation':
-            subject = '<!channel> ' + subject
+            subject = '*<!channel>*\n\n' + subject
 
         # this should probably work, but if not, then removing the 'subject' key might fix it
 
