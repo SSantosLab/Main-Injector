@@ -1685,8 +1685,8 @@ if __name__ == '__main__':
             'distance_err': 50,
             'time_delay': 60.0,
             'fraction': 90,
-            'magplot_file': 'kn_mag_plot_clecio_loglan5.png',
-            'expplot_file': 'kn_exp_plot_clecio_test_loglan5.png',
+            'magplot_file': os.path.join(args.output, 'kn_mag_plot_clecio_loglan5.png'),
+            'expplot_file': os.path.join(args.output, 'kn_exp_plot_clecio_test_loglan5.png'),
             'report_file': 'kn_report_clecio_test',
             'filter': None
         }
