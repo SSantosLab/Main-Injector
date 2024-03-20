@@ -327,8 +327,8 @@ class GWStreamer():
                     f'{root_dir}/recycler.py ' +\
                     f'--trigger-id {trigger_id} ' +\
                     f'--skymap {self.OUTPUT_TRIGGER}/bayestar.fits.gz ' +\
-                    f'--event {source} ' +\
-                    '--ltt'
+                    f'--event {source} ' #+\
+                    #'--ltt'
                     # '--official' +\
                     # NEED TO REMOVE ABOVE LINE COMMENT 
 
