@@ -24,8 +24,15 @@ class SlackBot():
         with open(self.CONFIG) as f:
             self.token,self.channel = np.loadtxt(self.CONFIG,dtype=str,delimiter=",",comments="\0") # Open and log the token and channel
         self.mode = mode
-    
-    def post_image(self, impath: str) -> None:
+        
+        self.image_config = os.path.join(ROOT,"configs","slack_image_creds.txt")
+
+        with open(self.image_config) as f:
+            self.image_token,self.image_channel =  np.loadtxt(self.image_config,dtype=str,delimiter=",")
+        
+        
+            
+    def post_image(self, impath: str,title:str,comment:str) -> None:
         """
         Post_image method. Post a image to slack trough POST request.
 
@@ -36,12 +43,12 @@ class SlackBot():
 
         """
 
-        client = WebClient(os.environ[self.token])
+        client = WebClient(self.image_token)
 
-        new_file = client.files_upload_v2(title="TestFile",filename=impath,content="Placeholder Text")
+        # new_file = client.files_upload_v2(title="TestFile",filename=impath,content="Placeholder Text")
 
-        file_url = new_file.get("file").get("permalink")
-        return client.chat_postMessage(channel=self.channel,text=f"{file_url}")
+        # file_url = new_file.get("file").get("permalink")
+        return client.files_upload_v2(channel=self.image_channel,file=impath,title=title,initial_comment=comment)
 
         # maybe use the below?
         # upload_and_then_share_file = client.files_upload_v2(channel="C123456789",title="Test text data",filename="test.txt",content="Hi there! This is a text file!",initial_comment="Here is the file:")

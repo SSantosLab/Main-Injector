@@ -13,3 +13,4 @@ test_hexes/mock_simulations/*
 test_logs/
 configs/slack_token.txt
 log_files/
+configs/slack_image_creds.txt
