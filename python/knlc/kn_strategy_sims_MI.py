@@ -1056,7 +1056,7 @@ def calc_mag_fractions(data,
                                               "knsed_info.txt"),
                        kn_weight_type="uniform",
                        kn_weight_sigma=1.0,
-                       model_weights_path='',
+                       model_weights_path=os.path.join(os.getenv("DESGW_DIR"),'knlc/'),
                        m_exp=False):
 
     if use_knmodel_weights == True:
@@ -1685,8 +1685,8 @@ if __name__ == '__main__':
             'distance_err': 50,
             'time_delay': 60.0,
             'fraction': 90,
-            'magplot_file': 'kn_mag_plot_clecio_loglan5.png',
-            'expplot_file': 'kn_exp_plot_clecio_test_loglan5.png',
+            'magplot_file': os.path.join(args.output, 'kn_mag_plot_clecio_loglan5.png'),
+            'expplot_file': os.path.join(args.output, 'kn_exp_plot_clecio_test_loglan5.png'),
             'report_file': 'kn_report_clecio_test',
             'filter': None
         }
