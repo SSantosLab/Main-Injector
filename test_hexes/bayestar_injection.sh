@@ -18,7 +18,7 @@ lalapps_inspinj \
 	--m-distr gaussian --mean-mass1 1.4 --stdev-mass1 0.1 --mean-mass2 1.4 --stdev-mass2 0.1 --min-mass1 1.2 --max-mass1 1.6 --min-mass2 1.2 --max-mass2 1.6 \
 	\
 	`# Distance Distribution: Choices from uniform (d), distancesquared (d^2), volume (d^3), log10 (log10(d)), or source file. Source file format unclear. Distances in kpc.` \
-	`# --d-distr volume --min-distance 1 --max-distance 600e3` \
+	`# --d-distr volume --min-distance 40e3 --max-distance 600e3` \
 	--d-distr source \
 	\
 	`# Localization Distribution: Choices from random (isotropic), fixed (set using --longitude (ra) and --latitude (dec) in degrees), or from source file. Source file format unclear.` \
