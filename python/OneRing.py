@@ -205,7 +205,10 @@ def run_or(
             #if it has been 2-3 min, take second pass of hexes already covered (in other words, take first dither with 2nd pass filter)
             if current_seconds >= 120:
                     while len(dithers_hexlist) != 0:
-                        dithers_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, found_hex, filt_list, exp_list = sort_hexes(dithers_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, filt_list, exp_list, dithering=True, secondpass=True)
+                        dithers_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, found_secondpass_hex, filt_list, exp_list = sort_hexes(dithers_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, filt_list, exp_list, dithering=True, secondpass=True)
+                        if not found_secondpass_hex:
+                            print(f'Could not do second pass on some inner hexes.')
+                            break
                     current_seconds = 0
             elif len(inner_hexlist) != 0 and current_seconds < 120:
                     old_mjd = current_mjd
