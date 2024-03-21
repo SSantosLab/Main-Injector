@@ -272,7 +272,7 @@ def run_or(
     ra = np.array(ra)
     dec = np.array(dec)
 #    expTime = np.array(expTime)
-    
+    print("Printing values for posterity in order: ra,dec,exp_list,filt_list, trigger_id, trigger_type, propid, skymap, jsonFilename",ra,dec,exp_list,filt_list,trigger_id, trigger_type, propid, skymap, jsonFilename,sep="\n\n")
     print(f'Writing observing plan to {jsonFilename}')
     # JSON writing
     jsonMaker.writeJson(ra,dec,exp_list,filt_list, 
