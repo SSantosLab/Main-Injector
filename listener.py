@@ -77,7 +77,6 @@ if __name__ == "__main__":
                     print('Trigger Received...')
                     gcn_alert = json.loads(message.value())
                     print('Passing event to Handler.', flush=True)
-                    slack_bot.post_message("","New GCN recieved, starting handler on event: {}".format(gcn_alert['superevent_id']))
                     gw_streamer.handle(gcn_alert)
 
         except Exception as e:
