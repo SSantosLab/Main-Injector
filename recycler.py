@@ -145,7 +145,7 @@ def run_strategy_and_onering(skymap_filename,
             ltt_config=[0.05,0.10,0.15]
             df_ltt=df[df["Detection Probability"].values > (prob_top-(ltt_config[1]*prob_top))]
     
-            df.sort_values(by='Detprob1', ascending=False, inplace=True)
+            df_ltt.sort_values(by='Detprob1', ascending=False, inplace=True)
             optimal_strategy = df_ltt.iloc[0]
 #     print(optimal_strategy)
 
