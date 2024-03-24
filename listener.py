@@ -14,6 +14,7 @@ from handlers.gwstreamer import GWStreamer
 from handlers.emails import EmailBot
 from handlers.slack import SlackBot
 from test_hexes.mock_bayestar_event import makeBayestarMock
+import datetime
 
 def elapsedTimeString(start):
     elapsed = int(time.time() - start)
@@ -72,12 +73,20 @@ if __name__ == "__main__":
                                 client_secret=gcn['client_secret'])
             consumer.subscribe(['igwn.gwalert'])
 
+            today = datetime.date.today().day
+            init_day = 1
+            
             while True:
                 for message in consumer.consume(timeout=10):
                     print('Trigger Received...')
                     gcn_alert = json.loads(message.value())
                     print('Passing event to Handler.', flush=True)
                     gw_streamer.handle(gcn_alert)
+                
+                if datetime.date.today().day != today:
+                    slack_bot.post_message("","`listener.py` has been running nonstop for {} days".format(init_day))
+                    today = datetime.date.today().day
+                    init_day +=1
 
         except Exception as e:
             print(e)
