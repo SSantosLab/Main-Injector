@@ -83,9 +83,10 @@ class SlackBot():
         if self.mode == 'observation':
             subject = '*<!channel>*\n\n' + subject
 
-        # this should probably work, but if not, then removing the 'subject' key might fix it
+        if text.__contains__("has been running nonstop"):
+            subject=""
 
-        text = subject + "\n" + text
+        text = subject + text
         
         slack_msg = {'text': text,'subject':subject}
 
