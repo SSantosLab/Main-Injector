@@ -299,7 +299,7 @@ class GWStreamer():
         if source == 'Terrestrial':
             return
 
-        self.slack_bot.post_message("","New GCN recieved, starting handler on event: {}".format(trigger_id))
+        self.slack_bot.post_message("","New GCN received, starting handler on event: {}".format(trigger_id))
         
         print('Plotting...', flush=True)
         plots_path = Path(os.path.join(self.OUTPUT_TRIGGER, "initial_plots"))
