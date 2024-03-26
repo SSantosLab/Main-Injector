@@ -330,8 +330,8 @@ class GWStreamer():
                     f'--trigger-id {trigger_id} ' +\
                     f'--skymap {self.OUTPUT_TRIGGER}/bayestar.fits.gz ' +\
                     f'--event {source} ' +\
-                    '--official' +\
-                    '--ltt'
+                    f'--official ' +\
+                    f'--ltt'
 
 ### TESTING CHANGES HERE ####### BIG MONEY NO WHAMMIES ### PLEASE CHANGE #####
 #        skymap_location = '/data/des80.a/data/eliseke/Main-Injector/new_test_skymaps/o4_hlv_bns/348.fits.gz'
