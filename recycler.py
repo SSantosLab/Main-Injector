@@ -184,8 +184,8 @@ def run_strategy_and_onering(skymap_filename,
     subject = ""
     text = f'*Strategy for event: {event}* \n\n' +\
         f'*Assumptions* \n' +\
-        f'Sky Conditions: {sky_condition}' +\
-        f'Event type: {event}' +\
+        f'Sky Conditions: {sky_condition}\n' +\
+        f'Event type: {event}\n' +\
         f'Light curve model: {kn_type}\n' +\
         f'*Optimal Strategy Parameters*\n\n' +\
         f'Outer region coverage: {outer}\n' +\
