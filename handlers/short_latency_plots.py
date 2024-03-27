@@ -169,7 +169,7 @@ def make_plots_initial(url, name):
 
 
     fig = plt.figure(figsize=(10, 10), dpi=100)
-    plt.annotate('Event Name: {}'.format(os.path.basename(name)) + '\n'
+    plt.annotate('Event Name: {}'.format(name) + '\n'
                  + r'50% Area: {} deg$^2$'.format(area50) + '\n'
                  + r'90% Area: {} deg$^2$'.format(area90) + '\n'
                  + r'Max Prob Coordinates (degrees): ({},{})'.format(maxprob_ra, maxprob_dec) + '\n'
