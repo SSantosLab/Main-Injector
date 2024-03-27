@@ -21,6 +21,7 @@ import ephem
 import json
 import os
 
+
 ### Function for reading + parsing the skymap 
 def make_alert_skymap(map_path):
     skymap = hp.read_map(map_path, field=range(3))
@@ -167,9 +168,10 @@ def make_plots_initial(url, name):
     moon_plot = moon_airmass(name, date, [maxprob_ra, maxprob_dec])
     center = SkyCoord(maxprob_ra, maxprob_dec, unit="deg")  # defaults to ICRS frame
 
-
+    event_id = os.path.basename(os.path.abspath(os.path.join(name ,"../..")))
+    
     fig = plt.figure(figsize=(10, 10), dpi=100)
-    plt.annotate('Event Name: {}'.format(name) + '\n'
+    plt.annotate('Event Name: {}'.format(event_id) + '\n'
                  + r'50% Area: {} deg$^2$'.format(area50) + '\n'
                  + r'90% Area: {} deg$^2$'.format(area90) + '\n'
                  + r'Max Prob Coordinates (degrees): ({},{})'.format(maxprob_ra, maxprob_dec) + '\n'
