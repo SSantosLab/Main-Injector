@@ -181,12 +181,18 @@ def run_strategy_and_onering(skymap_filename,
         jsonFilename=json_output
     )
 
-    subject = f'Strategy for event {event}'
-    text = f'Outer region coverage: {outer}\n' +\
+    subject = ""
+    text = f'*Strategy for event: {event}* \n\n' +\ 
+        f'*Assumptions* \n' +\ 
+        f'Sky Conditions: {sky_condition}' +\
+        f'Event type: {event}' +\
+        f'Light curve model: {kn_type}'\n +\
+        f'*Optimal Strategy Parameters*\n\n' +\
+        f'Outer region coverage: {outer}\n' +\
         f'Inner region coverage: {inner}\n' +\
-        f'Filter: {filt}\n' +\
-        f'Exposure for Outer Region: {exposure_outer}\n' +\
-        f'Exposure for Inner Region: {exposure_inner}\n' +\
+        f'Filter: {filt} \n' +\
+        f'Exposure for Outer Region (seconds): {exposure_outer}\n' +\
+        f'Exposure for Inner Region (seconds): {exposure_inner}\n' +\
         f'Json file path: {json_output}\n'
     
     if official:
