@@ -182,18 +182,18 @@ def run_strategy_and_onering(skymap_filename,
     )
 
     subject = ""
-    text = f'*Strategy for event: {event}* \n\n' +\
+    text = f'*Strategy for event: {trigger_id}* \n\n' +\
         f'*Assumptions* \n' +\
         f'Sky Conditions: {sky_condition}\n' +\
         f'Event type: {event}\n' +\
-        f'Light curve model: {kn_type}\n' +\
+        f'Light curve model: {kn_type}\n\n' +\
         f'*Optimal Strategy Parameters*\n\n' +\
         f'Outer region coverage: {outer}\n' +\
         f'Inner region coverage: {inner}\n' +\
         f'Filter: {filt} \n' +\
         f'Exposure for Outer Region (seconds): {exposure_outer}\n' +\
         f'Exposure for Inner Region (seconds): {exposure_inner}\n' +\
-        f'Json file path: {json_output}'
+        f'Json file path: `{json_output}`'
     
     if official:
         mode = 'observation'
