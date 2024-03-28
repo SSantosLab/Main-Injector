@@ -100,32 +100,30 @@ class GWStreamer():
         FAR = round(1./float(FAR)/60./60./24./365., 2)
         FAR = f'1 per {FAR} Years'
 
-        text = f"Alert Type: {record['alert_type']}\n"+\
-            f"Superevent ID: {record['superevent_id']}\n"+\
-            f"Event Time: {record['event']['time']} \n"+\
-            f"Alert Time: {record['time_created']}\n"+\
-            f"MJD: {record['MJD']}\n"+\
-            f"FAR: {FAR}\n"+\
-            f"Detectors: {record['event']['instruments']}\n"+\
+        source, prob_source = self._get_max_prob(record)
+
+        text = f"*Superevent ID*: {record['superevent_id']}\n"+\
+            f"*MJD*: {record['MJD']}\n"+\
+            f'*Classification*: {source} ({prob_source})\n' +\
             f"BNS: {record['event']['classification']['BNS']:.3f}\n"+\
             f"NSBH: {record['event']['classification']['NSBH']:.3f}\n"+\
             f"BBH: {record['event']['classification']['BBH']:.3f}\n"+\
+            f"*FAR*: {FAR}\n"+\
+            f"*Alert Type*: {record['alert_type']}\n\n"+\
+            f"Event Time: {record['event']['time']} \n"+\
+            f"Alert Time: {record['time_created']}\n"+\
+            f"Detectors: {record['event']['instruments']}\n"+\
             f"Terrestrial: {record['event']['classification']['Terrestrial']}\n"+\
             f"Has Remmant: {record['event']['properties']['HasRemnant']}\n"+\
-            f"DISTMEAN: {record['event']['distmean']:.2f} Mpc\n"+\
-            f"DISTSIGMA: {record['event']['distsigma']:.2} Mpc\n"+\
-            f"Has Mass Gap: {record['event']['properties']['HasMassGap']}\n"+\
+            f"*DISTMEAN*: {record['event']['distmean']:.2f} Mpc\n"+\
+            f"*DISTSIGMA*: {record['event']['distsigma']:.2} Mpc\n\n"+\
+            f"Has Mass Gap: {record['event']['properties']['HasMassGap']}\n\n"+\
             f"GraceDB Link: {record['urls']['gracedb']}\n"+\
             f"Skymap Link: https://gracedb.ligo.org/apiweb/superevents/{trigger_id}/files/bayestar.png\n"+\
             f"SLIP Moon plot: https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/initial_plots/Moon.png\n"+\
             f"SLIP Initial Skymap: https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/initial_plots/initial_skymap.png"
         
-        source, prob_source = self._get_max_prob(record)
-
-        subject = f'Trigger {trigger_id} MJD: {record["MJD"]} '+\
-            f'Classification: {source} ({prob_source}) FAR: {FAR} '+\
-            f'Alert Type {record["alert_type"]}.'
-
+        subject = ""
         return subject, text
 
     def flatten_skymap(self,
