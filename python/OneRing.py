@@ -37,6 +37,7 @@ def run_or(
     expTime_inner,
     expTime_outer,
     mjd,
+    detP,
     resolution=64,
     hexFile=getenv('DATA_DIR')+"/all-sky-hexCenters-decam.txt", 
     trigger_id="LIGO/Virgo", 
@@ -100,8 +101,8 @@ def run_or(
 
     
     # From here on is implementation of The Main Injectors (consisting of Elise, Nora, Isaac, Thomas, and Andre) new hex sorting code, with sorting based on awesomeness factor
-    og_inner_hexlist, sunrise, sunset = af.get_hexinfo(inner_ra, inner_dec, inner_prob, inner_exptime, filt, mjd, True)
-    og_outer_hexlist = af.get_hexinfo(outer_ra, outer_dec, outer_prob, outer_exptime, filt, mjd)
+    og_inner_hexlist, sunrise, sunset = af.get_hexinfo(inner_ra, inner_dec, inner_prob, inner_exptime, filt, mjd, detP,True)
+    og_outer_hexlist = af.get_hexinfo(outer_ra, outer_dec, outer_prob, outer_exptime, filt, detP,mjd)
     
     # Create copies of original inner and outer lists of hexes in order to remove hexes as they're sorted
     inner_hexlist = og_inner_hexlist.copy()
