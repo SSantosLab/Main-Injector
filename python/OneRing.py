@@ -205,6 +205,7 @@ def run_or(
         observe_mjds = []
         filt_list = []
         exp_list = []
+        prob_list = []
         current_seconds = 0
         while current_mjd < sunrise:
             found_any_hex = False
@@ -212,7 +213,9 @@ def run_or(
             if current_seconds >= 120:
                     while len(dithers_hexlist) != 0:
                         dithers_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, found_secondpass_hex, filt_list, exp_list = sort_hexes(dithers_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, filt_list, exp_list, dithering=True, secondpass=True)
-                        if not found_secondpass_hex:
+                        if found_secondpass_hex:
+                            prob_list.append(obs_order[-1].detP[1])
+                        elif not found_secondpass_hex:
                             print(f'Could not do second pass on some inner hexes.')
                             break
                     current_seconds = 0
@@ -223,15 +226,20 @@ def run_or(
                     found_any_hex = found_hex
                     if found_any_hex:
                         current_seconds += (current_mjd - old_mjd)*86400
+                        prob_list.append(obs_order[-1].detP[0])
     #                     print(current_seconds)
                     if len(inner_hexlist) != 0 and not found_hex:
                         outer_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, found_outer_hex, filt_list, exp_list = sort_hexes(outer_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, filt_list, exp_list, dithering=False)
                         found_any_hex = found_outer_hex
+                        if found_outer_hex:
+                            prob_list.append(obs_order[-1].detP[0])
                         if not found_any_hex:
                             current_mjd += (30 / 86400)
             elif len(outer_hexlist) != 0:
                 outer_hexlist, current_mjd, last_ra, last_dec,  obs_order, observe_mjds, found_outer_hex, filt_list, exp_list = sort_hexes(outer_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, filt_list, exp_list, dithering=False)
                 found_any_hex = found_outer_hex
+                if found_outer_hex:
+                    prob_list.append(obs_order[-1].detP[0])
                 if not found_any_hex:
                     current_mjd += (30 / 86400)
             else:
@@ -240,8 +248,10 @@ def run_or(
 
         sky_covered = 0.
         prob_covered = 0.
+        disc_prob_covered = 0.
         coverage_list = []
-        prob_list = []
+        localization_prob_list = [] # discovery prob based on strategy
+        disc_prob_list = [] # total discovery prob based on strategy + model
 
         for i in range(len(obs_order)):
             print(f'At {af.mjd_to_date_time(observe_mjds[i])} will observe this hex:')
@@ -249,10 +259,16 @@ def run_or(
             print(f'With filter {filt_list[i]}, exptime {exp_list[i]}, and dither {obs_order[i].dither}')
             sky_covered += obs_order[i].coverage_factor
             prob_covered += obs_order[i].coverage_factor * obs_order[i].prob
+            disc_prob_covered += obs_order[i].coverage_factor * obs_order[i].prob * prob_list[i]
             coverage_list.append(sky_covered)
-            prob_list.append(prob_covered)
+            localization_prob_list.append(prob_covered)
+            disc_prob_list.append(disc_prob_covered)
+            
+        
+        final_local_prob = prob_covered
+        final_disc_prob = disc_prob_covered
 
-        return obs_order, observe_mjds, coverage_list, prob_list, filt_list, exp_list
+        return obs_order, observe_mjds, coverage_list, prob_list, filt_list, exp_list,find_local_prob,final_disc_prob
 
 
 
