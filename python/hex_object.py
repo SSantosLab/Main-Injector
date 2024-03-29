@@ -55,12 +55,14 @@ class HexObject:
     set_mjd: float
         Modified Julian Date of hex set time.
     """
-    def __init__(self, ra, dec, prob, rise_mjd, set_mjd, expTime, filt, coverage = 0, camera='decam', index=None):
+    def __init__(self, ra, dec, prob, rise_mjd, set_mjd, expTime, filt, detP, coverage = 0, camera='decam', index=None):
         self.prob = prob
         self.rise_mjd = rise_mjd
         self.set_mjd = set_mjd
         self.ra = ra
         self.dec = dec
+        self.detP = detP # tuple of (detP_1,detP_2), where detP_1 is first pass and detP_2 is second pass
+        
         if camera == "decam":
             self.lat = -30.16527778
             self.lon = -70.8125
