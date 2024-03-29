@@ -101,7 +101,7 @@ class HexObject:
         self.slewTime = 0
         
         
-
+    
     def getAwesomenessFactor(self, mjd, last_ra, last_dec, moon_ra, moon_dec, moon_zd, dither = [0, 0], detailed = False):
         # Ranks hex based on attributes. Inputs are current time (MJD), current scope coordinates (deg), and moon coordinates (deg).
         if detailed:
