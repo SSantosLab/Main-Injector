@@ -277,7 +277,7 @@ def run_or(
     dithers_hexlist = []
     # inner_hexlist = og_inner_hexlist.copy()
     # outer_hexlist = og_outer_hexlist.copy()
-    obs_order, obs_mjds, coverage_list, prob_list, filt_list, exp_list = plan_observations(starttime, sunrise, inner_hexlist, outer_hexlist, None, None, obs_order, dithers_hexlist)
+    obs_order, obs_mjds, coverage_list, prob_list, filt_list, exp_list, local_prob, disc_prob = plan_observations(starttime, sunrise, inner_hexlist, outer_hexlist, None, None, obs_order, dithers_hexlist)
     ra = []
     dec = []
     for i in range(len(obs_order)):
@@ -306,7 +306,7 @@ def run_or(
     timer_end = time.perf_counter()
     print(f"Finished OneRing in {timer_end - timer_start:0.4f} seconds")
 
-    return
+    return local_prob, disc_prob
 
 
 ##FROM HERE ON IS OLD ONERING ##
