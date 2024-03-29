@@ -173,25 +173,25 @@ def run_strategy_and_onering(skymap_filename,
         
     print(f'OneRing inputs: skymap: {skymap}, outer: {outer}, inner: {inner}, filt: {filt}, exp_out: {exposure_outer}, exposure_inner: {exposure_inner}, mjd:{mjd}', flush=True)
     #run updated onering!
-    OneRing.run_or(
-        skymap,
-        outer,
-        inner,
-        filt,
-        exposure_inner,
-        exposure_outer,
-        mjd,
-        detP,
-        resolution=64,
-        jsonFilename=json_output
-    )
+    local_prob, disco_prob = OneRing.run_or(skymap,
+                                            outer,
+                                            inner,
+                                            filt,
+                                            exposure_inner,
+                                            exposure_outer,
+                                            mjd,
+                                            detP,
+                                            resolution=64,
+                                            jsonFilename=json_output)
 
     subject = ""
     text = f'*Strategy for event: {trigger_id}* \n\n' +\
         f'*Assumptions* \n' +\
         f'Sky Conditions: {sky_condition}\n' +\
         f'Event type: {event}\n' +\
-        f'Light curve model: {kn_type}\n\n' +\
+        f'Light curve model: {kn_type}\n' +\
+        f'Localization cumulative probability: {local_prob}\n' +\
+        f'Discovery cumulative probability: {disco_prob}\n\n' +\
         f'*Optimal Strategy Parameters*\n\n' +\
         f'Outer region coverage: {outer}\n' +\
         f'Inner region coverage: {inner}\n' +\
