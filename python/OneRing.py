@@ -103,6 +103,11 @@ def run_or(
     # From here on is implementation of The Main Injectors (consisting of Elise, Nora, Isaac, Thomas, and Andre) new hex sorting code, with sorting based on awesomeness factor
     og_inner_hexlist, sunrise, sunset = af.get_hexinfo(inner_ra, inner_dec, inner_prob, inner_exptime, filt, mjd, detP,True)
     og_outer_hexlist = af.get_hexinfo(outer_ra, outer_dec, outer_prob, outer_exptime, filt, detP,mjd)
+
+    # def find_total_sky(self):
+        # self.get_hexlists()
+        # total_sky = len(og_inner_hexlist)+len(og_outer_hexlist) # literally just the number of hexes
+    total_prob = np.sum([hexy.prob for hexy in og_inner_hexlist]) + np.sum([hexy.prob for hexy in og_outer_hexlist]) # Total prob coverage *possible* from strategy code, not total prob possible for the skymap
     
     # Create copies of original inner and outer lists of hexes in order to remove hexes as they're sorted
     inner_hexlist = og_inner_hexlist.copy()
