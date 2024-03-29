@@ -156,6 +156,8 @@ def run_strategy_and_onering(skymap_filename,
     exposure_inner1 = optimal_strategy['Exposure01_deep']
     exposure_outer2 = optimal_strategy['Exposure02']
     exposure_inner2 = optimal_strategy['Exposure02_deep']
+    detP_1 = optimal_strategy['Detprob1']
+    detP_2 = optimal_strategy['Detprob2']
     json_output = os.path.join(output_dir, f"des-gw_{outname}_{sky_condition}.json")
 
     df.assign(json_output=json_output)
@@ -166,6 +168,8 @@ def run_strategy_and_onering(skymap_filename,
 
     exposure_inner = [exposure_inner1, exposure_inner2]
     exposure_outer = [exposure_outer1, exposure_outer2]
+    detP = [detP_1,detP_2]
+                                 
         
     print(f'OneRing inputs: skymap: {skymap}, outer: {outer}, inner: {inner}, filt: {filt}, exp_out: {exposure_outer}, exposure_inner: {exposure_inner}, mjd:{mjd}', flush=True)
     #run updated onering!
@@ -177,6 +181,7 @@ def run_strategy_and_onering(skymap_filename,
         exposure_inner,
         exposure_outer,
         mjd,
+        detP,
         resolution=64,
         jsonFilename=json_output
     )
