@@ -268,7 +268,7 @@ def run_or(
         final_local_prob = prob_covered
         final_disc_prob = disc_prob_covered
 
-        return obs_order, observe_mjds, coverage_list, prob_list, filt_list, exp_list,find_local_prob,final_disc_prob
+        return obs_order, observe_mjds, coverage_list, prob_list, filt_list, exp_list,final_local_prob,final_disc_prob
 
 
 
