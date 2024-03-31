@@ -184,14 +184,17 @@ def run_strategy_and_onering(skymap_filename,
                                             resolution=64,
                                             jsonFilename=json_output)
 
+    local_prob = round(local_prob * 100,1)
+    disco_prob = round(disco_prob,1)
+                                 
     subject = ""
     text = f'*Strategy for event: {trigger_id}* \n\n' +\
         f'*Assumptions* \n' +\
         f'Sky Conditions: {sky_condition}\n' +\
         f'Event type: {event}\n' +\
         f'Light curve model: {kn_type}\n' +\
-        f'Localization cumulative probability: {local_prob}\n' +\
-        f'Discovery cumulative probability: {disco_prob}\n\n' +\
+        f'Localization cumulative probability: {local_prob}%\n' +\
+        f'Discovery cumulative probability: {disco_prob}%\n\n' +\
         f'*Optimal Strategy Parameters*\n\n' +\
         f'Outer region coverage: {outer}\n' +\
         f'Inner region coverage: {inner}\n' +\
