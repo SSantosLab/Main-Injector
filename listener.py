@@ -84,7 +84,7 @@ if __name__ == "__main__":
                     gw_streamer.handle(gcn_alert)
                 
                 if datetime.date.today().day != today:
-                    slack_bot.post_message("","`listener.py` has been running nonstop for {} days".format(init_day))
+                    slack_bot.post_message("","`listener.py` has been running nonstop in {} mode for {} days".format(mode, init_day))
                     today = datetime.date.today().day
                     init_day +=1
 
