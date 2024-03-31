@@ -37,6 +37,7 @@ def run_or(
     expTime_inner,
     expTime_outer,
     mjd,
+    detP,
     resolution=64,
     hexFile=getenv('DATA_DIR')+"/all-sky-hexCenters-decam.txt", 
     trigger_id="LIGO/Virgo", 
@@ -100,8 +101,13 @@ def run_or(
 
     
     # From here on is implementation of The Main Injectors (consisting of Elise, Nora, Isaac, Thomas, and Andre) new hex sorting code, with sorting based on awesomeness factor
-    og_inner_hexlist, sunrise, sunset = af.get_hexinfo(inner_ra, inner_dec, inner_prob, inner_exptime, filt, mjd, True)
-    og_outer_hexlist = af.get_hexinfo(outer_ra, outer_dec, outer_prob, outer_exptime, filt, mjd)
+    og_inner_hexlist, sunrise, sunset = af.get_hexinfo(inner_ra, inner_dec, inner_prob, inner_exptime, filt, mjd, detP,True)
+    og_outer_hexlist = af.get_hexinfo(outer_ra, outer_dec, outer_prob, outer_exptime, filt, mjd, detP)
+
+    # def find_total_sky(self):
+        # self.get_hexlists()
+        # total_sky = len(og_inner_hexlist)+len(og_outer_hexlist) # literally just the number of hexes
+    total_prob = np.sum([hexy.prob for hexy in og_inner_hexlist]) + np.sum([hexy.prob for hexy in og_outer_hexlist]) # Total prob coverage *possible* from strategy code, not total prob possible for the skymap
     
     # Create copies of original inner and outer lists of hexes in order to remove hexes as they're sorted
     inner_hexlist = og_inner_hexlist.copy()
@@ -199,6 +205,7 @@ def run_or(
         observe_mjds = []
         filt_list = []
         exp_list = []
+        prob_list = []
         current_seconds = 0
         while current_mjd < sunrise:
             found_any_hex = False
@@ -206,7 +213,9 @@ def run_or(
             if current_seconds >= 120:
                     while len(dithers_hexlist) != 0:
                         dithers_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, found_secondpass_hex, filt_list, exp_list = sort_hexes(dithers_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, filt_list, exp_list, dithering=True, secondpass=True)
-                        if not found_secondpass_hex:
+                        if found_secondpass_hex:
+                            prob_list.append(obs_order[-1].detP[1])
+                        elif not found_secondpass_hex:
                             print(f'Could not do second pass on some inner hexes.')
                             break
                     current_seconds = 0
@@ -217,15 +226,20 @@ def run_or(
                     found_any_hex = found_hex
                     if found_any_hex:
                         current_seconds += (current_mjd - old_mjd)*86400
+                        prob_list.append(obs_order[-1].detP[0])
     #                     print(current_seconds)
                     if len(inner_hexlist) != 0 and not found_hex:
                         outer_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, found_outer_hex, filt_list, exp_list = sort_hexes(outer_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, filt_list, exp_list, dithering=False)
                         found_any_hex = found_outer_hex
+                        if found_outer_hex:
+                            prob_list.append(obs_order[-1].detP[0])
                         if not found_any_hex:
                             current_mjd += (30 / 86400)
             elif len(outer_hexlist) != 0:
                 outer_hexlist, current_mjd, last_ra, last_dec,  obs_order, observe_mjds, found_outer_hex, filt_list, exp_list = sort_hexes(outer_hexlist, current_mjd, last_ra, last_dec, obs_order, observe_mjds, filt_list, exp_list, dithering=False)
                 found_any_hex = found_outer_hex
+                if found_outer_hex:
+                    prob_list.append(obs_order[-1].detP[0])
                 if not found_any_hex:
                     current_mjd += (30 / 86400)
             else:
@@ -234,8 +248,10 @@ def run_or(
 
         sky_covered = 0.
         prob_covered = 0.
+        disc_prob_covered = 0.
         coverage_list = []
-        prob_list = []
+        localization_prob_list = [] # discovery prob based on strategy
+        disc_prob_list = [] # total discovery prob based on strategy + model
 
         for i in range(len(obs_order)):
             print(f'At {af.mjd_to_date_time(observe_mjds[i])} will observe this hex:')
@@ -243,10 +259,16 @@ def run_or(
             print(f'With filter {filt_list[i]}, exptime {exp_list[i]}, and dither {obs_order[i].dither}')
             sky_covered += obs_order[i].coverage_factor
             prob_covered += obs_order[i].coverage_factor * obs_order[i].prob
+            disc_prob_covered += obs_order[i].coverage_factor * obs_order[i].prob * prob_list[i]
             coverage_list.append(sky_covered)
-            prob_list.append(prob_covered)
+            localization_prob_list.append(prob_covered)
+            disc_prob_list.append(disc_prob_covered)
+            
+        
+        final_local_prob = prob_covered
+        final_disc_prob = disc_prob_covered
 
-        return obs_order, observe_mjds, coverage_list, prob_list, filt_list, exp_list
+        return obs_order, observe_mjds, coverage_list, prob_list, filt_list, exp_list,final_local_prob,final_disc_prob
 
 
 
@@ -255,7 +277,7 @@ def run_or(
     dithers_hexlist = []
     # inner_hexlist = og_inner_hexlist.copy()
     # outer_hexlist = og_outer_hexlist.copy()
-    obs_order, obs_mjds, coverage_list, prob_list, filt_list, exp_list = plan_observations(starttime, sunrise, inner_hexlist, outer_hexlist, None, None, obs_order, dithers_hexlist)
+    obs_order, obs_mjds, coverage_list, prob_list, filt_list, exp_list, local_prob, disc_prob = plan_observations(starttime, sunrise, inner_hexlist, outer_hexlist, None, None, obs_order, dithers_hexlist)
     ra = []
     dec = []
     for i in range(len(obs_order)):
@@ -284,7 +306,7 @@ def run_or(
     timer_end = time.perf_counter()
     print(f"Finished OneRing in {timer_end - timer_start:0.4f} seconds")
 
-    return
+    return local_prob, disc_prob
 
 
 ##FROM HERE ON IS OLD ONERING ##

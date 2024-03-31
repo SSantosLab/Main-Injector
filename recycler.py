@@ -156,6 +156,8 @@ def run_strategy_and_onering(skymap_filename,
     exposure_inner1 = optimal_strategy['Exposure01_deep']
     exposure_outer2 = optimal_strategy['Exposure02']
     exposure_inner2 = optimal_strategy['Exposure02_deep']
+    detP_1 = optimal_strategy['Detprob1']
+    detP_2 = optimal_strategy['Detprob2']
     json_output = os.path.join(output_dir, f"des-gw_{outname}_{sky_condition}.json")
 
     df.assign(json_output=json_output)
@@ -166,27 +168,33 @@ def run_strategy_and_onering(skymap_filename,
 
     exposure_inner = [exposure_inner1, exposure_inner2]
     exposure_outer = [exposure_outer1, exposure_outer2]
+    detP = [detP_1,detP_2]
+                                 
         
     print(f'OneRing inputs: skymap: {skymap}, outer: {outer}, inner: {inner}, filt: {filt}, exp_out: {exposure_outer}, exposure_inner: {exposure_inner}, mjd:{mjd}', flush=True)
     #run updated onering!
-    OneRing.run_or(
-        skymap,
-        outer,
-        inner,
-        filt,
-        exposure_inner,
-        exposure_outer,
-        mjd,
-        resolution=64,
-        jsonFilename=json_output
-    )
+    local_prob, disco_prob = OneRing.run_or(skymap,
+                                            outer,
+                                            inner,
+                                            filt,
+                                            exposure_inner,
+                                            exposure_outer,
+                                            mjd,
+                                            detP,
+                                            resolution=64,
+                                            jsonFilename=json_output)
 
+    local_prob = round(local_prob * 100,1)
+    disco_prob = round(disco_prob,1)
+                                 
     subject = ""
     text = f'*Strategy for event: {trigger_id}* \n\n' +\
         f'*Assumptions* \n' +\
         f'Sky Conditions: {sky_condition}\n' +\
         f'Event type: {event}\n' +\
-        f'Light curve model: {kn_type}\n\n' +\
+        f'Light curve model: {kn_type}\n' +\
+        f'Localization cumulative probability: {local_prob}%\n' +\
+        f'Discovery cumulative probability: {disco_prob}%\n\n' +\
         f'*Optimal Strategy Parameters*\n\n' +\
         f'Outer region coverage: {outer}\n' +\
         f'Inner region coverage: {inner}\n' +\

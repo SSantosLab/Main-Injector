@@ -115,7 +115,7 @@ def mjd_to_date_time(mjd, with_date = False):
     else:
         return time_str
     
-def get_hexinfo(ra, dec, prob, expTime, filt, mjd, get_sunrise_sunset = False, camera="decam"):
+def get_hexinfo(ra, dec, prob, expTime, filt, mjd, detP, get_sunrise_sunset = False, camera="decam"):
     """
     Gets information about given hexes, primarily rise and set times, then initializes
     a hex object for each (from hex_object.py) and stores them in a list. Rise and set 
@@ -228,7 +228,7 @@ def get_hexinfo(ra, dec, prob, expTime, filt, mjd, get_sunrise_sunset = False, c
     
     list_hexes = []
     for i in range(len(ra)):
-        thishex = hex_object.HexObject(ra[i], dec[i], prob[i], rise_times[i], set_times[i], expTime, filt, index = i)
+        thishex = hex_object.HexObject(ra[i], dec[i], prob[i], rise_times[i], set_times[i], expTime, filt,detP,index = i)
         list_hexes.append(thishex)
         
     if get_sunrise_sunset:
