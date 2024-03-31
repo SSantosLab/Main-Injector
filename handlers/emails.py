@@ -109,13 +109,17 @@ class EmailBot():
                     'Andre Santos',
                     'Nora Sherman',
                     'Jim Annis',
-                    'Marcelle Soares-Santos'
+                    'Marcelle Soares-Santos',
+                    'Sean MacBride',
+                    'Isaac McMahon'
                 ],
                 'emails': [
                     'andsouzasanttos@gmail.com',
                     'norafs@umich.edu',
                     'annis@fnal.gov',
-                    'mssantos@umich.edu'
+                    'mssantos@umich.edu',
+                    'sean.p.macbride@gmail.com',
+                    'isaac.mcmahon@physik.uzh.ch'
                 ]
             }
 
