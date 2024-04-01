@@ -1,0 +1,69 @@
+2023-11-01 09:48:15.286 | INFO     | __main__:<module>:157 - Handling Event S231030av with alert type EARLYWARNING
+2023-11-01 09:48:21.518 | INFO     | __main__:<module>:166 - skymaps stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING.
+2023-11-01 09:48:21.550 | INFO     | __main__:<module>:224 - In stage initial-plots for EARLYWARNING S231030av alert.
+2023-11-01 09:57:31.004 | INFO     | __main__:<module>:157 - Handling Event S231030av with alert type EARLYWARNING
+2023-11-01 09:57:37.066 | INFO     | __main__:<module>:166 - skymaps stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING.
+2023-11-01 09:57:37.114 | INFO     | __main__:<module>:224 - In stage initial-plots for EARLYWARNING S231030av alert.
+2023-11-01 10:03:57.372 | INFO     | __main__:<module>:157 - Handling Event S231030av with alert type EARLYWARNING
+2023-11-01 10:04:03.440 | INFO     | __main__:<module>:166 - skymaps stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING.
+2023-11-01 10:04:03.493 | INFO     | __main__:<module>:224 - In stage initial-plots for EARLYWARNING S231030av alert.
+2023-11-01 10:04:43.836 | INFO     | __main__:<module>:157 - Handling Event S231030av with alert type EARLYWARNING
+2023-11-01 10:04:49.872 | INFO     | __main__:<module>:166 - skymaps stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING.
+2023-11-01 10:04:49.907 | INFO     | __main__:<module>:224 - In stage initial-plots for EARLYWARNING S231030av alert.
+2023-11-01 10:05:20.319 | INFO     | __main__:<module>:231 - Initial plots for EARLYWARNING S231030av stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING/initial_plots.
+2023-11-01 11:00:16.567 | INFO     | __main__:<module>:157 - Handling Event S231030av with alert type EARLYWARNING
+2023-11-01 11:00:20.271 | INFO     | __main__:<module>:166 - skymaps stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING.
+2023-11-01 11:00:20.305 | INFO     | __main__:<module>:224 - In stage initial-plots for EARLYWARNING S231030av alert.
+2023-11-01 11:00:45.252 | INFO     | __main__:<module>:231 - Initial plots for EARLYWARNING S231030av stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING/initial_plots.
+2023-11-01 11:00:45.254 | INFO     | __main__:<module>:234 - Ranking galaxies for EARLYWARNING S231030av alert.
+2023-11-01 11:01:50.325 | INFO     | __main__:<module>:243 - Ranked galaxies list stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING
+2023-11-01 12:32:13.783 | INFO     | __main__:<module>:159 - Handling Event S231030av with alert type EARLYWARNING
+2023-11-01 12:32:17.708 | INFO     | __main__:<module>:168 - skymaps stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING.
+2023-11-01 12:32:17.741 | INFO     | __main__:<module>:226 - In stage initial-plots for EARLYWARNING S231030av alert.
+2023-11-01 12:32:41.433 | INFO     | __main__:<module>:233 - Initial plots for EARLYWARNING S231030av stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING/initial_plots.
+2023-11-01 12:32:41.435 | INFO     | __main__:<module>:236 - Ranking galaxies for EARLYWARNING S231030av alert.
+2023-11-01 12:33:48.908 | INFO     | __main__:<module>:245 - Ranked galaxies list stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING/initial_plots
+2023-11-01 12:33:48.910 | INFO     | __main__:<module>:249 - Pushing data from alert S231030av to website
+2023-11-01 12:35:06.983 | INFO     | __main__:<module>:159 - Handling Event S231030av with alert type EARLYWARNING
+2023-11-01 12:35:10.686 | INFO     | __main__:<module>:168 - skymaps stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING.
+2023-11-01 12:35:10.719 | INFO     | __main__:<module>:226 - In stage initial-plots for EARLYWARNING S231030av alert.
+2023-11-01 12:35:34.172 | INFO     | __main__:<module>:233 - Initial plots for EARLYWARNING S231030av stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING/initial_plots.
+2023-11-01 12:35:34.174 | INFO     | __main__:<module>:236 - Ranking galaxies for EARLYWARNING S231030av alert.
+2023-11-01 12:36:41.711 | INFO     | __main__:<module>:245 - Ranked galaxies list stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING/initial_plots
+2023-11-01 12:36:41.713 | INFO     | __main__:<module>:249 - Pushing data from alert S231030av to website
+2023-11-01 12:36:41.716 | INFO     | __main__:<module>:269 - scp data from alert S231030av to website
+2023-11-01 12:36:43.712 | INFO     | __main__:<module>:297 - Pushing initial data from alert S231030av to website
+2023-11-01 12:41:16.153 | INFO     | __main__:<module>:159 - Handling Event S231030av with alert type EARLYWARNING
+2023-11-01 12:41:19.884 | INFO     | __main__:<module>:168 - skymaps stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING.
+2023-11-01 12:41:19.917 | INFO     | __main__:<module>:226 - In stage initial-plots for EARLYWARNING S231030av alert.
+2023-11-01 12:41:43.049 | INFO     | __main__:<module>:233 - Initial plots for EARLYWARNING S231030av stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING/initial_plots.
+2023-11-01 12:41:43.050 | INFO     | __main__:<module>:236 - Ranking galaxies for EARLYWARNING S231030av alert.
+2023-11-01 12:42:44.986 | INFO     | __main__:<module>:245 - Ranked galaxies list stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING/initial_plots
+2023-11-01 12:42:44.987 | INFO     | __main__:<module>:249 - Pushing data from alert S231030av to website
+2023-11-01 12:42:44.989 | INFO     | __main__:<module>:269 - scp data from alert S231030av to website
+2023-11-01 12:42:45.333 | INFO     | __main__:<module>:297 - Pushing initial data from alert S231030av to website
+2023-11-01 12:45:18.872 | INFO     | __main__:<module>:159 - Handling Event S231030av with alert type EARLYWARNING
+2023-11-01 12:45:22.557 | INFO     | __main__:<module>:168 - skymaps stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING.
+2023-11-01 12:45:22.591 | INFO     | __main__:<module>:226 - In stage initial-plots for EARLYWARNING S231030av alert.
+2023-11-01 12:45:46.139 | INFO     | __main__:<module>:233 - Initial plots for EARLYWARNING S231030av stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING/initial_plots.
+2023-11-01 12:45:46.141 | INFO     | __main__:<module>:236 - Ranking galaxies for EARLYWARNING S231030av alert.
+2023-11-01 12:46:47.389 | INFO     | __main__:<module>:245 - Ranked galaxies list stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING/initial_plots
+2023-11-01 12:46:47.391 | INFO     | __main__:<module>:249 - Pushing data from alert S231030av to website
+2023-11-01 12:46:47.393 | INFO     | __main__:<module>:269 - scp data from alert S231030av to website
+2023-11-01 12:50:42.595 | INFO     | __main__:<module>:159 - Handling Event S231030av with alert type EARLYWARNING
+2023-11-01 12:50:46.501 | INFO     | __main__:<module>:168 - skymaps stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING.
+2023-11-01 12:50:46.533 | INFO     | __main__:<module>:226 - In stage initial-plots for EARLYWARNING S231030av alert.
+2023-11-01 12:51:10.177 | INFO     | __main__:<module>:233 - Initial plots for EARLYWARNING S231030av stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING/initial_plots.
+2023-11-01 12:51:10.179 | INFO     | __main__:<module>:236 - Ranking galaxies for EARLYWARNING S231030av alert.
+2023-11-01 12:52:19.961 | INFO     | __main__:<module>:245 - Ranked galaxies list stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING/initial_plots
+2023-11-01 12:52:19.963 | INFO     | __main__:<module>:249 - Pushing data from alert S231030av to website
+2023-11-01 12:52:19.965 | INFO     | __main__:<module>:269 - scp data from alert S231030av to website
+2023-11-01 13:02:48.494 | INFO     | __main__:<module>:159 - Handling Event S231030av with alert type EARLYWARNING
+2023-11-01 13:02:53.259 | INFO     | __main__:<module>:168 - skymaps stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING.
+2023-11-01 13:02:53.295 | INFO     | __main__:<module>:226 - In stage initial-plots for EARLYWARNING S231030av alert.
+2023-11-01 13:03:18.308 | INFO     | __main__:<module>:233 - Initial plots for EARLYWARNING S231030av stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING/initial_plots.
+2023-11-01 13:03:18.311 | INFO     | __main__:<module>:236 - Ranking galaxies for EARLYWARNING S231030av alert.
+2023-11-01 13:04:19.911 | INFO     | __main__:<module>:245 - Ranked galaxies list stored at OUTPUT/O4REAL_test/S231030av/EARLYWARNING/initial_plots
+2023-11-01 13:04:19.913 | INFO     | __main__:<module>:249 - Pushing data from alert S231030av to website
+2023-11-01 13:04:19.916 | INFO     | __main__:<module>:269 - scp data from alert S231030av to website
+2023-11-01 13:04:21.878 | INFO     | __main__:<module>:298 - Pushing initial data from alert S231030av to website

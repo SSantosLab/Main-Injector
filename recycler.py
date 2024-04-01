@@ -13,7 +13,7 @@ from stages.plots import make_plots_initial, make_plots_post_strat
 from stages.api import DESGWApi
 from stages.rank_galaxies import find_galaxy_list
 from pathlib import Path
-#from python.OneRing import run_or
+from python.OneRing import run_or
 from subprocess import run
 from stages.chirp_mass import get_chirp_mass
 
@@ -135,12 +135,11 @@ if __name__ == "__main__":
     LOG_DIR = ROOT_DIR/"logs"
     listener_log = LOG_DIR/"recyler.log"
     logger.add(listener_log, level="INFO", rotation="00:00")
+    desgw = DESGWApi(os.environ.get("API_BASE_URL"))
 
-    '''if gw_id[0] == "S": #previouslt was 'alert_type[0]'
-        EVENT_DIR = ROOT_DIR/"OUTPUT"/"O4REAL_test"/gw_id/f'{alert_type}_0' #This will throw an error since there is PRELIMINARY_0 and PRELIMINARY_1
-        #EVENT_DIR = ROOT_DIR/"OUTPUT"/"O4REAL"/gw_id/"PRELIMINARY_0" #This will throw an error since there is PRELIMINARY_0 and PRELIMINARY_1
-    else:
-        EVENT_DIR = ROOT_DIR/"OUTPUT"/"TESTING_test"/gw_id/alert_type'''
+    # Oftentimes, two preliminary LVC alerts will be issued only a few minutes apart, entitled "PRELIMINARY _1"
+    # and "PRELIMINARY_2". Here we handle this, and make relevant output directories for each instance, as well as for 
+    # the other alert types (EARLYWARNING, INITIAL, UPDATE, RETRACTION)
 
     if alert_type == 'PRELIMINARY':
         alert_type_codemanager = f'{alert_type}_0'
@@ -174,15 +173,17 @@ if __name__ == "__main__":
     
     moc_skymap = EVENT_DIR/"bayestar.multiorder.fits"
     flatten_skymap = Path(moc_skymap.as_posix().replace(".multiorder.fits", ".fits.gz"))
-    plots_path = EVENT_DIR/"initial_plots" 
+    plots_path = EVENT_DIR/"initial_data" 
 
+    # Make sure units are correct for FAR on website
     far = round(1/float(gw.event.far)/60/60/24/365, 2)
+    
+    # Find the event type(BBH, BNS, etc.) and probability that the event is the labeled type (ex: 0.9 -> 90% chance it is a BBH)
     source, event_prob = gw.find_source_and_prob()
 
 
     if ("all" in options.stages) or ("handle" in options.stages):
         logger.info(f"In stage handle for {alert_type} {gw_id} alert.")
-        #logger.info(f"Handling Event {gw_id} with alert type {alert_type}")
 
         if not moc_skymap.parent.exists():
             moc_skymap.parent.mkdir(parents=True, exist_ok=True)
@@ -193,9 +194,8 @@ if __name__ == "__main__":
         
         logger.info(f"Skymaps stored at {EVENT_DIR}.")
 
+        # Make the SLIPs for the event (skymap, observability(moon_plot), ranked galaxy list)
         logger.info(f"Making SLIPs for {alert_type} {gw_id} alert.")
-        #plots_path = EVENT_DIR/"initial_plots"
-        #plots_path.mkdir(parents=True, exist_ok=True)
         plots_path = Path(os.path.join(EVENT_DIR, "initial_data"))
         plots_path.mkdir(parents=True, exist_ok=True)
 
@@ -212,7 +212,7 @@ if __name__ == "__main__":
         logger.info(f"SLIP plots and galaxy ranking catalog for {alert_type} {gw_id} stored at {plots_path}.")
 
         
-        #desgw = DESGWApi(os.environ.get("API_BASE_URL"))
+        # Move these intitial plots + ranked galaxy list to codemanager
         # Make a directory within the server hosting the webpage corresponding to the gw_id
         server_dir = os.path.join("/des_web","www","html","desgw-new",f"{gw_id}", f"{alert_type_codemanager}")
         os.system("ssh -k codemanager@desweb.fnal.gov 'mkdir -p {}'".format(server_dir))
@@ -258,8 +258,8 @@ if __name__ == "__main__":
             f"Has Mass Gap: {gw.event.properties.HasMassGap}\n"
             f"GraceDB Link: {gw.urls.gracedb}\n"
             f"Skymap Link: {link}\n"
-            f"SLIP Moon plot: https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial_plots/Moon.png\n"
-            f"SLIP Initial Skymap: https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial_plots/initial_skymap.png")
+            f"SLIP Moon plot: https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial_data/Moon.png\n"
+            f"SLIP Initial Skymap: https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial_data/initial_skymap.png")
         
         if source == "BBH" and (far < 1000):
             logger.info("BBH with low FAR, skipping event!")
@@ -287,8 +287,6 @@ if __name__ == "__main__":
 
         logger.info(f"In stage add-trigger for {alert_type} {gw_id} alert.")
 
-        desgw = DESGWApi(os.environ.get("API_BASE_URL"))
-
         season = -9  # Change to official season later
 
         trigger_data = {
@@ -302,15 +300,13 @@ if __name__ == "__main__":
             }
 
         logger.info(f"Pushing data from alert {gw.superevent_id} to website")
-        print("Trigger Data:")
-        print(trigger_data)
-        #desgw.add_trigger(trigger_data = trigger_data)
+        desgw.add_trigger(trigger_data = trigger_data)
 
     if ("all" in options.stages) or ("add-trigger-by-day-initial" in options.stages):
 
         logger.info(f"In stage add-trigger-by-day-initial for {alert_type} {gw_id} alert.")
 
-        #desgw = DESGWApi(os.environ.get("API_BASE_URL"))
+        desgw = DESGWApi(os.environ.get("API_BASE_URL"))
 
         chirp_mass = get_chirp_mass(distmean, distsigma, area50, area90)
         trigger_data = {
@@ -318,9 +314,10 @@ if __name__ == "__main__":
             "ligo_prob": event_prob,
             "far": far,
             "distance": distmean,
+            "sigma_distance": distsigma,
             "galaxy_percentage_file": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial_data/ranked_galaxies_list.csv", #output from galaxy ranking file. (csv filepath)
             "initial_skymap": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial_data/initial_skymap.png", # output initial skymap plot filepath
-            "moon": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial/data/Moon.png",
+            "moon": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial_data/Moon.png",
             "season": "-9",
             "prob_region_50": area50,
             "prob_region_90": area90,
@@ -330,9 +327,7 @@ if __name__ == "__main__":
             "component_mass": 'Updated afer LVC releases these values'
         }
         logger.info(f"Pushing data from alert {gw.superevent_id} to website")
-        print("Trigger Data Initial:")
-        print(trigger_data)
-        #desgw.add_trigger_by_day(trigger_data = trigger_data)
+        desgw.add_trigger_by_day_initial(trigger_data = trigger_data)
 
     if ("all" in options.stages) or ("strategy" in options.stages):
 
@@ -367,7 +362,7 @@ if __name__ == "__main__":
 
     if ("all" in options.stages) or ("post-plots" in options.stages):
         logger.info(f"In stage post-plots for {alert_type} {gw_id} alert.")
-        airmass_hexes, skymap_obs_hexes, cum_hex_prob = make_plots_post_strat(flatten_skymap.as_posix(), plots_path.as_posix(), 'CHOOSE_JSON')
+        airmass_hexes, skymap_obs_hexes, cum_hex_prob = make_plots_post_strat(flatten_skymap.as_posix(), plots_path.as_posix(), 'chosen_strategy_json')
         logger.info(f"Post strategy plots for {alert_type} {gw_id} stored at {plots_path}.")
 
         # Make a directory within the server hosting the webpage corresponding to the gw_id
@@ -378,9 +373,10 @@ if __name__ == "__main__":
         os.system(f"rsync -a {plots_path} {desweb}")
 
 
-    '''if ("all" in options.stages) or ("add-trigger-by-day-final" in options.stages):
+    if ("all" in options.stages) or ("add-trigger-by-day-final" in options.stages):
 
-        logger.info(f"scp data from alert {gw.superevent_id} to website")
+        logger.info(f"In stage add-trigger-by-day-final for {alert_type} {gw_id} alert.")
+        logger.info(f"Pushing data from alert {gw.superevent_id} to website")
 
         #season = -9  # Change to official season later
         trigger_data = {
@@ -410,7 +406,7 @@ if __name__ == "__main__":
             "cumulative_hex_prob": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/cum_hex_prob.png"
             }
 
-        desgw.add_trigger(trigger_data = trigger_data)'''
+        desgw.add_trigger_by_day_final(trigger_data = trigger_data)
 
 
 
