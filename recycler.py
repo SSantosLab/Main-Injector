@@ -8,6 +8,7 @@ from argparse import ArgumentParser
 from astropy.io import fits
 from handlers.slack import SlackBot
 import time
+from ..stages.api import DESGWApi
 
 def elapsedTimeString(start):
     elapsed = int(time.time() - start)
@@ -63,6 +64,7 @@ max_hex_time = args.max_hex_time
 max_hex_count = args.max_hex_count
 official = args.official
 least_telescope = args.ltt
+desgw = DESGWApi(os.environ.get("API_BASE_URL")) # Update the base URL of the base API
 
 with fits.open(skymap) as f:
     header = f[1].header
@@ -169,9 +171,27 @@ def run_strategy_and_onering(skymap_filename,
     exposure_inner = [exposure_inner1, exposure_inner2]
     exposure_outer = [exposure_outer1, exposure_outer2]
     detP = [detP_1,detP_2]
-                                 
-    # add_trigger_by_day_intitial call
-    
+
+    # trigger_data = {
+    #         "type": source,
+    #         "ligo_prob": event_prob,
+    #         "far": far,
+    #         "distance": distmean,
+    #         "sigma_distance": distsigma,
+    #         "galaxy_percentage_file": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial_data/ranked_galaxies_list.csv", #output from galaxy ranking file. (csv filepath)
+    #         "initial_skymap": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial_data/initial_skymap.png", # output initial skymap plot filepath
+    #         "moon": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial_data/Moon.png",
+    #         "season": "-9",
+    #         "prob_region_50": area50,
+    #         "prob_region_90": area90,
+    #         "prob_coverage": 'Need to figure out what this is',
+    #         "snr": 'Disregard',
+    #         "chirp_mass": ' \u00B1 '.join(str(num) for num in chirp_mass), #str
+    #         "component_mass": 'Updated afer LVC releases these values'
+    #     }
+
+    # desgw.add_trigger_by_day_intitial(trigger_data=trigger_data)
+
     print(f'OneRing inputs: skymap: {skymap}, outer: {outer}, inner: {inner}, filt: {filt}, exp_out: {exposure_outer}, exposure_inner: {exposure_inner}, mjd:{mjd}', flush=True)
     #run updated onering!
     local_prob, disco_prob = OneRing.run_or(skymap,
@@ -185,7 +205,34 @@ def run_strategy_and_onering(skymap_filename,
                                             resolution=64,
                                             jsonFilename=json_output)
     
-    # add_trigger_by_day_final call 
+    # trigger_data = {
+    #         "date": datetime.now()
+    #         "n_hexes":
+    #         "econ_prob":
+    #         "econ_area":
+    #         "need_area":
+    #         "quality":
+    #         "exp_time":
+    #         "filter":
+    #         "hours":
+    #         "n_visits":
+    #         "n_slots":
+    #         "b_slot":
+    #         "prob_vs_slot_prob":
+    #         "centered_gif_plot":
+    #         "ligo_prob_contour_plot":
+    #         "des_prob_vs_ligo_prob_plot":
+    #         "des_limit_mag_map":
+    #         "des_limit_mag_map_src":
+    #         "json_link":
+    #         "log_link":
+    #         "strategy_table":
+    #         "final_skymap": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/skymap_obs_hexes.png", 
+    #         "airmass": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/airmass_hexes.png", 
+    #         "cumulative_hex_prob": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/cum_hex_prob.png"
+    #         }
+
+    #     desgw.add_trigger_by_day_final(trigger_data = trigger_data)
 
     local_prob = round(local_prob * 100,1)
     disco_prob = round(disco_prob,1)
