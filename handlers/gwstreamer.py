@@ -245,6 +245,10 @@ class GWStreamer():
         with open(f'{self.OUTPUT_TRIGGER}/{trigger_id}.json', 'w') as jsonfile:
             json.dump(record, jsonfile)
 
+        print('Posting to website...',flush=True)
+        
+        # add_trigger call here
+
         print('Handling Trigger...', flush=True)
         skymap_str = record.get('event', {}).pop('skymap')
         if skymap_str:

@@ -170,7 +170,8 @@ def run_strategy_and_onering(skymap_filename,
     exposure_outer = [exposure_outer1, exposure_outer2]
     detP = [detP_1,detP_2]
                                  
-        
+    # add_trigger_by_day_intitial call
+    
     print(f'OneRing inputs: skymap: {skymap}, outer: {outer}, inner: {inner}, filt: {filt}, exp_out: {exposure_outer}, exposure_inner: {exposure_inner}, mjd:{mjd}', flush=True)
     #run updated onering!
     local_prob, disco_prob = OneRing.run_or(skymap,
@@ -183,6 +184,8 @@ def run_strategy_and_onering(skymap_filename,
                                             detP,
                                             resolution=64,
                                             jsonFilename=json_output)
+    
+    # add_trigger_by_day_final call 
 
     local_prob = round(local_prob * 100,1)
     disco_prob = round(disco_prob,1)
@@ -212,6 +215,7 @@ def run_strategy_and_onering(skymap_filename,
 
     slack_bot.post_message(subject=subject,
                            text=text)
+    
 
 moony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
                                         args=(skymap,
