@@ -23,6 +23,7 @@ import pprint
 import json
 import yaml
 from .short_latency_plots import make_plots_initial
+from ..stages.api import DESGWApi
 
 def elapsedTimeString(start):
     elapsed = int(time.time() - start)
@@ -42,6 +43,7 @@ class GWStreamer():
         self._ROOT = root
         self.email_bot = EmailBot(mode=mode)
         self.slack_bot = SlackBot(mode=mode)
+        self.desgw = DESGWApi(os.environ.get("API_BASE_URL"))
 
     def _get_max_prob(self, record: dict) -> tuple:
         """Returns Event Source and max probability."""
@@ -246,8 +248,18 @@ class GWStreamer():
             json.dump(record, jsonfile)
 
         print('Posting to website...',flush=True)
-        
-        # add_trigger call here
+
+        # add_trigger call to website here
+        trigger_data = {
+            "trigger_label": trigger_id,
+            "mjd": float(Time(record['event']['time']).mjd),
+            "event_datetime": Time(record['event']['time']).strftime("%Y-%m-%d %H:%M:%S"),
+            "mock": is_mock, # True for mock event, False for real event.
+            "detectors":  record['event']['instruments'], #list of the detectors
+            "lvc_event_url": record['urls']['gracedb'], 
+            "season": season # This needs to be figured out...
+            }
+        desgw.add_trigger(trigger_data = trigger_data)
 
         print('Handling Trigger...', flush=True)
         skymap_str = record.get('event', {}).pop('skymap')
