@@ -216,7 +216,7 @@ class HexObject:
             added_coverage = 0.004673
             self.coverage = self.coverage_factor
             self.coverage_factor = added_coverage  
-        elif self.dither == [0.9423775, 0.405792]:
+        elif self.dither == [-0.543065, -0.828492]:
             added_coverage = 0.001298
             self.coverage = self.coverage_factor
             self.coverage_factor = added_coverage   
