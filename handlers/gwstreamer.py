@@ -259,7 +259,7 @@ class GWStreamer():
             "mock": is_mock, # True for mock event, False for real event.
             "detectors":  record['event']['instruments'], #list of the detectors
             "lvc_event_url": record['urls']['gracedb'], 
-            "season": -9}# This needs to be figured out...
+            "season": 1500}# This needs to be figured out...
 
         self.desgw.add_trigger(trigger_data = trigger_data)
 
