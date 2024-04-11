@@ -185,14 +185,14 @@ def run_strategy_and_onering(skymap_filename,
                                             resolution=64,
                                             jsonFilename=json_output)
     
-    trigger_data = {"date": datetime.now(),
+    trigger_data = {"date": mjd,
                     "n_hexes":
                     "econ_prob":
                     "econ_area":
                     "need_area":
                     "quality":
-                    "exp_time":
-                    "filter":
+                    "exp_time":[exposure_inner,exposure_outer],
+                    "filter":filt,
                     "hours":
                     "n_visits":
                     "n_slots":
