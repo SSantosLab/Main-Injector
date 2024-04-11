@@ -204,9 +204,11 @@ class GWStreamer():
             if record['superevent_id'][0] != 'S':
                 print('MI running in Observing Mode; unofficial trigger discarded')
                 return
-            
+            is_mock = False
             self.OUTPUT_PATH = os.path.join(self._ROOT,
                                             "OUTPUT/O4REAL")
+        else:
+            is_mock=True
                 
         if (self.mode == 'test') or (self.mode == 'mock'):
             if record['superevent_id'][0] != 'M':
@@ -259,7 +261,7 @@ class GWStreamer():
             "lvc_event_url": record['urls']['gracedb'], 
             "season": season # This needs to be figured out...
             }
-        desgw.add_trigger(trigger_data = trigger_data)
+        self.desgw.add_trigger(trigger_data = trigger_data)
 
         print('Handling Trigger...', flush=True)
         skymap_str = record.get('event', {}).pop('skymap')
