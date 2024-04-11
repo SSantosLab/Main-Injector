@@ -250,15 +250,18 @@ class GWStreamer():
             self.OUTPUT_TRIGGER = os.path.join(self.OUTPUT_PATH,
                                                trigger_id,
                                                f'{alert_type}_0')
+            self.alert_num =f'{alert_type}_0' 
             
             if os.path.isdir(self.OUTPUT_TRIGGER):
                 self.OUTPUT_TRIGGER = self.OUTPUT_TRIGGER.replace('_0','_1')
+                self.alert_num =f'{alert_type}_1'  
 
         else:
             self.OUTPUT_TRIGGER = os.path.join(self.OUTPUT_PATH,
                                                trigger_id,
                                                alert_type)
-            
+            self.alert_num =alert_type
+              
         if not os.path.exists(self.OUTPUT_TRIGGER):
             os.makedirs(self.OUTPUT_TRIGGER)
         
@@ -375,9 +378,9 @@ class GWStreamer():
                 "far": FAR,
                 "distance": record['event']['distmean'],
                 "sigma_distance": record['event']['distsigma'],
-                "galaxy_percentage_file": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alert_type}/initial_data/ranked_galaxies_list.csv", #output from galaxy ranking file. (csv filepath)
-                "initial_skymap": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alert_type}/initial_data/initial_skymap.png", # output initial skymap plot filepath
-                "moon": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alert_type}/initial_data/Moon.png",
+                "galaxy_percentage_file": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{self.alert_num}/initial_data/ranked_galaxies_list.csv", #output from galaxy ranking file. (csv filepath)
+                "initial_skymap": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{self.alert_num}/initial_data/initial_skymap.png", # output initial skymap plot filepath
+                "moon": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{self.alert_num}/initial_data/Moon.png",
                 "season": "-9",
                 "prob_region_50": area50,
                 "prob_region_90": area90,
