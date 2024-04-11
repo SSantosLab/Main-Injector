@@ -22,7 +22,7 @@ import astropy_healpix as ah
 import pprint
 import json
 import yaml
-from .short_latency_plots import make_plots_initial
+from .short_latency_plots import make_plots_initial, make_alert_skymap
 from ..stages.api import DESGWApi
 
 def elapsedTimeString(start):
@@ -349,6 +349,29 @@ class GWStreamer():
                     f'--official ' +\
                     f'--ltt'
 
+        area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob = make_alert_skymap(record['urls']['gracedb'])
+
+
+        trigger_data = {
+                "type": record['event']['group'],
+                "ligo_prob": EVENT_PROB,
+                "far": FAR,
+                "distance": record['event']['distmean'],
+                "sigma_distance": record['event']['distsigma'],
+                "galaxy_percentage_file": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alert_type_codemanager}/initial_data/ranked_galaxies_list.csv", #output from galaxy ranking file. (csv filepath)
+                "initial_skymap": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alert_type_codemanager}/initial_data/initial_skymap.png", # output initial skymap plot filepath
+                "moon": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alert_type_codemanager}/initial_data/Moon.png",
+                "season": "-9",
+                "prob_region_50": area50,
+                "prob_region_90": area90,
+                "prob_coverage": 'Need to figure out what this is',
+                "snr": 'Disregard',
+                "chirp_mass": ' \u00B1 '.join(str(num) for num in chirp_mass), #str
+                "component_mass": 'Updated afer LVC releases these values'
+            }
+
+        self.desgw.add_trigger_by_day_intitial(trigger_data=trigger_data)
+
 ### TESTING CHANGES HERE ####### BIG MONEY NO WHAMMIES ### PLEASE CHANGE #####
 #        skymap_location = '/data/des80.a/data/eliseke/Main-Injector/new_test_skymaps/o4_hlv_bns/348.fits.gz'
  #       recycler = 'python ' +\
@@ -357,4 +380,6 @@ class GWStreamer():
     #               f'--skymap {skymap_location} ' +\
      #              f'--event {source} ' +\
       #             f'--ltt'
+
+
         subprocess.Popen(recycler,shell=True)

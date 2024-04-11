@@ -172,26 +172,6 @@ def run_strategy_and_onering(skymap_filename,
     exposure_outer = [exposure_outer1, exposure_outer2]
     detP = [detP_1,detP_2]
 
-    # trigger_data = {
-    #         "type": source,
-    #         "ligo_prob": event_prob,
-    #         "far": far,
-    #         "distance": distmean,
-    #         "sigma_distance": distsigma,
-    #         "galaxy_percentage_file": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial_data/ranked_galaxies_list.csv", #output from galaxy ranking file. (csv filepath)
-    #         "initial_skymap": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial_data/initial_skymap.png", # output initial skymap plot filepath
-    #         "moon": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/initial_data/Moon.png",
-    #         "season": "-9",
-    #         "prob_region_50": area50,
-    #         "prob_region_90": area90,
-    #         "prob_coverage": 'Need to figure out what this is',
-    #         "snr": 'Disregard',
-    #         "chirp_mass": ' \u00B1 '.join(str(num) for num in chirp_mass), #str
-    #         "component_mass": 'Updated afer LVC releases these values'
-    #     }
-
-    # desgw.add_trigger_by_day_intitial(trigger_data=trigger_data)
-
     print(f'OneRing inputs: skymap: {skymap}, outer: {outer}, inner: {inner}, filt: {filt}, exp_out: {exposure_outer}, exposure_inner: {exposure_inner}, mjd:{mjd}', flush=True)
     #run updated onering!
     local_prob, disco_prob = OneRing.run_or(skymap,
