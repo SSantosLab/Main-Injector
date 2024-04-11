@@ -24,11 +24,27 @@ import json
 import yaml
 from .short_latency_plots import make_plots_initial, make_alert_skymap
 from ..stages.api import DESGWApi
+import pickle
 
 def elapsedTimeString(start):
     elapsed = int(time.time() - start)
     return "{}h {:02d}m {:02d}s".format(elapsed//(60*60), elapsed//60%60, elapsed%60)
 
+
+def chirp_mass(distmean, diststd, area90, area50):
+    test_event = [[distmean, diststd, area90, area50]] 
+
+    with open('../models/model.dat', 'rb') as f:
+        clf = pickle.load(f)
+
+    pdf = clf.predict_proba(test_event)[0]
+    if clf.missing_bins.shape[0]:
+        for c in clf.missing_bins:
+            pdf = np.insert(pdf, c-1, 0.)
+    expv = np.sum(pdf*clf.midpoints)
+    std = np.sqrt(np.sum(pdf*clf.midpoints*clf.midpoints) - expv**2)
+
+    return expv, std
 class GWStreamer():
 
     def __init__(self, mode):
@@ -351,6 +367,7 @@ class GWStreamer():
 
         area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob = make_alert_skymap(record['urls']['gracedb'])
 
+        chirp_mass,chirp_mass_std = chirp_mass(DISTANCE,DISTANCE_SIGMA,area90,area50)
 
         trigger_data = {
                 "type": record['event']['group'],
