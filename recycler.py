@@ -185,34 +185,33 @@ def run_strategy_and_onering(skymap_filename,
                                             resolution=64,
                                             jsonFilename=json_output)
     
-    # trigger_data = {
-    #         "date": datetime.now()
-    #         "n_hexes":
-    #         "econ_prob":
-    #         "econ_area":
-    #         "need_area":
-    #         "quality":
-    #         "exp_time":
-    #         "filter":
-    #         "hours":
-    #         "n_visits":
-    #         "n_slots":
-    #         "b_slot":
-    #         "prob_vs_slot_prob":
-    #         "centered_gif_plot":
-    #         "ligo_prob_contour_plot":
-    #         "des_prob_vs_ligo_prob_plot":
-    #         "des_limit_mag_map":
-    #         "des_limit_mag_map_src":
-    #         "json_link":
-    #         "log_link":
-    #         "strategy_table":
-    #         "final_skymap": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/skymap_obs_hexes.png", 
-    #         "airmass": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/airmass_hexes.png", 
-    #         "cumulative_hex_prob": f"https://des-ops.fnal.gov:8082/desgw-new/{gw_id}/{alert_type_codemanager}/cum_hex_prob.png"
-    #         }
+    trigger_data = {"date": datetime.now(),
+                    "n_hexes":
+                    "econ_prob":
+                    "econ_area":
+                    "need_area":
+                    "quality":
+                    "exp_time":
+                    "filter":
+                    "hours":
+                    "n_visits":
+                    "n_slots":
+                    "b_slot":
+                    "prob_vs_slot_prob":
+                    "centered_gif_plot":
+                    "ligo_prob_contour_plot":
+                    "des_prob_vs_ligo_prob_plot":
+                    "des_limit_mag_map":
+                    "des_limit_mag_map_src":
+                    "json_link":json_output,
+                    "log_link":output_log,
+                    "strategy_table":
+                    "final_skymap": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alert_type_codemanager}/skymap_obs_hexes.png", 
+                    "airmass": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alert_type_codemanager}/airmass_hexes.png", 
+                    "cumulative_hex_prob": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alert_type_codemanager}/cum_hex_prob.png"
+                    }
 
-    #     desgw.add_trigger_by_day_final(trigger_data = trigger_data)
+    desgw.add_trigger_by_day_final(trigger_data = trigger_data)
 
     local_prob = round(local_prob * 100,1)
     disco_prob = round(disco_prob,1)
