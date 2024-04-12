@@ -225,6 +225,10 @@ class GWStreamer():
         if record['event']['group'] != 'CBC':
             print('Non-CBC event discarded')
             return
+
+        if record['event']['pipeline'] == 'CWB':
+            print('Continuous wave background search event discarded')
+            return
         
         if alert_type == 'PRELIMINARY':
             self.OUTPUT_TRIGGER = os.path.join(self.OUTPUT_PATH,
