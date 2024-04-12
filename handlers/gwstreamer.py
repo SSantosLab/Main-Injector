@@ -227,7 +227,7 @@ class GWStreamer():
             return
 
         if record['event']['pipeline'] == 'CWB':
-            print('Continuous wave background search event discarded')
+            print('Coherent waveburst search event discarded')
             return
         
         if alert_type == 'PRELIMINARY':
