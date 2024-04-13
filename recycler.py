@@ -216,6 +216,13 @@ def run_strategy_and_onering(skymap_filename,
                     "airmass": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alertNum}/airmass_hexes.png", 
                     "cumulative_hex_prob": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alertNum}/cum_hex_prob.png"
                     }
+    
+    print("Trigger data to be posted to website",flush=True)
+    print("",flush=True)
+    for key, val in zip(trigger_data.keys(),trigger_data.values()):
+        print("Key:",key,flush=True)
+        print("Value:",val,flush=True) 
+        print("",flush=True)
 
     desgw.add_trigger_by_day_final(trigger_data = trigger_data)
 
