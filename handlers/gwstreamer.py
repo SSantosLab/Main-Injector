@@ -284,8 +284,8 @@ class GWStreamer():
             "mjd": float(Time(record['event']['time']).mjd),
             "event_datetime": Time(record['event']['time']).strftime("%Y-%m-%d %H:%M:%S"),
             "mock": is_mock, # True for mock event, False for real event.
-            "detectors":  record['event']['instruments'], #list of the detectors
-            "lvc_event_url": record['urls']['gracedb'], 
+            "detectors":  str(record['event']['instruments'])[1:-1], #list of the detectors
+            "lvc_event_url": str(record['urls']['gracedb']), 
             "season": 1500}# This needs to be figured out...
         
         print("Trigger data to be posted to website",flush=True)
@@ -293,6 +293,7 @@ class GWStreamer():
         for key, val in zip(trigger_data.keys(),trigger_data.values()):
             print("Key:",key,flush=True)
             print("Value:",val,flush=True) 
+            print("Value datatype:",type(val),flush=True)  
             print("",flush=True)
 
         self.desgw.add_trigger(trigger_data = trigger_data)
