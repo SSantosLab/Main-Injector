@@ -272,14 +272,14 @@ class GWStreamer():
 
         # add_trigger call to website here
         trigger_data = {
-            # 'type', 
-            # 'ligo_prob',
-            # 'far',
-            # 'distance',
-            # 'image_url',
-            # 'galaxy_percentage_file',
-            # 'initial_skymap',
-            # 'moon', 
+            'type':"", 
+            'ligo_prob':"",
+            'far':"",
+            'distance':"",
+            'image_url':"",
+            'galaxy_percentage_file':"",
+            'initial_skymap':"",
+            'moon':"", 
             "trigger_label": trigger_id,
             "mjd": float(Time(record['event']['time']).mjd),
             "event_datetime": Time(record['event']['time']).strftime("%Y-%m-%d %H:%M:%S"),
