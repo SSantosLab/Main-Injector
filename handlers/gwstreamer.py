@@ -23,7 +23,7 @@ import pprint
 import json
 import yaml
 from .short_latency_plots import make_plots_initial, make_alert_skymap
-from ..stages.api import DESGWApi
+from .api import DESGWApi
 import pickle
 
 def elapsedTimeString(start):

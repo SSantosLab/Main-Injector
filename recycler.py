@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 from astropy.io import fits
 from handlers.slack import SlackBot
 import time
-from ..stages.api import DESGWApi
+from handlers.api import DESGWApi
 
 def elapsedTimeString(start):
     elapsed = int(time.time() - start)
