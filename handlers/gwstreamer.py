@@ -289,6 +289,7 @@ class GWStreamer():
             "season": 1500}# This needs to be figured out...
         
         print("Trigger data to be posted to website",flush=True)
+        print("",flush=True)
         for key, val in zip(trigger_data.keys(),trigger_data.values()):
             print("Key:",key,flush=True)
             print("Value:",val,flush=True) 
@@ -404,7 +405,14 @@ class GWStreamer():
                 "chirp_mass": ' \u00B1 '.join(str(num) for num in chirp_mass), #str
                 "component_mass": 'Updated afer LVC releases these values'
             }
-
+        
+        print("Trigger data to be posted to website",flush=True)
+        print("",flush=True)
+        for key, val in zip(trigger_data.keys(),trigger_data.values()):
+            print("Key:",key,flush=True)
+            print("Value:",val,flush=True) 
+            print("",flush=True)
+        
         self.desgw.add_trigger_by_day_intitial(trigger_data=trigger_data)
 
 ### TESTING CHANGES HERE ####### BIG MONEY NO WHAMMIES ### PLEASE CHANGE #####
