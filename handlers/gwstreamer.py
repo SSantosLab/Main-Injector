@@ -272,6 +272,14 @@ class GWStreamer():
 
         # add_trigger call to website here
         trigger_data = {
+            # 'type', 
+            # 'ligo_prob',
+            # 'far',
+            # 'distance',
+            # 'image_url',
+            # 'galaxy_percentage_file',
+            # 'initial_skymap',
+            # 'moon', 
             "trigger_label": trigger_id,
             "mjd": float(Time(record['event']['time']).mjd),
             "event_datetime": Time(record['event']['time']).strftime("%Y-%m-%d %H:%M:%S"),
@@ -279,6 +287,12 @@ class GWStreamer():
             "detectors":  record['event']['instruments'], #list of the detectors
             "lvc_event_url": record['urls']['gracedb'], 
             "season": 1500}# This needs to be figured out...
+        
+        print("Trigger data to be posted to website",flush=True)
+        for key, val in zip(trigger_data.keys,trigger_data.values):
+            print("Key:",key,flush=True)
+            print("Value:",val,flush=True) 
+            print("",flush=True)
 
         self.desgw.add_trigger(trigger_data = trigger_data)
 
