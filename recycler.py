@@ -40,6 +40,11 @@ parser.add_argument('--official',
                     default=False,
                     help='If official, starts recycler for an official event.')
 
+parser.add_argument('--alertNum',
+                    type=str,
+                    default="PRELIMINARY_0",
+                    help='Stores the preliminary iterator')
+
 #NEW ADDITION -- LEAST TELESCOPE TIME STRATEGY?#
 parser.add_argument('--ltt',
                     action='store_true',
@@ -63,6 +68,7 @@ event = args.event
 max_hex_time = args.max_hex_time
 max_hex_count = args.max_hex_count
 official = args.official
+alertNum = args.alertNum
 least_telescope = args.ltt
 desgw = DESGWApi(os.environ.get("API_BASE_URL")) # Update the base URL of the base API
 
@@ -185,30 +191,30 @@ def run_strategy_and_onering(skymap_filename,
                                             resolution=64,
                                             jsonFilename=json_output)
     
-    trigger_data = {"date": mjd,
-                    "n_hexes":
-                    "econ_prob":
-                    "econ_area":
-                    "need_area":
-                    "quality":
+    trigger_data = {"date": np.datetime64('now'),
+                    # "n_hexes":
+                    # "econ_prob":
+                    # "econ_area":
+                    # "need_area":
+                    # "quality":
                     "exp_time":[exposure_inner,exposure_outer],
                     "filter":filt,
-                    "hours":
-                    "n_visits":
-                    "n_slots":
-                    "b_slot":
-                    "prob_vs_slot_prob":
-                    "centered_gif_plot":
-                    "ligo_prob_contour_plot":
-                    "des_prob_vs_ligo_prob_plot":
-                    "des_limit_mag_map":
-                    "des_limit_mag_map_src":
+                    # "hours":
+                    # "n_visits":
+                    # "n_slots":
+                    # "b_slot":
+                    # "prob_vs_slot_prob":
+                    # "centered_gif_plot":
+                    # "ligo_prob_contour_plot":
+                    # "des_prob_vs_ligo_prob_plot":
+                    # "des_limit_mag_map":
+                    # "des_limit_mag_map_src":
                     "json_link":json_output,
                     "log_link":output_log,
-                    "strategy_table":
-                    "final_skymap": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alert_type_codemanager}/skymap_obs_hexes.png", 
-                    "airmass": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alert_type_codemanager}/airmass_hexes.png", 
-                    "cumulative_hex_prob": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alert_type_codemanager}/cum_hex_prob.png"
+                    # "strategy_table":
+                    "final_skymap": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alertNum}/skymap_obs_hexes.png", 
+                    "airmass": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alertNum}/airmass_hexes.png", 
+                    "cumulative_hex_prob": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{alertNum}/cum_hex_prob.png"
                     }
 
     desgw.add_trigger_by_day_final(trigger_data = trigger_data)
