@@ -289,7 +289,7 @@ class GWStreamer():
             "season": 1500}# This needs to be figured out...
         
         print("Trigger data to be posted to website",flush=True)
-        for key, val in zip(trigger_data.keys,trigger_data.values):
+        for key, val in zip(trigger_data.keys(),trigger_data.values()):
             print("Key:",key,flush=True)
             print("Value:",val,flush=True) 
             print("",flush=True)
