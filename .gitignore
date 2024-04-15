@@ -17,3 +17,4 @@ test_hexes/MS*
 utils/*
 *-checkpoint.ipynb
 *.ipynb_checkpoints*
+*.DS_Store*
