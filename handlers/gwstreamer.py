@@ -37,7 +37,7 @@ def elapsedTimeString(start):
 def chirp_mass(distmean, diststd, area90, area50):
     test_event = [[distmean, diststd, area90, area50]] 
 
-    with open('../models/model.dat', 'rb') as f:
+    with open('/data/des70.a/data/desgw/O4/Main-Injector-O4b/models/model.dat', 'rb') as f:
         clf = pickle.load(f)
 
     pdf = clf.predict_proba(test_event)[0]
