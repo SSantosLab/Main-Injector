@@ -390,7 +390,7 @@ class GWStreamer():
 
         area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob = make_alert_skymap(f'{self.OUTPUT_TRIGGER}/bayestar.fits.gz') # the halpix map path
 
-        chirp_mass,chirp_mass_std = chirp_mass(DISTANCE,DISTANCE_SIGMA,area90,area50)
+        mass_chirp,chirp_mass_std = chirp_mass(DISTANCE,DISTANCE_SIGMA,area90,area50)
 
         trigger_data = {
                 "type": record['event']['group'],
@@ -406,7 +406,7 @@ class GWStreamer():
                 "prob_region_90": area90,
                 "prob_coverage": 'Need to figure out what this is',
                 "snr": 'Disregard',
-                "chirp_mass": ' \u00B1 '.join(str(num) for num in chirp_mass), #str
+                "chirp_mass": ' \u00B1 '.join(str(num) for num in mass_chirp), #str
                 "component_mass": 'Updated afer LVC releases these values'
             }
         
