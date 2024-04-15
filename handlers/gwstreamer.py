@@ -61,7 +61,7 @@ class GWStreamer():
         self._ROOT = root
         self.email_bot = EmailBot(mode=mode)
         self.slack_bot = SlackBot(mode=mode)
-        self.desgw = DESGWApi()
+        self.desgw = DESGWApi.DESGWApi()
 
     def _get_max_prob(self, record: dict) -> tuple:
         """Returns Event Source and max probability."""

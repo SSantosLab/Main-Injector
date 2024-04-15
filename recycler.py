@@ -72,7 +72,7 @@ max_hex_count = args.max_hex_count
 official = args.official
 alertNum = args.alertNum
 least_telescope = args.ltt
-desgw = DESGWApi() # Update the base URL of the base API
+desgw =  DESGWApi.DESGWApi() # Update the base URL of the base API
 
 with fits.open(skymap) as f:
     header = f[1].header
