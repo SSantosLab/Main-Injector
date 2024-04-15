@@ -419,7 +419,7 @@ class GWStreamer():
             print("Value:",val,flush=True) 
             print("",flush=True)
         
-        self.desgw.add_trigger_by_day(trigger_data=trigger_data)
+        self.desgw.add_trigger_by_day(trigger_data)
 
 ### TESTING CHANGES HERE ####### BIG MONEY NO WHAMMIES ### PLEASE CHANGE #####
 #        skymap_location = '/data/des80.a/data/eliseke/Main-Injector/new_test_skymaps/o4_hlv_bns/348.fits.gz'
