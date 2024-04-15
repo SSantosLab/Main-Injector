@@ -388,7 +388,7 @@ class GWStreamer():
                     f'--alertNum {self.alert_num}' +\
                     f'--ltt'
 
-        area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob = make_alert_skymap(record['urls']['gracedb'])
+        area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob = make_alert_skymap(f'{self.OUTPUT_TRIGGER}/bayestar.fits.gz') # the halpix map path
 
         chirp_mass,chirp_mass_std = chirp_mass(DISTANCE,DISTANCE_SIGMA,area90,area50)
 
