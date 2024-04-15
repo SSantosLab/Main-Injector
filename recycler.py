@@ -8,7 +8,9 @@ from argparse import ArgumentParser
 from astropy.io import fits
 from handlers.slack import SlackBot
 import time
-from desgw_db_writer.desgw_db_writer import api as DESGWApi
+import sys
+sys.path.insert(0, '/data/des70.a/data/desgw/O4/Main-Injector-O4b/desgw_db_writer')
+import desgw_db_writer.api as DESGWApi
 
 def elapsedTimeString(start):
     elapsed = int(time.time() - start)
@@ -70,7 +72,7 @@ max_hex_count = args.max_hex_count
 official = args.official
 alertNum = args.alertNum
 least_telescope = args.ltt
-desgw = DESGWApi(os.environ.get("API_BASE_URL")) # Update the base URL of the base API
+desgw = DESGWApi() # Update the base URL of the base API
 
 with fits.open(skymap) as f:
     header = f[1].header
