@@ -16,3 +16,4 @@ configs/slack*.txt
 test_hexes/MS*
 utils/*
 *-checkpoint.ipynb
+*.ipynb_checkpoints*
