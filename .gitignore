@@ -14,3 +14,4 @@ test_logs/
 log_files/
 configs/slack*.txt
 test_hexes/MS*
+utils/*
