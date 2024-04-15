@@ -17,6 +17,7 @@ import glob
 import time
 import subprocess
 import os
+os.environ["API_BASE_URL"] = "https://desgw-api-physics-soares-santos-flaskapi.apps.gnosis.lsa.umich.edu/api/v0.1/"
 import numpy as np
 import astropy_healpix as ah
 import pprint
