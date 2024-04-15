@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
     if mode == 'test':
         print('Reading test event...')
-        fake_alert_list = glob.glob('test_hexes/MS240320h-prelimi*.json')
+        fake_alert_list = glob.glob('/data/des70.a/data/desgw/O4/Main-Injector-O4b/OUTPUT/O4REAL/S240413p/UPDATE/S240413p.json')
         print('Passing event to Handler - Listener took '+elapsedTimeString(start_time), flush=True)
         for fake_alert in fake_alert_list:
             with open(fake_alert, 'r', encoding='utf-8') as f:

@@ -387,8 +387,8 @@ class GWStreamer():
                     f'--skymap {self.OUTPUT_TRIGGER}/bayestar.fits.gz ' +\
                     f'--event {source} ' +\
                     f'--official ' +\
-                    f'--alertNum {self.alert_num}' +\
-                    f'--ltt'
+                    f'--ltt' +\
+                    f'--alertNum {self.alert_num}'
 
         area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob = make_alert_skymap(f'{self.OUTPUT_TRIGGER}/bayestar.fits.gz') # the halpix map path
 
