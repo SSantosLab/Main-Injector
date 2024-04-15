@@ -406,7 +406,7 @@ class GWStreamer():
                 "prob_region_90": area90,
                 "prob_coverage": 'Need to figure out what this is',
                 "snr": 'Disregard',
-                "chirp_mass": ' \u00B1 '.join(str(num) for num in mass_chirp), #str
+                "chirp_mass": mass_chirp, #str
                 "component_mass": 'Updated afer LVC releases these values'
             }
         
