@@ -227,7 +227,7 @@ def run_strategy_and_onering(skymap_filename,
         print("Value:",val,flush=True) 
         print("",flush=True)
 
-    desgw.add_trigger_by_day_final(trigger_data = trigger_data)
+    desgw.add_trigger_by_day(trigger_data = trigger_data)
 
     local_prob = round(local_prob * 100,1)
     disco_prob = round(disco_prob,1)
