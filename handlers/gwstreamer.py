@@ -26,7 +26,7 @@ import yaml
 from .short_latency_plots import make_plots_initial, make_alert_skymap
 import sys
 sys.path.insert(0, '/data/des70.a/data/desgw/O4/Main-Injector-O4b/desgw_db_writer')
-import desgw_db_writer.api as DESGWApi
+import desgw_db_writer.desgw_db_writer.api as DESGWApi
 import pickle
 
 def elapsedTimeString(start):
