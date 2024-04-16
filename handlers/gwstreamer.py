@@ -278,20 +278,22 @@ class GWStreamer():
         # add_trigger call to website here
         trigger_data = {
                         "trigger_label":trigger_id,
-                        "type":alert_type,
+                        # "type":alert_type,
                         # "ligo_prob":"",
-                        "far":record['event']['far'],
+                        # "far":record['event']['far'],
                         # "distance":"",
                         "mjd":float(Time(record['event']['time']).mjd),
                         "event_datetime":datetime(record['event']['time']),
                         "mock":is_mock,
+                        # "lvc_event_url":"",
                         # "image_url":"",
                         # "galaxy_percentage_file":"",
                         # "initial_skymap":"",
                         # "moon":"",
                         "season":1599,
-                        "weather_img_url":'https://noirlab.edu/science/observing-noirlab/weather-webcams/cerro-tololo/environmental-conditions',
-                        "weather_report_url":'https://www.yr.no/en/forecast/graph/2-3895825/Chile/Coquimbo%20Region/Provincia%20de%20Elqui/Observatorio%20Astron%C3%B3mico%20Cerro%20Tololo'}
+                        # "weather_img_url":'https://noirlab.edu/science/observing-noirlab/weather-webcams/cerro-tololo/environmental-conditions',
+                        # "weather_report_url":'https://www.yr.no/en/forecast/graph/2-3895825/Chile/Coquimbo%20Region/Provincia%20de%20Elqui/Observatorio%20Astron%C3%B3mico%20Cerro%20Tololo'
+                        }
 
             # "detectors":  str(record['event']['instruments'])[1:-1], #list of the detectors
         
@@ -303,7 +305,7 @@ class GWStreamer():
             print("Value datatype:",type(val),flush=True)  
             print("",flush=True)
 
-        self.api.add_trigger(trigger_data = trigger_data)
+        self.api.add_trigger(trigger_data)
 
         print('Handling Trigger...', flush=True)
         skymap_str = record.get('event', {}).pop('skymap')
