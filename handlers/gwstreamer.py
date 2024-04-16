@@ -62,9 +62,9 @@ class GWStreamer():
         self._ROOT = root
         self.email_bot = EmailBot(mode=mode)
         self.slack_bot = SlackBot(mode=mode)
-        self.desgw = DESGWApi.DESGWApi()
+        self.api = DESGWApi.DESGWApi()
 
-        print("API Functions:",self.desgw.__dir__())
+        print("API Functions:",self.api.__dir__())
 
     def _get_max_prob(self, record: dict) -> tuple:
         """Returns Event Source and max probability."""
@@ -113,7 +113,7 @@ class GWStreamer():
         trigger_id = record['superevent_id']
 
         if retraction:
-            subject = f"Rectraction for {str(trigger_id)}"
+            subject = f"Retraction for {str(trigger_id)}"
             text = ''
             self.email_bot.send_email(subject, text)
             return subject, text
@@ -283,7 +283,7 @@ class GWStreamer():
                         "far":record['event']['far'],
                         # "distance":"",
                         "mjd":float(Time(record['event']['time']).mjd),
-                        "event_datetime":datetime(record['event']['time']).strftime("%Y-%m-%d %H:%M:%S"),
+                        "event_datetime":datetime(record['event']['time']),
                         "mock":is_mock,
                         # "image_url":"",
                         # "galaxy_percentage_file":"",
@@ -303,7 +303,7 @@ class GWStreamer():
             print("Value datatype:",type(val),flush=True)  
             print("",flush=True)
 
-        self.desgw.add_trigger(trigger_data = trigger_data)
+        self.api.add_trigger(trigger_data = trigger_data)
 
         print('Handling Trigger...', flush=True)
         skymap_str = record.get('event', {}).pop('skymap')
@@ -432,7 +432,7 @@ class GWStreamer():
             print("Value:",val,flush=True) 
             print("",flush=True)
         
-        self.desgw.add_trigger_by_day(trigger_data)
+        self.api.add_trigger_by_day(trigger_data)
 
 ### TESTING CHANGES HERE ####### BIG MONEY NO WHAMMIES ### PLEASE CHANGE #####
 #        skymap_location = '/data/des80.a/data/eliseke/Main-Injector/new_test_skymaps/o4_hlv_bns/348.fits.gz'
