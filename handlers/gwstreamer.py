@@ -283,13 +283,14 @@ class GWStreamer():
                         # "far":record['event']['far'],
                         # "distance":"",
                         "mjd":float(Time(record['event']['time']).mjd),
-                        "event_datetime":int(1), # record['event']['time']
+                        "event_datetime":str(record['event']['time']), # record['event']['time']
                         "mock":is_mock,
-                        # "lvc_event_url":"",
+                        "lvc_event_url":"",
                         # "image_url":"",
                         # "galaxy_percentage_file":"",
                         # "initial_skymap":"",
                         # "moon":"",
+                        "detectors":"",
                         "season":1599,
                         # "weather_img_url":'https://noirlab.edu/science/observing-noirlab/weather-webcams/cerro-tololo/environmental-conditions',
                         # "weather_report_url":'https://www.yr.no/en/forecast/graph/2-3895825/Chile/Coquimbo%20Region/Provincia%20de%20Elqui/Observatorio%20Astron%C3%B3mico%20Cerro%20Tololo'
