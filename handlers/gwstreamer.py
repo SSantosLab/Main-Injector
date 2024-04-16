@@ -283,7 +283,7 @@ class GWStreamer():
                         # "far":record['event']['far'],
                         # "distance":"",
                         "mjd":float(Time(record['event']['time']).mjd),
-                        "event_datetime":datetime(record['event']['time']),
+                        "event_datetime":int(datetime(record['event']['time'])),
                         "mock":is_mock,
                         # "lvc_event_url":"",
                         # "image_url":"",
