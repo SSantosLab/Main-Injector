@@ -10,6 +10,7 @@ from astropy.io import fits
 from handlers.slack import SlackBot
 import time
 import sys
+from datetime import datetime
 sys.path.insert(0, '/data/des70.a/data/desgw/O4/Main-Injector-O4b/desgw_db_writer')
 import desgw_db_writer.api as DESGWApi
 
@@ -194,13 +195,15 @@ def run_strategy_and_onering(skymap_filename,
                                             resolution=64,
                                             jsonFilename=json_output)
     
-    trigger_data = {"date": np.datetime64('now'),
+
+
+    trigger_data = {"date": datetime.now(),
                     # "n_hexes":
                     # "econ_prob":
                     # "econ_area":
                     # "need_area":
                     # "quality":
-                    "exp_time":[exposure_inner,exposure_outer],
+                    "exp_time":"Inner: "+ str(exposure_inner)+ " Outer: " + str(exposure_outer),
                     "filter":filt,
                     # "hours":
                     # "n_visits":

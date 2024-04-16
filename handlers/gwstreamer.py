@@ -277,21 +277,23 @@ class GWStreamer():
 
         # add_trigger call to website here
         trigger_data = {
-            'type':"", 
-            'ligo_prob':"",
-            'far':"",
-            'distance':"",
-            'image_url':"",
-            'galaxy_percentage_file':"",
-            'initial_skymap':"",
-            'moon':"", 
-            "trigger_label": trigger_id,
-            "mjd": float(Time(record['event']['time']).mjd),
-            "event_datetime": Time(record['event']['time']).strftime("%Y-%m-%d %H:%M:%S"),
-            "mock": is_mock, # True for mock event, False for real event.
-            "detectors":  str(record['event']['instruments'])[1:-1], #list of the detectors
-            "lvc_event_url": str(record['urls']['gracedb']), 
-            "season": 1500}# This needs to be figured out...
+                        "trigger_label":trigger_id,
+                        "type":alert_type,
+                        # "ligo_prob":"",
+                        "far":record['event']['far'],
+                        # "distance":"",
+                        "mjd":float(Time(record['event']['time']).mjd),
+                        "event_datetime":datetime(record['event']['time']).strftime("%Y-%m-%d %H:%M:%S"),
+                        "mock":is_mock,
+                        # "image_url":"",
+                        # "galaxy_percentage_file":"",
+                        # "initial_skymap":"",
+                        # "moon":"",
+                        "season":1599,
+                        "weather_img_url":'https://noirlab.edu/science/observing-noirlab/weather-webcams/cerro-tololo/environmental-conditions',
+                        "weather_report_url":'https://www.yr.no/en/forecast/graph/2-3895825/Chile/Coquimbo%20Region/Provincia%20de%20Elqui/Observatorio%20Astron%C3%B3mico%20Cerro%20Tololo'}
+
+            # "detectors":  str(record['event']['instruments'])[1:-1], #list of the detectors
         
         print("Trigger data to be posted to website",flush=True)
         print("",flush=True)
@@ -395,22 +397,33 @@ class GWStreamer():
         mass_chirp,chirp_mass_std = chirp_mass(DISTANCE,DISTANCE_SIGMA,area90,area50)
 
         trigger_data = {
-                "type": record['event']['group'],
-                "ligo_prob": EVENT_PROB,
-                "far": FAR,
-                "distance": record['event']['distmean'],
-                "sigma_distance": record['event']['distsigma'],
-                "galaxy_percentage_file": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{self.alert_num}/initial_data/ranked_galaxies_list.csv", #output from galaxy ranking file. (csv filepath)
-                "initial_skymap": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{self.alert_num}/initial_data/initial_skymap.png", # output initial skymap plot filepath
-                "moon": f"https://des-ops.fnal.gov:8082/desgw-new/{trigger_id}/{self.alert_num}/initial_data/Moon.png",
-                "season": "-9",
-                "prob_region_50": area50,
-                "prob_region_90": area90,
-                "prob_coverage": 'Need to figure out what this is',
-                "snr": 'Disregard',
-                "chirp_mass": mass_chirp, #str
-                "component_mass": 'Updated afer LVC releases these values'
-            }
+                "trigger_label":trigger_id,
+                "date":datetime.now()
+                # "n_hexes":"",
+                # "econ_prob":"",
+                # "econ_area":"",
+                # "need_area":"",
+                # "quality":"",
+                # "exp_time":"",
+                # "filter":"",
+                # "hours":"",
+                # "n_visits":"",
+                # "n_slots":"",
+                # "b_slot":"",
+                # "prob_vs_slot_plot":"",
+                # "centered_gif_plot":"",
+                # "ligo_prob_contour_plot":"",
+                # "des_prob_vs_ligo_prob_plot":"",
+                # "des_limit_mag_map":"",
+                # "des_limit_mag_map_src":"",
+                # "json_link":"",
+                # "log_link":"",
+                # "strategy_table":"",
+                # "final_skymap":"",
+                # "airmass":"",
+                # "cumulative_hex_prob":""
+                }
+
         
         print("Trigger data to be posted to website",flush=True)
         print("",flush=True)
