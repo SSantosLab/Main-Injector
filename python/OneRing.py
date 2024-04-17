@@ -45,7 +45,8 @@ def run_or(
     propid='propid', 
     jsonFilename="des-gw.json",
     test=False,
-    plot_numbers=False
+    plot_numbers=False,
+    manual = False
 ):
     
     timer_start = time.perf_counter()
@@ -99,6 +100,22 @@ def run_or(
     outer_ra = np.array(outer_ra); outer_dec = np.array(outer_dec); 
     inner_prob = np.array(inner_prob); outer_prob = np.array(outer_prob); 
 
+    if manual:
+        #add in an option to produce a manual observing .json with the input filter, all inner ras and all inner decs, in no particular order
+        #this requires inputting only one filter, ie [ii] or [rr], and one exp time per hex, ie inner hexes [100, 100], outer hexes [150, 150]. produce additional jsons if you want second pass manually
+        print(f'Writing observing plan to {jsonFilename}')
+        # JSON writing
+        ra_list = np.concatenate((inner_ra, outer_ra), axis=0)
+        dec_list = np.concatenate((inner_dec, outer_dec), axis=0)
+        exp_list_inner = len(list(inner_dec))*[expTime_inner[0]]
+        exp_list_outer= len(list(outer_dec))*[expTime_outer[0]]
+        exp_list = np.concatenate((exp_list_inner, exp_list_outer), axis=0)
+        filt_list = len(list(ra_list))*[filt[0]]
+
+        jsonMaker.writeJson(ra_list,dec_list,exp_list,filt_list, trigger_id, trigger_type, propid, skymap, jsonFilename) 
+
+        #return nothing if this is a manual plan
+        return 
     
     # From here on is implementation of The Main Injectors (consisting of Elise, Nora, Isaac, Thomas, and Andre) new hex sorting code, with sorting based on awesomeness factor
     og_inner_hexlist, sunrise, sunset = af.get_hexinfo(inner_ra, inner_dec, inner_prob, inner_exptime, filt, mjd, detP,True)
@@ -128,7 +145,6 @@ def run_or(
     observe_mjds = []
     obs_order = []
     current_mjd = sunset
-    
     
     def order_hexes(hex_list):
         """
