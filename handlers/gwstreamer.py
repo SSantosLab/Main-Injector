@@ -401,7 +401,7 @@ class GWStreamer():
 
         trigger_data = {
                 "trigger_label":trigger_id,
-                "date":datetime.now()
+                "date":str(datetime.now())
                 # "type",
                 # "ligo_prob",
                 # "far",
