@@ -18,3 +18,4 @@ utils/*
 *-checkpoint.ipynb
 *.ipynb_checkpoints*
 *.DS_Store*
+python/*nora_needs*
