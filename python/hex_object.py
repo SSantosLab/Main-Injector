@@ -62,6 +62,7 @@ class HexObject:
         self.ra = ra
         self.dec = dec
         self.detP = detP # tuple of (detP_1,detP_2), where detP_1 is first pass and detP_2 is second pass
+        self.observed_time = None
         
         if camera == "decam":
             self.lat = -30.16527778
@@ -170,8 +171,9 @@ class HexObject:
             return 1.
         return c * time**(-a)
     
-    def observe_hex(self):
+    def observe_hex(self, mjd):
         #update coverage if hex has been observed
+        self.observed_time = mjd
         if self.dither == [0.00, 0.00]:
             #update dither to be next most coverage
             self.dither = [0.06389, 0.287436]
