@@ -16,3 +16,4 @@ configs/slack*.txt
 test_hexes/MS*
 *nora_needs*
 utils/*.jpg
+desgw_db_writer/desgw_db_writer/desgw_db_writer
