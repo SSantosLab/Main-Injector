@@ -278,20 +278,16 @@ class GWStreamer():
         # add_trigger call to website here
         trigger_data = {
                         "trigger_label":trigger_id,
-                        # "type":alert_type,
-                        # "ligo_prob":"",
-                        # "far":record['event']['far'],
-                        # "distance":"",
+                        "mock":is_mock,
+                        "season":"1599",
                         "mjd":float(Time(record['event']['time']).mjd),
                         "event_datetime":str(record['event']['time']), # record['event']['time']
-                        "mock":is_mock,
-                        "lvc_event_url":"",
+                        "detectors":str(record['event']['instruments'])[1:-1],
+                        "lvc_event_url":record['urls']['gracedb'],
                         # "image_url":"",
                         # "galaxy_percentage_file":"",
                         # "initial_skymap":"",
                         # "moon":"",
-                        "detectors":"",
-                        "season":1599,
                         # "weather_img_url":'https://noirlab.edu/science/observing-noirlab/weather-webcams/cerro-tololo/environmental-conditions',
                         # "weather_report_url":'https://www.yr.no/en/forecast/graph/2-3895825/Chile/Coquimbo%20Region/Provincia%20de%20Elqui/Observatorio%20Astron%C3%B3mico%20Cerro%20Tololo'
                         }
