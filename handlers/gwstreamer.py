@@ -320,7 +320,7 @@ class GWStreamer():
                                         record=record,
                                         retraction=False)
         
-        weather_text = f"*Weather at CTIO*: {} \n*CTIO Weather protocol*:{}".format(self.weather_link,self.weather_info_link)
+        weather_text = "*Weather at CTIO*: {} \n*CTIO Weather protocol*:{}".format(self.weather_link,self.weather_info_link)
 
         self.slack_bot = SlackBot(mode=self.mode)
         self.slack_bot.post_message(subject=subject, text=text)
