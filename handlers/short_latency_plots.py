@@ -160,7 +160,7 @@ def moon_airmass(event_name, todays_date, target_coords):
     # Closes all the figure windows.
     plt.close('all')
     
-    return moon_plot,moonaltazs,max_prob_coord_altazs
+    return moon_plot
     
 def make_plots_initial(url, name):
     '''url is either the skymap url or the local path to the skymap, name is something like "S230518". 
