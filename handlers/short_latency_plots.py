@@ -90,35 +90,40 @@ def moon_airmass(event_name, todays_date, target_coords):
     
     
     
-    CTIO = EarthLocation(lat=-30.17*u.deg, lon=-70.80*u.deg, height=3000*u.m)
+    CTIO = EarthLocation.of_site('Cerro Tololo Interamerican Observatory')
     utcoffset = -4*u.hour  # Eastern Daylight Time
 
     mytime = todays_date
-    midnight = Time(mytime) - utcoffset
+    midnight = Time(mytime) - utcoffset # - -> plus?
     
     
     delta_midnight = np.linspace(-12, 12, 1000)*u.hour
     times_tonight = midnight + delta_midnight
+
+    print(todays_date,times_tonight)
+
     frame = AltAz(obstime=times_tonight, location=CTIO)
     sunaltazs = get_sun(times_tonight).transform_to(frame)
     
-    max_prob_coord = SkyCoord(target_coords[0], target_coords[1], unit="deg")
+    max_prob_coord = SkyCoord(target_coords[0], target_coords[1], unit="deg",frame='icrs')
     max_prob_coord_altazs = max_prob_coord.transform_to(frame)
     
     
     moon = get_body("moon", times_tonight)
     moonaltazs = moon.transform_to(frame)
+
+    moon_separation = max_prob_coord_altazs.separation(moonaltazs)
     
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
     t = max_prob_coord_altazs.secz
-    condition = [i for i in range(len(t)-1) if abs(t[i] - t[1+1]) > 10]
+    condition = [i for i in range(len(t)-1) if abs(t[i] - t[i+1]) > 10]
     t[condition] = np.nan
     
     
-    l1 = ax1.plot(delta_midnight, moonaltazs.alt, color='blue', ls='--', label='Moon')
+    l1 = ax1.plot(delta_midnight, moon_separation.deg, color='blue', ls='--', label='Moon separation')
     l2 = ax2.plot(delta_midnight, t, color = 'red', ls='-', label='Max Prob Coord', alpha = 0.5)
-    label = ['Moon (Alt)', 'Max Prob Coord (Airmass)']
+    label = ['Moon separation (deg)', 'Max Prob Coord (Airmass)']
     fig.legend(labels=label,
            loc= (0.1, 0.82), fontsize = 9)
     
@@ -145,6 +150,7 @@ def moon_airmass(event_name, todays_date, target_coords):
     ax2.set_ylim(4,1)
 
     moon_plot = event_name+'/Moon.png'
+    moon_plot = f'/data/des70.a/data/desgw/O4/Main-Injector-O4b/utils/Moon_{todays_date}.png'
     plt.savefig(moon_plot, dpi=300, bbox_inches = "tight")
     
     # Clear the current axes.
@@ -154,7 +160,7 @@ def moon_airmass(event_name, todays_date, target_coords):
     # Closes all the figure windows.
     plt.close('all')
     
-    return moon_plot
+    return moon_plot,moonaltazs,max_prob_coord_altazs
     
 def make_plots_initial(url, name):
     '''url is either the skymap url or the local path to the skymap, name is something like "S230518". 
