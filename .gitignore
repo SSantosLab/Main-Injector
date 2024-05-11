@@ -18,3 +18,4 @@ test_hexes/MS*
 utils/*.jpg
 *desgw_db_writer/*
 utils/*.png
+utils/*.ipynb
