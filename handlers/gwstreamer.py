@@ -429,7 +429,7 @@ class GWStreamer():
             print("",flush=True)
         
         self.api.add_trigger_by_day(trigger_data)
-
+        creationTime = str(record['time_created'])
         print('Passing event to Recycler. Handler took '+elapsedTimeString(t0), flush=True)
         root_dir = os.environ["ROOT_DIR"]
         recycler = 'python ' +\
@@ -439,8 +439,8 @@ class GWStreamer():
                     f'--event {source} ' +\
                     f'--official ' +\
                     f'--ltt ' +\
-                    f'--alertNum {self.alert_num}' +\
-                    f'--creationTime {str(record['time_created'])}'
+                    f'--alertNum {self.alert_num} ' +\
+                    f'--creationTime {creationTime}'
 ### TESTING CHANGES HERE ####### BIG MONEY NO WHAMMIES ### PLEASE CHANGE #####
 #        skymap_location = '/data/des80.a/data/eliseke/Main-Injector/new_test_skymaps/o4_hlv_bns/348.fits.gz'
  #       recycler = 'python ' +\
