@@ -278,7 +278,7 @@ class GWStreamer():
                         "mock":is_mock,
                         "season":"1599",
                         "mjd":float(Time(record['event']['time']).mjd),
-                        "event_datetime":str(record['event']['time']), # record['event']['time']
+                        "event_datetime":str(record['time_created']), # record['event']['time']
                         "detectors":str(record['event']['instruments'])[1:-1],
                         "lvc_event_url":record['urls']['gracedb']}
 
@@ -369,16 +369,6 @@ class GWStreamer():
         self.email_bot.send_email(subject=subject,text=text)
         
         OUTPUT_IMAGE = OUTPUT_FLATTEN.replace('bayestar.fits.gz', 'bayestar.png')
-        print('Passing event to Recycler. Handler took '+elapsedTimeString(t0), flush=True)
-        root_dir = os.environ["ROOT_DIR"]
-        recycler = 'python ' +\
-                    f'{root_dir}/recycler.py ' +\
-                    f'--trigger-id {trigger_id} ' +\
-                    f'--skymap {self.OUTPUT_TRIGGER}/bayestar.fits.gz ' +\
-                    f'--event {source} ' +\
-                    f'--official ' +\
-                    f'--ltt ' +\
-                    f'--alertNum {self.alert_num}'
 
         area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob = make_alert_skymap(f'{self.OUTPUT_TRIGGER}/bayestar.fits.gz') # the halpix map path
 
@@ -386,7 +376,7 @@ class GWStreamer():
 
         trigger_data = {
                 "trigger_label":trigger_id,
-                "date":str(datetime.now()),
+                "date":str(record['time_created']),
                 "type":str(alert_type),
                 "ligo_prob":float(EVENT_PROB),
                 "far":float(FAR),
@@ -440,6 +430,17 @@ class GWStreamer():
         
         self.api.add_trigger_by_day(trigger_data)
 
+        print('Passing event to Recycler. Handler took '+elapsedTimeString(t0), flush=True)
+        root_dir = os.environ["ROOT_DIR"]
+        recycler = 'python ' +\
+                    f'{root_dir}/recycler.py ' +\
+                    f'--trigger-id {trigger_id} ' +\
+                    f'--skymap {self.OUTPUT_TRIGGER}/bayestar.fits.gz ' +\
+                    f'--event {source} ' +\
+                    f'--official ' +\
+                    f'--ltt ' +\
+                    f'--alertNum {self.alert_num}' +\
+                    f'--creationTime {str(record['time_created'])}'
 ### TESTING CHANGES HERE ####### BIG MONEY NO WHAMMIES ### PLEASE CHANGE #####
 #        skymap_location = '/data/des80.a/data/eliseke/Main-Injector/new_test_skymaps/o4_hlv_bns/348.fits.gz'
  #       recycler = 'python ' +\

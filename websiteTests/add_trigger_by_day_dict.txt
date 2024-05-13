@@ -1,0 +1,45 @@
+    # trigger_data = { # for add_trigger_by_day
+    #                 "trigger_label":trigger_id,# implemented everywhere
+    #                 "date": str(datetime.now()),# implemented everywhere
+                    # "type":,# implemented in gwstreamer
+                    # "ligo_prob":,# implemented in gwstreamer
+                    # "far":,# implemented in gwstreamer
+                    # "distance":,# implemented in gwstreamer
+                    # "n_hexes":, # implemented in OneRing
+                    # "econ_prob":, # not yet incorporated
+                    # "econ_area":, # not yet incorporated
+                    # "need_area":,  # not yet incorporated
+                    # "quality":, # not yet incorporated
+                    # "exp_time":[exposure_inner,exposure_outer].__str__(), # implemented in recycler
+                    # "filter":filt, # implemented in recycler
+                    # "hours":, # implemented in OneRing
+                    # "n_visits":, # number of visits to a hex - this is in OneRing, but not implemented
+                    # "n_slots":, # defunct
+                    # "b_slot":, # defunct
+                    # "prob_region_50":,# implemented in gwstreamer
+                    # "prob_region_90":,# implemented in gwstreamer
+                    # "prob_coverage":disco_prob,# implemented in gwstreamer
+                    # "snr":, # recycler? "An outdated concept" says Isaac
+                    # "chirp_mass":, # in gwstreamer
+                    # "component_mass_1":, # huh recycler - defunct
+                    # "component_mass_2":, # huh - defunct
+                    # "season":, # DONT CARE and defunct
+                    # "prob_vs_slot_plot":, # defunct
+                    # "centered_gif_plot":, # not implemented
+                    # "ligo_prob_contour_plot":, # This is one of the SLIPS - not implemented
+                    # "des_prob_vs_ligo_prob_plot":, # OneRing allegedly?? - not implemented
+                    # "des_limit_mag_map":, # defunct? maybe calculated in OneRing? No, awesomeness functions uses mags.py to calculate some stufffffff - not implemented
+                    # "des_limit_mag_map_src":, # defunct?? - not implemented
+                    # "highest_prob_json":, # we don't use this so defunct
+                    # "low_tt_json":json_output, # implemented in recycler
+                    # "log_link":, # implemented in recycler
+                    # "strategy_table":, # implemented in recycler
+                    # "initial_skymap":, # implemented in  recycler
+                    # "final_skymap":, #  implemented in recycler
+                    # "airmass":, # not implemented
+                    # "cumulative_hex_prob":, # not implemented
+                    # "galaxies_plot_initial":, # not implemented
+                    # "galaxies_plot_final":, # not implemented
+                    # "galaxy_percentage_file":, # not implemented
+                    # "moon": # implemented in gwStreamer
+                    # }

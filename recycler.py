@@ -55,6 +55,11 @@ parser.add_argument('--ltt',
                     default=False,
                     help='If true, uses least telescope time strategy.')
 
+parser.add_argument('--creationTime',
+                    type=str,
+                    default=str(datetime.now()),
+                    help='The date the GCN was created.')
+
 args = parser.parse_args()
 t0 = time.time()
 print('Settings for Recycler:')
@@ -74,6 +79,7 @@ max_hex_count = args.max_hex_count
 official = args.official
 alertNum = args.alertNum
 least_telescope = args.ltt
+creationTime = args.creationTime
 desgw =  DESGWApi.DESGWApi() # Update the base URL of the base API
 
 with fits.open(skymap) as f:
@@ -192,6 +198,7 @@ def run_strategy_and_onering(skymap_filename,
                                             exposure_outer,
                                             mjd,
                                             detP,
+                                            creationTime,
                                             resolution=64,
                                             jsonFilename=json_output)
     
@@ -200,50 +207,14 @@ def run_strategy_and_onering(skymap_filename,
     disco_prob = round(disco_prob,1)
 
 
-    trigger_data = {
-                    "trigger_label":trigger_id,
-                    "date": str(datetime.now()),
-                    # "type":,
-                    # "ligo_prob":,
-                    # "far":,
-                    # "distance":,
-                    "n_hexes":, # total number of hexes - this is in OneRing
-                    # "econ_prob":, # not yet incorporated
-                    # "econ_area":, # not yet incorporated
-                    # "need_area":,  # not yet incorporated
-                    # "quality":, # not yet incorporated
+    trigger_data = {"trigger_label":trigger_id,
+                    "date": creationTime, # Add the date from the gcn
                     "exp_time":[exposure_inner,exposure_outer].__str__(),
                     "filter":filt,
-                    "hours":, # this is in OneRing
-                    "n_visits":, # number of visits to a hex - this is in OneRing, but probably not important
-                    # "n_slots":, # defunct
-                    # "b_slot":, # defunct
-                    # "prob_region_50":,
-                    # "prob_region_90":,
                     "prob_coverage":disco_prob,
-                    "snr":, # recycler?
-                    # "chirp_mass":,
-                    "component_mass_1":, # huh recycler
-                    "component_mass_2":, # huh
-                    # "season":, # DONT CARE
-                    # "prob_vs_slot_plot":, # defunct
-                    "centered_gif_plot":, # Post OneRing, Isaac probably has code for it - testPlotSkymaps jupyter notebook
-                    "ligo_prob_contour_plot":, # This is one of the SLIPS
-                    "des_prob_vs_ligo_prob_plot":, # OneRing allegedly??
-                    # "des_limit_mag_map":, # defunct? maybe calculated in OneRing? No, awesomeness functions uses mags.py to calculate some stufffffff
-                    # "des_limit_mag_map_src":, # defunct??
-                    # "highest_prob_json":, # we don't use this so defunct
                     "low_tt_json":json_output,
-                    "log_link":, # OneRing? No, recycler
-                    "strategy_table":, # recycler
-                    # "initial_skymap":, # recycler
-                    "final_skymap":, # recycler
-                    "airmass":, # not yet incorporated??? lol
-                    "cumulative_hex_prob":, # This was made somewhere but idk where it is anymore 
-                    "galaxies_plot_initial":, # not yet incorporated
-                    "galaxies_plot_final":, # not yet incorporated
-                    "galaxy_percentage_file":, # not yet incorporated
-                    # "moon":
+                    "log_link":output_log,
+                    "strategy_table":strategy_file
                     }
     
     print("Trigger data to be posted to website",flush=True)
@@ -377,3 +348,50 @@ print('Strategy begun. Recycler exiting after '+elapsedTimeString(t0), flush=Tru
 #            badtriggers = open('badtriggers.txt', 'a')
 #            badtriggers.write(trigger_id + '\n')
 #############################################################################
+
+
+    # trigger_data = { # for add_trigger_by_day
+    #                 "trigger_label":trigger_id,
+    #                 "date": str(datetime.now()),
+                    # "type":,
+                    # "ligo_prob":,
+                    # "far":,
+                    # "distance":,
+                    # "n_hexes":, # total number of hexes - this is in OneRing
+                    # "econ_prob":, # not yet incorporated
+                    # "econ_area":, # not yet incorporated
+                    # "need_area":,  # not yet incorporated
+                    # "quality":, # not yet incorporated
+                    # "exp_time":[exposure_inner,exposure_outer].__str__(),
+                    # "filter":filt,
+                    # "hours":, # this is in OneRing
+                    # "n_visits":, # number of visits to a hex - this is in OneRing, but probably not important
+                    # "n_slots":, # defunct
+                    # "b_slot":, # defunct
+                    # "prob_region_50":,
+                    # "prob_region_90":,
+                    # "prob_coverage":disco_prob,
+                    # "snr":, # recycler? "An outdated concept" says Isaac
+                    # "chirp_mass":, # in gwstreamer
+                    # "component_mass_1":, # huh recycler
+                    # "component_mass_2":, # huh
+                    # "season":, # DONT CARE
+                    # "prob_vs_slot_plot":, # defunct
+                    # "centered_gif_plot":, # Post OneRing, Isaac probably has code for it - testPlotSkymaps jupyter notebook
+                    # "ligo_prob_contour_plot":, # This is one of the SLIPS
+                    # "des_prob_vs_ligo_prob_plot":, # OneRing allegedly??
+                    # "des_limit_mag_map":, # defunct? maybe calculated in OneRing? No, awesomeness functions uses mags.py to calculate some stufffffff
+                    # "des_limit_mag_map_src":, # defunct??
+                    # "highest_prob_json":, # we don't use this so defunct
+                    # "low_tt_json":json_output,
+                    # "log_link":, # OneRing? No, recycler
+                    # "strategy_table":, # recycler
+                    # "initial_skymap":, # recycler
+                    # "final_skymap":, # recycler
+                    # "airmass":, # not yet incorporated??? lol
+                    # "cumulative_hex_prob":, # This was made somewhere but idk where it is anymore 
+                    # "galaxies_plot_initial":, # not yet incorporated
+                    # "galaxies_plot_final":, # not yet incorporated
+                    # "galaxy_percentage_file":, # not yet incorporated
+                    # "moon": # moonplot
+                    # }

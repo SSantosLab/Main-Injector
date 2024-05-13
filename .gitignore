@@ -19,3 +19,4 @@ utils/*
 *.ipynb_checkpoints*
 *.DS_Store*
 python/*nora_needs*
+websiteTests/*copy*

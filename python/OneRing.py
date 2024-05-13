@@ -5,8 +5,12 @@ import hexalate
 import decam2hp
 import jsonMaker
 from os import getenv
+import os
+os.environ["API_BASE_URL"] = "https://desgw-api-physics-soares-santos-flaskapi.apps.gnosis.lsa.umich.edu/api/v0.1/"
 import pandas as pd
 import sys
+sys.path.insert(0, '/data/des70.a/data/desgw/O4/Main-Injector-O4b/desgw_db_writer')
+import desgw_db_writer.api as DESGWApi
 import copy
 import matplotlib.pyplot as plt
 import hex_functions
@@ -38,6 +42,7 @@ def run_or(
     expTime_outer,
     mjd,
     detP,
+    creationTime,
     resolution=64,
     hexFile=getenv('DATA_DIR')+"/all-sky-hexCenters-decam.txt", 
     trigger_id="LIGO/Virgo", 
@@ -304,7 +309,30 @@ def run_or(
             trigger_id, trigger_type, propid, skymap, jsonFilename ) 
 
     timer_end = time.perf_counter()
+
+    desgw =  DESGWApi.DESGWApi()
+    trigger_data = {"trigger_label":trigger_id,
+                    "date": creationTime,
+                    "n_hexes":len(exp_list), # total number of hexes - this is in OneRing
+                    "hours":sum(exp_list)/(60*60), # this is in OneRing
+                    # "n_visits":, # number of visits to a hex - this is in OneRing, but probably not important
+                    # "centered_gif_plot":, # Post OneRing, Isaac probably has code for it - testPlotSkymaps jupyter notebook
+                    # "ligo_prob_contour_plot":, # This is one of the SLIPS
+                    # "des_prob_vs_ligo_prob_plot":, # OneRing allegedly??
+                    # "des_limit_mag_map":, # defunct? maybe calculated in OneRing? No, awesomeness functions uses mags.py to calculate some stufffffff
+                    }
+    
+    print("Trigger data to be posted to website",flush=True)
+    print("",flush=True)
+    for key, val in zip(trigger_data.keys(),trigger_data.values()):
+        print("Key:",key,flush=True)
+        print("Value:",val,flush=True) 
+        print("",flush=True)
+
+    desgw.add_trigger_by_day(trigger_data)
+
     print(f"Finished OneRing in {timer_end - timer_start:0.4f} seconds")
+
 
     return local_prob, disc_prob
 
