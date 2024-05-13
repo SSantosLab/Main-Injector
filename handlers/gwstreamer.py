@@ -378,7 +378,7 @@ class GWStreamer():
                 "trigger_label":trigger_id,
                 "date":str(record['time_created']),
                 "type":str(alert_type),
-                "ligo_prob":float(EVENT_PROB),
+                # "ligo_prob":float(EVENT_PROB),
                 "far":float(FAR),
                 "distance":float(maxprob_dist),
                 # "n_hexes":,

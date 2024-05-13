@@ -209,6 +209,7 @@ def run_strategy_and_onering(skymap_filename,
 
     trigger_data = {"trigger_label":trigger_id,
                     "date": creationTime, # Add the date from the gcn
+                    'ligo_prob':local_prob,
                     "exp_time":[exposure_inner,exposure_outer].__str__(),
                     "filter":filt,
                     "prob_coverage":disco_prob,
