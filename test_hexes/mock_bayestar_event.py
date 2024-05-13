@@ -1,4 +1,4 @@
-import os, io, string, random, datetime, base64, json
+import os, io, sys, string, random, datetime, base64, json
 from astropy.time import Time
 
 def makeBayestarMock():
@@ -8,13 +8,19 @@ def makeBayestarMock():
     os.makedirs(outdir, exist_ok=True)
     sourcefile = "test_hexes/host_galaxies.txt"
     
-    os.system('test_hexes/bayestar_injection.sh {} {} {} {}'.format(t.gps-1, t.gps-0.5, sourcefile, outdir))
-    
-    if os.path.isfile(outdir+'0.fits'):
-        with open(outdir+"0.fits", "rb") as skymap_binary:
-            skymap_bytes = base64.b64encode(skymap_binary.read())
-    else:
-        print('No .fits file: BAYESTAR failure or event not detected')
+    tries = 0
+    while True:
+        os.system('test_hexes/bayestar_injection.sh {} {} {} {}'.format(t.gps-1, t.gps-0.5, sourcefile, outdir))
+        if os.path.isfile(outdir+'0.fits'):
+            with open(outdir+"0.fits", "rb") as skymap_binary:
+                 skymap_bytes = base64.b64encode(skymap_binary.read())
+            break
+        else:
+            if tries > 10:
+                print('Max number of bayestar sim attempts (10) reached. Exiting.')
+                sys.exit(1)
+            tries += 1
+            print('No .fits file: BAYESTAR failure or event not detected, trying again')
     
     alert = {
         "alert_type": "PRELIMINARY",

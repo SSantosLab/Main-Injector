@@ -161,6 +161,12 @@ def get_hexinfo(ra, dec, prob, expTime, filt, mjd, detP, get_sunrise_sunset = Fa
     night = np.float64(night)*24.
     sunset = np.float64(sunset)
     sunrise = np.float64(sunrise)
+    if sunset < mjd:
+        # if event occurs during the day, get sunset of that night
+        night, sunset, sunrise = mags.findNightDuration(mjd+1, camera)
+        night = np.float64(night)*24.
+        sunset = np.float64(sunset)
+        sunrise = np.float64(sunrise)
 #     print(sunset)
 
     # Work every 30 seconds from sunset to sunrise, commented out is working every min

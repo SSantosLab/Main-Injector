@@ -62,6 +62,9 @@ class GWStreamer():
         self._ROOT = root
         self.email_bot = EmailBot(mode=mode)
         self.slack_bot = SlackBot(mode=mode)
+        self.weather_info_link = "https://noirlab.edu/science/index.php/observing-noirlab/observing-ctio/cerro-tololo/bad-weather-protocol-at-ctio"
+        self.weather_link = "https://www.wunderground.com/forecast/cl/la-serena/ICOQUIMB2"
+
         self.api = DESGWApi.DESGWApi()
 
     def _get_max_prob(self, record: dict) -> tuple:
@@ -248,6 +251,10 @@ class GWStreamer():
         if record['event']['group'] != 'CBC':
             print('Non-CBC event discarded')
             return
+
+        if record['event']['pipeline'] == 'CWB':
+            print('Coherent waveburst search event discarded')
+            return
         
         if alert_type == 'PRELIMINARY':
             self.OUTPUT_TRIGGER = os.path.join(self.OUTPUT_PATH,
@@ -360,11 +367,15 @@ class GWStreamer():
         subject, text = self._format_message(trigger_id=trigger_id,
                                         record=record,
                                         retraction=False)
+        
+        weather_text = "*Weather at CTIO*: {} \n*CTIO Weather protocol*:{}".format(self.weather_link,self.weather_info_link)
 
         self.slack_bot = SlackBot(mode=self.mode)
         self.slack_bot.post_message(subject=subject, text=text)
         self.slack_bot.post_image(skymap_plot,"Skymap - {}".format(trigger_id),"Skymap for {}".format(trigger_id))
         self.slack_bot.post_image(moon_plot,"MoonPlot - {}".format(trigger_id),"MoonPlot for {}".format(trigger_id))
+        self.slack_bot.post_message("",weather_text)
+
         self.email_bot = EmailBot(mode=self.mode)
         self.email_bot.send_email(subject=subject,text=text)
         

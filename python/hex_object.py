@@ -62,6 +62,7 @@ class HexObject:
         self.ra = ra
         self.dec = dec
         self.detP = detP # tuple of (detP_1,detP_2), where detP_1 is first pass and detP_2 is second pass
+        self.observed_time = None
         
         if camera == "decam":
             self.lat = -30.16527778
@@ -129,8 +130,10 @@ class HexObject:
         
         airmass = self.getAirmass(mjd)
         
-        if airmass<=1.8: # Airmass of 1.8 is DECam limit
+        if airmass<=1.6 and airmass >= 1: # Airmass of 1.6 is where we wanted decline to become more steep
             return 2 - airmass
+        elif airmass <= 1.8: # Airmass of 1.8 is DECam limit
+            return 3.6 - 2*airmass
         elif airmass<1:
             return 1.
         else:
@@ -168,8 +171,9 @@ class HexObject:
             return 1.
         return c * time**(-a)
     
-    def observe_hex(self):
+    def observe_hex(self, mjd):
         #update coverage if hex has been observed
+        self.observed_time = mjd
         if self.dither == [0.00, 0.00]:
             #update dither to be next most coverage
             self.dither = [0.06389, 0.287436]
@@ -214,7 +218,7 @@ class HexObject:
             added_coverage = 0.004673
             self.coverage = self.coverage_factor
             self.coverage_factor = added_coverage  
-        elif self.dither == [0.9423775, 0.405792]:
+        elif self.dither == [-0.543065, -0.828492]:
             added_coverage = 0.001298
             self.coverage = self.coverage_factor
             self.coverage_factor = added_coverage   

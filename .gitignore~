@@ -1,7 +1,6 @@
 OUTPUT/TESTING/*
 !OUTPUT/TESTING/MS181101ab/
 OUTPUT/O4REAL/*
-OUTPUT/O4REAL/*
 !OUTPUT/04REAL/S230518h/
 PHONE_AND_EMAIL_LIST.TXT
 *.pyc
@@ -20,4 +19,4 @@ utils/*
 *.ipynb_checkpoints*
 *.DS_Store*
 python/*nora_needs*
-websiteTests/*copy*
+handlers/OUTPUT/TESTING/
