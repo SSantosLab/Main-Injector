@@ -273,7 +273,6 @@ class GWStreamer():
 
         print('Posting to website...',flush=True)
 
-        # add_trigger call to website here
         trigger_data = {
                         "trigger_label":trigger_id,
                         "mock":is_mock,
@@ -281,16 +280,8 @@ class GWStreamer():
                         "mjd":float(Time(record['event']['time']).mjd),
                         "event_datetime":str(record['event']['time']), # record['event']['time']
                         "detectors":str(record['event']['instruments'])[1:-1],
-                        "lvc_event_url":record['urls']['gracedb'],
-                        # "image_url":"",
-                        # "galaxy_percentage_file":"",
-                        # "initial_skymap":"",
-                        # "moon":"",
-                        # "weather_img_url":'https://noirlab.edu/science/observing-noirlab/weather-webcams/cerro-tololo/environmental-conditions',
-                        # "weather_report_url":'https://www.yr.no/en/forecast/graph/2-3895825/Chile/Coquimbo%20Region/Provincia%20de%20Elqui/Observatorio%20Astron%C3%B3mico%20Cerro%20Tololo'
-                        }
+                        "lvc_event_url":record['urls']['gracedb']}
 
-            # "detectors":  str(record['event']['instruments'])[1:-1], #list of the detectors
         
         print("Trigger data to be posted to website",flush=True)
         print("",flush=True)
@@ -395,48 +386,48 @@ class GWStreamer():
 
         trigger_data = {
                 "trigger_label":trigger_id,
-                "date":str(datetime.now())
-                # "type",
-                # "ligo_prob",
-                # "far",
-                # "distance",
-                # "n_hexes",
-                # "econ_prob",
-                # "econ_area",
-                # "need_area",
-                # "quality",
-                # "exp_time",
-                # "filter",
-                # "hours",
-                # "n_visits",
-                # "n_slots",
-                # "b_slot",
-                # "prob_region_50",
-                # "prob_region_90",
-                # "prob_coverage",
-                # "snr",
-                # "chirp_mass",
-                # "component_mass_1",
-                # "component_mass_2",
-                # "season",
-                # "prob_vs_slot_plot",
-                # "centered_gif_plot",
-                # "ligo_prob_contour_plot",
-                # "des_prob_vs_ligo_prob_plot",
-                # "des_limit_mag_map",
-                # "des_limit_mag_map_src",
-                # "highest_prob_json",
-                # "low_tt_json",
-                # "log_link",
-                # "strategy_table",
-                # "initial_skymap",
-                # "final_skymap",
-                # "airmass",
-                # "cumulative_hex_prob",
-                # "galaxies_plot_initial",
-                # "galaxies_plot_final",
-                # "galaxy_percentage_file",
-                # "moon",
+                "date":str(datetime.now()),
+                # "type":,
+                # "ligo_prob":,
+                "far":FAR,
+                "distance":maxprob_dist,
+                # "n_hexes":,
+                # "econ_prob":,
+                # "econ_area":,
+                # "need_area":,
+                # "quality":,
+                # "exp_time":,
+                # "filter":,
+                # "hours":,
+                # "n_visits":,
+                # "n_slots":,
+                # "b_slot":,
+                "prob_region_50":area50,
+                "prob_region_90":area90,
+                # "prob_coverage":,
+                # "snr":,
+                "chirp_mass":mass_chirp,
+                # "component_mass_1":,
+                # "component_mass_2":,
+                # "season":,
+                # "prob_vs_slot_plot":,
+                # "centered_gif_plot":,
+                # "ligo_prob_contour_plot":,
+                # "des_prob_vs_ligo_prob_plot":,
+                # "des_limit_mag_map":,
+                # "des_limit_mag_map_src":,
+                # "highest_prob_json":,
+                # "low_tt_json":,
+                # "log_link":,
+                # "strategy_table":,
+                # "initial_skymap":,
+                # "final_skymap":,
+                # "airmass":,
+                # "cumulative_hex_prob":,
+                # "galaxies_plot_initial":,
+                # "galaxies_plot_final":,
+                # "galaxy_percentage_file":,
+                # "moon":
                 }
 
         
