@@ -21,3 +21,4 @@ utils/*
 *.DS_Store*
 python/*nora_needs*
 websiteTests/*copy*
+desgw_db_writer/desgw_db_writer/desgw_db_writer
