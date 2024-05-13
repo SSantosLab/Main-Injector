@@ -64,8 +64,6 @@ class GWStreamer():
         self.slack_bot = SlackBot(mode=mode)
         self.api = DESGWApi.DESGWApi()
 
-        print("API Functions:",self.api.__dir__())
-
     def _get_max_prob(self, record: dict) -> tuple:
         """Returns Event Source and max probability."""
         Classification = {
