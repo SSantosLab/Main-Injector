@@ -387,8 +387,8 @@ class GWStreamer():
         trigger_data = {
                 "trigger_label":trigger_id,
                 "date":str(datetime.now()),
-                # "type":,
-                # "ligo_prob":,
+                "type":str(alert_type),
+                "ligo_prob":float(EVENT_PROB),
                 "far":float(FAR),
                 "distance":float(maxprob_dist),
                 # "n_hexes":,
@@ -420,14 +420,14 @@ class GWStreamer():
                 # "low_tt_json":,
                 # "log_link":,
                 # "strategy_table":,
-                # "initial_skymap":,
+                "initial_skymap":skymap_plot,
                 # "final_skymap":,
                 # "airmass":,
                 # "cumulative_hex_prob":,
                 # "galaxies_plot_initial":,
                 # "galaxies_plot_final":,
                 # "galaxy_percentage_file":,
-                # "moon":
+                "moon":moon_plot
                 }
 
         

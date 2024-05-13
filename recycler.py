@@ -196,51 +196,54 @@ def run_strategy_and_onering(skymap_filename,
                                             jsonFilename=json_output)
     
 
+    local_prob = round(local_prob * 100,1)
+    disco_prob = round(disco_prob,1)
+
 
     trigger_data = {
                     "trigger_label":trigger_id,
                     "date": str(datetime.now()),
-                    # "type",
-                    # "ligo_prob",
-                    # "far",
-                    # "distance",
-                    # "n_hexes",
-                    # "econ_prob",
-                    # "econ_area",
-                    # "need_area",
-                    # "quality",
-                    # "exp_time",
-                    # "filter",
-                    # "hours",
-                    # "n_visits",
-                    # "n_slots",
-                    # "b_slot",
-                    # "prob_region_50",
-                    # "prob_region_90",
-                    # "prob_coverage",
-                    # "snr",
-                    # "chirp_mass",
-                    # "component_mass_1",
-                    # "component_mass_2",
-                    # "season",
-                    # "prob_vs_slot_plot",
-                    # "centered_gif_plot",
-                    # "ligo_prob_contour_plot",
-                    # "des_prob_vs_ligo_prob_plot",
-                    # "des_limit_mag_map",
-                    # "des_limit_mag_map_src",
-                    # "highest_prob_json",
-                    # "low_tt_json",
-                    # "log_link",
-                    # "strategy_table",
-                    # "initial_skymap",
-                    # "final_skymap",
-                    # "airmass",
-                    # "cumulative_hex_prob",
-                    # "galaxies_plot_initial",
-                    # "galaxies_plot_final",
-                    # "galaxy_percentage_file",
-                    # "moon",
+                    # "type":,
+                    # "ligo_prob":,
+                    # "far":,
+                    # "distance":,
+                    "n_hexes":, # total number of hexes - this is in OneRing
+                    # "econ_prob":, # not yet incorporated
+                    # "econ_area":, # not yet incorporated
+                    # "need_area":,  # not yet incorporated
+                    # "quality":, # not yet incorporated
+                    "exp_time":[exposure_inner,exposure_outer].__str__(),
+                    "filter":filt,
+                    "hours":, # this is in OneRing
+                    "n_visits":, # number of visits to a hex - this is in OneRing, but probably not important
+                    # "n_slots":, # defunct
+                    # "b_slot":, # defunct
+                    # "prob_region_50":,
+                    # "prob_region_90":,
+                    "prob_coverage":disco_prob,
+                    "snr":, # recycler?
+                    # "chirp_mass":,
+                    "component_mass_1":, # huh recycler
+                    "component_mass_2":, # huh
+                    # "season":, # DONT CARE
+                    # "prob_vs_slot_plot":, # defunct
+                    "centered_gif_plot":, # Post OneRing, Isaac probably has code for it - testPlotSkymaps jupyter notebook
+                    "ligo_prob_contour_plot":, # This is one of the SLIPS
+                    "des_prob_vs_ligo_prob_plot":, # OneRing allegedly??
+                    # "des_limit_mag_map":, # defunct? maybe calculated in OneRing? No, awesomeness functions uses mags.py to calculate some stufffffff
+                    # "des_limit_mag_map_src":, # defunct??
+                    # "highest_prob_json":, # we don't use this so defunct
+                    "low_tt_json":json_output,
+                    "log_link":, # OneRing? No, recycler
+                    "strategy_table":, # recycler
+                    # "initial_skymap":, # recycler
+                    "final_skymap":, # recycler
+                    "airmass":, # not yet incorporated??? lol
+                    "cumulative_hex_prob":, # This was made somewhere but idk where it is anymore 
+                    "galaxies_plot_initial":, # not yet incorporated
+                    "galaxies_plot_final":, # not yet incorporated
+                    "galaxy_percentage_file":, # not yet incorporated
+                    # "moon":
                     }
     
     print("Trigger data to be posted to website",flush=True)
@@ -251,9 +254,6 @@ def run_strategy_and_onering(skymap_filename,
         print("",flush=True)
 
     desgw.add_trigger_by_day(trigger_data)
-
-    local_prob = round(local_prob * 100,1)
-    disco_prob = round(disco_prob,1)
                                  
     subject = ""
     text = f'*Strategy for event: {trigger_id}* \n\n' +\
