@@ -152,6 +152,7 @@ def moon_airmass(event_name, todays_date, target_coords):
     moon_plot = event_name+'/Moon.png'
     # moon_plot = f'/data/des70.a/data/desgw/O4/Main-Injector-O4b/utils/Moon_{todays_date}.jpg' #uncomment this line if you are using the moonplot figure in utils
     plt.savefig(moon_plot, dpi=300, bbox_inches = "tight")
+    os.chmod(moon_plot, 0o0777)
     
     # Clear the current axes.
     plt.cla() 
@@ -227,6 +228,7 @@ def make_plots_initial(url, name):
     
     initial_skymap_plot = name+'/initial_skymap.png'
     plt.savefig(initial_skymap_plot,dpi=300, bbox_inches = "tight")
+    os.chmod(initial_skymap_plot, 0o0777)
 
     # Clear the current axes.
     plt.cla() 
