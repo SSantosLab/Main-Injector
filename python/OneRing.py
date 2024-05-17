@@ -149,6 +149,7 @@ def run_or(
         filt_list = len(list(ra_list))*[filt[0]]
 
         jsonMaker.writeJson(ra_list,dec_list,exp_list,filt_list, trigger_id, trigger_type, propid, skymap, jsonFilename) 
+        os.chmod(jsonFilename, 0o0777)
 
         #return nothing if this is a manual plan
         return 
@@ -369,6 +370,7 @@ def run_or(
     # JSON writing
     jsonMaker.writeJson(ra,dec,exp_list,filt_list, 
             trigger_id, trigger_type, propid, skymap, jsonFilename ) 
+    os.chmod(jsonFilename, 0o0777)
 
     timer_end = time.perf_counter()
 
