@@ -133,6 +133,7 @@ def run_strategy_and_onering(skymap_filename,
             
         strategy_file = f'bayestar_{sky_condition}_{kn_type}_{outname}' +\
                         '_allconfig.csv'
+        os.chmod(strategy_file, 0o0777)
             
         strategy_log.close()
         strategy = os.path.join(output_dir, strategy_file)
