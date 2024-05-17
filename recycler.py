@@ -225,7 +225,10 @@ def run_strategy_and_onering(skymap_filename,
         print("Value:",val,flush=True) 
         print("",flush=True)
 
-    desgw.add_trigger_by_day(trigger_data)
+    if alertNum=="PRELIMINARY_0":
+        desgw.add_trigger_by_day(trigger_data)
+    else:
+        desgw.update_trigger_by_day(trigger_data)
                                  
     subject = ""
     text = f'*Strategy for event: {trigger_id}* \n\n' +\

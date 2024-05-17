@@ -390,8 +390,11 @@ def run_or(
         print("Key:",key,flush=True)
         print("Value:",val,flush=True) 
         print("",flush=True)
-
-    desgw.add_trigger_by_day(trigger_data)
+        
+    if alertNum=="PRELIMINARY_0":
+        desgw.add_trigger_by_day(trigger_data)
+    else:
+        desgw.update_trigger_by_day(trigger_data)
 
     print(f"Finished OneRing in {timer_end - timer_start:0.4f} seconds")
 
