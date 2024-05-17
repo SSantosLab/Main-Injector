@@ -277,6 +277,7 @@ class GWStreamer():
         
         with open(f'{self.OUTPUT_TRIGGER}/{trigger_id}.json', 'w') as jsonfile:
             json.dump(record, jsonfile)
+            os.chmod(jsonfile, 0o0777)
 
     # Adding trigger call 
         
@@ -333,9 +334,11 @@ class GWStreamer():
 
         if not os.path.isfile(OUTPUT_SKYMAP):
             skymap.write(OUTPUT_SKYMAP, overwrite=True)
+            os.chmod(OUTPUT_SKYMAP, 0o0777)
             print('Skymap saved at '+OUTPUT_FLATTEN)
         
         self.flatten_skymap(OUTPUT_SKYMAP, OUTPUT_FLATTEN)
+        os.chmod(OUTPUT_FLATTEN, 0o0777)
 
         nt = Time(record['event']['time'])
         trigger_mjd = round(nt.mjd, 4)
@@ -347,6 +350,7 @@ class GWStreamer():
         event_paramfile = os.path.join(self.OUTPUT_TRIGGER,
                                        f"{trigger_id}_params.npz")
         np.savez(event_paramfile, record)
+        os.chmod(event_paramfile, 0o0777)
         print('Parameters saved at '+event_paramfile, flush=True)
         FAR = record['event']['far']
         FAR = round(1./float(FAR)/60./60./24./365., 2)
