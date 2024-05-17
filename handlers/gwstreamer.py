@@ -278,28 +278,31 @@ class GWStreamer():
         with open(f'{self.OUTPUT_TRIGGER}/{trigger_id}.json', 'w') as jsonfile:
             json.dump(record, jsonfile)
 
-        print('Posting to website...',flush=True)
-
-        trigger_data = {
-                        "trigger_label":trigger_id,
-                        "mock":is_mock,
-                        "season":"1599",
-                        "mjd":float(Time(record['event']['time']).mjd),
-                        "event_datetime":str(record['time_created']), # record['event']['time']
-                        "detectors":str(record['event']['instruments'])[1:-1],
-                        "lvc_event_url":record['urls']['gracedb']}
-
-        
-        print("Trigger data to be posted to website",flush=True)
-        print("",flush=True)
-        for key, val in zip(trigger_data.keys(),trigger_data.values()):
-            print("Key:",key,flush=True)
-            print("Value:",val,flush=True) 
-            print("Value datatype:",type(val),flush=True)  
+        if record['alert_type']=="PRELIMINARY_0":
+            # Adding trigger call 
+            
+            print('Posting to website...',flush=True)
+    
+            trigger_data = {
+                            "trigger_label":trigger_id,
+                            "mock":is_mock,
+                            "season":"1599",
+                            "mjd":float(Time(record['event']['time']).mjd),
+                            "event_datetime":str(record['time_created']), # record['event']['time']
+                            "detectors":str(record['event']['instruments'])[1:-1],
+                            "lvc_event_url":record['urls']['gracedb']}
+    
+            
+            print("Trigger data to be posted to website",flush=True)
             print("",flush=True)
-
-        self.api.add_trigger(trigger_data)
-
+            for key, val in zip(trigger_data.keys(),trigger_data.values()):
+                print("Key:",key,flush=True)
+                print("Value:",val,flush=True) 
+                print("Value datatype:",type(val),flush=True)  
+                print("",flush=True)
+    
+            self.api.add_trigger(trigger_data)
+    
         print('Handling Trigger...', flush=True)
         skymap_str = record.get('event', {}).pop('skymap')
         if skymap_str:
