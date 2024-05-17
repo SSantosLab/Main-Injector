@@ -278,30 +278,34 @@ class GWStreamer():
         with open(f'{self.OUTPUT_TRIGGER}/{trigger_id}.json', 'w') as jsonfile:
             json.dump(record, jsonfile)
 
-        if record['alert_type']=="PRELIMINARY_0":
-            # Adding trigger call 
-            
-            print('Posting to website...',flush=True)
-    
-            trigger_data = {
-                            "trigger_label":trigger_id,
-                            "mock":is_mock,
-                            "season":"1599",
-                            "mjd":float(Time(record['event']['time']).mjd),
-                            "event_datetime":str(record['time_created']), # record['event']['time']
-                            "detectors":str(record['event']['instruments'])[1:-1],
-                            "lvc_event_url":record['urls']['gracedb']}
-    
-            
-            print("Trigger data to be posted to website",flush=True)
+    # Adding trigger call 
+        
+        print('Posting to website...',flush=True)
+
+        trigger_data = {
+                        "trigger_label":trigger_id,
+                        "mock":is_mock,
+                        "season":"1599",
+                        "mjd":float(Time(record['event']['time']).mjd),
+                        "event_datetime":str(record['time_created']), # record['event']['time']
+                        "detectors":str(record['event']['instruments'])[1:-1],
+                        "lvc_event_url":record['urls']['gracedb']}
+
+        
+        print("Trigger data to be posted to website",flush=True)
+        print("",flush=True)
+        for key, val in zip(trigger_data.keys(),trigger_data.values()):
+            print("Key:",key,flush=True)
+            print("Value:",val,flush=True) 
+            print("Value datatype:",type(val),flush=True)  
             print("",flush=True)
-            for key, val in zip(trigger_data.keys(),trigger_data.values()):
-                print("Key:",key,flush=True)
-                print("Value:",val,flush=True) 
-                print("Value datatype:",type(val),flush=True)  
-                print("",flush=True)
-    
+        
+        if self.alert_num=="PRELIMINARY_0":
             self.api.add_trigger(trigger_data)
+            self.firstAlert=True
+        else:
+            self.api.update_trigger(trigger_data)
+            self.firstAlert=False
     
         print('Handling Trigger...', flush=True)
         skymap_str = record.get('event', {}).pop('skymap')
@@ -441,8 +445,12 @@ class GWStreamer():
             print("Key:",key,flush=True)
             print("Value:",val,flush=True) 
             print("",flush=True)
+
+        if self.firstAlert:
+            self.api.add_trigger_by_day(trigger_data)
+        else:
+            self.api.update_trigger_by_day(trigger_data)
         
-        self.api.add_trigger_by_day(trigger_data)
         creationTime = str(record['time_created'])
         print('Passing event to Recycler. Handler took '+elapsedTimeString(t0), flush=True)
         root_dir = os.environ["ROOT_DIR"]
@@ -455,6 +463,7 @@ class GWStreamer():
                     f'--ltt ' +\
                     f'--alertNum {self.alert_num} ' +\
                     f'--creationTime {creationTime}'
+                
 ### TESTING CHANGES HERE ####### BIG MONEY NO WHAMMIES ### PLEASE CHANGE #####
 #        skymap_location = '/data/des80.a/data/eliseke/Main-Injector/new_test_skymaps/o4_hlv_bns/348.fits.gz'
  #       recycler = 'python ' +\
