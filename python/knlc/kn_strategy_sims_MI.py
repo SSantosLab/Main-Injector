@@ -2243,7 +2243,7 @@ if map_mode == 1:
                     "Region_coverage_deg_deep": area_deg_all_deep,
                     "Detprob1": prob1_all,
                     "Detprob2": prob2_all,}).to_csv(f,  index=False)
-    os.chmod(f, 0o0777)
+    os.chmod(strategy_file, 0o0777)
 
     f.close()
 
