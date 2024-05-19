@@ -277,7 +277,7 @@ class GWStreamer():
         
         with open(f'{self.OUTPUT_TRIGGER}/{trigger_id}.json', 'w') as jsonfile:
             json.dump(record, jsonfile)
-            os.chmod(jsonfile, 0o0777)
+            os.chmod(f'{self.OUTPUT_TRIGGER}/{trigger_id}.json', 0o0777)
 
     # Adding trigger call 
         
