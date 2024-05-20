@@ -381,7 +381,7 @@ class GWStreamer():
                                         retraction=False)
         
 
-        weather_text = f"*Current weather at CTIO*: {} \n*CTIO Weather protocol*:{} \n*CTIO Weather forecast*:{}".format(self.weather_CTIO_currently,self.weather_forecast)
+        weather_text = "*Current weather at CTIO*: {} \n*CTIO Weather protocol*:{} \n*CTIO Weather forecast*:{}".format(self.weather_CTIO_currently,self.weather_forecast)
         self.slack_bot = SlackBot(mode=self.mode)
         self.slack_bot.post_message(subject=subject, text=text)
         self.slack_bot.post_image(skymap_plot,"Skymap - {}".format(trigger_id),"Skymap for {}".format(trigger_id))
