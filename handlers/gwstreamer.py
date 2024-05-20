@@ -62,8 +62,9 @@ class GWStreamer():
         self._ROOT = root
         self.email_bot = EmailBot(mode=mode)
         self.slack_bot = SlackBot(mode=mode)
-        self.weather_info_link = "https://noirlab.edu/science/index.php/observing-noirlab/observing-ctio/cerro-tololo/bad-weather-protocol-at-ctio"
-        self.weather_link = "https://www.wunderground.com/forecast/cl/la-serena/ICOQUIMB2"
+        self.weather_protocol_CTIO = "https://noirlab.edu/science/index.php/observing-noirlab/observing-ctio/cerro-tololo/bad-weather-protocol-at-ctio"
+        self.weather_forecast = "https://www.wunderground.com/forecast/cl/la-serena/ICOQUIMB2"
+        self.weather_CTIO_currently = "https://noirlab.edu/science/observing-noirlab/weather-webcams/cerro-tololo/environmental-conditions"
 
         self.api = DESGWApi.DESGWApi()
 
@@ -379,13 +380,13 @@ class GWStreamer():
                                         record=record,
                                         retraction=False)
         
-        weather_text = "*Weather at CTIO*: {} \n*CTIO Weather protocol*:{}".format(self.weather_link,self.weather_info_link)
 
+        weather_text = f"*Current weather at CTIO*: {} \n*CTIO Weather protocol*:{} \n*CTIO Weather forecast*:{}".format(self.weather_CTIO_currently,self.weather_forecast)
         self.slack_bot = SlackBot(mode=self.mode)
         self.slack_bot.post_message(subject=subject, text=text)
         self.slack_bot.post_image(skymap_plot,"Skymap - {}".format(trigger_id),"Skymap for {}".format(trigger_id))
         self.slack_bot.post_image(moon_plot,"MoonPlot - {}".format(trigger_id),"MoonPlot for {}".format(trigger_id))
-        self.slack_bot.post_message("",weather_text)
+        self.slack_bot.post_message(":milky_way: *Weather report* :milky_way:",weather_text)
 
         self.email_bot = EmailBot(mode=self.mode)
         self.email_bot.send_email(subject=subject,text=text)
