@@ -603,6 +603,7 @@ class KNCalc():
                             distsigma_std
                         ]
                 )
+                os.chmod(use_map_info, 0o0777)
 
                 highres_sum = sum(pb)
                 NSIDE = hp.npix2nside(pb.shape[0])
@@ -623,6 +624,7 @@ class KNCalc():
                 print('saving low resolution map')
                 hp.write_map(use_map_lowres, m=[pb, distmu, distsigma], nest=False, dtype=None, fits_IDL=True,
                              coord=None, partial=False, column_names=None, column_units=None, extra_header=(), overwrite=True)
+                os.chmod(use_map_lowres, 0o0777)
 
                 if flag_inf_mu == True:
                     print('prob of reduced correspondend region due to infs ', sum(
@@ -845,11 +847,15 @@ class KNCalc():
                         weights_pix_area, weights_pix_area_deep])
                 np.save(use_map_weights_info, [
                         num_pix_covered*resolution, num_pix_covered_deep*resolution, resolution])
+                
             else:
                 np.save(use_map_weights, weights_pix_area)
                 np.save(use_map_weights_info, [
                         num_pix_covered*resolution, resolution])
 
+            os.chmod(use_map_weights, 0o0777)
+            os.chmod(use_map_weights_info, 0o0777)
+            
             self.Resolution = resolution
             self.area_deg = num_pix_covered*resolution
             if m_exp_kncalc == True:
@@ -1082,6 +1088,9 @@ def calc_mag_fractions(data,
                 'prior'+kn_weight_type+'.npy', model_weights)
         np.save(model_weights_path+'kn_weights_ids_type' +
                 kn_type+'prior'+kn_weight_type+'.npy', ids_total)
+        
+        os.chmod(model_weights_path+'kn_weights_ids_type'+kn_type+'prior'+kn_weight_type+'.npy', 0o0777)
+        os.chmod(model_weights_path+'kn_weights_type'+kn_type +'prior'+kn_weight_type+'.npy', 0o0777)
 
     mags_range = np.arange(14, 28, 0.2)
     prob_at_maglim = {}
@@ -1434,6 +1443,7 @@ def make_output_csv(cutoffs, percentile_dict, outfile=None, return_df=False, wri
     out_df['PERCENTILE'] = cutoffs
     if outfile:
         out_df.to_csv(outfile + '.csv', index=False)
+        os.chmod(outfile + '.csv', 0o0777)
 
     if write_answer:
         if fraction < 1.0:
@@ -1444,7 +1454,9 @@ def make_output_csv(cutoffs, percentile_dict, outfile=None, return_df=False, wri
         stream = open(datadir+'answer_%s.txt' % flt, 'w+')
         #stream = open('answer_%s.txt' %flt, 'w+')
         stream.write('%.2f' % out_df[flt].values[closest_index])
+        
         stream.close()
+        os.chmod(datadir+'answer_%s.txt' % flt, 0o0777)
 
     if return_df:
         return out_df
@@ -1484,6 +1496,7 @@ def make_plot_days(time, fracs, plotname="detection_distance.png", _title="", da
     plt.legend(fontsize=14, loc='upper right', frameon=False)
     plt.title(_title, fontsize=14)
     plt.savefig(plotname)
+    os.chmod(plotname, 0o0777)
     plt.close()
 
 
@@ -1539,6 +1552,7 @@ def make_plot(percentile_dict, title:str = '', outfile: str = None,
 
     if outfile:
         plt.savefig(outfile)
+        os.chmod(outfile, 0o0777)
 
     plt.close()
 
@@ -1645,6 +1659,7 @@ def make_exptime_plot(percentile_dict, title='', outfile=None, teff=1.0, exposur
 
     if outfile:
         plt.savefig(outfile)
+        os.chmod(outfile, 0o0777)
 
     plt.close()
 
@@ -2228,6 +2243,7 @@ if map_mode == 1:
                     "Region_coverage_deg_deep": area_deg_all_deep,
                     "Detprob1": prob1_all,
                     "Detprob2": prob2_all,}).to_csv(f,  index=False)
+    os.chmod(strategy_file, 0o0777)
 
     f.close()
 
@@ -2249,6 +2265,7 @@ if map_mode == 0:
                     str(bands_plot[m])+" exp: "+str(exposure_times_calc[k]), fontsize=10)
             plt.savefig(
                 plot_name_+bands_plot[m]+"exp"+str(exposure_times_calc[k])+"_distvsdelay.png")
+            os.chmod(plot_name_+bands_plot[m]+"exp"+str(exposure_times_calc[k])+"_distvsdelay.png", 0o0777)
             plt.clf()
             plt.close()
 
@@ -2269,6 +2286,8 @@ if map_mode == 0:
                     str(day_delays[j])+" exp: "+str(exposure_times_calc[k]), fontsize=10)
             plt.savefig(
                 plot_name_+str(time_delays[j])+"exp"+str(exposure_times_calc[k])+"_dist.png")
+            
+            os.chmod(plot_name_+str(time_delays[j])+"exp"+str(exposure_times_calc[k])+"_dist.png", 0o0777)
 
 end = time_mod.time() - start
 with open(f'{out_dir}/strategy_runtime.log', 'w') as f:
