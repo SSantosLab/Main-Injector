@@ -65,6 +65,7 @@ class GWStreamer():
         self.weather_protocol_CTIO = "https://noirlab.edu/science/index.php/observing-noirlab/observing-ctio/cerro-tololo/bad-weather-protocol-at-ctio"
         self.weather_forecast = "https://www.wunderground.com/forecast/cl/la-serena/ICOQUIMB2"
         self.weather_CTIO_currently = "https://noirlab.edu/science/observing-noirlab/weather-webcams/cerro-tololo/environmental-conditions"
+        self.website_base_url = "https://des-ops.fnal.gov:8082/desgw-new/#/trigger/"
 
         self.api = DESGWApi.DESGWApi()
 
@@ -308,7 +309,9 @@ class GWStreamer():
         else:
             self.api.update_trigger(trigger_data)
             self.firstAlert=False
-    
+
+        self.slack_bot.post_message("","*Website page for this event*: {}".format(self.website_base_url+trigger_id))
+
         print('Handling Trigger...', flush=True)
         skymap_str = record.get('event', {}).pop('skymap')
         if skymap_str:
@@ -381,7 +384,7 @@ class GWStreamer():
                                         retraction=False)
         
 
-        weather_text = "*Current weather at CTIO*: {} \n*CTIO Weather protocol*:{} \n*CTIO Weather forecast*:{}".format(self.weather_CTIO_currently,self.weather_forecast)
+        weather_text = "*Current weather at CTIO*: {} \n*CTIO Weather protocol*:{} \n*CTIO Weather forecast*:{}".format(self.weather_CTIO_currently,self.weather_protocol_CTIO,self.weather_forecast)
         self.slack_bot = SlackBot(mode=self.mode)
         self.slack_bot.post_message(subject=subject, text=text)
         self.slack_bot.post_image(skymap_plot,"Skymap - {}".format(trigger_id),"Skymap for {}".format(trigger_id))
