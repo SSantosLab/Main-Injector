@@ -379,7 +379,7 @@ def run_or(
     trigger_data = {"trigger_label":trigger_id,
                     "date": creationTime,
                     "n_hexes":len(exp_list), # total number of hexes - this is in OneRing
-                    "hours":sum(exp_list)/(60*60), # this is in OneRing
+                    "hours":float(sum(exp_list)/(60*60)), # this is in OneRing
                     # "n_visits":, # number of visits to a hex - this is in OneRing, but probably not important
                     # "centered_gif_plot":, # Post OneRing, Isaac probably has code for it - testPlotSkymaps jupyter notebook
                     # "ligo_prob_contour_plot":, # This is one of the SLIPS
