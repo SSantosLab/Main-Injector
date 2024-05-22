@@ -201,6 +201,7 @@ def run_strategy_and_onering(skymap_filename,
                                             mjd,
                                             detP,
                                             creationTime,
+                                            alertNum,
                                             resolution=64,
                                             jsonFilename=json_output)
     
