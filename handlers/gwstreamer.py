@@ -310,7 +310,7 @@ class GWStreamer():
             self.api.update_trigger(trigger_data)
             self.firstAlert=False
 
-        weather_text = "*Current weather at CTIO*: {} \n*CTIO Weather protocol*:{} \n*CTIO Weather forecast*:{}".format(self.weather_CTIO_currently,self.weather_protocol_CTIO,self.weather_forecast)
+        weather_text = "*Current weather at CTIO*: {} \n*CTIO Weather protocol*: {} \n*CTIO Weather forecast*: {}".format(self.weather_CTIO_currently,self.weather_protocol_CTIO,self.weather_forecast)
         self.slack_bot.post_message("","New GCN received, starting handler on event: *{}* \n\n*Website page for this event*: {}\n\n :milky_way: *Weather report* :milky_way:\n\n{}".format(trigger_id,self.website_base_url+trigger_id,weather_text))
 
         print('Handling Trigger...', flush=True)
