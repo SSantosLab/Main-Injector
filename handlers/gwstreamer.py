@@ -310,7 +310,8 @@ class GWStreamer():
             self.api.update_trigger(trigger_data)
             self.firstAlert=False
 
-        self.slack_bot.post_message("","*Website page for this event*: {}".format(self.website_base_url+trigger_id))
+        weather_text = "*Current weather at CTIO*: {} \n*CTIO Weather protocol*:{} \n*CTIO Weather forecast*:{}".format(self.weather_CTIO_currently,self.weather_protocol_CTIO,self.weather_forecast)
+        self.slack_bot.post_message("","New GCN received, starting handler on event: *{}* \n\n*Website page for this event*: {}\n\n :milky_way: *Weather report* :milky_way:\n\n{}".format(trigger_id,self.website_base_url+trigger_id,weather_text))
 
         print('Handling Trigger...', flush=True)
         skymap_str = record.get('event', {}).pop('skymap')
@@ -366,8 +367,6 @@ class GWStreamer():
         
         if source == 'Terrestrial':
             return
-
-        self.slack_bot.post_message("","New GCN received, starting handler on event: {}".format(trigger_id))
         
         print('Plotting...', flush=True)
         plots_path = Path(os.path.join(self.OUTPUT_TRIGGER, "initial_plots"))
@@ -384,13 +383,12 @@ class GWStreamer():
                                         retraction=False)
         
 
-        weather_text = "*Current weather at CTIO*: {} \n*CTIO Weather protocol*:{} \n*CTIO Weather forecast*:{}".format(self.weather_CTIO_currently,self.weather_protocol_CTIO,self.weather_forecast)
+        
         self.slack_bot = SlackBot(mode=self.mode)
         self.slack_bot.post_message(subject=subject, text=text)
         self.slack_bot.post_image(skymap_plot,"Skymap - {}".format(trigger_id),"Skymap for {}".format(trigger_id))
         self.slack_bot.post_image(moon_plot,"MoonPlot - {}".format(trigger_id),"MoonPlot for {}".format(trigger_id))
-        self.slack_bot.post_message(":milky_way: *Weather report* :milky_way:\n\n",weather_text)
-
+        
         self.email_bot = EmailBot(mode=self.mode)
         self.email_bot.send_email(subject=subject,text=text)
         
