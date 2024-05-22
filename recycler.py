@@ -203,7 +203,8 @@ def run_strategy_and_onering(skymap_filename,
                                             creationTime,
                                             alertNum,
                                             resolution=64,
-                                            jsonFilename=json_output)
+                                            jsonFilename=json_output,
+                                            trigger_id=trigger_id)
     
 
     local_prob = round(local_prob * 100,1)
