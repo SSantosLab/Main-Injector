@@ -370,13 +370,13 @@ def run_or(
         print(f'Writing observing plan to {jsonFilename}')
     # JSON writing
     jsonMaker.writeJson(ra,dec,exp_list,filt_list, 
-            trigger_id, trigger_type, propid, skymap, jsonFilename ) 
+            "LIGO/Virgo", trigger_type, propid, skymap, jsonFilename ) 
     os.chmod(jsonFilename, 0o0777)
 
     timer_end = time.perf_counter()
 
     desgw =  DESGWApi.DESGWApi()
-    trigger_data = {"trigger_label":trigger_id,
+    trigger_data = {"trigger_label":trigger_id, # this has to be something different
                     "date": creationTime,
                     "n_hexes":len(exp_list), # total number of hexes - this is in OneRing
                     "hours":float(sum(exp_list)/(60*60)), # this is in OneRing
