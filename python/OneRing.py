@@ -43,6 +43,7 @@ def run_or(
     mjd,
     detP,
     creationTime,
+    alertNum,
     resolution=64,
     hexFile=getenv('DATA_DIR')+"/all-sky-hexCenters-decam.txt", 
     trigger_id="LIGO/Virgo", 
