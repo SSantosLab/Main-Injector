@@ -96,6 +96,7 @@ mjd = header['MJD-OBS']
 def run_strategy_and_onering(skymap_filename,
                              trigger_id,
                              mjd,
+                             alertNum,
                              sky_condition: str = 'moony',
                              event: str = 'BNS'):
     if event != 'BBH':
