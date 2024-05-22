@@ -53,7 +53,7 @@ if __name__ == "__main__":
         for fake_alert in fake_alert_list:
             with open(fake_alert, 'r', encoding='utf-8') as f:
                 gcn_fake_alert = json.load(f)
-            slack_bot.post_message("","Starting handler on test event: {}".format(gcn_fake_alert['superevent_id']))
+            # slack_bot.post_message("","Starting handler on test event: {}".format(gcn_fake_alert['superevent_id']))
             gw_streamer.handle(gcn_fake_alert)
     	
     elif mode == 'mock-bayestar':
@@ -63,7 +63,7 @@ if __name__ == "__main__":
             gcn_fake_alert = json.load(f)
 
         print('Passing event to Handler - Listener took '+elapsedTimeString(start_time), flush=True)
-        slack_bot.post_message("","Starting handler on mock-bayestar event: {}".format(gcn_fake_alert['superevent_id']))
+        # slack_bot.post_message("","Starting handler on mock-bayestar event: {}".format(gcn_fake_alert['superevent_id']))
         gw_streamer = GWStreamer(mode='mock')
         gw_streamer.handle(gcn_fake_alert)
         	
