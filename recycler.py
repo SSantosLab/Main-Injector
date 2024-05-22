@@ -264,6 +264,7 @@ moony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
                                         args=(skymap,
                                             trigger_id,
                                             mjd,
+                                              alertNum,
                                             'moony',
                                             event,))
 
@@ -271,6 +272,7 @@ notmoony_strategy = multiprocessing.Process(target=run_strategy_and_onering,
                                             args=(skymap,
                                                 trigger_id,
                                                 mjd,
+                                                  alertNum,
                                                 'notmoony',
                                                 event,))
 
