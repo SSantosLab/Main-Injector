@@ -6,29 +6,30 @@ import numpy as np
 def makeBayestarMock():
     t = Time(str(datetime.datetime.utcnow()), format='iso', scale='utc')
     trigger_id = 'MS'+t.isot[2:4]+t.isot[5:7]+t.isot[8:10]+''.join(random.choices(string.ascii_lowercase, k=3))
-    outdir = "test_hexes/mock_simulations/"+trigger_id+"/"
+    outdir = trigger_id+"/"
     os.makedirs(outdir, exist_ok=True)
-    sourcefile = "test_hexes/host_galaxies.txt"
+    sourcefile = "host_galaxies.txt"
     
     tries = 0
     while True:
-        os.system('test_hexes/bayestar_injection.sh {} {} {} {}'.format(t.gps-1, t.gps-0.5, sourcefile, outdir))
+        os.system('./bayestar_injection.sh {} {} {} {}'.format(t.gps-1, t.gps-0.5, sourcefile, outdir))
         if os.path.isfile(outdir+'0.fits'):
-	    os.system("ligo-skymap-flatten --nside {} {} {}".format(1024, outdir+'0.fits', outdir+'0_flatten.fits'))
-	
-	    hpx = hp.read_map(outdir+'0_flatten.fits')
-	    i = np.flipud(np.argsort(hpx))
-	    sorted_credible_levels = np.cumsum(hpx[i])
-	    credible_levels = np.empty_like(sorted_credible_levels)
-	    credible_levels[i] = sorted_credible_levels
+            os.system("ligo-skymap-flatten --nside {} {} {}".format(1024, outdir+'0.fits', outdir+'0_flatten.fits'))
+            
+            hpx = hp.read_map(outdir+'0_flatten.fits')
+            i = np.flipud(np.argsort(hpx))
+            sorted_credible_levels = np.cumsum(hpx[i])
+            credible_levels = np.empty_like(sorted_credible_levels)
+            credible_levels[i] = sorted_credible_levels
             area = np.sum(credible_levels <= 0.5) * hp.nside2pixarea(1024, degrees=True)
-	    
-	    if area > 10:
-		with open(outdir+"0_flatten.fits", "rb") as skymap_binary:
+            
+            if area > 10:
+                with open(outdir+"0_flatten.fits", "rb") as skymap_binary:
                     skymap_bytes = base64.b64encode(skymap_binary.read())
-            	break
-	    else:
-		print('Skymap area too small, trying again ({} deg^2)'.format(np.round(area, 2)))
+                break
+            else:
+                tries += 1
+                print('Skymap area too small, trying again ({} deg^2)'.format(np.round(area, 2)))
         else:
             if tries > 10:
                 print('Max number of bayestar sim attempts (10) reached. Exiting.')
