@@ -367,7 +367,7 @@ class GWStreamer():
         if source == 'Terrestrial':
             return
             
-        self.slack_bot.post_message("","New GCN received, starting handler on event: *{}* \n\n*Website page for this event*: {}\n\n :milky_way: *Weather report* :milky_way:\n\n{}".format(trigger_id,self.website_base_url+trigger_id,weather_text))
+        info_text = "New GCN received, starting strategy on event: *{}* \n\n*Website page for this event*: {}\n\n :milky_way: *Weather report* :milky_way:\n\n{}".format(trigger_id,self.website_base_url+trigger_id,weather_text)
         
         print('Plotting...', flush=True)
         plots_path = Path(os.path.join(self.OUTPUT_TRIGGER, "initial_plots"))
@@ -386,7 +386,7 @@ class GWStreamer():
 
         
         self.slack_bot = SlackBot(mode=self.mode)
-        self.slack_bot.post_message(subject=subject, text=text)
+        self.slack_bot.post_message(subject=subject, text=info_text + text)
         self.slack_bot.post_image(skymap_plot,"Skymap - {}".format(trigger_id),"Skymap for {}".format(trigger_id))
         self.slack_bot.post_image(moon_plot,"MoonPlot - {}".format(trigger_id),"MoonPlot for {}".format(trigger_id))
         
