@@ -6,13 +6,13 @@ import numpy as np
 def makeBayestarMock():
     t = Time(str(datetime.datetime.utcnow()), format='iso', scale='utc')
     trigger_id = 'MS'+t.isot[2:4]+t.isot[5:7]+t.isot[8:10]+''.join(random.choices(string.ascii_lowercase, k=3))
-    outdir = trigger_id+"/"
+    outdir = "test_hexes/mock_simulations/"+trigger_id+"/"
     os.makedirs(outdir, exist_ok=True)
-    sourcefile = "host_galaxies.txt"
+    sourcefile = "test_hexes/host_galaxies.txt"
     
     tries = 0
     while True:
-        os.system('./bayestar_injection.sh {} {} {} {}'.format(t.gps-1, t.gps-0.5, sourcefile, outdir))
+        os.system('test_hexes/bayestar_injection.sh {} {} {} {}'.format(t.gps-1, t.gps-0.5, sourcefile, outdir))
         if os.path.isfile(outdir+'0.fits'):
             os.system("ligo-skymap-flatten --nside {} {} {}".format(1024, outdir+'0.fits', outdir+'0_flatten.fits'))
             
