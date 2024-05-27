@@ -44,7 +44,8 @@ bayestar-sample-model-psd \
 	`# Write output to psd.xml` \
 	-o $4/psd.xml \
 	`# Specify noise models for desired detectors. The ones used here are for O4 design sensitivity, based on LIGO tech report T1800545.` \
-	--H1=aLIGO175MpcT1800545 --L1=aLIGO175MpcT1800545 --V1=aLIGOAdVO4T1800545
+	`#--H1=aLIGO175MpcT1800545 --L1=aLIGO175MpcT1800545 --V1=aLIGOAdVO4T1800545` \
+	--H1=aLIGOO3LowT1800545 --L1=aLIGOO3LowT1800545 --V1=aLIGOAdVO3LowT1800545
 
 bayestar-realize-coincs \
 	`# Write output to coinc.xml` \

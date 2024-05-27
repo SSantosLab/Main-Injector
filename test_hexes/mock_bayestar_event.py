@@ -1,5 +1,7 @@
 import os, io, sys, string, random, datetime, base64, json
 from astropy.time import Time
+import healpy as hp
+import numpy as np
 
 def makeBayestarMock():
     t = Time(str(datetime.datetime.utcnow()), format='iso', scale='utc')
@@ -12,9 +14,22 @@ def makeBayestarMock():
     while True:
         os.system('test_hexes/bayestar_injection.sh {} {} {} {}'.format(t.gps-1, t.gps-0.5, sourcefile, outdir))
         if os.path.isfile(outdir+'0.fits'):
-            with open(outdir+"0.fits", "rb") as skymap_binary:
-                 skymap_bytes = base64.b64encode(skymap_binary.read())
-            break
+            os.system("ligo-skymap-flatten --nside {} {} {}".format(1024, outdir+'0.fits', outdir+'0_flatten.fits'))
+            
+            hpx = hp.read_map(outdir+'0_flatten.fits')
+            i = np.flipud(np.argsort(hpx))
+            sorted_credible_levels = np.cumsum(hpx[i])
+            credible_levels = np.empty_like(sorted_credible_levels)
+            credible_levels[i] = sorted_credible_levels
+            area = np.sum(credible_levels <= 0.5) * hp.nside2pixarea(1024, degrees=True)
+            
+            if area > 10:
+                with open(outdir+"0_flatten.fits", "rb") as skymap_binary:
+                    skymap_bytes = base64.b64encode(skymap_binary.read())
+                break
+            else:
+                tries += 1
+                print('Skymap area too small, trying again ({} deg^2)'.format(np.round(area, 2)))
         else:
             if tries > 10:
                 print('Max number of bayestar sim attempts (10) reached. Exiting.')
