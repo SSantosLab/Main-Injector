@@ -367,7 +367,7 @@ class GWStreamer():
         if source == 'Terrestrial':
             return
             
-        info_text = "New GCN received, starting strategy on event: *{}* \n\n*Website page for this event*: {}\n\n :milky_way: *Weather report* :milky_way:\n\n{}".format(trigger_id,self.website_base_url+trigger_id,weather_text)
+        info_text = "New GCN received, starting strategy on event: *{}* \n\n*Website page for this event*: {}\n\n :milky_way: *Weather report* :milky_way:\n\n{}\n\n".format(trigger_id,self.website_base_url+trigger_id,weather_text)
         
         print('Plotting...', flush=True)
         plots_path = Path(os.path.join(self.OUTPUT_TRIGGER, "initial_plots"))
