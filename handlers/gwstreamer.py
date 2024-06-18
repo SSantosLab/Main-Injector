@@ -360,11 +360,13 @@ class GWStreamer():
         FAR = round(1./float(FAR)/60./60./24./365., 2)
         source, EVENT_PROB = self._get_max_prob(record)
 
-        if FAR < 1000.0:
-            if source == 'BBH':
+        if source == 'BBH':
+            if FAR > 1E-9 or not all(x in record['event']['instruments'][1:-1] for x in ['H1', 'L1', 'V1']):
+                print("BBH event does not pass FAR and detector cut, discarding")
                 return
         
         if source == 'Terrestrial':
+            print("Terrestrial event, discarding")
             return
             
         info_text = "New GCN received, starting strategy on event: *{}* \n\n*Website page for this event*: {}\n\n :milky_way: *Weather report* :milky_way:\n\n{}\n\n".format(trigger_id,self.website_base_url+trigger_id,weather_text)
