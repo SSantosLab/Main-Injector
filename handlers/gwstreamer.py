@@ -62,6 +62,7 @@ class GWStreamer():
         self._ROOT = root
         self.email_bot = EmailBot(mode=mode)
         self.slack_bot = SlackBot(mode=mode)
+        self.slack_bot2 = SlackBot(mode="dummy")
         self.weather_protocol_CTIO = "https://noirlab.edu/science/index.php/observing-noirlab/observing-ctio/cerro-tololo/bad-weather-protocol-at-ctio"
         self.weather_forecast = "https://www.wunderground.com/forecast/cl/la-serena/ICOQUIMB2"
         self.weather_CTIO_currently = "https://noirlab.edu/science/observing-noirlab/weather-webcams/cerro-tololo/environmental-conditions"
@@ -252,12 +253,12 @@ class GWStreamer():
 
         if record['event']['group'] != 'CBC':
             print('Non-CBC event discarded')
-            self.slack_bot.post_message(subject="", text="Non-CBC event {}, discarded".format(trigger_id))
+            self.slack_bot2.post_message(subject="", text="Non-CBC event {}, discarded".format(trigger_id))
             return
 
         if record['event']['pipeline'] == 'CWB':
             print('Coherent waveburst search event discarded')
-            self.slack_bot.post_message(subject="", text="Coherent waveburst search event {}, discarded".format(trigger_id))
+            self.slack_bot2.post_message(subject="", text="Coherent waveburst search event {}, discarded".format(trigger_id))
             return
         
         if alert_type == 'PRELIMINARY':
@@ -365,12 +366,12 @@ class GWStreamer():
         if source == 'BBH':
             if FAR > self.FAR_threshold or not all(x in record['event']['instruments'] for x in ['H1', 'L1', 'V1']):
                 print("BBH event does not pass FAR and detector cut, discarding")
-                self.slack_bot.post_message(subject="", text="BBH event {} does not pass FAR and detector cut, discarding \n\n FAR: {} [yr^-1]\n\n FAR threshold:{} [yr^-1]\n\n Detectors: {}".format(trigger_id,FAR,self.FAR_threshold,record['event']['instruments']))
+                self.slack_bot2.post_message(subject="", text="BBH event {} does not pass FAR and detector cut, discarding \n\n FAR: {} [yr^-1]\n\n FAR threshold:{} [yr^-1]\n\n Detectors: {}".format(trigger_id,FAR,self.FAR_threshold,record['event']['instruments']))
                 return
         
         if source == 'Terrestrial':
             print("Terrestrial event, discarding")
-            self.slack_bot.post_message(subject="", text="Terrestrial event {}, discarding".format(trigger_id))
+            self.slack_bot2.post_message(subject="", text="Terrestrial event {}, discarding".format(trigger_id))
             return
             
         info_text = "New GCN received, starting strategy on event: *{}* \n\n*Website page for this event*: {}\n\n :milky_way: *Weather report* :milky_way:\n\n{}\n\n".format(trigger_id,self.website_base_url+trigger_id,weather_text)
