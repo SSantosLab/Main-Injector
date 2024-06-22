@@ -66,7 +66,7 @@ class GWStreamer():
         self.weather_forecast = "https://www.wunderground.com/forecast/cl/la-serena/ICOQUIMB2"
         self.weather_CTIO_currently = "https://noirlab.edu/science/observing-noirlab/weather-webcams/cerro-tololo/environmental-conditions"
         self.website_base_url = "https://des-ops.fnal.gov:8082/desgw-new/#/trigger/"
-
+        self.FAR_threshold = 1E-9
         self.api = DESGWApi.DESGWApi()
 
     def _get_max_prob(self, record: dict) -> tuple:
@@ -252,10 +252,12 @@ class GWStreamer():
 
         if record['event']['group'] != 'CBC':
             print('Non-CBC event discarded')
+            self.slack_bot.post_message(subject="", text="Non-CBC event {}, discarded".format(trigger_id))
             return
 
         if record['event']['pipeline'] == 'CWB':
             print('Coherent waveburst search event discarded')
+            self.slack_bot.post_message(subject="", text="Coherent waveburst search event {}, discarded".format(trigger_id))
             return
         
         if alert_type == 'PRELIMINARY':
@@ -361,12 +363,14 @@ class GWStreamer():
         source, EVENT_PROB = self._get_max_prob(record)
 
         if source == 'BBH':
-            if FAR > 1E-9 or not all(x in record['event']['instruments'][1:-1] for x in ['H1', 'L1', 'V1']):
+            if FAR > self.FAR_threshold or not all(x in record['event']['instruments'] for x in ['H1', 'L1', 'V1']):
                 print("BBH event does not pass FAR and detector cut, discarding")
+                self.slack_bot.post_message(subject="", text="BBH event {} does not pass FAR and detector cut, discarding \n\n FAR: {}\n\n FAR threshold:{} \n\n Detectors: {}".format(trigger_id,FAR,self.FAR_threshold,record['event']['instruments']))
                 return
         
         if source == 'Terrestrial':
             print("Terrestrial event, discarding")
+            self.slack_bot.post_message(subject="", text="Terrestrial event {}, discarding".format(trigger_id))
             return
             
         info_text = "New GCN received, starting strategy on event: *{}* \n\n*Website page for this event*: {}\n\n :milky_way: *Weather report* :milky_way:\n\n{}\n\n".format(trigger_id,self.website_base_url+trigger_id,weather_text)
@@ -387,7 +391,6 @@ class GWStreamer():
         
 
         
-        self.slack_bot = SlackBot(mode=self.mode)
         self.slack_bot.post_message(subject=subject, text=info_text + text)
         self.slack_bot.post_image(skymap_plot,"Skymap - {}".format(trigger_id),"Skymap for {}".format(trigger_id))
         self.slack_bot.post_image(moon_plot,"MoonPlot - {}".format(trigger_id),"MoonPlot for {}".format(trigger_id))
