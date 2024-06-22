@@ -82,7 +82,7 @@ class SlackBot():
             
         elif self.mode == 'observation':
             subject = '*<!channel>*\n\n' + subject
-        else:
+        elif self.mode == 'dummy':
             subject=""
         if text.__contains__("has been running nonstop"):
             subject=""
