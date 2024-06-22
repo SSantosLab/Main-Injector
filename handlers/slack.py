@@ -74,15 +74,16 @@ class SlackBot():
         if self.mode == 'test':
             subject = '*OFFLINE TESTING NO PANICKING IS REQUIRED* \n\n' + subject
 
-        if self.mode == 'mock':
+        elif self.mode == 'mock':
             subject = '*GCN STREAM TEST* \n\n' + subject
 
-        if self.mode == 'mock-bayestar':
+        elif self.mode == 'mock-bayestar':
             subject = '*MOCK BAYESTAR TEST* \n\n' + subject
             
-        if self.mode == 'observation':
+        elif self.mode == 'observation':
             subject = '*<!channel>*\n\n' + subject
-
+        else:
+            subject=""
         if text.__contains__("has been running nonstop"):
             subject=""
 
