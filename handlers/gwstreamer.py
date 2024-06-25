@@ -67,7 +67,7 @@ class GWStreamer():
         self.weather_forecast = "https://www.wunderground.com/forecast/cl/la-serena/ICOQUIMB2"
         self.weather_CTIO_currently = "https://noirlab.edu/science/observing-noirlab/weather-webcams/cerro-tololo/environmental-conditions"
         self.website_base_url = "https://des-ops.fnal.gov:8082/desgw-new/#/trigger/"
-        self.FAR_threshold = 1E-10 * 31536000
+        self.FAR_threshold = 100 # in yr^-1
         self.api = DESGWApi.DESGWApi()
 
     def _get_max_prob(self, record: dict) -> tuple:
