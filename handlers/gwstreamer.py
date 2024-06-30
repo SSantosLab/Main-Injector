@@ -364,9 +364,9 @@ class GWStreamer():
         source, EVENT_PROB = self._get_max_prob(record)
 
         if source == 'BBH':
-            if FAR > self.FAR_threshold or not all(x in record['event']['instruments'] for x in ['H1', 'L1', 'V1']):
+            if FAR < self.FAR_threshold or not all(x in record['event']['instruments'] for x in ['H1', 'L1', 'V1']):
                 print("BBH event does not pass FAR and detector cut, discarding")
-                self.slack_bot2.post_message(subject="", text="BBH event {} does not pass FAR and detector cut, discarding \n\n FAR: {} [yr^-1]\n\n FAR threshold:{} [yr^-1]\n\n Detectors: {}".format(trigger_id,FAR,self.FAR_threshold,record['event']['instruments']))
+                self.slack_bot2.post_message(subject="", text="BBH event {} does not pass FAR and detector cut, discarding \n\n FAR: {} [yr^-1]\n\n FAR threshold: {} [yr^-1]\n\n Detectors: {}".format(trigger_id,FAR,self.FAR_threshold,record['event']['instruments']))
                 return
         
         if source == 'Terrestrial':
