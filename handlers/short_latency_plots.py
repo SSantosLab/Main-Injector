@@ -20,7 +20,7 @@ import datetime
 import ephem
 import json
 import os
-
+from astropy.coordinates import ICRS
 
 ### Function for reading + parsing the skymap 
 def make_alert_skymap(map_path):
@@ -210,6 +210,39 @@ def make_plots_initial(url, name):
     ax.imshow_hpx(url, cmap='cylon')
     cs = ax.contour_hpx(url, levels = levels, colors = ['black'], linewidths = [1,0.5])
     ct = ax_inset.contour_hpx(url, levels = levels, colors = ['black'], linewidths = [1,0.5])
+
+
+    ### Add galactic plane and +- 15 deg to skymap plot 
+    
+    seanLimit = 15 # The upper and lower limit on the galactic latitude range - typically, this is 15 degrees
+    galacticLongitude = np.append(np.arange(0,360.1,step=0.1), 0)
+
+    galacticCenterline = np.full(np.shape(galacticLongitude),0)
+    galacticLowerLimit = np.full(np.shape(galacticLongitude),-seanLimit)
+    galacticUpperLimit = np.full(np.shape(galacticLongitude),seanLimit)
+
+    galacticCenterlineCoords = SkyCoord(l=galacticLongitude*u.degree,b=galacticCenterline*u.degree,frame='galactic')
+    galacticLowerLimitCoords = SkyCoord(l=galacticLongitude*u.degree,b= galacticLowerLimit*u.degree,frame='galactic')
+    galacticUpperLimitCoords = SkyCoord(l=galacticLongitude*u.degree,b= galacticUpperLimit*u.degree,frame='galactic')
+
+    # Coordinate transform
+
+    galacticCenterlineCoords = galacticCenterlineCoords.transform_to(ICRS)
+    galacticLowerLimitCoords = galacticLowerLimitCoords.transform_to(ICRS)
+    galacticUpperLimitCoords = galacticUpperLimitCoords.transform_to(ICRS)
+
+    # plot it
+
+    galaxyKwargs = {"Center": {'ls':'--','color':'black','label':"Galactic centerline"},
+                    "Upper limit": {'ls':'--',"color":'black','alpha':0.5,'label':"Galactic latitude limit +/- {} deg".format(seanLimit)},
+                    "Lower limit": {'ls':'--',"color":'black','alpha':0.5}}
+
+    for coord,label,galkey in zip([galacticCenterlineCoords,galacticLowerLimitCoords,galacticUpperLimitCoords],["Galactic center","Galactic lower limit","Galactic upper limit"],galaxyKwargs.keys()):
+        galRa = coord.ra.wrap_at(180 * u.deg).radian
+        galDec = coord.dec.radian
+        ax.plot(galRa,galDec,**galaxyKwargs[galkey])
+
+    ###
 
     ax_inset.imshow_hpx(url, cmap='cylon')
     ax_inset.plot(
