@@ -80,7 +80,7 @@ def make_alert_skymap(map_path):
     return (area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob)
 
 
-def moon_airmass(event_name, todays_date, target_coords):
+def moon_airmass(event_name, todays_date, target_coords,return_many=False):
     date = datetime.date.today()
     m = ephem.Moon(todays_date)
     phase = round(m.moon_phase, 2)
@@ -91,7 +91,7 @@ def moon_airmass(event_name, todays_date, target_coords):
     
     
     CTIO = EarthLocation.of_site('Cerro Tololo Interamerican Observatory')
-    utcoffset = -4*u.hour  # Eastern Daylight Time
+    utcoffset = -3*u.hour  # Eastern Daylight Time
 
     mytime = todays_date
     midnight = Time(mytime) - utcoffset # - -> plus?
@@ -144,13 +144,13 @@ def moon_airmass(event_name, todays_date, target_coords):
     ax1.set_xlim(-12*u.hour, 12*u.hour)
     ax1.set_xticks((np.arange(13)*2-12)*u.hour)
     ax1.set_ylim(0*u.deg, 90*u.deg)
-    ax1.set_xlabel('Hours from CTIO Local Midnight (UTC-4)')
+    ax1.set_xlabel('Hours from CTIO Local Midnight (UTC-3)')
     ax1.set_ylabel('Altitude [deg]')
     ax2.set_ylabel('Airmass')
     ax2.set_ylim(4,1)
 
     moon_plot = event_name+'/Moon.png'
-    # moon_plot = f'/data/des70.a/data/desgw/O4/Main-Injector-O4b/utils/Moon_{todays_date}.jpg' #uncomment this line if you are using the moonplot figure in utils
+    moon_plot = f'/data/des70.a/data/desgw/O4/Main-Injector-O4b/utils/Moon_{todays_date}.jpg' #uncomment this line if you are using the moonplot figure in utils
     plt.savefig(moon_plot, dpi=300, bbox_inches = "tight")
     os.chmod(moon_plot, 0o0777)
     
@@ -160,8 +160,10 @@ def moon_airmass(event_name, todays_date, target_coords):
     plt.clf() 
     # Closes all the figure windows.
     plt.close('all')
-    
-    return moon_plot
+    if return_many:
+        return moon_plot,sunaltazs,delta_midnight,moon_separation,t
+    else:   
+        return moon_plot
     
 def make_plots_initial(url, name):
     '''url is either the skymap url or the local path to the skymap, name is something like "S230518". 
