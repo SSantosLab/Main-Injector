@@ -20,7 +20,7 @@ import datetime
 import ephem
 import json
 import os
-
+import pytz
 
 ### Function for reading + parsing the skymap 
 def make_alert_skymap(map_path):
@@ -91,7 +91,8 @@ def moon_airmass(event_name, todays_date, target_coords,return_many=False):
     
     
     CTIO = EarthLocation.of_site('Cerro Tololo Interamerican Observatory')
-    utcoffset = -3*u.hour  # Eastern Daylight Time
+    chile_now = datetime.datetime.now(pytz.timezone('Chile/Continental'))
+    utcoffset =  int(chile_now.utcoffset().total_seconds()/60/60)
 
     mytime = todays_date
     midnight = Time(mytime) - utcoffset # - -> plus?
@@ -144,7 +145,7 @@ def moon_airmass(event_name, todays_date, target_coords,return_many=False):
     ax1.set_xlim(-12*u.hour, 12*u.hour)
     ax1.set_xticks((np.arange(13)*2-12)*u.hour)
     ax1.set_ylim(0*u.deg, 90*u.deg)
-    ax1.set_xlabel('Hours from CTIO Local Midnight (UTC-3)')
+    ax1.set_xlabel("Hours from CTIO Local Midnight (UTC{})".format(utcoffset))
     ax1.set_ylabel('Altitude [deg]')
     ax2.set_ylabel('Airmass')
     ax2.set_ylim(4,1)
