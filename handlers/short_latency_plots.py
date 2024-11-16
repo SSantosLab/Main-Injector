@@ -238,8 +238,8 @@ def make_plots_initial(url, name):
                     "Lower limit": {'ls':'--',"color":'black','alpha':0.5}}
 
     for coord,label,galkey in zip([galacticCenterlineCoords,galacticLowerLimitCoords,galacticUpperLimitCoords],["Galactic center","Galactic lower limit","Galactic upper limit"],galaxyKwargs.keys()):
-        galRa = coord.ra.wrap_at(180 * u.deg).radian
-        galDec = coord.dec.radian
+        galRa = 90-np.rad2deg(coord.ra)
+        galDec = np.rad2deg(coord.dec) 
         ax.plot(galRa,galDec,**galaxyKwargs[galkey])
 
     ###
