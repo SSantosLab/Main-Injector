@@ -80,7 +80,7 @@ def make_alert_skymap(map_path):
     return (area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob)
 
 
-def moon_airmass(event_name, todays_date, target_coords):
+def moon_airmass(event_name, todays_date, target_coords,return_many=False):
     date = datetime.date.today()
     m = ephem.Moon(todays_date)
     phase = round(m.moon_phase, 2)
@@ -92,7 +92,7 @@ def moon_airmass(event_name, todays_date, target_coords):
     
     CTIO = EarthLocation.of_site('Cerro Tololo Interamerican Observatory')
     chile_now = datetime.datetime.now(pytz.timezone('Chile/Continental'))
-    utcoffset =  int(chile_now.utcoffset().total_seconds()/60/60) 
+    utcoffset =  int(chile_now.utcoffset().total_seconds()/60/60)
 
     mytime = todays_date
     midnight = Time(mytime) - utcoffset # - -> plus?
@@ -151,7 +151,7 @@ def moon_airmass(event_name, todays_date, target_coords):
     ax2.set_ylim(4,1)
 
     moon_plot = event_name+'/Moon.png'
-    # moon_plot = f'/data/des70.a/data/desgw/O4/Main-Injector-O4b/utils/Moon_{todays_date}.jpg' #uncomment this line if you are using the moonplot figure in utils
+    moon_plot = f'/data/des70.a/data/desgw/O4/Main-Injector-O4b/utils/Moon_{todays_date}.jpg' #uncomment this line if you are using the moonplot figure in utils
     plt.savefig(moon_plot, dpi=300, bbox_inches = "tight")
     os.chmod(moon_plot, 0o0777)
     
@@ -161,8 +161,10 @@ def moon_airmass(event_name, todays_date, target_coords):
     plt.clf() 
     # Closes all the figure windows.
     plt.close('all')
-    
-    return moon_plot
+    if return_many:
+        return moon_plot,sunaltazs,delta_midnight,moon_separation,t
+    else:   
+        return moon_plot
     
 def make_plots_initial(url, name):
     '''url is either the skymap url or the local path to the skymap, name is something like "S230518". 
