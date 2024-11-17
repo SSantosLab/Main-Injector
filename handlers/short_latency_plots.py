@@ -190,6 +190,8 @@ def make_plots_initial(url, name):
 
     ax = plt.axes(projection='astro hours mollweide')
 
+    # print("Limits:",ax.get_ylim(),ax.get_xlim())
+
     ax_inset = plt.axes(
         [0.9, 0.2, 0.2, 0.2],
         projection='astro zoom',
@@ -215,34 +217,35 @@ def make_plots_initial(url, name):
     ### Add galactic plane and +- 15 deg to skymap plot 
     
     seanLimit = 15 # The upper and lower limit on the galactic latitude range - typically, this is 15 degrees
-    galacticLongitude = np.append(np.arange(0,360.1,step=0.1), 0)
+    galacticLatitude = np.append(np.arange(121,474,step=1), [])
 
-    galacticCenterline = np.full(np.shape(galacticLongitude),0)
-    galacticLowerLimit = np.full(np.shape(galacticLongitude),-seanLimit)
-    galacticUpperLimit = np.full(np.shape(galacticLongitude),seanLimit)
+    galacticCenterline = np.full(np.shape(galacticLatitude),0)
+    galacticLowerLimit = np.full(np.shape(galacticLatitude),-seanLimit)
+    galacticUpperLimit = np.full(np.shape(galacticLatitude),seanLimit)
 
-    galacticCenterlineCoords = SkyCoord(l=galacticLongitude*u.degree,b=galacticCenterline*u.degree,frame='galactic')
-    galacticLowerLimitCoords = SkyCoord(l=galacticLongitude*u.degree,b= galacticLowerLimit*u.degree,frame='galactic')
-    galacticUpperLimitCoords = SkyCoord(l=galacticLongitude*u.degree,b= galacticUpperLimit*u.degree,frame='galactic')
-
-    # Coordinate transform
-
-    galacticCenterlineCoords = galacticCenterlineCoords.transform_to(ICRS)
-    galacticLowerLimitCoords = galacticLowerLimitCoords.transform_to(ICRS)
-    galacticUpperLimitCoords = galacticUpperLimitCoords.transform_to(ICRS)
+    galacticCenterlineCoords = SkyCoord(l=galacticLatitude*u.degree,b=galacticCenterline*u.degree,frame='galactic')
+    galacticLowerLimitCoords = SkyCoord(l=galacticLatitude*u.degree,b= galacticLowerLimit*u.degree,frame='galactic')
+    galacticUpperLimitCoords = SkyCoord(l=galacticLatitude*u.degree,b= galacticUpperLimit*u.degree,frame='galactic')
 
     # plot it
 
-    galaxyKwargs = {"Center": {'ls':'--','color':'black','label':"Galactic centerline"},
-                    "Upper limit": {'ls':'--',"color":'black','alpha':0.5,'label':"Galactic latitude limit +/- {} deg".format(seanLimit)},
-                    "Lower limit": {'ls':'--',"color":'black','alpha':0.5}}
+    galaxyKwargs = {"Center": {'ls':"--",'color':'black','label':"Galactic centerline"},
+                    "Upper limit": {'ls':"--","color":'black','alpha':0.5,'label':"Galactic latitude limit +/- {} deg".format(seanLimit)},
+                    "Lower limit": {'ls':"--","color":'black','alpha':0.5}}
 
     for coord,label,galkey in zip([galacticCenterlineCoords,galacticLowerLimitCoords,galacticUpperLimitCoords],["Galactic center","Galactic lower limit","Galactic upper limit"],galaxyKwargs.keys()):
-        galRa = 90-np.rad2deg(coord.ra)
-        galDec = np.rad2deg(coord.dec) 
-        ax.plot(galRa,galDec,**galaxyKwargs[galkey])
+        # coord = 
+        # wrapLoc = 267*u.deg
+        
+        # print("WrapLocation:", wrapLoc)
+        galRa = coord.icrs.ra
+        galDec = -coord.icrs.dec
+        ax.plot(galRa,galDec,transform=ax.get_transform('icrs'),**galaxyKwargs[galkey])
 
-    ###
+    # print("Galactic coords after transformation:",galacticCenterlineCoords.ra,galacticCenterlineCoords.dec)
+    # print("Galactic coords after transformation:",galacticCenterlineCoords.l,galacticCenterlineCoords.b) 
+
+    ### End galactic plane plot
 
     ax_inset.imshow_hpx(url, cmap='cylon')
     ax_inset.plot(
@@ -271,3 +274,4 @@ def make_plots_initial(url, name):
     plt.close('all')
 
     return initial_skymap_plot, moon_plot
+    # return  initial_skymap_plot, moon_plot, galacticCenterlineCoords,maxprob_ra, maxprob_dec 
