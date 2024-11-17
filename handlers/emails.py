@@ -50,7 +50,7 @@ class EmailBot():
 
         test_emails = [
             'seanmacb@umich.edu',
-            'isaac.mcmahon@physik.uzh.ch'
+            'imcmahon@umich.edu'
         ]
         
         if not emergency:
@@ -119,7 +119,7 @@ class EmailBot():
                     'annis@fnal.gov',
                     'mssantos@umich.edu',
                     'sean.p.macbride@gmail.com',
-                    'isaac.mcmahon@physik.uzh.ch'
+                    'imcmahon@umich.edu'
                 ]
             }
 

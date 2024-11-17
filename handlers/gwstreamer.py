@@ -224,10 +224,11 @@ class GWStreamer():
         record = gcn_alert
         alert_type = record['alert_type']
         trigger_id = record['superevent_id']
+        print('Handling trigger {}, alert type {}'.format(trigger_id, alert_type), flush=True)
 
         if self.mode == 'observation':
             if record['superevent_id'][0] != 'S':
-                print('MI running in Observing Mode; unofficial trigger discarded')
+                print('MI running in Observing Mode; unofficial trigger discarded', flush=True)
                 return
             is_mock = False
             self.OUTPUT_PATH = os.path.join(self._ROOT,
@@ -237,7 +238,7 @@ class GWStreamer():
                 
         if (self.mode == 'test') or (self.mode == 'mock'):
             if record['superevent_id'][0] != 'M':
-                print('MI running in a testing mode; non-testing trigger discarded')
+                print('MI running in a testing mode; non-testing trigger discarded', flush=True)
                 return
             
             self.OUTPUT_PATH = os.path.join(self._ROOT,
@@ -252,12 +253,12 @@ class GWStreamer():
             return None
 
         if record['event']['group'] != 'CBC':
-            print('Non-CBC event discarded')
+            print('Non-CBC event discarded', flush=True)
             self.slack_bot2.post_message(subject="", text="Non-CBC event {}, discarded".format(trigger_id))
             return
 
         if record['event']['pipeline'] == 'CWB':
-            print('Coherent waveburst search event discarded')
+            print('Coherent waveburst search event discarded', flush=True)
             self.slack_bot2.post_message(subject="", text="Coherent waveburst search event {}, discarded".format(trigger_id))
             return
         
@@ -366,7 +367,9 @@ class GWStreamer():
         if source == 'BBH':
             if FAR < self.FAR_threshold or not all(x in record['event']['instruments'] for x in ['H1', 'L1', 'V1']):
                 print("BBH event does not pass FAR and detector cut, discarding")
-                self.slack_bot2.post_message(subject="", text="BBH event {} does not pass FAR and detector cut, discarding \n\n FAR: {} [yr^-1]\n\n FAR threshold: {} [yr^-1]\n\n Detectors: {}".format(trigger_id,FAR,self.FAR_threshold,record['event']['instruments']))
+
+                self.slack_bot2.post_message(subject="", text="BBH event <{}|{}> does not pass FAR and detector cut, discarding \n\n FAR: {} [yr^-1]\n\n FAR threshold: {} [yr^-1]\n\n Detectors: {}".format(record['url'],trigger_id,FAR,self.FAR_threshold,record['event']['instruments']))
+
                 return
         
         if source == 'Terrestrial':
