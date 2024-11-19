@@ -243,7 +243,7 @@ def make_plots_initial(url, name):
         
         # print("WrapLocation:", wrapLoc)
         galRa = coord.icrs.ra
-        galDec = -coord.icrs.dec
+        galDec = coord.icrs.dec
         ax.plot(galRa,galDec,transform=ax.get_transform('icrs'),**galaxyKwargs[galkey])
 
     # print("Galactic coords after transformation:",galacticCenterlineCoords.ra,galacticCenterlineCoords.dec)
