@@ -20,3 +20,4 @@ utils/*
 *.DS_Store*
 python/*nora_needs*
 handlers/OUTPUT/TESTING/
+PhysicalObservable.py
