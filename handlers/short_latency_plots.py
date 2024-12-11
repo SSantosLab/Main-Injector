@@ -25,11 +25,15 @@ import pytz
 import subprocess
 
 
-def make_agn_plot(plots_path,trigger_id,mass_chirp,maxprob_dist,maxprob_distsigma):
-    
+def make_agn_plot(plots_path,trigger_id,mass_chirp,maxprob_dist,maxprob_distsigma):   
+ 
+    print(plots_path,type(plots_path))
+    print(trigger_id,type(trigger_id))
+    print(mass_chirp,type(mass_chirp))
+    print(maxprob_dist,type(maxprob_dist))
+    print(maxprob_distsigma,type(maxprob_distsigma))
     plotString =    'python ' +\
-                    f'.
-                    /handlers/PhysicalObservable.py ' +\
+                    f'./handlers/PhysicalObservable.py ' +\
                     f'--triggerid {trigger_id} ' +\
                     f'--chirpmass {mass_chirp} ' +\
                     f'--distance {maxprob_dist} ' +\
