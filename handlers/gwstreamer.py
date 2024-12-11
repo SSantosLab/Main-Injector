@@ -283,7 +283,7 @@ class GWStreamer():
         
         with open(f'{self.OUTPUT_TRIGGER}/{trigger_id}.json', 'w') as jsonfile:
             json.dump(record, jsonfile)
-            os.chmod(f'{self.OUTPUT_TRIGGER}/{trigger_id}.json', 0o0777)
+            # os.chmod(f'{self.OUTPUT_TRIGGER}/{trigger_id}.json', 0o0777)
 
     # Adding trigger call 
         
@@ -342,11 +342,11 @@ class GWStreamer():
 
         if not os.path.isfile(OUTPUT_SKYMAP):
             skymap.write(OUTPUT_SKYMAP, overwrite=True)
-            os.chmod(OUTPUT_SKYMAP, 0o0777)
+            # os.chmod(OUTPUT_SKYMAP, 0o0777)
             print('Skymap saved at '+OUTPUT_FLATTEN)
         
         self.flatten_skymap(OUTPUT_SKYMAP, OUTPUT_FLATTEN)
-        os.chmod(OUTPUT_FLATTEN, 0o0777)
+        # os.chmod(OUTPUT_FLATTEN, 0o0777)
 
         nt = Time(record['event']['time'])
         trigger_mjd = round(nt.mjd, 4)
@@ -358,7 +358,7 @@ class GWStreamer():
         event_paramfile = os.path.join(self.OUTPUT_TRIGGER,
                                        f"{trigger_id}_params.npz")
         np.savez(event_paramfile, record)
-        os.chmod(event_paramfile, 0o0777)
+        # os.chmod(event_paramfile, 0o0777)
         print('Parameters saved at '+event_paramfile, flush=True)
         FAR = record['event']['far']
         FAR = round(1./float(FAR)/60./60./24./365., 2)
@@ -412,6 +412,8 @@ class GWStreamer():
         ## Here is where the BBH-AGN observability code should be implmented
         if source=="BBH":
             vis_plot = make_agn_plot(plots_path,trigger_id,mass_chirp,maxprob_dist,maxprob_distsigma)
+            while not os.path.isfile(vis_plot):
+                time.sleep(1)
             self.slack_bot.post_image(vis_plot,"AGN Visibility plot - {}".format(trigger_id),"AGN Visibility plot for {}".format(trigger_id))
 
 

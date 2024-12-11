@@ -28,16 +28,17 @@ import subprocess
 def make_agn_plot(plots_path,trigger_id,mass_chirp,maxprob_dist,maxprob_distsigma):
     
     plotString =    'python ' +\
-                    f'PhysicalObservable.py ' +\
+                    f'.
+                    /handlers/PhysicalObservable.py ' +\
                     f'--triggerid {trigger_id} ' +\
                     f'--chirpmass {mass_chirp} ' +\
                     f'--distance {maxprob_dist} ' +\
                     f'--sigma_dist {maxprob_distsigma} ' +\
                     f'--save_path {plots_path}'
 
-    subprocess.Popen(plotString,shell=True)
+    subprocess.run(plotString,shell=True)
 
-    return plot_path+'/RealEventsLum_'+triggerid+'.png'
+    return str(plots_path)+'/RealEventsLum_'+trigger_id+'.png'
 
 ### Function for reading + parsing the skymap 
 def make_alert_skymap(map_path):
