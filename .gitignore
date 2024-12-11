@@ -22,4 +22,4 @@ utils/*
 python/*nora_needs*
 websiteTests/*copy*
 desgw_db_writer/desgw_db_writer/desgw_db_writer
-PhysicalObservable.py
+handlers/PhysicalObservable.py

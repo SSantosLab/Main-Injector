@@ -22,6 +22,22 @@ import json
 import os
 from astropy.coordinates import ICRS
 import pytz
+import subprocess
+
+
+def make_agn_plot(plots_path,trigger_id,mass_chirp,maxprob_dist,maxprob_distsigma):
+    
+    plotString =    'python ' +\
+                    f'PhysicalObservable.py ' +\
+                    f'--triggerid {trigger_id} ' +\
+                    f'--chirpmass {mass_chirp} ' +\
+                    f'--distance {maxprob_dist} ' +\
+                    f'--sigma_dist {maxprob_distsigma} ' +\
+                    f'--save_path {plots_path}'
+
+    subprocess.Popen(plotString,shell=True)
+
+    return plot_path+'/RealEventsLum_'+triggerid+'.png'
 
 ### Function for reading + parsing the skymap 
 def make_alert_skymap(map_path):
@@ -152,7 +168,7 @@ def moon_airmass(event_name, todays_date, target_coords,return_many=False):
     ax2.set_ylim(4,1)
 
     moon_plot = event_name+'/Moon.png'
-    moon_plot = f'/data/des70.a/data/desgw/O4/Main-Injector-O4b/utils/Moon_{todays_date}.jpg' #uncomment this line if you are using the moonplot figure in utils
+    # moon_plot = f'/data/des70.a/data/desgw/O4/Main-Injector-O4b/utils/Moon_{todays_date}.jpg' #uncomment this line if you are using the moonplot figure in utils
     plt.savefig(moon_plot, dpi=300, bbox_inches = "tight")
     os.chmod(moon_plot, 0o0777)
     

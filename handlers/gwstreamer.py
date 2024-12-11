@@ -23,7 +23,7 @@ import astropy_healpix as ah
 import pprint
 import json
 import yaml
-from .short_latency_plots import make_plots_initial, make_alert_skymap
+from .short_latency_plots import make_plots_initial, make_alert_skymap,make_agn_plot
 import sys
 sys.path.insert(0, '/data/des70.a/data/desgw/O4/Main-Injector-O4b/desgw_db_writer')
 import desgw_db_writer.api as DESGWApi
@@ -399,6 +399,7 @@ class GWStreamer():
         self.slack_bot.post_image(skymap_plot,"Skymap - {}".format(trigger_id),"Skymap for {}".format(trigger_id))
         self.slack_bot.post_image(moon_plot,"MoonPlot - {}".format(trigger_id),"MoonPlot for {}".format(trigger_id))
         
+        
         self.email_bot = EmailBot(mode=self.mode)
         self.email_bot.send_email(subject=subject,text=text)
         
@@ -407,6 +408,12 @@ class GWStreamer():
         area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob = make_alert_skymap(f'{self.OUTPUT_TRIGGER}/bayestar.fits.gz') # the halpix map path
 
         mass_chirp,chirp_mass_std = chirp_mass(DISTANCE,DISTANCE_SIGMA,area90,area50)
+
+        ## Here is where the BBH-AGN observability code should be implmented
+        if source=="BBH":
+            vis_plot = make_agn_plot(plots_path,trigger_id,mass_chirp,maxprob_dist,maxprob_distsigma)
+            self.slack_bot.post_image(vis_plot,"AGN Visibility plot - {}".format(trigger_id),"AGN Visibility plot for {}".format(trigger_id))
+
 
         trigger_data = {
                 "trigger_label":trigger_id,
