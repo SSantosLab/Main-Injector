@@ -39,3 +39,16 @@ if [[ $HOSTNAME =~ "des"* ]] ; then
     export DESGW_MAP_DIR="$ROOT_DIR/skymaps"
     export PYTHONPATH="$ROOT_DIR/python:$PYTHONPATH"
 fi
+
+
+if [[ $HOSTNAME =~ "Seans"* ]] ; then
+    # conda activate /data/des80.a/data/imcmahon/micromamba/envs/mi38
+    mamba activate myjlabenv
+    export ROOT_DIR="/Users/sean/Desktop/Repos/Sirena-strategy" # 12-13-22 note to change to more permanent dir  after testing
+    export DESGW_DIR="/Users/sean/Desktop/Repos/Sirena-strategy/python"
+    export KNLC_ROOT="$ROOT_DIR/python"
+    export DATA_DIR="$ROOT_DIR/data"
+    export WEB="$ROOT_DIR/DES_GW_website"
+    export DESGW_MAP_DIR="$ROOT_DIR/skymaps"
+    export PYTHONPATH="$ROOT_DIR/python:$PYTHONPATH"
+fi
