@@ -114,7 +114,9 @@ def moon_airmass(event_name, todays_date, target_coords,return_many=False):
     
     CTIO = EarthLocation.of_site('Cerro Tololo Interamerican Observatory')
     chile_now = datetime.datetime.now(pytz.timezone('Chile/Continental'))
-    utcoffset =  int(chile_now.utcoffset().total_seconds()/60/60)
+    utcoffset =  u.hour * int(chile_now.utcoffset().total_seconds()/60/60)
+    # utcoffset = 0
+    # print("UTC offset:",utcoffset)
 
     mytime = todays_date
     midnight = Time(mytime) - utcoffset # - -> plus?
@@ -131,12 +133,13 @@ def moon_airmass(event_name, todays_date, target_coords,return_many=False):
     max_prob_coord = SkyCoord(target_coords[0], target_coords[1], unit="deg",frame='icrs')
     max_prob_coord_altazs = max_prob_coord.transform_to(frame)
     
-    
     moon = get_body("moon", times_tonight)
     moonaltazs = moon.transform_to(frame)
 
     moon_separation = max_prob_coord_altazs.separation(moonaltazs)
     
+    # print("Max moon sep: {}".format(np.min(moon_separation.deg)))
+
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
     t = max_prob_coord_altazs.secz
@@ -172,8 +175,10 @@ def moon_airmass(event_name, todays_date, target_coords,return_many=False):
     ax2.set_ylabel('Airmass')
     ax2.set_ylim(4,1)
 
+    print("Peak airmass: {}\n Peak airmass time (local): {}".format(np.nanmin(t),delta_midnight[np.nanargmin(t)]))
+
     moon_plot = event_name+'/Moon.png'
-    # moon_plot = f'/data/des70.a/data/desgw/O4/Main-Injector-O4b/utils/Moon_{todays_date}.jpg' #uncomment this line if you are using the moonplot figure in utils
+    moon_plot = f'/data/des70.a/data/desgw/O4/Main-Injector-O4b/utils/Moon_{todays_date}.jpg' #uncomment this line if you are using the moonplot figure in utils
     plt.savefig(moon_plot, dpi=300, bbox_inches = "tight")
     os.chmod(moon_plot, 0o0777)
     
@@ -183,6 +188,8 @@ def moon_airmass(event_name, todays_date, target_coords,return_many=False):
     plt.clf() 
     # Closes all the figure windows.
     plt.close('all')
+
+
     if return_many:
         return moon_plot,sunaltazs,delta_midnight,moon_separation,t
     else:   
