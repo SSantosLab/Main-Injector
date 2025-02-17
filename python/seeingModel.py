@@ -40,6 +40,11 @@ def filterEffWavelength(filter) :
     elif filter == "i" : effLam = 775.
     elif filter == "z" : effLam = 925.
     elif filter == "y" : effLam = 1000.
+    elif filter == 'M411': effLam = 411.
+    elif filter == "M438" : effLam = 438.
+    elif filter == "M464" : effLam = 464.
+    elif filter == "M490" : effLam = 490.
+    elif filter == "M517" : effLam = 517.
     else : raise Exception ("no such filter {}".format(filter))
     return effLam
 
