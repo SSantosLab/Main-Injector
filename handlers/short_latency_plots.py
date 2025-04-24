@@ -249,7 +249,7 @@ def make_plots_initial(url, name):
     ### Add galactic plane and +- 15 deg to skymap plot 
     
     seanLimit = 15 # The upper and lower limit on the galactic latitude range - typically, this is 15 degrees
-    galacticLatitude = np.append(np.arange(121,474,step=1), [])
+    galacticLatitude = np.append(np.arange(0,360,step=1), [])
 
     galacticCenterline = np.full(np.shape(galacticLatitude),0)
     galacticLowerLimit = np.full(np.shape(galacticLatitude),-seanLimit)
@@ -270,9 +270,9 @@ def make_plots_initial(url, name):
         # wrapLoc = 267*u.deg
         
         # print("WrapLocation:", wrapLoc)
-        galRa = coord.icrs.ra
+        galRa = coord.icrs.ra-180
         galDec = coord.icrs.dec
-        ax.plot(galRa,galDec,transform=ax.get_transform('icrs'),**galaxyKwargs[galkey])
+        ax.plot(galRa,galDec,transform=ax.get_transform('world'),**galaxyKwargs[galkey])
 
     # print("Galactic coords after transformation:",galacticCenterlineCoords.ra,galacticCenterlineCoords.dec)
     # print("Galactic coords after transformation:",galacticCenterlineCoords.l,galacticCenterlineCoords.b) 

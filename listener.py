@@ -79,10 +79,12 @@ if __name__ == "__main__":
             while True:
                 for message in consumer.consume(timeout=10):
                     print('Trigger Received...')
-                    gcn_alert = json.loads(message.value())
-                    print('Passing event to Handler.', flush=True)
-                    gw_streamer.handle(gcn_alert)
-                
+                    try:
+                        gcn_alert = json.loads(message.value())
+                        print('Passing event to Handler.', flush=True)
+                        gw_streamer.handle(gcn_alert)
+                    except Exception as e:
+                        print(e)
                 if datetime.date.today().day != today:
                     slack_bot.post_message("","`listener.py` has been running nonstop in {} mode for {} days".format(mode, init_day))
                     today = datetime.date.today().day
