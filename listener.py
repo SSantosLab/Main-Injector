@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     with open('configs/gcn_credentials.yaml', 'r', encoding='utf-8') as f:
         gcn = yaml.load(f, Loader=SafeLoader)
-        slack_bot.post_message("","Starting listener.py")
+        slack_bot.post_message("","Starting `listener.py` in `Main-Injector.py`")
 
     if mode == 'test':
         print('Reading test event...')
