@@ -270,7 +270,7 @@ def make_plots_initial(url, name):
         # wrapLoc = 267*u.deg
         
         # print("WrapLocation:", wrapLoc)
-        galRa = coord.icrs.ra-180
+        galRa = coord.icrs.ra-180*u.deg
         galDec = coord.icrs.dec
         ax.plot(galRa,galDec,transform=ax.get_transform('world'),**galaxyKwargs[galkey])
 
