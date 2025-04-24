@@ -169,11 +169,11 @@ def moon_airmass(event_name, todays_date, target_coords,return_many=False):
     ax1.set_title(todays_date)
     ax1.set_xlim(-12*u.hour, 12*u.hour)
     ax1.set_xticks((np.arange(13)*2-12)*u.hour)
-    ax1.set_ylim(0*u.deg, 90*u.deg)
+    ax1.set_ylim(60*u.deg, 90*u.deg)
     ax1.set_xlabel("Hours from CTIO Local Midnight (UTC{})".format(utcoffset))
     ax1.set_ylabel('Altitude [deg]')
     ax2.set_ylabel('Airmass')
-    ax2.set_ylim(4,1)
+    ax2.set_ylim(2,1)
 
     print("Peak airmass: {}\n Peak airmass time (local): {}".format(np.nanmin(t),delta_midnight[np.nanargmin(t)]))
 
@@ -270,7 +270,7 @@ def make_plots_initial(url, name):
         # wrapLoc = 267*u.deg
         
         # print("WrapLocation:", wrapLoc)
-        galRa = coord.icrs.ra-180
+        galRa = coord.icrs.ra-180*u.deg
         galDec = coord.icrs.dec
         ax.plot(galRa,galDec,transform=ax.get_transform('world'),**galaxyKwargs[galkey])
 
