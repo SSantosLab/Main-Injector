@@ -378,12 +378,16 @@ class GWStreamer():
             return
             
         info_text = "New GCN received, starting strategy on event: *{}* \n\n*Website page for this event*: {}\n\n :milky_way: *Weather report* :milky_way:\n\n{}\n\n".format(trigger_id,self.website_base_url+trigger_id,weather_text)
+ 
+        area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob = make_alert_skymap(f'{self.OUTPUT_TRIGGER}/bayestar.fits.gz') # the halpix map path
+
+        mass_chirp,chirp_mass_std = chirp_mass(DISTANCE,DISTANCE_SIGMA,area90,area50)
         
         print('Plotting...', flush=True)
         plots_path = Path(os.path.join(self.OUTPUT_TRIGGER, "initial_plots"))
         
         plots_path.mkdir(parents=True, exist_ok=True)
-        skymap_plot, moon_plot = make_plots_initial(OUTPUT_FLATTEN, plots_path.as_posix())
+        skymap_plot, moon_plot = make_plots_initial(OUTPUT_FLATTEN, plots_path.as_posix(),str(mass_chirp))
         server_dir = os.path.join("/des_web","www","html","desgw-new",f"{trigger_id}")
         os.system("ssh -k codemanager@desweb.fnal.gov 'mkdir -p {}'".format(server_dir))
         desweb = f"codemanager@desweb.fnal.gov:{server_dir}"
@@ -404,11 +408,6 @@ class GWStreamer():
         self.email_bot.send_email(subject=subject,text=text)
         
         OUTPUT_IMAGE = OUTPUT_FLATTEN.replace('bayestar.fits.gz', 'bayestar.png')
-
-        area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob = make_alert_skymap(f'{self.OUTPUT_TRIGGER}/bayestar.fits.gz') # the halpix map path
-
-        mass_chirp,chirp_mass_std = chirp_mass(DISTANCE,DISTANCE_SIGMA,area90,area50)
-
         ## Here is where the BBH-AGN observability code should be implmented
         if source=="BBH":
             vis_plot = make_agn_plot(plots_path,trigger_id,mass_chirp,DISTANCE,DISTANCE_SIGMA)
