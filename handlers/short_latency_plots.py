@@ -195,7 +195,7 @@ def moon_airmass(event_name, todays_date, target_coords,return_many=False):
     else:   
         return moon_plot
     
-def make_plots_initial(url, name):
+def make_plots_initial(url, name,chirpEstimate):
     '''url is either the skymap url or the local path to the skymap, name is something like "S230518". 
     
     This function should return 2 plots: One of the skymap, and another showing the moon phase + altitude and airmass of the max probability coordinate from the skymap. Currently, these are saved in the working directory.'''
@@ -214,8 +214,8 @@ def make_plots_initial(url, name):
                  + r'50% Area: {} deg$^2$'.format(area50) + '\n'
                  + r'90% Area: {} deg$^2$'.format(area90) + '\n'
                  + r'Max Prob Coordinates (degrees): ({},{})'.format(maxprob_ra, maxprob_dec) + '\n'
-                 + r'Max Prob Distance: {}$\pm${} Mpc'.format(maxprob_dist, maxprob_distsigma)
-                 ,(0.9,0.8))
+                 + r'Max Prob Distance: {}$\pm${} Mpc'.format(maxprob_dist, maxprob_distsigma) + '\n'
+                 + 'Chirp mass estimate: {:.2f}$M$'.format(float(chirpEstimate)),(0.9,0.8))
     plt.box(False)
     plt.xticks([])
     plt.yticks([])
@@ -249,7 +249,7 @@ def make_plots_initial(url, name):
     ### Add galactic plane and +- 15 deg to skymap plot 
     
     seanLimit = 15 # The upper and lower limit on the galactic latitude range - typically, this is 15 degrees
-    galacticLatitude = np.append(np.arange(0,360,step=1), [])
+    galacticLatitude =np.append(np.arange(121,474,step=1), []) 
 
     galacticCenterline = np.full(np.shape(galacticLatitude),0)
     galacticLowerLimit = np.full(np.shape(galacticLatitude),-seanLimit)
@@ -270,7 +270,7 @@ def make_plots_initial(url, name):
         # wrapLoc = 267*u.deg
         
         # print("WrapLocation:", wrapLoc)
-        galRa = coord.icrs.ra-180*u.deg
+        galRa = coord.icrs.ra
         galDec = coord.icrs.dec
         ax.plot(galRa,galDec,transform=ax.get_transform('world'),**galaxyKwargs[galkey])
 
