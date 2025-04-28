@@ -25,19 +25,19 @@ import pytz
 import subprocess
 
 
-def make_agn_plot(plots_path,trigger_id,mass_chirp,maxprob_dist,maxprob_distsigma):   
+def make_agn_plot(plots_path,trigger_id,mass_chirp,dist,distsigma):   
  
     print(plots_path,type(plots_path))
     print(trigger_id,type(trigger_id))
     print(mass_chirp,type(mass_chirp))
-    print(maxprob_dist,type(maxprob_dist))
-    print(maxprob_distsigma,type(maxprob_distsigma))
+    print(dist,type(dist))
+    print(distsigma,type(distsigma))
     plotString =    'python ' +\
                     f'./handlers/PhysicalObservable.py ' +\
                     f'--triggerid {trigger_id} ' +\
                     f'--chirpmass {mass_chirp} ' +\
-                    f'--distance {maxprob_dist} ' +\
-                    f'--sigma_dist {maxprob_distsigma} ' +\
+                    f'--distance {dist} ' +\
+                    f'--sigma_dist {distsigma} ' +\
                     f'--save_path {plots_path}'
 
     subprocess.run(plotString,shell=True)
@@ -195,7 +195,7 @@ def moon_airmass(event_name, todays_date, target_coords,return_many=False):
     else:   
         return moon_plot
     
-def make_plots_initial(url, name,chirpEstimate):
+def make_plots_initial(url, name,chirpEstimate,dist,distsigma):
     '''url is either the skymap url or the local path to the skymap, name is something like "S230518". 
     
     This function should return 2 plots: One of the skymap, and another showing the moon phase + altitude and airmass of the max probability coordinate from the skymap. Currently, these are saved in the working directory.'''
@@ -214,7 +214,7 @@ def make_plots_initial(url, name,chirpEstimate):
                  + r'50% Area: {} deg$^2$'.format(area50) + '\n'
                  + r'90% Area: {} deg$^2$'.format(area90) + '\n'
                  + r'Max Prob Coordinates (degrees): ({},{})'.format(maxprob_ra, maxprob_dec) + '\n'
-                 + r'Max Prob Distance: {}$\pm${} Mpc'.format(maxprob_dist, maxprob_distsigma) + '\n'
+                 + r'Weighted average distance: {}$\pm${} Mpc'.format(dist, distsigma) + '\n'
                  + 'Chirp mass estimate: {:.2f}$M$'.format(float(chirpEstimate)),(0.9,0.8))
     plt.box(False)
     plt.xticks([])
