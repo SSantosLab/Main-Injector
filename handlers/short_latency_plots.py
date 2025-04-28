@@ -47,7 +47,7 @@ def getSunset(date,location):
     - np.datetime64: Sunset time in UTC.
     """
     # Convert date to Astropy Time object (at noon to avoid timezone edge cases)
-    astropy_time = Time(date.astype('datetime64[D]') + np.timedelta64(12, 'h'), scale='utc') # this might need adjustment
+    astropy_time = Time(date, scale='utc') # this might need adjustment
 
     # AltAz frame for that location and time
     altaz_frame = AltAz(obstime=astropy_time, location=location)
@@ -553,11 +553,11 @@ def make_plots_initial(url, name,chirpEstimate,dist,distsigma,slackBot=None):
     
     moon_plot = moon_airmass(name, date, [maxprob_ra, maxprob_dec])
     center = SkyCoord(maxprob_ra, maxprob_dec, unit="deg")  # defaults to ICRS frame
-
-     for dateAdjust in np.arange(3):
+    CTIO = EarthLocation.of_site('Cerro Tololo Interamerican Observatory')
+    for dateAdjust in np.arange(3):
         dateOfInterest = np.datetime64(datetime.date.today())+np.timedelta64(dateAdjust,"D")
-        sunset,sunrise,sunElTimes = getSunTime(dateOfInterest,CTIO)
-        moonrise,moonset,moonClosest,moonCrossing = getMoonTimes(maxProbCoord,dateOfInterest,CTIO)
+        sunset,sunrise,sunElTimes = getSunTimes(dateOfInterest,CTIO)
+        moonrise,moonset,moonClosest,moonCrossing = getMoonTimes(center,dateOfInterest,CTIO)
         msg = __format_sepMessage(dateOfInterest,sunset,sunrise,sunElTimes,moonrise,moonset,moonClosest,moonCrossing)
         if slackBot!=None:
             slackBot.post_message("",msg)# Post the message
