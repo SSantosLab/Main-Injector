@@ -214,7 +214,7 @@ def make_plots_initial(url, name,chirpEstimate,dist,distsigma):
                  + r'50% Area: {} deg$^2$'.format(area50) + '\n'
                  + r'90% Area: {} deg$^2$'.format(area90) + '\n'
                  + r'Max Prob Coordinates (degrees): ({},{})'.format(maxprob_ra, maxprob_dec) + '\n'
-                 + r'Weighted average distance: {}$\pm${} Mpc'.format(dist, distsigma) + '\n'
+                 + 'Weighted average distance: {:.2f}$\pm${:.2f} Mpc'.format(dist, distsigma) + '\n'
                  + 'Chirp mass estimate: {:.2f}$M$'.format(float(chirpEstimate)),(0.9,0.8))
     plt.box(False)
     plt.xticks([])
