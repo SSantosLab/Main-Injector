@@ -564,13 +564,20 @@ def make_plots_initial(url, name,chirpEstimate,dist,distsigma,slackBot=None):
         for key in sunElTimes.keys():
             print(sunElTimes[key],type(sunElTimes[key]))
             sunElTimes[key] = np.array(sunElTimes[key]) - placeholderDelta
-        sunset -=placeholderDelta
-        sunrise-=placeholderDelta
+        if sunset!=None:
+            sunset -=placeholderDelta
+        if sunrise!=None:
+            sunrise-=placeholderDelta
         moonrise,moonset,moonClosest,moonCrossing = getMoonTimes(center,dateOfInterest,CTIO)
-        moonrise -=utcoffset
-        moonset -=utcoffset
-        moonClosest -=utcoffset
-        moonCrossing -=utcoffset
+        if moonrise!=None:
+            moonrise -=placeholderDelta
+        if moonset!=None:
+            moonset -=placeholderDelta
+        if moonClosest!=None:
+            #print("moonClosest:",moonClosest)
+            moonClosest[0] -=placeholderDelta
+        if moonCrossing!=None:
+            moonCrossing -=placeholderDelta
         msg = __format_sepMessage(dateOfInterest,sunset,sunrise,sunElTimes,moonrise,moonset,moonClosest,moonCrossing)
         if slackBot!=None:
             slackBot.post_message("",msg)# Post the message
