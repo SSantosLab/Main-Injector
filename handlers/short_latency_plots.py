@@ -46,7 +46,7 @@ def get_target_elevation_crossing_time(
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
     # Time grid across the day
-    times = midnight + np.linspace(0, 24, 2000) * u.hour
+    times = midnight + np.linspace(12,36, 2000) * u.hour
 
     # Set up AltAz frame for the location and times
     altaz_frame = AltAz(obstime=times, location=location)
@@ -186,7 +186,7 @@ def getSunElevations(date,location,target_altitude):
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
     # Create a full day grid of times
-    times = midnight + np.linspace(0,24, 2000) * u.hour
+    times = midnight + np.linspace(12,36, 2000) * u.hour
 
     # Calculate Sun altitudes
     frame = AltAz(obstime=times, location=location)
@@ -338,7 +338,7 @@ def getMoonClosest(date,location,target_coord):
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
     # Sample the whole day finely
-    times = midnight + np.linspace(0,24, 2000) * u.hour
+    times = midnight + np.linspace(12,36, 2000) * u.hour
 
     # Get Moon positions at these times
     moon_coords = get_moon(times, location=location)
@@ -609,7 +609,7 @@ def get_target_max_elevation_time(
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
     # Time grid across the day
-    times = midnight + np.linspace(0, 24, 2000) * u.hour
+    times = midnight + np.linspace(12,36, 2000) * u.hour
 
     # Set up AltAz frame
     altaz_frame = AltAz(obstime=times, location=location)
@@ -631,14 +631,14 @@ def get_target_max_elevation_time(
  
 def __format_sepMessage(dateOfInterest,maxElTime,targetElTimes,sunset,sunrise,sunElTimes,moonrise,moonset,moonClosest,moonCrossing):
     msg = "*Observability statistics for the night of {}*\nAll statistics are given in Chile Local time\n".format(dateOfInterest)
-    msg+= "Max probability coordinate at maximum elevation at {}\n".format(maxElTime)
+    msg+= "\n*Max probability coordinate*\nMax probability coordinate at maximum elevation at {}\n".format(maxElTime)
     for el,times in zip(targetElTimes.keys(),targetElTimes.values()):
-        msg+="Max probability coordinate crosses elevation {.2f} at {} and {}\n".format(el,times[0],times[1])
-    msg+= "Sunset time: {}\n".format(sunset) +\
+        msg+="Max probability coordinate crosses elevation {:.2f} at {} and {}\n".format(el,times[0],times[1])
+    msg+= "\n*Sun statistics*\nSunset time: {}\n".format(sunset) +\
            "Sunrise time: {}\n".format(sunrise)
     for el,times in zip(sunElTimes.keys(),sunElTimes.values()):
         msg += "Sun crossing of {} at {} and {}\n".format(el,times[0],times[1])
-    msg += "Moonrise time: {}\n".format(moonrise) +\
+    msg += "\n*Moon statistics*\nMoonrise time: {}\n".format(moonrise) +\
            "Moonset time: {}\n".format(moonset) +\
            "Moon closest angular separation to max probability coordinate at {}, {:.2f} degrees separation\n".format(moonClosest[0],moonClosest[1]) +\
            "Moon crosses 30 deg separation at {}".format(moonCrossing)
@@ -682,9 +682,13 @@ def make_plots_initial(url, name,chirpEstimate,dist,distsigma,slackBot=None):
         if moonCrossing!=None:
             moonCrossing +=placeholderDelta
         targetElTimes = {}
-        for elevation in [60*u.deg,70*u.deg,80*u.deg]:
-            targetElTimes[elevation] = np.array(get_target_elevation_crossing_time(center,dateOfInterest,CTIO,elevation))+placeholderDelta
-        targetMaxElTime = get_target_max_elevation_time(center,dateOfInterest,CTIO)
+        #for elevation in [60*u.deg,70*u.deg,80*u.deg]:
+        #    targetElTimes[elevation] = np.array(get_target_elevation_crossing_time(center,dateOfInterest,CTIO,elevation))
+        #    if targetElTimes[elevation][0]!=None:
+        #        targetElTimes[elevation][0] = +placeholderDelta
+        #    if targetElTimes[elevation][1]!=None:
+        #        targetElTimes[elevation][1] = +placeholderDelta
+        targetMaxElTime = get_target_max_elevation_time(center,dateOfInterest,CTIO) + placeholderDelta
         msg = __format_sepMessage(dateOfInterest,targetMaxElTime,targetElTimes,sunset,sunrise,sunElTimes,moonrise,moonset,moonClosest,moonCrossing)
         if slackBot!=None:
             slackBot.post_message("",msg)# Post the message
