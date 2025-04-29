@@ -387,7 +387,7 @@ class GWStreamer():
         plots_path = Path(os.path.join(self.OUTPUT_TRIGGER, "initial_plots"))
         
         plots_path.mkdir(parents=True, exist_ok=True)
-        skymap_plot, moon_plot = make_plots_initial(OUTPUT_FLATTEN, plots_path.as_posix(),str(mass_chirp),DISTANCE,DISTANCE_SIGMA)
+        skymap_plot, moon_plot = make_plots_initial(OUTPUT_FLATTEN, plots_path.as_posix(),str(mass_chirp),DISTANCE,DISTANCE_SIGMA,self.slack_bot)
         server_dir = os.path.join("/des_web","www","html","desgw-new",f"{trigger_id}")
         os.system("ssh -k codemanager@desweb.fnal.gov 'mkdir -p {}'".format(server_dir))
         desweb = f"codemanager@desweb.fnal.gov:{server_dir}"
