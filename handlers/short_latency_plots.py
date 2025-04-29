@@ -62,7 +62,8 @@ def get_target_elevation_crossing_time(
     setting_indices = np.where((altitudes[:-1] >= elevation) & (altitudes[1:] < elevation))[0]  # Setting
 
     if len(crossing_indices) == 0 or len(setting_indices) == 0:
-        raise ValueError("No crossing of the specified elevation found on this date.")
+        return None,None
+        #raise ValueError("No crossing of the specified elevation found on this date.")
 
     # Take the first rising and setting
     rise_idx = crossing_indices[0]
@@ -698,7 +699,7 @@ def make_plots_initial(url, name,chirpEstimate,dist,distsigma,slackBot=None):
                  + r'50% Area: {} deg$^2$'.format(area50) + '\n'
                  + r'90% Area: {} deg$^2$'.format(area90) + '\n'
                  + r'Max Prob Coordinates (degrees): ({},{})'.format(maxprob_ra, maxprob_dec) + '\n'
-                 + r'Weighted average distance: {}$\pm${} Mpc'.format(dist, distsigma) + '\n'
+                 + r'Weighted average distance: {:.2f}$\pm${:.2f} Mpc'.format(dist, distsigma) + '\n'
                  + 'Chirp mass estimate: {:.2f}$M$'.format(float(chirpEstimate)),(0.9,0.8))
     plt.box(False)
     plt.xticks([])
