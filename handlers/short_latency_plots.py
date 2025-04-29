@@ -560,9 +560,12 @@ def make_plots_initial(url, name,chirpEstimate,dist,distsigma,slackBot=None):
     for dateAdjust in np.arange(3):
         dateOfInterest = np.datetime64(datetime.date.today())+np.timedelta64(dateAdjust,"D")
         sunset,sunrise,sunElTimes = getSunTimes(dateOfInterest,CTIO)
-        sunElTimes -=utcoffset
-        sunset -=utcoffset
-        sunrise-=utcoffset
+        placeholderDelta = np.timedelta64(int(utcoffset.value),"h")
+        for key in sunElTimes.keys():
+            print(sunElTimes[key],type(sunElTimes[key]))
+            sunElTimes[key] = np.array(sunElTimes[key]) - placeholderDelta
+        sunset -=placeholderDelta
+        sunrise-=placeholderDelta
         moonrise,moonset,moonClosest,moonCrossing = getMoonTimes(center,dateOfInterest,CTIO)
         moonrise -=utcoffset
         moonset -=utcoffset
