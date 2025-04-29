@@ -120,7 +120,7 @@ def getSunElevations(date,location,target_altitude):
     """
     if not target_altitude.unit.is_equivalent(u.deg):
         raise ValueError("target_altitude must have angular units (e.g., degrees)")
-
+        
     # Start from midnight UTC of the given date
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
@@ -136,7 +136,7 @@ def getSunElevations(date,location,target_altitude):
     crossing_indices = np.where(alt_diff[:-1] * alt_diff[1:] <= 0)[0]
 
     if len(crossing_indices) < 2:
-        raise ValueError("Could not find both rising and setting times for this altitude on this date.")
+        #raise ValueError("Could not find both rising and setting times for this altitude on this date.")
         return None
 
     # Rising: first crossing; Setting: second crossing
@@ -195,7 +195,7 @@ def getMoonrise(date,location):
     crossing_indices = np.where((alt_diff[:-1] < 0) & (alt_diff[1:] >= 0))[0]
 
     if len(crossing_indices) == 0:
-        raise ValueError("No moonrise found on this date at this location.")
+        #raise ValueError("No moonrise found on this date at this location.")
         return None
 
     # First moonrise
@@ -241,7 +241,7 @@ def getMoonset(date,location):
     crossing_indices = np.where((alt_diff[:-1] > 0) & (alt_diff[1:] <= 0))[0]
 
     if len(crossing_indices) == 0:
-        raise ValueError("No moonset found on this date at this location.")
+        #raise ValueError("No moonset found on this date at this location.")
         return None
 
     # First moonset
@@ -312,7 +312,7 @@ def getMoonClosest(date,location,target_coord):
     return best_time_np,min_sep
 
 
-def getMoonCrossing(date,location,target_coord,crossing):
+def getMoonCrossing(date,location,target_coord,threshold):
     """
     Find the UTC time when the Moon's angular separation from a target
     drops below a given threshold.
@@ -342,7 +342,8 @@ def getMoonCrossing(date,location,target_coord,crossing):
     crossing_indices = np.where((separations[:-1] > threshold) & (separations[1:] <= threshold))[0]
 
     if len(crossing_indices) == 0:
-        raise ValueError("No crossing below the threshold found on this date at this location.")
+        return None
+        # raise ValueError("No crossing below the threshold found on this date at this location.")
 
     # Take the first crossing
     idx = crossing_indices[0]
