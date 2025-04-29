@@ -24,6 +24,66 @@ from astropy.coordinates import ICRS
 import pytz
 import subprocess
 
+def get_target_elevation_crossing_time(
+    target_coord: SkyCoord,
+    date: np.datetime64,
+    location: EarthLocation,
+    elevation: u.Quantity
+) -> tuple[np.datetime64, np.datetime64]:
+    """
+    Find the UTC times when a target sky coordinate crosses a given elevation.
+
+    Parameters:
+    - target_coord (SkyCoord): Target sky coordinate (ICRS recommended).
+    - date (np.datetime64): The date of interest (UTC).
+    - location (EarthLocation): Observer's location.
+    - elevation (Quantity): Desired elevation threshold (e.g., 30*u.deg).
+
+    Returns:
+    - (np.datetime64, np.datetime64): Tuple of (rising time, setting time) in UTC.
+    """
+    # Midnight UTC of the date
+    midnight = Time(date.astype('datetime64[D]'), scale='utc')
+
+    # Time grid across the day
+    times = midnight + np.linspace(0, 24, 2000) * u.hour
+
+    # Set up AltAz frame for the location and times
+    altaz_frame = AltAz(obstime=times, location=location)
+
+    # Transform the target coordinates to AltAz
+    target_altaz = target_coord.transform_to(altaz_frame)
+
+    # Get altitudes
+    altitudes = target_altaz.alt
+
+    # Find crossings
+    crossing_indices = np.where((altitudes[:-1] < elevation) & (altitudes[1:] >= elevation))[0]  # Rising
+    setting_indices = np.where((altitudes[:-1] >= elevation) & (altitudes[1:] < elevation))[0]  # Setting
+
+    if len(crossing_indices) == 0 or len(setting_indices) == 0:
+        raise ValueError("No crossing of the specified elevation found on this date.")
+
+    # Take the first rising and setting
+    rise_idx = crossing_indices[0]
+    set_idx = setting_indices[0]
+
+    # Interpolate times for precision
+    def interpolate_time(idx, alt1, alt2):
+        t1, t2 = times[idx], times[idx+1]
+        a1, a2 = alt1.deg, alt2.deg
+        frac = (elevation.value - a1) / (a2 - a1)
+        return t1 + frac * (t2 - t1)
+
+    rise_time = interpolate_time(rise_idx, altitudes[rise_idx], altitudes[rise_idx+1])
+    set_time = interpolate_time(set_idx, altitudes[set_idx], altitudes[set_idx+1])
+
+    # Convert to np.datetime64
+    rise_time_np = np.datetime64(rise_time.utc.iso, 's')
+    set_time_np = np.datetime64(set_time.utc.iso, 's')
+
+    return rise_time_np, set_time_np
+
 def getSunTimes(date,location,elevations=[-14*u.deg,-18*u.deg]):
     """
     A function to give the sunset, sunrise, and time of sun elevations as a function of the night of observation
@@ -53,7 +113,7 @@ def getSunset(date,location):
     altaz_frame = AltAz(obstime=astropy_time, location=location)
 
     # Find the sunset by stepping in small intervals
-    times = astropy_time + np.linspace(-12, 12, 1000) * u.hour
+    times = astropy_time + np.linspace(0,24, 1000) * u.hour
     sun_altazs = get_sun(times).transform_to(AltAz(obstime=times, location=location))
     
     # Sunset is where altitude crosses from positive to negative
@@ -85,7 +145,7 @@ def getSunrise(date,location):
     midnight = Time(date.astype('datetime64[D]'), scale='utc') # This might need some adjustment...
 
     # Create a range of times around the date
-    times = midnight + np.linspace(-12, 12, 1000) * u.hour  # full day coverage
+    times = midnight + np.linspace(0,24, 1000) * u.hour  # full day coverage
 
     # Calculate the Sun's altitude at these times
     frame = AltAz(obstime=times, location=location)
@@ -125,7 +185,7 @@ def getSunElevations(date,location,target_altitude):
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
     # Create a full day grid of times
-    times = midnight + np.linspace(-12, 12, 2000) * u.hour
+    times = midnight + np.linspace(0,24, 2000) * u.hour
 
     # Calculate Sun altitudes
     frame = AltAz(obstime=times, location=location)
@@ -184,7 +244,7 @@ def getMoonrise(date,location):
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
     # Create a full day grid of times
-    times = midnight + np.linspace(-12, 12, 2000) * u.hour
+    times = midnight + np.linspace(0,24, 2000) * u.hour
 
     # Calculate Moon altitudes
     frame = AltAz(obstime=times, location=location)
@@ -230,7 +290,7 @@ def getMoonset(date,location):
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
     # Create a full day grid of times
-    times = midnight + np.linspace(-12, 12, 2000) * u.hour
+    times = midnight + np.linspace(0,24, 2000) * u.hour
 
     # Calculate Moon altitudes
     frame = AltAz(obstime=times, location=location)
@@ -277,7 +337,7 @@ def getMoonClosest(date,location,target_coord):
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
     # Sample the whole day finely
-    times = midnight + np.linspace(-12, 12, 2000) * u.hour
+    times = midnight + np.linspace(0,24, 2000) * u.hour
 
     # Get Moon positions at these times
     moon_coords = get_moon(times, location=location)
@@ -309,7 +369,7 @@ def getMoonClosest(date,location,target_coord):
     # Convert to np.datetime64
     best_time_np = np.datetime64(best_time.utc.iso, 's')
 
-    return best_time_np,min_sep
+    return [best_time_np,min_sep]
 
 
 def getMoonCrossing(date,location,target_coord,threshold):
@@ -330,7 +390,7 @@ def getMoonCrossing(date,location,target_coord,threshold):
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
     # Create time grid for the full day
-    times = midnight + np.linspace(-12, 12, 2000) * u.hour
+    times = midnight + np.linspace(0,24, 2000) * u.hour
 
     # Get Moon coordinates at these times
     moon_coords = get_moon(times, location=location)
@@ -563,21 +623,21 @@ def make_plots_initial(url, name,chirpEstimate,dist,distsigma,slackBot=None):
         placeholderDelta = np.timedelta64(int(utcoffset.value),"h")
         for key in sunElTimes.keys():
             print(sunElTimes[key],type(sunElTimes[key]))
-            sunElTimes[key] = np.array(sunElTimes[key]) - placeholderDelta
+            sunElTimes[key] = np.array(sunElTimes[key]) + placeholderDelta
         if sunset!=None:
-            sunset -=placeholderDelta
+            sunset +=placeholderDelta
         if sunrise!=None:
-            sunrise-=placeholderDelta
+            sunrise+=placeholderDelta
         moonrise,moonset,moonClosest,moonCrossing = getMoonTimes(center,dateOfInterest,CTIO)
         if moonrise!=None:
-            moonrise -=placeholderDelta
+            moonrise +=placeholderDelta
         if moonset!=None:
-            moonset -=placeholderDelta
+            moonset +=placeholderDelta
         if moonClosest!=None:
             #print("moonClosest:",moonClosest)
-            moonClosest[0] -=placeholderDelta
+            moonClosest[0] =moonClosest[0] + placeholderDelta
         if moonCrossing!=None:
-            moonCrossing -=placeholderDelta
+            moonCrossing +=placeholderDelta
         msg = __format_sepMessage(dateOfInterest,sunset,sunrise,sunElTimes,moonrise,moonset,moonClosest,moonCrossing)
         if slackBot!=None:
             slackBot.post_message("",msg)# Post the message
