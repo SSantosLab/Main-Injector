@@ -560,9 +560,14 @@ def make_plots_initial(url, name,chirpEstimate,dist,distsigma,slackBot=None):
     for dateAdjust in np.arange(3):
         dateOfInterest = np.datetime64(datetime.date.today())+np.timedelta64(dateAdjust,"D")
         sunset,sunrise,sunElTimes = getSunTimes(dateOfInterest,CTIO)
-        sunset,sunrise,sunElTimes -=utcoffset
+        sunElTimes -=utcoffset
+        sunset -=utcoffset
+        sunrise-=utcoffset
         moonrise,moonset,moonClosest,moonCrossing = getMoonTimes(center,dateOfInterest,CTIO)
-        moonrise,moonset,moonClosest,moonCrossing -=utcoffset
+        moonrise -=utcoffset
+        moonset -=utcoffset
+        moonClosest -=utcoffset
+        moonCrossing -=utcoffset
         msg = __format_sepMessage(dateOfInterest,sunset,sunrise,sunElTimes,moonrise,moonset,moonClosest,moonCrossing)
         if slackBot!=None:
             slackBot.post_message("",msg)# Post the message
