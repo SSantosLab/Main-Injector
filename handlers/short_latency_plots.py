@@ -338,7 +338,7 @@ def getMoonClosest(date,location,target_coord):
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
     # Sample the whole day finely
-    times = midnight + np.linspace(12,36, 2000) * u.hour
+    times = midnight + np.linspace(-12,12, 2000) * u.hour
 
     # Get Moon positions at these times
     moon_coords = get_moon(times, location=location)
@@ -678,7 +678,7 @@ def make_plots_initial(url, name,chirpEstimate,dist,distsigma,slackBot=None):
             moonset +=placeholderDelta
         if moonClosest!=None:
             #print("moonClosest:",moonClosest)
-            moonClosest[0] =moonClosest[0] + placeholderDelta
+            moonClosest[0] =moonClosest[0]
         if moonCrossing!=None:
             moonCrossing +=placeholderDelta
         targetElTimes = {}
