@@ -85,7 +85,7 @@ def getSunrise(date,location):
     midnight = Time(date.astype('datetime64[D]'), scale='utc') # This might need some adjustment...
 
     # Create a range of times around the date
-    times = midnight + np.linspace(0, 24, 1000) * u.hour  # full day coverage
+    times = midnight + np.linspace(-12, 12, 1000) * u.hour  # full day coverage
 
     # Calculate the Sun's altitude at these times
     frame = AltAz(obstime=times, location=location)
@@ -125,7 +125,7 @@ def getSunElevations(date,location,target_altitude):
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
     # Create a full day grid of times
-    times = midnight + np.linspace(0, 24, 2000) * u.hour
+    times = midnight + np.linspace(-12, 12, 2000) * u.hour
 
     # Calculate Sun altitudes
     frame = AltAz(obstime=times, location=location)
@@ -184,7 +184,7 @@ def getMoonrise(date,location):
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
     # Create a full day grid of times
-    times = midnight + np.linspace(0, 24, 2000) * u.hour
+    times = midnight + np.linspace(-12, 12, 2000) * u.hour
 
     # Calculate Moon altitudes
     frame = AltAz(obstime=times, location=location)
@@ -230,7 +230,7 @@ def getMoonset(date,location):
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
     # Create a full day grid of times
-    times = midnight + np.linspace(0, 24, 2000) * u.hour
+    times = midnight + np.linspace(-12, 12, 2000) * u.hour
 
     # Calculate Moon altitudes
     frame = AltAz(obstime=times, location=location)
@@ -277,7 +277,7 @@ def getMoonClosest(date,location,target_coord):
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
     # Sample the whole day finely
-    times = midnight + np.linspace(0, 24, 2000) * u.hour
+    times = midnight + np.linspace(-12, 12, 2000) * u.hour
 
     # Get Moon positions at these times
     moon_coords = get_moon(times, location=location)
@@ -330,7 +330,7 @@ def getMoonCrossing(date,location,target_coord,threshold):
     midnight = Time(date.astype('datetime64[D]'), scale='utc')
 
     # Create time grid for the full day
-    times = midnight + np.linspace(0, 24, 2000) * u.hour
+    times = midnight + np.linspace(-12, 12, 2000) * u.hour
 
     # Get Moon coordinates at these times
     moon_coords = get_moon(times, location=location)
@@ -530,11 +530,11 @@ def moon_airmass(event_name, todays_date, target_coords,return_many=False):
         return moon_plot
  
 def __format_sepMessage(dateOfInterest,sunset,sunrise,sunElTimes,moonrise,moonset,moonClosest,moonCrossing):
-    msg = "**Observability statistics for the night of {}**\n\n".format(dateOfInterest) +\
+    msg = "*Observability statistics for the night of {}*\nAll statistics are given in Chile Local time\n".format(dateOfInterest) +\
            "Sunset time: {}\n".format(sunset) +\
            "Sunrise time: {}\n".format(sunrise)
     for el,times in zip(sunElTimes.keys(),sunElTimes.values()):
-        msg += "Sun crossing of {} deg at {} and {}\n".format(el,times[0],times[1])
+        msg += "Sun crossing of {} at {} and {}\n".format(el,times[0],times[1])
     msg += "Moonrise time: {}\n".format(moonrise) +\
            "Moonset time: {}\n".format(moonset) +\
            "Moon closest angular separation to max probability coordinate at {}, {:.2f} degrees separation\n".format(moonClosest[0],moonClosest[1]) +\
@@ -555,10 +555,14 @@ def make_plots_initial(url, name,chirpEstimate,dist,distsigma,slackBot=None):
     moon_plot = moon_airmass(name, date, [maxprob_ra, maxprob_dec])
     center = SkyCoord(maxprob_ra, maxprob_dec, unit="deg")  # defaults to ICRS frame
     CTIO = EarthLocation.of_site('Cerro Tololo Interamerican Observatory')
+    chile_now = datetime.datetime.now(pytz.timezone('Chile/Continental'))
+    utcoffset =  u.hour * int(chile_now.utcoffset().total_seconds()/60/60)
     for dateAdjust in np.arange(3):
         dateOfInterest = np.datetime64(datetime.date.today())+np.timedelta64(dateAdjust,"D")
         sunset,sunrise,sunElTimes = getSunTimes(dateOfInterest,CTIO)
+        sunset,sunrise,sunElTimes -=utcoffset
         moonrise,moonset,moonClosest,moonCrossing = getMoonTimes(center,dateOfInterest,CTIO)
+        moonrise,moonset,moonClosest,moonCrossing -=utcoffset
         msg = __format_sepMessage(dateOfInterest,sunset,sunrise,sunElTimes,moonrise,moonset,moonClosest,moonCrossing)
         if slackBot!=None:
             slackBot.post_message("",msg)# Post the message
