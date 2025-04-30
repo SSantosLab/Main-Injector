@@ -499,7 +499,7 @@ def make_alert_skymap(map_path):
 
 def moon_airmass(event_name, todays_date, target_coords,return_many=False):
     date = datetime.date.today()
-    m = ephem.Moon(todays_date)
+    m = ephem.Moon(str(date+datetime.timedelta(days=1)))
     phase = round(m.moon_phase, 2)
     
     plt.style.use(astropy_mpl_style)
@@ -542,8 +542,8 @@ def moon_airmass(event_name, todays_date, target_coords,return_many=False):
     t[condition] = np.nan
     
     
-    l1 = ax1.plot(delta_midnight, moon_separation.deg, color='blue', ls='--', label='Moon separation')
-    l2 = ax2.plot(delta_midnight, t, color = 'red', ls='-', label='Max Prob Coord', alpha = 0.5)
+    l1 = ax1.plot(delta_midnight, moon_separation.deg, color='blue', ls='--', label='Moon separation [angular separation]')
+    l2 = ax2.plot(delta_midnight, t, color = 'red', ls='-', label='Max Prob Coord [airmass]', alpha = 0.5)
     label = ['Moon separation (deg)', 'Max Prob Coord (Airmass)']
     fig.legend(labels=label,
            loc= (0.1, 0.82), fontsize = 9)
@@ -566,14 +566,14 @@ def moon_airmass(event_name, todays_date, target_coords,return_many=False):
     ax1.set_xticks((np.arange(13)*2-12)*u.hour)
     ax1.set_ylim(0*u.deg, 90*u.deg)
     ax1.set_xlabel("Hours from CTIO Local Midnight (UTC{})".format(utcoffset))
-    ax1.set_ylabel('Altitude [deg]')
-    ax2.set_ylabel('Airmass')
-    ax2.set_ylim(4,1)
+    ax1.set_ylabel('Lunar Separation [deg]')
+    ax2.set_ylabel('Max probability coordinate airmass')
+    ax2.set_ylim(2,1)
 
     print("Peak airmass: {}\n Peak airmass time (local): {}".format(np.nanmin(t),delta_midnight[np.nanargmin(t)]))
 
     moon_plot = event_name+'/Moon.png'
-    moon_plot = f'/data/des70.a/data/desgw/O4/Main-Injector-O4b/utils/Moon_{todays_date}.jpg' #uncomment this line if you are using the moonplot figure in utils
+    # moon_plot = f'/data/des70.a/data/desgw/O4/Main-Injector-O4b/utils/Moon_{todays_date}.jpg' #uncomment this line if you are using the moonplot figure in utils
     plt.savefig(moon_plot, dpi=300, bbox_inches = "tight")
     os.chmod(moon_plot, 0o0777)
     
@@ -589,6 +589,7 @@ def moon_airmass(event_name, todays_date, target_coords,return_many=False):
         return moon_plot,sunaltazs,delta_midnight,moon_separation,t
     else:   
         return moon_plot
+
 def get_target_max_elevation_time(
     target_coord: SkyCoord,
     date: np.datetime64,
@@ -655,7 +656,7 @@ def make_plots_initial(url, name,chirpEstimate,dist,distsigma,slackBot=None):
     
     area50, area90, maxprob_ra, maxprob_dec, maxprob_dist, maxprob_distsigma, levels, nside, prob = make_alert_skymap(url)
     
-    moon_plot = moon_airmass(name, date, [maxprob_ra, maxprob_dec])
+    moon_plot = moon_airmass(name, str(datetime.date.today()+datetime.timedelta(days=1)), [maxprob_ra, maxprob_dec])
     center = SkyCoord(maxprob_ra, maxprob_dec, unit="deg")  # defaults to ICRS frame
     CTIO = EarthLocation.of_site('Cerro Tololo Interamerican Observatory')
     chile_now = datetime.datetime.now(pytz.timezone('Chile/Continental'))
