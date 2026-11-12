@@ -129,13 +129,13 @@ class HexObject:
             return 0.
         
         airmass = self.getAirmass(mjd)
-        
+
+        if airmass < 1: #new line; used to prevent unphysical results/catch them before running other checks
+            return 0.
         if airmass<=1.6 and airmass >= 1: # Airmass of 1.6 is where we wanted decline to become more steep
             return 2 - airmass
         elif airmass <= 1.8: # Airmass of 1.8 is DECam limit
             return 3.6 - 2*airmass
-        elif airmass<1:
-            return 1.
         else:
             return 0.
     
